@@ -4,7 +4,7 @@
 
 ## Запуск после скачивания с GitHub
 
-Нужны Python 3.11+ и Node.js 22.12+ с pnpm. Секреты храните только в `backend/.env`; этот файл намеренно не публикуется в GitHub.
+Нужны Python 3.11–3.13 и Node.js 22.12+ с pnpm. Python 3.14 пока не используйте: часть бинарных зависимостей FastAPI/Pydantic может установиться несовместимо. Секреты храните только в `backend/.env`; этот файл намеренно не публикуется в GitHub.
 
 Из папки проекта в PowerShell:
 
@@ -15,11 +15,13 @@ pnpm build
 cd ..
 
 cd backend
-python -m venv .venv
+py -3.12 -m venv .venv
 .\.venv\Scripts\python.exe -m pip install -r requirements.txt
 Copy-Item .env.example .env
 .\.venv\Scripts\python.exe -m uvicorn app.main:app --host 127.0.0.1 --port 8000 --no-access-log
 ```
+
+Если команда `py -3.12` не найдена, установите Python 3.12 или 3.13 с https://www.python.org/downloads/windows/, закройте PowerShell, откройте заново и повторите команды.
 
 Если `.env` уже настроен, не перезаписывайте его. Откройте http://127.0.0.1:8000. Создайте свой аккаунт. Учётные записи, презентации, версии, задания и избранное сохраняются в `backend/data/deckly.sqlite3`. Загруженные PPTX — в `backend/data/templates/`. Исходные три шаблона VK приложены; оригиналы не изменяются.
 

@@ -4,6 +4,10 @@ $pythonPath = Join-Path $backendPath '.venv/Scripts/python.exe'
 if (!(Test-Path -LiteralPath $pythonPath)) {
     throw 'Сначала выполните установку из README.md: создайте .venv и установите requirements.txt.'
 }
+$version = & $pythonPath -c "import sys; print(f'{sys.version_info.major}.{sys.version_info.minor}')"
+if ($version -notmatch '^(3\.11|3\.12|3\.13)$') {
+    throw "Нужен Python 3.11-3.13 внутри backend/.venv. Сейчас найден Python $version. Удалите backend/.venv и пересоздайте его командой: py -3.12 -m venv .venv"
+}
 if (!(Test-Path -LiteralPath (Join-Path $PSScriptRoot 'frontend/dist/index.html'))) {
     throw 'Не найдена сборка интерфейса. Выполните pnpm build в папке frontend.'
 }
