@@ -1,0 +1,11 @@
+import ReactDOM from "react-dom/client";
+import App from "./App";
+import { ThemeProvider } from "./components/ThemeToggle";
+import "./styles/base.css";
+import "./styles/workspace.css";
+import "./styles/app.css";
+import "./styles/auth.css";
+import "./styles/polish.css";
+import "./styles/refinements.css";
+import "./styles/experience.css";
+ReactDOM.createRoot(document.getElementById("root")!).render(<ThemeProvider><App /></ThemeProvider>);

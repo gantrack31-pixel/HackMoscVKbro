@@ -1,0 +1,364 @@
+/* Токены, которые удобно сопоставлять с Figma. Шаг отступов — 8px. */
+:root {
+  --navy: #0f172a;
+  --blue: #0077ff;
+  --coral: #ff3b30;
+  --canvas: #f8fafc;
+  --line: #e2e8f0;
+  --space: 8px;
+}
+@font-face {
+  font-family: Manrope;
+  src: url("/assets/Manrope.ttf") format("truetype");
+  font-weight: 200 800;
+  font-display: swap;
+}
+.wrap {
+  flex-wrap: wrap;
+}
+.error-banner {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 24px;
+  background: #fff0ef;
+  border: 1px solid #ffc8c4;
+  border-radius: 12px;
+  margin-bottom: 24px;
+  font-size: 14px;
+}
+.error-banner > span {
+  flex: 1;
+}
+.project-title {
+  background: none;
+  border: 0;
+  padding: 0;
+  width: 100%;
+  font-size: 28px;
+  font-weight: 750;
+  color: var(--navy);
+  letter-spacing: -1px;
+}
+.heading > div:first-child {
+  max-width: 100%;
+}
+.editor-toolbar select {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 8px;
+  background: white;
+  font-size: 12px;
+}
+.canvas-workspace {
+  min-width: 0;
+  align-self: start;
+}
+.slide-canvas {
+  background: white;
+  border: 1px solid var(--line);
+  box-shadow:
+    0 4px 8px #0f172a06,
+    0 16px 40px #0f172a0d;
+  border-radius: 8px;
+  overflow: hidden;
+}
+.deck-slide {
+  width: 100%;
+  height: auto;
+  display: block;
+  background: white;
+  aspect-ratio: auto;
+}
+.thumbnail {
+  padding: 8px;
+  border: 1px solid var(--line);
+  background: white;
+  border-radius: 8px;
+  text-align: left;
+  width: 100%;
+}
+.thumbnail > span {
+  font-size: 10px;
+  color: #64748b;
+  display: block;
+  margin-bottom: 4px;
+}
+.thumbnail.active {
+  border: 2px solid var(--blue);
+  padding: 7px;
+  background: #eff6ff;
+}
+.thumbnail .deck-slide {
+  border-radius: 4px;
+}
+.new-thumb {
+  aspect-ratio: 16/9;
+  background: #eff6ff;
+  font-size: 10px;
+  display: grid;
+  place-items: center;
+}
+.source-card {
+  background: white;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 24px;
+  margin-top: 24px;
+  display: grid;
+  gap: 16px;
+}
+.source-card h3 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+}
+.source-card .between {
+  flex-wrap: wrap;
+}
+.source-card blockquote {
+  margin: 0;
+  border-left: 3px solid var(--blue);
+  padding: 8px 0 8px 16px;
+  font-size: 13px;
+  line-height: 1.8;
+  color: #334155;
+  white-space: pre-wrap;
+}
+.source-card pre {
+  white-space: pre-wrap;
+  font: 12px/1.8 Manrope;
+  margin-top: 16px;
+  max-height: 240px;
+  overflow: auto;
+}
+.source-card summary {
+  font-size: 12px;
+  cursor: pointer;
+}
+.inspector .field {
+  min-width: 0;
+}
+.inspector textarea {
+  font-size: 12px;
+}
+.audit-slide-wrap {
+  position: relative;
+  margin: 24px 0;
+  box-shadow: 0 8px 32px #0f172a0d;
+}
+.audit-pin {
+  position: absolute !important;
+  transform: translate(-50%, -50%);
+  z-index: 3;
+  width: 28px;
+  height: 28px;
+  border: 3px solid white;
+  border-radius: 50%;
+  background: var(--coral);
+  color: white;
+  font-size: 12px;
+  font-weight: 800;
+  box-shadow: 0 0 0 4px #ff3b3022;
+  animation: pin-pulse 2.5s infinite;
+}
+.audit-pin.focused {
+  outline: 3px solid #ff3b3055;
+}
+.audit-summary {
+  margin-bottom: 24px;
+}
+.audit-summary > div {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.audit-summary .audit-score {
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  background: #eaf3ff;
+  border-radius: 16px;
+  color: var(--blue);
+}
+.audit-summary p {
+  color: #64748b;
+  font-size: 12px;
+}
+.audit-summary h2 {
+  font-size: 20px;
+}
+.audit-checklist {
+  align-self: start;
+  gap: 16px;
+  display: grid;
+}
+.audit-issue {
+  padding: 16px;
+  background: #fff9f8;
+  border: 1px solid #ffe0dd;
+  border-radius: 12px;
+  display: grid;
+  gap: 8px;
+}
+.audit-issue.focused {
+  border-color: var(--coral);
+  box-shadow: 0 0 0 3px #ff3b3010;
+}
+.audit-issue.info {
+  background: #f5faf7;
+  border-color: #dcefe4;
+}
+.audit-issue h3 {
+  font-size: 13px;
+}
+.audit-issue p {
+  font-size: 12px;
+  color: #64748b;
+  line-height: 1.7;
+}
+.audit-issue input {
+  accent-color: var(--blue);
+  width: 18px;
+  height: 18px;
+}
+.audit-items {
+  max-height: 640px;
+  overflow: auto;
+  display: grid;
+  gap: 12px;
+}
+.slide-select-strip {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 24px;
+}
+.slide-select-strip .btn {
+  min-width: 40px;
+}
+.design-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+.design-grid > .panel {
+  align-content: start;
+  gap: 24px;
+}
+.code-map {
+  display: grid;
+  gap: 8px;
+  font-size: 13px;
+}
+.code-map code {
+  color: #0070ec;
+  font-size: 13px;
+  margin-top: 8px;
+  overflow-wrap: anywhere;
+}
+.code-map span {
+  color: #64748b;
+}
+.instruction-list {
+  margin: 0;
+  padding-left: 20px;
+  display: grid;
+  gap: 12px;
+  font-size: 13px;
+}
+.template-details {
+  display: grid;
+  gap: 16px;
+  margin-top: 24px;
+}
+.template-selection .slide {
+  margin-bottom: 8px;
+}
+.demo-checks {
+  display: grid;
+  gap: 24px;
+  font-weight: 650;
+  color: #334155;
+}
+.demo-checks p {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+.demo-checks p:first-child {
+  color: #16754d;
+}
+.demo-checks p:nth-child(2) {
+  color: #bd3027;
+}
+.demo-outline {
+  display: grid;
+  gap: 16px;
+}
+.demo-templates > div {
+  min-width: 0;
+}
+.demo-templates > div > p {
+  margin-top: 12px;
+}
+.faq p {
+  margin: 16px 0;
+}
+.telegram-orb .icon {
+  width: 40px;
+  height: 40px;
+}
+.panel {
+  box-shadow:
+    0 2px 4px #0f172a03,
+    0 8px 24px #0f172a03;
+}
+.btn.primary:disabled {
+  box-shadow: none;
+}
+.template-cover {
+  overflow: hidden;
+}
+.slide-rail {
+  align-self: start;
+}
+.inspector {
+  gap: 16px;
+}
+.field-helper {
+  font-size: 11px;
+  color: #64748b;
+  line-height: 1.7;
+}
+.badge .icon {
+  width: 14px;
+  height: 14px;
+}
+@keyframes pin-pulse {
+  50% {
+    box-shadow: 0 0 0 8px #ff3b300d;
+  }
+}
+@media (max-width: 1100px) {
+  .project-title {
+    font-size: 23px;
+  }
+  .design-grid {
+    grid-template-columns: 1fr;
+  }
+  .audit-summary {
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+  .source-card {
+    padding: 16px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .audit-pin {
+    animation: none;
+  }
+}
