@@ -8,4 +8,5 @@ import "./styles/auth.css";
 import "./styles/polish.css";
 import "./styles/refinements.css";
 import "./styles/experience.css";
+import "./styles/system.css";
 ReactDOM.createRoot(document.getElementById("root")!).render(<ThemeProvider><App /></ThemeProvider>);

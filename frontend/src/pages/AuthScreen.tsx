@@ -10,9 +10,10 @@ import {
 } from "lucide-react";
 import { ThemeToggle } from "../components/ThemeToggle";
 import { api } from "../api";
+import { SystemActivity } from "../components/SystemActivity";
 
 import { TemplateCover } from "../components/TemplateCard";
-import type { Health, Template, User } from "../types";
+import type { Template, User } from "../types";
 type Screen = "welcome" | "choice" | "login" | "register";
 const oauthErrors: Record<string, string> = {
   state: "Сессия входа истекла. Повторите вход через Яндекс.",
@@ -28,9 +29,8 @@ export function AuthScreen({
   onUser: (u: User) => void;
   error: string;
 }) {
-  const [screen, setScreen] = useState<Screen>("welcome"),
+  const [screen, setScreen] = useState<Screen>(location.hash === "#login" ? "login" : location.hash.startsWith("#auth-error=") ? "choice" : "welcome"),
     [templates, setTemplates] = useState<Template[]>([]),
-    [health, setHealth] = useState<Health | null>(null),
     [error, setError] = useState(
       initialError ||
         oauthErrors[location.hash.replace("#auth-error=", "")] ||
@@ -43,10 +43,6 @@ export function AuthScreen({
       .publicTemplates()
       .then(setTemplates)
       .catch((e) => setError(e.message));
-    api
-      .health()
-      .then(setHealth)
-      .catch(() => {});
   }, []);
   const startRef = useRef<HTMLButtonElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
@@ -112,6 +108,7 @@ export function AuthScreen({
     >
       <section className="auth-left">
         <div className="auth-sliding-surface" aria-hidden="true" />
+        <SystemActivity />
         <div className="auth-controls">
           <ThemeToggle />
           <button
@@ -195,13 +192,7 @@ export function AuthScreen({
                 </div>
                 <button
                   className="yandex-button"
-                  onClick={() =>
-                    health?.yandex_enabled
-                      ? location.assign("/api/auth/yandex/start")
-                      : setError(
-                          "Вход через Яндекс пока недоступен. Войдите по почте или создайте аккаунт.",
-                        )
-                  }
+                  onClick={() => location.assign("/auth/yandex")}
                 >
                   <b>Я</b>Войти с Яндекс ID
                 </button>
@@ -346,13 +337,14 @@ export function AuthScreen({
           </div>
         </div>
         <footer className="auth-footer">
-          <span>Deckly.Ai © 2026</span>
+          <span>Ваши идеи. Ваш стиль. © 2026</span>
           <a href="https://t.me/flixyyy" target="_blank" rel="noreferrer">
             Поддержка ↗
           </a>
         </footer>
       </section>
       <section className="auth-right" aria-label="Примеры шаблонов">
+        <SystemActivity />
         <div className="auth-preview-note" aria-hidden={opened}>
           <span className="auth-note-dot" />
           Один шаблон — бесконечно много идей

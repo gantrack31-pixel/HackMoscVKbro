@@ -392,6 +392,7 @@ export function Catalog(
           <Icon name="star" />
           <h2>Пока пусто</h2>
           <p>Попробуйте другую категорию или сохраните шаблон звёздочкой.</p>
+          {props.onlyFavorites && props.favorites.length === 0 ? <a className="btn primary" href="#templates">Выбрать шаблоны</a> : (
           <button
             className="btn"
             onClick={() => {
@@ -401,6 +402,7 @@ export function Catalog(
           >
             Сбросить фильтры
           </button>
+          )}
         </div>
       )}
     </>

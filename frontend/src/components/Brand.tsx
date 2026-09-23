@@ -11,8 +11,8 @@ export function BrandMark() {
         strokeLinecap="round"
         strokeLinejoin="round"
       >
-        <path d="M12 8h10c21 0 21 28 0 28H12Z" />
-        <path d="M12 44h24M12 52h18" strokeWidth="3" />
+        <text x="7" y="38" fill="currentColor" stroke="none" fontFamily="Manrope, Arial, sans-serif" fontSize="42" fontWeight="800">D</text>
+        <path d="M12 46h24" strokeWidth="3" />
       </g>
     </svg>
   );
@@ -22,7 +22,7 @@ export function Brand({ compact = false }: { compact?: boolean }) {
   return (
     <span className={`deckly-wordmark ${compact ? "compact" : ""}`}>
       {compact && <BrandMark />}
-      <span>Deckly</span>
+      <span>{compact ? "eckly" : "Deckly"}</span>
       <i>.</i>
       <small>Ai</small>
     </span>

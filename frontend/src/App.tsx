@@ -12,6 +12,7 @@ import { Audit } from "./pages/Audit";
 import { Projects, Demo, Support } from "./pages/InfoPages";
 import { AuthScreen } from "./pages/AuthScreen";
 import { Profile } from "./pages/Profile";
+import { YandexAuth } from "./pages/YandexAuth";
 import type { Health, Project, Route, Template, User } from "./types";
 
 const routes: Route[] = [
@@ -45,6 +46,7 @@ export default function App() {
     window.addEventListener("session-expired", expired);
     return () => window.removeEventListener("session-expired", expired);
   }, []);
+  if (location.pathname.replace(/\/$/, "") === "/auth/yandex") return <YandexAuth />;
   if (!ready)
     return (
       <div className="boot-screen">

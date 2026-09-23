@@ -9,6 +9,7 @@ import { Icon, type IconName } from "./Icon";
 import { ThemeToggle } from "./ThemeToggle";
 import { PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import { Avatar, Brand } from "./Brand";
+import { SystemActivity } from "./SystemActivity";
 import type { Health, Route, User } from "../types";
 const nav: [Route, IconName, string][] = [
   ["home", "home", "Главная"],
@@ -49,7 +50,32 @@ export function Shell({
 }) {
   const [menu, setMenu] = useState(false),
     [query, setQuery] = useState("");
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(true);
+  const sidebarRef = useRef<HTMLElement>(null);
+  const sidebarTrigger = useRef<HTMLButtonElement>(null);
+  useEffect(() => { setCollapsed(true); }, [route]);
+  useEffect(() => {
+    if (collapsed) return;
+    const previous = document.activeElement as HTMLElement | null;
+    const overflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    sidebarTrigger.current?.focus();
+    const keyboard = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setCollapsed(true);
+      if (event.key !== "Tab") return;
+      const items = sidebarRef.current?.querySelectorAll<HTMLElement>('a[href], button:not([disabled])');
+      if (!items?.length) return;
+      const first = items[0], last = items[items.length - 1];
+      if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+      else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+    };
+    document.addEventListener("keydown", keyboard);
+    return () => {
+      document.body.style.overflow = overflow;
+      document.removeEventListener("keydown", keyboard);
+      previous?.focus({ preventScroll: true });
+    };
+  }, [collapsed]);
   const profileRef = useRef<HTMLDivElement>(null),
     trigger = useRef<HTMLButtonElement>(null);
   useEffect(() => setMenu(false), [route]);
@@ -77,14 +103,16 @@ export function Shell({
   }
   return (
     <div className={`shell shell-refined ${collapsed ? "sidebar-collapsed" : ""}`} id="design-root">
-      <aside className="sidebar" id="workspace-sidebar" inert={collapsed} aria-hidden={collapsed}>
-        <a
+      <aside ref={sidebarRef} className="sidebar" id="workspace-sidebar" aria-label="Навигация">
+        <button
+          ref={sidebarTrigger}
           className="sidebar-brand"
-          href="#home"
-          aria-label="Deckly.Ai — главная"
+          onClick={() => setCollapsed(value => !value)}
+          aria-expanded={!collapsed}
+          aria-label={collapsed ? "Раскрыть навигацию Deckly.Ai" : "Свернуть навигацию Deckly.Ai"}
         >
           <Brand compact />
-        </a>
+        </button>
         <a
           className="workspace workspace-link"
           href="#profile"
@@ -106,6 +134,7 @@ export function Shell({
               className={id === route ? "active" : ""}
               aria-current={id === route ? "page" : undefined}
               title={name}
+              aria-label={name}
             >
               <Icon name={icon} />
               <span>{name}</span>
@@ -115,7 +144,7 @@ export function Shell({
             </a>
           ))}
         </nav>
-        <a href="#create" className="sidebar-create">
+        <a href="#create" className="sidebar-create" aria-label="Новая презентация" title="Новая презентация">
           <Icon name="plus" />
           <span>Новая презентация</span>
         </a>
@@ -131,6 +160,7 @@ export function Shell({
           <nav className="nav" aria-label="Аккаунт и помощь">
             <a
               href="#profile"
+              aria-label="Мой профиль" title="Мой профиль"
               className={route === "profile" ? "active" : ""}
               aria-current={route === "profile" ? "page" : undefined}
             >
@@ -139,6 +169,7 @@ export function Shell({
             </a>
             <a
               href="#support"
+              aria-label="Поддержка" title="Поддержка"
               className={route === "support" ? "active" : ""}
               aria-current={route === "support" ? "page" : undefined}
             >
@@ -149,6 +180,9 @@ export function Shell({
           <div className="local-note">Ваши идеи. Ваш стиль.</div>
         </div>
       </aside>
+      {!collapsed && <button className="sidebar-scrim" aria-label="Закрыть навигацию" onClick={() => setCollapsed(true)} tabIndex={-1} />}
+      <div className="workspace-layer" inert={!collapsed}>
+      <SystemActivity />
       <header className="topbar topbar-refined">
         <div className="masthead">
           <button className="theme-toggle sidebar-toggle" aria-expanded={!collapsed} aria-controls="workspace-sidebar"
@@ -233,6 +267,7 @@ export function Shell({
       <main aria-label={titles[route]} className="page" id="main" tabIndex={-1}>
         {children}
       </main>
+      </div>
     </div>
   );
 }

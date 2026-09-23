@@ -7,7 +7,7 @@ from urllib.parse import quote
 import logging
 from fastapi import FastAPI, UploadFile, HTTPException, BackgroundTasks, Query, Depends, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import Response, JSONResponse
+from fastapi.responses import Response, JSONResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 from .config import settings, BASE
 from . import database as db
@@ -271,4 +271,11 @@ def export(pid: str,format: str,variant: str=Query('a',pattern='^[abc]$'),user=D
     return Response(payload,media_type=mime,headers={'Content-Disposition':f"attachment; filename=deckly-{variant}.{format}; filename*=UTF-8''{filename}"})
 
 frontend=BASE.parent/'frontend/dist'
+@app.get('/auth/yandex', include_in_schema=False)
+@app.get('/auth/yandex/', include_in_schema=False)
+def yandex_host_page():
+    if not (frontend/'index.html').exists():
+        raise HTTPException(503, 'Сначала соберите интерфейс приложения.')
+    return FileResponse(frontend/'index.html', headers={'Cache-Control': 'no-store'})
+
 if frontend.exists(): app.mount('/',StaticFiles(directory=frontend,html=True),name='frontend')
