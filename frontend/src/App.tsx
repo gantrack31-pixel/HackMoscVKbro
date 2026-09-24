@@ -89,6 +89,8 @@ function Workspace({
 }) {
   const [dirty, setDirty] = useState(false),
     [pending, setPending] = useState<Route | "logout" | null>(null);
+  const [loggingOut, setLoggingOut] = useState(false);
+  const logoutLock = useRef(false);
   const [route, setRoute] = useState(readRoute),
     [templates, setTemplates] = useState<Template[]>([]),
     [health, setHealth] = useState<Health | null>(null),
@@ -232,11 +234,7 @@ function Workspace({
           setSearchRevision((value) => value + 1);
           location.hash = "templates";
         }}
-        onLogout={() =>
-          dirty
-            ? setPending("logout")
-            : onLogout().catch((e) => setError(e.message))
-        }
+        onLogout={() => setPending("logout")}
       >
         {error && (
           <div className="error-banner" role="alert">
@@ -349,11 +347,7 @@ function Workspace({
                 health={health}
                 onUser={onUser}
                 onDirty={setDirty}
-                onLogout={() =>
-                  dirty
-                    ? setPending("logout")
-                    : onLogout().catch((e) => setError(e.message))
-                }
+                onLogout={() => setPending("logout")}
               />
             )}
           </>
@@ -407,33 +401,42 @@ function Workspace({
       )}
       {pending && (
         <Modal
-          title="Изменения ещё не сохранены"
-          onClose={() => setPending(null)}
+          title={pending === "logout" ? "Вы уверены, что хотите выйти?" : "Изменения ещё не сохранены"}
+          onClose={() => { if (!logoutLock.current) setPending(null); }}
         >
           <p className="muted">
-            Сохраните изменения на текущей странице, чтобы продолжить работу с
-            ними.
+            {pending === "logout"
+              ? dirty
+                ? "На этой странице есть несохранённые изменения. При выходе они будут потеряны."
+                : "Сохранённые презентации останутся в вашем аккаунте."
+              : "Сохраните изменения на текущей странице, чтобы продолжить работу с ними."}
           </p>
           <div className="form-footer">
             <button
               className="btn"
-              onClick={() => {
+              disabled={loggingOut}
+              onClick={async () => {
+                if (logoutLock.current) return;
                 const next = pending;
-                setPending(null);
-                setDirty(false);
-                if (next === "logout")
-                  onLogout().catch((e) => setError(e.message));
-                else {
+                if (next === "logout") {
+                  logoutLock.current = true;
+                  setLoggingOut(true);
+                  try { await onLogout(); }
+                  catch (e) { setError((e as Error).message); setPending(null); }
+                  finally { logoutLock.current = false; setLoggingOut(false); }
+                } else {
+                  setPending(null);
+                  setDirty(false);
                   history.replaceState(null, "", `#${next}`);
                   setRoute(next);
                   window.scrollTo(0, 0);
                 }
               }}
             >
-              Уйти без сохранения
+              {loggingOut ? "Выходим…" : pending === "logout" ? "Выйти из аккаунта" : "Уйти без сохранения"}
             </button>
-            <button className="btn primary" onClick={() => setPending(null)}>
-              Остаться на странице
+            <button className="btn primary" disabled={loggingOut} autoFocus onClick={() => setPending(null)}>
+              {pending === "logout" ? "Остаться" : "Остаться на странице"}
             </button>
           </div>
         </Modal>

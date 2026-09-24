@@ -1,4 +1,4 @@
-import { useEffect, useRef, type ReactNode } from "react";
+import { useEffect, useId, useRef, type ReactNode } from "react";
 import { Icon } from "./Icon";
 export function Modal({
   title,
@@ -12,6 +12,7 @@ export function Modal({
   wide?: boolean;
 }) {
   const ref = useRef<HTMLDialogElement>(null);
+  const headingId = useId();
   useEffect(() => {
     ref.current?.showModal();
     return () => ref.current?.close();
@@ -19,11 +20,12 @@ export function Modal({
   return (
     <dialog
       ref={ref}
-      onCancel={onClose}
+      aria-labelledby={headingId}
+      onCancel={(event) => { event.preventDefault(); onClose(); }}
       style={{ width: wide ? "min(1000px,calc(100% - 32px))" : undefined }}
     >
       <div className="between modal-heading">
-        <h2>{title}</h2>
+        <h2 id={headingId}>{title}</h2>
         <button
           className="btn ghost icon-only"
           onClick={onClose}

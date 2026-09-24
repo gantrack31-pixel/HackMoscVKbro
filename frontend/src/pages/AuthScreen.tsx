@@ -11,6 +11,7 @@ import {
 import { ThemeToggle } from "../components/ThemeToggle";
 import { api } from "../api";
 import { SystemActivity } from "../components/SystemActivity";
+import { WordmarkTitle } from "../components/Brand";
 
 import { TemplateCover } from "../components/TemplateCard";
 import type { Template, User } from "../types";
@@ -46,35 +47,54 @@ export function AuthScreen({
   }, []);
   const startRef = useRef<HTMLButtonElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
+  const [leaving, setLeaving] = useState(false);
+  const [entering, setEntering] = useState(false);
+  const entranceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const transitionTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => { if (transitionTimer.current) clearTimeout(transitionTimer.current); }, []);
+  useEffect(() => () => { if (entranceTimer.current) clearTimeout(entranceTimer.current); }, []);
   const opened = screen !== "welcome";
   useEffect(() => {
-    if (!opened) return;
+    if (!opened || entering) return;
     const escape = (e: KeyboardEvent) => {
       if (e.key === "Escape" && !busy) go("welcome");
     };
     document.addEventListener("keydown", escape);
     return () => document.removeEventListener("keydown", escape);
-  }, [opened, busy]);
+  }, [opened, busy, entering]);
   useEffect(() => {
-    if (!opened) return;
+    if (!opened || entering) return;
     const timer = setTimeout(
       () =>
         contentRef.current
           ?.querySelector<HTMLElement>("input, button")
           ?.focus({ preventScroll: true }),
-      520,
+      360,
     );
     return () => clearTimeout(timer);
-  }, [screen]);
+  }, [screen, entering]);
   function go(next: Screen) {
-    if (busy) return;
-    if (next === "welcome")
-      requestAnimationFrame(() =>
-        startRef.current?.focus({ preventScroll: true }),
-      );
-    setScreen(next);
-    setError("");
-    setShowPassword(false);
+    if (busy || entering || transitionTimer.current || next === screen) return;
+    const commit = () => {
+      setScreen(next);
+      setError("");
+      setShowPassword(false);
+      setLeaving(false);
+      transitionTimer.current = null;
+      if (next === "welcome") requestAnimationFrame(() => startRef.current?.focus({ preventScroll: true }));
+    };
+    if (opened) {
+      setLeaving(true);
+      transitionTimer.current = setTimeout(commit, matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : 220);
+    } else {
+      const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+      setEntering(!reduced);
+      commit();
+      if (!reduced) entranceTimer.current = setTimeout(() => {
+        setEntering(false);
+        entranceTimer.current = null;
+      }, 1120);
+    }
   }
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -103,17 +123,22 @@ export function AuthScreen({
   }
   return (
     <div
-      className={`auth-shell ${screen === "welcome" ? "welcome" : "auth-dark"}`}
+      className={`auth-shell ${screen === "welcome" ? "welcome" : "auth-dark"} ${entering ? "is-entering" : ""}`}
       id="design-root"
     >
       <section className="auth-left">
-        <div className="auth-sliding-surface" aria-hidden="true" />
-        <SystemActivity />
+        <div className="entry-wipe" aria-hidden="true" />
+        <div className="auth-sliding-surface" aria-hidden="true">
+          <div className="binary-pattern">{Array.from({ length: 16 }, (_, i) =>
+            <span key={i}>{i % 2 ? "1010 0011 0101 1001 0110 1010" : "0101 1100 1010 0110 1001 0101"}</span>
+          )}</div>
+        </div>
+        <SystemActivity placement="left" />
         <div className="auth-controls">
           <ThemeToggle />
           <button
             className="auth-panel-toggle"
-            disabled={busy}
+            disabled={busy || entering}
             onClick={() => go(opened ? "welcome" : "choice")}
             aria-expanded={opened}
             aria-controls="auth-panel"
@@ -132,7 +157,8 @@ export function AuthScreen({
             }}
             aria-label="Deckly.Ai — главная"
           >
-            <span>Deckly</span>
+            <WordmarkTitle entry />
+            <span className="entry-traveler" aria-hidden="true">D</span>
             <i>.</i>
             <small>Ai</small>
           </a>
@@ -172,9 +198,9 @@ export function AuthScreen({
           <div
             ref={contentRef}
             id="auth-panel"
-            className="auth-panel-content"
-            inert={!opened}
-            aria-hidden={!opened}
+            className={`auth-panel-content ${leaving ? "is-leaving" : ""}`}
+            inert={!opened || entering}
+            aria-hidden={!opened || entering}
           >
             {screen === "choice" || screen === "welcome" ? (
               <>
@@ -344,12 +370,13 @@ export function AuthScreen({
         </footer>
       </section>
       <section className="auth-right" aria-label="Примеры шаблонов">
-        <SystemActivity />
+        <SystemActivity placement="right" />
         <div className="auth-preview-note" aria-hidden={opened}>
           <span className="auth-note-dot" />
           Один шаблон — бесконечно много идей
         </div>
         <div className="auth-template-stack">
+          {[0, 1].map(copy => <div className="auth-feed-group" key={copy} aria-hidden={copy === 1}>
           {templates.slice(0, 3).map((t, i) => (
             <article className={`auth-template auth-template-${i}`} key={t.id}>
               <TemplateCover
@@ -371,14 +398,14 @@ export function AuthScreen({
                 </div>
                 <button
                   onClick={() => go("choice")}
-                  tabIndex={screen === "welcome" ? 0 : -1}
+                  tabIndex={copy === 0 && screen === "welcome" ? 0 : -1}
                 >
                   Выбрать этот шаблон
                   <ArrowRight size={14} />
                 </button>
               </div>
             </article>
-          ))}
+          ))}</div>)}
         </div>
         <div className="auth-preview-caption">
           Ваша история выглядит лучше

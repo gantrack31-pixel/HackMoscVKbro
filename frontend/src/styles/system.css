@@ -17,9 +17,9 @@ html { scrollbar-gutter: stable; }
 .shell .sidebar-brand .deckly-wordmark { display: inline-flex; font-size: 32px; color: #fff; align-items: center; letter-spacing: -1.6px; }
 .shell .sidebar-brand .brand-mark { width: 32px; height: 40px; margin: 0; transform: rotate(8deg); transition: transform .42s var(--motion); }
 .shell.sidebar-collapsed .sidebar-brand .brand-mark { transform: rotate(0); }
-.shell .sidebar-brand .deckly-wordmark > :not(svg) { max-width: 160px; opacity: 1; clip-path: inset(0); transition: opacity .25s .08s, clip-path .42s var(--motion), max-width .42s var(--motion); }
+.shell .sidebar-brand .deckly-wordmark > span { opacity: 1; }
 .shell .sidebar-brand .deckly-wordmark small { display: inline; font-size: 12px; align-self: center; margin-top: 12px; }
-.shell.sidebar-collapsed .sidebar-brand .deckly-wordmark > :not(svg) { max-width: 0; opacity: 0; clip-path: inset(0 100% 0 0); transition-delay: 0s; }
+.shell.sidebar-collapsed .sidebar-brand .brand-suffix { max-width: 0; opacity: 0; }
 .shell .sidebar .workspace-link { display: flex; min-height: 48px; margin: 24px 0 16px; padding: 8px; }
 .shell .sidebar .nav-caption { display: block; height: 40px; white-space: nowrap; }
 .shell .sidebar .nav { display: grid; width: 100%; margin: 0; gap: 8px; }
