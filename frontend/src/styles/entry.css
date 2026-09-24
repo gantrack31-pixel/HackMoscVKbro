@@ -122,15 +122,25 @@
 @media (max-width: 760px) { .shell .sidebar .nav-caption { display: block; } .shell .page { padding-top: 24px; } }
 @media (prefers-reduced-motion: reduce) { .auth-shell .auth-template-stack { transform: none; position: relative; animation: none; } .auth-shell .auth-right { overflow-y: auto; } .auth-feed-group[aria-hidden="true"] { display: none; } }
 
-/* Статичный фирменный логотип. Размер меняется только между компактной и полной панелью. */
-.shell .sidebar-brand .deckly-wordmark { font-size: 40px; letter-spacing: -2px; align-items: baseline; }
+/* Логотип плавно раскрывается вместе с панелью, не меняя геометрию остальной навигации. */
+.shell .sidebar-brand .deckly-wordmark { font-size: 40px; letter-spacing: -2px; align-items: baseline; transition: font-size .48s var(--motion), letter-spacing .48s var(--motion); }
 .shell .sidebar-brand .brand-initial { width: auto; flex: none; font-size: inherit; line-height: inherit; transform: none; }
 .shell .sidebar-brand .deckly-wordmark small { font-size: 14px; }
 .shell.sidebar-collapsed .sidebar-brand .deckly-wordmark { font-size: 28px; letter-spacing: -1.4px; }
+.shell .sidebar-brand .brand-initial { transition: transform .48s cubic-bezier(.2,.8,.2,1); }
+.shell.sidebar-collapsed .sidebar-brand .brand-initial { transform: rotate(-8deg); }
+.shell .sidebar-brand .brand-tail { transform: translateX(0) scale(1); transform-origin: left center; filter: blur(0); transition: max-width .52s cubic-bezier(.2,.8,.2,1), opacity .3s ease .08s, transform .52s cubic-bezier(.2,.8,.2,1), filter .36s ease .06s; }
+.shell.sidebar-collapsed .sidebar-brand .brand-tail { max-width: 0; opacity: 0; transform: translateX(-.16em) scale(.97); filter: blur(3px); transition: max-width .42s cubic-bezier(.4,0,.8,.4), opacity .2s ease, transform .38s ease, filter .22s ease; }
 .shell .sidebar-brand { padding-left: 12px; }
-:is(.deckly-wordmark,.auth-logo,.auth-brand-block), :is(.deckly-wordmark,.auth-logo) * { animation: none !important; transition: none !important; }
+:is(.auth-logo,.auth-brand-block), .auth-logo * { animation: none !important; transition: none !important; }
 :is(.auth-logo,.auth-letter-d,.brand-title)::before,
 :is(.auth-logo,.auth-letter-d,.brand-title)::after { content: none !important; }
+.shell .sidebar-brand .deckly-wordmark,
+.shell .sidebar-brand .deckly-wordmark * { animation: none; }
+@media (prefers-reduced-motion: reduce) {
+  .shell .sidebar-brand .deckly-wordmark,
+  .shell .sidebar-brand .deckly-wordmark * { transition: none !important; }
+}
 .auth-shell .entry-word-title { -webkit-text-stroke: 0; -webkit-text-fill-color: currentColor; }
 .auth-shell .auth-logo { color: var(--entry-ink); }
 .auth-shell .auth-left { border: 0; background: var(--entry-surface); }
