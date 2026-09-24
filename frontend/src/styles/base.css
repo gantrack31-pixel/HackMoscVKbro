@@ -577,12 +577,31 @@ select:focus {
   border: 1px solid #e2e8f0;
   border-radius: 8px;
   color: #64748b;
+  transition: color .2s ease, border-color .2s ease, background-color .2s ease, transform .2s ease;
 }
+.favorite:hover { transform: translateY(-1px); }
+.favorite:active { transform: scale(.92); }
+.favorite svg { transition: fill .24s ease, transform .24s ease; }
 .favorite.on {
-  color: #0077ff;
+  color: #e5a900;
+  border-color: #f2c94c99;
+}
+[data-theme="dark"] .favorite.on {
+  color: #f5bd2f;
+  border-color: #f2c94c99;
 }
 .favorite.on svg {
-  fill: #0077ff22;
+  fill: #f5bd2f;
+  animation: favorite-star-fill .46s cubic-bezier(.2,.9,.25,1.35) both;
+}
+@keyframes favorite-star-fill {
+  0% { transform: scale(.55) rotate(-18deg); fill: transparent; }
+  58% { transform: scale(1.3) rotate(7deg); }
+  78% { transform: scale(.92) rotate(-3deg); }
+  100% { transform: scale(1) rotate(0); fill: #f5bd2f; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .favorite, .favorite.on svg { animation: none; transition: none; }
 }
 .slide {
   aspect-ratio: 16/9;

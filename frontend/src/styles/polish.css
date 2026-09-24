@@ -305,7 +305,21 @@
 }
 .support-contact {
   background:
+    radial-gradient(circle at 100% 0, #ffffff, transparent 60%), #eff5ff;
+  color: #0f172a;
+  border-color: #dae7fb;
+}
+.support-contact > p {
+  color: #526176;
+}
+[data-theme="dark"] .support-contact {
+  background:
     radial-gradient(circle at 100% 0, #233c60, transparent 60%), #0f172a;
+  color: #edf3ff;
+  border-color: #ffffff1a;
+}
+[data-theme="dark"] .support-contact > p {
+  color: #a1b1c9;
 }
 .support-contact .btn {
   box-shadow: 0 8px 24px #0002;

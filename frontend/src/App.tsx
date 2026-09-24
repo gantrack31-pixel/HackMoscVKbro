@@ -176,12 +176,15 @@ function Workspace({
     if (favoriteBusy.current.has(id)) return;
     favoriteBusy.current.add(id);
     const save = !favorites.includes(id);
+    setFavorites((prev) =>
+      save ? [...new Set([...prev, id])] : prev.filter((x) => x !== id),
+    );
     try {
       await api.favorite(id, save);
-      setFavorites((prev) =>
-        save ? [...new Set([...prev, id])] : prev.filter((x) => x !== id),
-      );
     } catch (e) {
+      setFavorites((prev) =>
+        save ? prev.filter((x) => x !== id) : [...new Set([...prev, id])],
+      );
       setError((e as Error).message);
     } finally {
       favoriteBusy.current.delete(id);
