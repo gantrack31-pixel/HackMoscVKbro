@@ -19,6 +19,12 @@ export function Home(
   },
 ) {
   const [tab, setTab] = useState("Обзор");
+  const [shownTab, setShownTab] = useState(tab);
+  useEffect(() => {
+    if (shownTab === tab) return;
+    const timer = setTimeout(() => setShownTab(tab), matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : 140);
+    return () => clearTimeout(timer);
+  }, [tab, shownTab]);
   const [recent, setRecent] = useState<ProjectSummary[]>([]),
     [opening, setOpening] = useState("");
   useEffect(() => {
@@ -137,10 +143,13 @@ export function Home(
       </div>
       <div
         id="home-tab-content"
+        key={shownTab}
+        className={tab === shownTab ? "home-tab-panel" : "home-tab-panel is-exiting"}
         role="tabpanel"
-        aria-labelledby={`home-tab-${["Обзор", "Быстрый старт", "Вдохновение"].indexOf(tab)}`}
+        aria-labelledby={`home-tab-${["Обзор", "Быстрый старт", "Вдохновение"].indexOf(shownTab)}`}
+        inert={tab !== shownTab}
       >
-        {tab === "Обзор" && (
+        {shownTab === "Обзор" && (
           <section className="hero">
             <div className="hero-copy">
               <span className="badge blue">
@@ -191,8 +200,8 @@ export function Home(
             </div>
           </section>
         )}
-        {tab !== "Вдохновение" && quick}
-        {tab === "Обзор" && recent.length > 0 && (
+        {shownTab !== "Вдохновение" && quick}
+        {shownTab === "Обзор" && recent.length > 0 && (
           <section className="recent-section">
             <div className="section-head">
               <h2>Продолжите с того же места</h2>
@@ -231,7 +240,7 @@ export function Home(
             </div>
           </section>
         )}
-        {tab === "Быстрый старт" ? (
+        {shownTab === "Быстрый старт" ? (
           <div className="panel stack">
             <h2>Начните с готового примера</h2>
             <p className="muted">
@@ -247,7 +256,7 @@ export function Home(
           <>
             <div className="section-head">
               <h2>
-                {tab === "Вдохновение"
+                {shownTab === "Вдохновение"
                   ? "Подборки под вашу задачу"
                   : "Ваш стиль начинается здесь"}
               </h2>
@@ -257,7 +266,7 @@ export function Home(
               </a>
             </div>
             <div className="cards">
-              {(tab === "Вдохновение"
+              {(shownTab === "Вдохновение"
                 ? props.templates.slice(3)
                 : props.templates.slice(0, 3)
               ).map((t) => (

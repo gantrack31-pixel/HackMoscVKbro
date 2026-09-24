@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { api } from "../api";
 import { Brand } from "../components/Brand";
 import { ThemeToggle } from "../components/ThemeToggle";
-import { SystemActivity } from "../components/SystemActivity";
 
 export function YandexAuth() {
   const [enabled, setEnabled] = useState<boolean | null>(null);
@@ -16,7 +15,6 @@ export function YandexAuth() {
     return () => window.removeEventListener("pageshow", restore);
   }, []);
   return <main className="yandex-host">
-    <SystemActivity />
     <div className="yandex-theme"><ThemeToggle /></div>
     <section className="panel yandex-auth-card" aria-labelledby="yandex-heading">
       <Brand />

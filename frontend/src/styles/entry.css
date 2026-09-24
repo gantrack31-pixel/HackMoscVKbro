@@ -2,20 +2,10 @@
 .auth-shell { --entry-ink: #0f172a; --entry-muted: #526176; --entry-surface: #fff; --entry-field: #f5f7fb; --entry-border: #dce3ed; }
 [data-theme="dark"] .auth-shell { --entry-ink: #edf3ff; --entry-muted: #abbad0; --entry-surface: #141e30; --entry-field: #1d2b42; --entry-border: #ffffff26; }
 .auth-shell .auth-left { color: var(--entry-ink); background: var(--entry-surface); transition: background-color .5s, color .5s; }
-.auth-shell .auth-left .auth-sliding-surface { transform: none; clip-path: inset(0 calc(100% - var(--entry-stripe)) 0 0); background: var(--entry-ink); color: var(--entry-surface); transition: clip-path .72s var(--motion), background-color .65s, color .65s; overflow: hidden; }
-.auth-shell.auth-dark .auth-sliding-surface { clip-path: inset(0); background: #fff; color: #111; }
 /* В тёмной теме светлым становится край панели, сохраняя контраст текста. */
-[data-theme="dark"] .auth-dark .auth-sliding-surface { background: var(--entry-surface); color: #fff; box-shadow: none; }
-.binary-pattern { position: absolute; inset: -15% 0; display: flex; flex-direction: column; justify-content: space-around; gap: 12px; opacity: .055; font: 12px/1.8 ui-monospace, monospace; letter-spacing: 12px; white-space: nowrap; animation: binary-drift 32s linear infinite alternate; mask-image: linear-gradient(90deg,#000,transparent 78%); }
-@keyframes binary-drift { to { transform: translateY(8%); } }
 .auth-shell .auth-brand-block { animation: none; }
-.auth-shell.auth-dark .auth-brand-block { animation: entry-brand .64s var(--motion) both; }
-@keyframes entry-brand { from { opacity: 0; transform: translateX(-24px); } to { opacity: 1; transform: translateX(0); } }
 .auth-shell .auth-logo { color: var(--entry-ink); font-weight: 800; letter-spacing: -.065em; position: relative; }
 .auth-letter-d { display: inline-block; position: relative; transform-origin: 50% 70%; transition: transform .7s var(--motion), color .6s; }
-.auth-letter-d::before { content: ""; position: absolute; width: calc(var(--entry-inset) + 2px); height: .34em; right: calc(100% - 2px); top: .14em; background: var(--entry-ink); transform-origin: left; transition: transform .4s var(--motion), opacity .4s; }
-.auth-dark .auth-letter-d { transform: translateX(-2px); }
-.auth-dark:not(.is-entering) .auth-letter-d::before { transform: scaleX(0); opacity: 0; }
 .auth-logo::after { content: none; }
 @keyframes title-line { to { transform: translateX(88px); } }
 .auth-tagline { margin-top: 24px; color: #d65c59; font-weight: 750; }
@@ -63,18 +53,6 @@
 .auth-shell .auth-right::after { content: ""; display: block; position: absolute; inset: 0; z-index: 3; pointer-events: none; background: #0f172a00; backdrop-filter: blur(0); transition: background .6s, backdrop-filter .6s; }
 .auth-shell.auth-dark .auth-right::after { background: #0f172a26; backdrop-filter: blur(2px); }
 
-/* Три простые формы вместо схемы нейронных соединений. */
-.system-activity.geometry-field { opacity: 1; color: var(--accent-text); }
-.geometry-field i { position: absolute; display: block; pointer-events: none; animation: shape-drift 18s ease-in-out infinite alternate; }
-.geometry-disc { width: 136px; height: 136px; right: 7%; top: 15%; border-radius: 50%; background: radial-gradient(circle at 30% 25%, #ff97951a, #ff979505); border: 1px solid #ff97951c; }
-.geometry-frame { width: 170px; height: 220px; right: 12%; bottom: 12%; border: 1px solid #7a8eff20; border-radius: 32px; transform: rotate(-16deg); }
-.geometry-pill { width: 88px; height: 24px; right: 32%; top: 49%; border-radius: 30px; background: #0077ff08; transform: rotate(-35deg); }
-@keyframes shape-drift { to { translate: 0 -16px; } }
-.auth-left > .system-activity.geometry-field,.auth-dark .auth-left > .system-activity.geometry-field { opacity: 1; transform: none; z-index: 0; }
-.auth-right > .system-activity.geometry-field { opacity: 1; }
-.workspace-layer > .system-activity.geometry-field { opacity: .7; }
-.workspace-layer::before { background: radial-gradient(ellipse at 92% 15%,var(--ambient),transparent 52%); mask-image: none; }
-
 /* Подпись действительно схлопывается, поэтому иконки плавно поднимаются. */
 .shell .sidebar-brand { width: 100%; flex-shrink: 0; }
 .shell .sidebar-brand .deckly-wordmark { gap: 0; letter-spacing: -1.5px; }
@@ -88,9 +66,6 @@
 .sidebar-theme .theme-toggle { width: 44px; height: 44px; background: #ffffff08; color: #e4edff; border-color: #ffffff1a; }
 .shell.sidebar-collapsed .sidebar-theme > span { display: none; }
 .shell .sidebar { isolation: isolate; }
-.sidebar-binary { position: absolute; left: 0; top: 80px; bottom: 24px; width: 5px; overflow: hidden; color: #fff; opacity: .12; font: 9px/3 monospace; pointer-events: none; transition: width .5s var(--motion); }
-.shell:not(.sidebar-collapsed) .sidebar-binary { width: 12px; animation: sidebar-binary-entry .65s var(--motion); }
-@keyframes sidebar-binary-entry { from { opacity: 0; transform: translateX(-12px); } to { opacity: .12; transform: translateX(0); } }
 .shell .sidebar-scrim { display: block; border-radius: 0; animation: none; opacity: 1; visibility: visible; transition: opacity .3s, visibility .3s; }
 .shell .sidebar-scrim.is-hidden { opacity: 0; visibility: hidden; pointer-events: none; }
 .shell .page { padding-top: 40px; }
@@ -144,74 +119,58 @@
 .auth-shell .auth-letter-d { transform: none; }
 .auth-shell .auth-panel-content.is-leaving { transition: opacity .22s ease, transform .22s ease; }
 .auth-shell .auth-content > .auth-welcome-layer { transition: opacity .28s ease, transform .5s var(--motion), visibility .5s; }
-/* Единые метрики для D, иконок навигации и подвижной линии. */
-.shell .sidebar-brand { padding-left: 12px; }
-.shell .sidebar-brand .brand-initial { width: 20px; flex: 0 0 20px; font-size: 28px; line-height: 1.2; text-align: center; }
-.shell .sidebar-brand .deckly-wordmark { font-size: 28px; letter-spacing: -1.4px; }
-.shell.sidebar-collapsed .brand-initial { transform: none; }
-.entry-word-title { display: inline-flex; align-items: baseline; position: relative; }
-.wordmark-y { display: inline-block; }
-.wordmark-underline { position: absolute; left: 0; bottom: -.02em; width: var(--underline-limit, 0px); height: 2px; overflow: hidden; pointer-events: none; -webkit-text-stroke: 0; }
-.wordmark-underline > i { position: absolute; left: 0; bottom: 0; width: min(.65em, 100%); height: 2px; background: currentColor; margin: 0; color: inherit; animation: underline-shuttle 4s ease-in-out infinite; }
-/* Край доходит до ограничителя, удерживается, затем движется обратно. */
-@keyframes underline-shuttle {
-  0%, 10%, 100% { left: 0; }
-  44%, 56% { left: max(0px, calc(100% - .65em)); }
-  90% { left: 0; }
-}
-.shell.sidebar-collapsed .wordmark-underline { width: 20px; }
-.shell.sidebar-collapsed .wordmark-underline > i { width: 20px; animation: none; }
-
-/* D движется по мосту в полосу; единая заливка ограничена левой колонкой. */
-.auth-shell { --entry-inset: clamp(48px, 6vw, 96px); --entry-stripe: 24px; }
-.auth-shell .auth-left { padding-left: var(--entry-inset); }
-.auth-shell .auth-left .entry-wipe { position: absolute; inset: 0; z-index: 3; background: var(--entry-ink); clip-path: inset(0 calc(100% - var(--entry-stripe)) 0 0); pointer-events: none; opacity: 0; }
-.auth-shell.is-entering .entry-wipe { animation: entry-unify 1120ms var(--motion) both; }
-@keyframes entry-unify {
-  0%, 24% { opacity: 1; clip-path: inset(0 calc(100% - var(--entry-stripe)) 0 0); }
-  64%, 78% { opacity: 1; clip-path: inset(0); }
-  100% { opacity: 0; clip-path: inset(0); }
-}
-.auth-shell .entry-traveler { display: block; position: absolute; top: 0; left: 0; opacity: 0; pointer-events: none; -webkit-text-stroke: 0; -webkit-text-fill-color: var(--entry-ink); }
-.auth-shell.is-entering .entry-traveler { animation: d-merge 1120ms var(--motion) both; }
-@keyframes d-merge {
-  0% { opacity: 1; transform: translateX(0); }
-  27% { opacity: 1; transform: translateX(calc(0px - var(--entry-inset) + var(--entry-stripe) / 2)); }
-  36%, 100% { opacity: 0; transform: translateX(calc(0px - var(--entry-inset) + var(--entry-stripe) / 2)) scaleX(.4); }
-}
-.auth-shell.is-entering .auth-letter-d::before { animation: bridge-merge 1120ms var(--motion) both; }
-@keyframes bridge-merge {
-  0%, 15% { transform: scaleX(1); opacity: 1; }
-  34%, 100% { transform: scaleX(0); opacity: 0; }
-}
-.auth-shell .entry-word-title { -webkit-text-stroke: 0 var(--entry-ink); -webkit-text-fill-color: var(--entry-ink); transition: -webkit-text-fill-color .32s, -webkit-text-stroke-width .32s; }
-.auth-shell.auth-dark .entry-word-title { -webkit-text-stroke: 1.4px var(--entry-ink); -webkit-text-fill-color: var(--entry-surface); }
-.auth-shell.is-entering .auth-panel-content { opacity: 0; visibility: hidden; pointer-events: none; transition-delay: 0s; }
-.auth-shell.is-entering .auth-left .auth-controls { z-index: 4; }
-.auth-shell .auth-logo .entry-traveler { font-weight: inherit; letter-spacing: inherit; }
-.auth-shell .auth-left .auth-sliding-surface { border: 0; box-shadow: none; }
-.auth-shell.auth-dark .auth-sliding-surface { background: var(--entry-surface); color: var(--entry-ink); }
-
-/* Матовые формы повторяют дугу D, прямоугольный мост и коралловую точку логотипа. */
-:root { --geometry-block: #e9edf5; --geometry-coral: #ffe2df; --geometry-blue: #e0edff; }
-:root[data-theme="dark"] { --geometry-block: #1c2a40; --geometry-coral: #332936; --geometry-blue: #172c48; }
-.geometry-field i { border: 0; backdrop-filter: none; box-shadow: none; }
-.geometry-field .geometry-disc { width: 104px; height: 152px; border: 20px solid var(--geometry-block); border-left-width: 24px; border-radius: 0 76px 76px 0; background: none; }
-.geometry-field .geometry-frame { width: 24px; height: 24px; border-radius: 0; background: var(--geometry-coral); }
-.geometry-field .geometry-pill { width: 108px; height: 12px; border-radius: 0; background: var(--geometry-blue); }
-.geometry-left .geometry-disc { top: 43%; right: -20px; transform: rotate(-18deg); animation-delay: -4s; }
-.geometry-left .geometry-frame { top: 29%; right: 16%; bottom: auto; transform: rotate(8deg); animation-delay: -9s; }
-.geometry-left .geometry-pill { top: auto; bottom: 10%; right: 21%; transform: rotate(-12deg); animation-delay: -13s; }
-.geometry-right .geometry-disc { top: 7%; left: -26px; right: auto; width: 84px; height: 120px; transform: rotate(26deg); animation-delay: -12s; }
-.geometry-right .geometry-frame { top: auto; bottom: 18%; right: 8%; width: 40px; height: 40px; transform: rotate(-12deg); animation-delay: -2s; }
-.geometry-right .geometry-pill { top: 39%; right: -18px; width: 88px; transform: rotate(18deg); animation-delay: -8s; }
-.geometry-workspace .geometry-disc { top: 20%; right: -24px; transform: rotate(12deg); }
-.geometry-workspace .geometry-frame { bottom: 7%; right: 44%; transform: rotate(-9deg); }
-.geometry-workspace .geometry-pill { top: 58%; right: 14%; transform: rotate(-12deg); }
-@media (min-width: 1600px) { .auth-shell { --entry-inset: clamp(80px, 8vw, 160px); } }
-@media (max-width: 1000px) { .auth-shell { --entry-inset: 32px; } }
-@media (max-width: 700px) { .auth-shell { --entry-stripe: 12px; } }
-@media (prefers-reduced-motion: reduce) { .wordmark-underline > i { animation: none; left: 0; } }
 @media (max-width: 760px) { .shell .sidebar .nav-caption { display: block; } .shell .page { padding-top: 24px; } }
-@media (max-width: 700px) { .auth-shell .auth-left .auth-sliding-surface { clip-path: inset(0 calc(100% - 12px) 0 0); } .auth-shell.auth-dark .auth-sliding-surface { clip-path: inset(0); } .auth-shell .auth-content { padding-top: 32px; } .auth-intro h1 { font-size: 32px; } }
 @media (prefers-reduced-motion: reduce) { .auth-shell .auth-template-stack { transform: none; position: relative; animation: none; } .auth-shell .auth-right { overflow-y: auto; } .auth-feed-group[aria-hidden="true"] { display: none; } }
+
+/* Статичный фирменный логотип. Размер меняется только между компактной и полной панелью. */
+.shell .sidebar-brand .deckly-wordmark { font-size: 40px; letter-spacing: -2px; align-items: baseline; }
+.shell .sidebar-brand .brand-initial { width: auto; flex: none; font-size: inherit; line-height: inherit; transform: none; }
+.shell .sidebar-brand .deckly-wordmark small { font-size: 14px; }
+.shell.sidebar-collapsed .sidebar-brand .deckly-wordmark { font-size: 28px; letter-spacing: -1.4px; }
+.shell .sidebar-brand { padding-left: 12px; }
+:is(.deckly-wordmark,.auth-logo,.auth-brand-block), :is(.deckly-wordmark,.auth-logo) * { animation: none !important; transition: none !important; }
+:is(.auth-logo,.auth-letter-d,.brand-title)::before,
+:is(.auth-logo,.auth-letter-d,.brand-title)::after { content: none !important; }
+.auth-shell .entry-word-title { -webkit-text-stroke: 0; -webkit-text-fill-color: currentColor; }
+.auth-shell .auth-logo { color: var(--entry-ink); }
+.auth-shell .auth-left { border: 0; background: var(--entry-surface); }
+.auth-shell .auth-left::before,.auth-shell .auth-left::after { content: none; }
+.workspace-layer::before,.workspace-layer::after { content: none; }
+.auth-shell .auth-template-stack { width: clamp(264px, 30vw, 412px); max-width: calc(100% - 48px); }
+.hero-visual { background: none; }
+.hero-visual .floating { border: 0; box-shadow: 0 12px 28px #00000018; }
+.auth-template,.auth-template:hover { box-shadow: 0 8px 24px #00000012; }
+[data-theme="dark"] .hero-visual .floating,
+[data-theme="dark"] .auth-template { box-shadow: 0 12px 28px #00000026; }
+
+/* Диалоги расположены вне .page и получают собственные цвета кнопок. */
+dialog { color: var(--ink); background: var(--surface); }
+dialog .btn:not(.primary):not(.danger) { color: var(--ink); background: var(--surface-soft); border-color: var(--line); }
+dialog .btn:not(.primary):not(.danger):hover { background: var(--state-tint); }
+dialog .btn.primary { color: #fff; background: #0077ff; border-color: #0077ff; }
+dialog .btn.primary:hover { background: #0065db; }
+dialog .btn:disabled { opacity: .55; }
+dialog .form-footer { flex-wrap: wrap; gap: 12px; }
+dialog .form-footer .btn { min-width: 144px; }
+
+/* Фон выбранного пункта перемещается независимо от ссылок. */
+.shell .sidebar .sliding-nav { position: relative; isolation: isolate; }
+.shell .sidebar .sliding-nav a { position: relative; z-index: 1; }
+.shell .sidebar .sliding-nav a.active,
+.shell .sidebar .sliding-nav a.active:hover { background: transparent; box-shadow: none; color: #fff; }
+.nav-selection { position: absolute; top: 0; left: 0; width: 100%; z-index: 0; pointer-events: none; transition: transform .58s cubic-bezier(.22,1.08,.36,1), height .4s, opacity .18s; }
+.nav-selection-fill { display: block; height: 100%; width: 100%; border-radius: 12px; background: #0077ff; transform-origin: center; animation: nav-settle .58s ease-out both; }
+@keyframes nav-settle {
+  0%, 100% { transform: scale(1); }
+  28% { transform: scale(.98,1.06); }
+  65% { transform: scale(1.015,.98); }
+  84% { transform: scale(.997,1.01); }
+}
+.home-tab-panel { animation: home-content-arrive .42s var(--motion) both; }
+.home-tab-panel.is-exiting { animation: home-content-leave .14s ease-in both; pointer-events: none; }
+@keyframes home-content-arrive { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes home-content-leave { from { opacity: 1; transform: translateY(0); } to { opacity: 0; transform: translateY(-5px); } }
+@media (prefers-reduced-motion: reduce) {
+  .nav-selection { transition: none; }
+  .nav-selection-fill,.home-tab-panel,.home-tab-panel.is-exiting { animation: none; }
+}

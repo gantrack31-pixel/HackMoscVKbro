@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Icon, type IconName } from "./Icon";
 import { ThemeToggle } from "./ThemeToggle";
 import { Brand } from "./Brand";
-import { SystemActivity } from "./SystemActivity";
+import { SelectionIndicator } from "./SelectionIndicator";
 import type { Health, Route, User } from "../types";
 
 const nav: [Route, IconName, string][] = [
@@ -18,7 +18,14 @@ export function Shell({ route, children, favoriteCount, onLogout }: {
   const [collapsed, setCollapsed] = useState(true);
   const sidebarRef = useRef<HTMLElement>(null);
   const sidebarTrigger = useRef<HTMLButtonElement>(null);
-  useEffect(() => { setCollapsed(true); }, [route]);
+  const navigationRef = useRef<HTMLElement>(null);
+  const previousRoute = useRef(route);
+  useEffect(() => {
+    if (previousRoute.current === route) return;
+    previousRoute.current = route;
+    const timer = setTimeout(() => setCollapsed(true), matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : 580);
+    return () => clearTimeout(timer);
+  }, [route]);
   useEffect(() => {
     if (collapsed) return;
     const overflow = document.body.style.overflow;
@@ -42,7 +49,6 @@ export function Shell({ route, children, favoriteCount, onLogout }: {
   }, [collapsed]);
   return <div className={`shell shell-refined ${collapsed ? "sidebar-collapsed" : ""}`} id="design-root">
     <aside ref={sidebarRef} className="sidebar" id="workspace-sidebar" aria-label="Навигация">
-      <div className="sidebar-binary" aria-hidden="true">0101<br />1010<br />0011<br />1010</div>
       <button ref={sidebarTrigger} className="sidebar-brand" onClick={() => setCollapsed(v => !v)}
         aria-expanded={!collapsed} aria-controls="workspace-sidebar"
         aria-label={collapsed ? "Раскрыть навигацию Deckly.Ai" : "Свернуть навигацию Deckly.Ai"}>
@@ -50,7 +56,8 @@ export function Shell({ route, children, favoriteCount, onLogout }: {
       </button>
       <div className="sidebar-nav-group">
         <span className="nav-caption">РАБОЧЕЕ ПРОСТРАНСТВО</span>
-        <nav className="nav" aria-label="Основная навигация">
+        <nav ref={navigationRef} className="nav sliding-nav" aria-label="Основная навигация">
+          <SelectionIndicator container={navigationRef} activeKey={route} />
           {nav.map(([id, icon, name]) => <a key={id} href={"#" + id}
             className={id === route ? "active" : ""} aria-current={id === route ? "page" : undefined}
             title={name} aria-label={name}>
@@ -82,7 +89,6 @@ export function Shell({ route, children, favoriteCount, onLogout }: {
     <button className={`sidebar-scrim ${collapsed ? "is-hidden" : ""}`} aria-hidden={collapsed}
       aria-label="Закрыть навигацию" onClick={() => setCollapsed(true)} tabIndex={-1} />
     <div className="workspace-layer" inert={!collapsed}>
-      <SystemActivity />
       <main className="page" id="main" tabIndex={-1}>{children}</main>
     </div>
   </div>;
