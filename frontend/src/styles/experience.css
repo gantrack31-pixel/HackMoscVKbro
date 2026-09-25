@@ -101,13 +101,83 @@ body {
 .template {
   transition:
     transform 0.3s var(--motion),
-    box-shadow 0.3s;
+    box-shadow 0.3s,
+    background-color 0.45s var(--motion),
+    color 0.45s var(--motion),
+    border-color 0.45s var(--motion);
+}
+.auth-shell .auth-template {
+  transition:
+    transform 0.3s var(--motion),
+    background-color 0.45s var(--motion),
+    color 0.45s var(--motion),
+    border-color 0.45s var(--motion),
+    box-shadow 0.45s var(--motion);
+}
+.auth-shell .auth-template-info,
+.auth-shell .auth-template-info h2,
+.auth-shell .auth-template-info p,
+.auth-shell .auth-template-info button {
+  transition:
+    background-color 0.45s var(--motion),
+    color 0.45s var(--motion),
+    border-color 0.45s var(--motion);
 }
 .template:hover {
   transform: translateY(-4px);
   box-shadow:
     0 4px 12px #0f172a08,
     0 24px 48px #0f172a12;
+}
+.hero,
+.collection-banner {
+  transition:
+    background 0.45s var(--motion),
+    color 0.45s var(--motion),
+    border-color 0.45s var(--motion);
+}
+.hero-visual {
+  transition: background 0.45s var(--motion);
+}
+.hero-copy p,
+.hero-copy h2 span,
+.hero .float-label,
+.quick,
+.quick-icon,
+.quick small,
+.recent-card,
+.recent-card strong,
+.recent-card small,
+.recent-preview,
+.recent-preview i,
+.template-body p,
+.template-footer {
+  transition:
+    background 0.45s var(--motion),
+    color 0.45s var(--motion),
+    border-color 0.45s var(--motion);
+}
+.quick {
+  transition:
+    background 0.45s var(--motion),
+    color 0.45s var(--motion),
+    border-color 0.45s var(--motion),
+    transform 0.2s,
+    box-shadow 0.2s;
+}
+.recent-card {
+  transition:
+    background 0.45s var(--motion),
+    color 0.45s var(--motion),
+    border-color 0.45s var(--motion),
+    box-shadow 0.2s;
+}
+.quick-icon {
+  transition:
+    background 0.45s var(--motion),
+    color 0.45s var(--motion),
+    border-color 0.45s var(--motion),
+    transform 0.2s;
 }
 .account-popover,
 .modal {
@@ -1000,6 +1070,49 @@ body {
 }
 [data-theme="dark"] .quick small {
   color: var(--muted);
+}
+[data-theme="dark"] :is(.hero, .collection-banner) {
+  color: var(--ink);
+  border-color: var(--line);
+}
+[data-theme="dark"] .hero {
+  background: linear-gradient(115deg, #131e31 0%, #17243a 48%, #1d2b42 100%);
+}
+[data-theme="dark"] .collection-banner {
+  background: linear-gradient(120deg, #131e31 0%, #17243a 65%, #1d2b42 100%);
+}
+[data-theme="dark"] .hero-copy p {
+  color: var(--muted);
+}
+[data-theme="dark"] .hero-copy h2 span {
+  color: var(--accent-text);
+}
+[data-theme="dark"] .hero-visual {
+  background: radial-gradient(ellipse at 55% 56%, #31517a, transparent 68%);
+}
+[data-theme="dark"] .hero .float-label {
+  background: #1d2b42e8;
+  color: var(--ink);
+  border-color: var(--line);
+}
+[data-theme="dark"] .template {
+  background: var(--surface);
+  color: var(--ink);
+  border-color: var(--line);
+}
+[data-theme="dark"] :is(.template-body p, .template-footer) {
+  color: var(--muted);
+}
+[data-theme="dark"] .template-footer {
+  border-color: var(--line);
+}
+[data-theme="dark"] .recent-preview {
+  background: linear-gradient(145deg, #1d2b42, #253a57);
+  border-color: var(--line);
+  color: var(--accent-text);
+}
+[data-theme="dark"] .recent-preview i {
+  background: #4b6a91;
 }
 [data-theme="dark"] .error-banner {
   background: #3c222a;
