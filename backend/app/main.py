@@ -9,7 +9,7 @@ from fastapi import FastAPI, UploadFile, HTTPException, BackgroundTasks, Query, 
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response, JSONResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
-from .config import settings, BASE
+from .config import settings, BASE, validate_settings
 from . import database as db
 from .models import OutlineRequest, GenerateRequest, ProjectUpdate, FixRequest, DeckContent, Issue
 from .services.templates import seed_templates, analyze_template, BUILTIN_IDS
@@ -25,6 +25,7 @@ generation_slots=asyncio.Semaphore(2)
 
 @asynccontextmanager
 async def lifespan(app):
+    validate_settings()
     settings.storage.mkdir(parents=True,exist_ok=True)
     db.initialize();seed_templates(settings.storage)
     yield
