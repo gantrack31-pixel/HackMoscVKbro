@@ -4,6 +4,7 @@ import { useLivePreview } from "../components/useLivePreview";
 import { api } from "../api";
 import { Icon } from "../components/Icon";
 import { SlidePreview } from "../components/SlidePreview";
+import "../styles/editor-polish.css";
 import {
   blankSlide,
   variantNames,
@@ -91,23 +92,32 @@ export function Editor({
   }
   const source = project.sources[index]?.status;
   return (
-    <>
-      <div className="heading between">
-        <div>
-          <input
-            className="project-title"
-            disabled={busy}
-            aria-label="Название презентации"
-            value={content.title}
-            maxLength={180}
-            onChange={(e) => {
-              setContent({ ...content, title: e.target.value });
-              setDirty(true);
-            }}
-          />
-          <p>
-            {project.template.name} · {content.slides.length} слайдов ·{" "}
-            {dirty ? "Есть несохранённые изменения" : "Сохранено на сервере"}
+    <section className="editor-page" aria-label="Редактор презентации">
+      <div className="heading between editor-heading">
+        <div className="editor-title-block">
+          <div className="editor-title-field">
+            <input
+              className="project-title"
+              disabled={busy}
+              aria-label="Название презентации"
+              value={content.title}
+              maxLength={180}
+              onChange={(e) => {
+                setContent({ ...content, title: e.target.value });
+                setDirty(true);
+              }}
+            />
+            <Icon name="edit" />
+          </div>
+          <p className="editor-document-meta">
+            <span>{project.template.name} · {content.slides.length} слайдов</span>
+            <span
+              className={`editor-save-status ${dirty ? "is-dirty" : ""}`}
+              role="status"
+            >
+              <Icon name={dirty ? "edit" : "check"} />
+              {busy ? "Сохраняем…" : dirty ? "Есть изменения" : "Сохранено"}
+            </span>
           </p>
         </div>
         <div className="row">
@@ -130,7 +140,7 @@ export function Editor({
         </div>
       </div>
       <div className="editor-toolbar between">
-        <div className="row">
+        <div className="row editor-toolbar-controls">
           <button
             className="btn sm"
             disabled={!project.can_undo || busy || dirty}
@@ -139,24 +149,29 @@ export function Editor({
             <Icon name="undo" />
             Вернуть версию
           </button>
-          <label className="row small">
-            Оформление
-            <select
-              aria-label="Вариант оформления"
-              value={project.variant}
-              disabled={busy}
-              onChange={(e) => save(e.target.value as Variant)}
-            >
+          <fieldset
+            className="editor-style-picker"
+            disabled={busy || hasDataErrors}
+          >
+            <legend>Оформление</legend>
+            <div className="editor-style-options">
               {(["a", "b", "c"] as const).map((v) => (
-                <option key={v} value={v}>
-                  {variantNames[v]}
-                </option>
+                <label key={v} className="editor-style-option">
+                  <input
+                    type="radio"
+                    name="editor-variant"
+                    value={v}
+                    checked={project.variant === v}
+                    onChange={() => save(v)}
+                  />
+                  <span>{variantNames[v]}</span>
+                </label>
               ))}
-            </select>
-          </label>
+            </div>
+          </fieldset>
         </div>
         <button
-          className="btn primary sm"
+          className="btn primary sm editor-save-button"
           disabled={
             busy ||
             hasDataErrors ||
@@ -166,7 +181,8 @@ export function Editor({
           }
           onClick={() => save()}
         >
-          {busy ? "Сохраняем…" : "Сохранить изменения"}
+          <Icon name="check" />
+          {busy ? "Сохраняем…" : dirty ? "Сохранить изменения" : "Всё сохранено"}
         </button>
       </div>
       <div className="editor-layout">
@@ -178,6 +194,7 @@ export function Editor({
               key={i}
               onClick={() => setIndex(i)}
               aria-label={`Слайд ${i + 1}: ${s.title}`}
+              aria-current={i === index ? "true" : undefined}
             >
               <span>{String(i + 1).padStart(2, "0")}</span>
               {preview.scenes[i] ? (
@@ -208,7 +225,7 @@ export function Editor({
             <span className="label">Слайд {index + 1}</span>
             <span className="badge">{slideKinds[slide.kind]}</span>
           </div>
-          <div className="slide-canvas">
+          <div className="slide-canvas" key={index}>
             {scene ? (
               <SlidePreview scene={scene} />
             ) : (
@@ -287,6 +304,6 @@ export function Editor({
           </button>
         </fieldset>
       </div>
-    </>
+    </section>
   );
 }

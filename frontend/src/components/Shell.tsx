@@ -19,6 +19,7 @@ export function Shell({ route, children, favoriteCount, onLogout }: {
   const sidebarRef = useRef<HTMLElement>(null);
   const sidebarTrigger = useRef<HTMLButtonElement>(null);
   const navigationRef = useRef<HTMLElement>(null);
+  const accountNavigationRef = useRef<HTMLElement>(null);
   const previousRoute = useRef(route);
   useEffect(() => {
     if (previousRoute.current === route) return;
@@ -71,7 +72,8 @@ export function Shell({ route, children, favoriteCount, onLogout }: {
       </div>
       <div className="sidebar-bottom">
         <div className="sidebar-theme"><ThemeToggle /><span>Оформление</span></div>
-        <nav className="nav" aria-label="Аккаунт и помощь">
+        <nav ref={accountNavigationRef} className="nav sliding-nav" aria-label="Аккаунт и помощь">
+          <SelectionIndicator container={accountNavigationRef} activeKey={route} />
           {([["support", "help", "Поддержка"], ["profile", "user", "Мой профиль"]] as [Route, IconName, string][]).map(([id, icon, name]) =>
             <a key={id} href={"#" + id} title={name} aria-label={name}
               className={route === id ? "active" : ""} aria-current={route === id ? "page" : undefined}>

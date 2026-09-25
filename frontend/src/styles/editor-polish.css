@@ -1,0 +1,149 @@
+/* Editor chrome follows the app theme; slide artwork keeps its original colors. */
+.page .editor-page { min-width: 0; }
+.page .editor-heading { align-items: center; gap: 24px; }
+.page .editor-title-block { flex: 1; min-width: 0; max-width: 720px; }
+.page .editor-title-field { position: relative; }
+.page .editor-title-field .project-title {
+  min-width: 0;
+  padding: 10px 44px 10px 14px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--ink);
+  font-size: clamp(21px, 2vw, 28px);
+  line-height: 1.35;
+  transition: border-color .2s, box-shadow .2s;
+}
+.page .editor-title-field .project-title:focus { box-shadow: 0 0 0 4px #0077ff0c; }
+.page .editor-title-field > .icon {
+  position: absolute;
+  right: 15px;
+  top: 50%;
+  width: 17px;
+  height: 17px;
+  color: var(--muted);
+  transform: translateY(-50%);
+  pointer-events: none;
+  transition: color .2s;
+}
+.page .editor-title-field:focus-within > .icon { color: var(--accent-text); }
+.page .editor-heading .editor-document-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 16px;
+  margin-top: 10px;
+  padding-left: 2px;
+  font-size: 12px;
+  color: var(--muted);
+}
+.page .editor-save-status { display: inline-flex; align-items: center; gap: 5px; }
+.page .editor-save-status .icon { width: 14px; height: 14px; color: var(--accent-text); }
+.page .editor-save-status.is-dirty { color: var(--accent-text); }
+.page .editor-page .editor-toolbar {
+  flex-wrap: wrap;
+  gap: 16px;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--surface);
+  box-shadow: 0 3px 12px #00000004;
+}
+.page .editor-toolbar-controls { flex-wrap: wrap; gap: 16px; }
+.page .editor-style-picker { min-width: 0; margin: 0; padding: 0; border: 0; }
+.page .editor-style-picker legend {
+  padding: 0 0 6px 3px;
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 750;
+  letter-spacing: .09em;
+  text-transform: uppercase;
+}
+.page .editor-style-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+  padding: 3px;
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  background: var(--surface-soft);
+}
+.page .editor-style-option { position: relative; display: flex; flex: 1; cursor: pointer; }
+.page .editor-style-option input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+.page .editor-style-option span {
+  display: block;
+  width: 100%;
+  padding: 8px 12px;
+  border-radius: 8px;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 700;
+  text-align: center;
+  white-space: nowrap;
+  transition: color .2s, background-color .2s, box-shadow .2s, transform .2s;
+}
+.page .editor-style-option:hover span { background: var(--surface); color: var(--ink); }
+.page .editor-style-option input:checked + span {
+  background: var(--surface);
+  color: var(--accent-text);
+  box-shadow: 0 1px 4px #00000012, inset 0 0 0 1px var(--line);
+}
+.page .editor-style-option input:focus-visible + span { outline: 2px solid #509eff; outline-offset: 2px; }
+.page .editor-style-option:active span { transform: scale(.98); }
+.page .editor-style-picker:disabled .editor-style-option { cursor: progress; }
+.page .editor-style-picker:disabled .editor-style-option span { opacity: .7; }
+.page .editor-save-button { min-width: 170px; margin-left: auto; }
+.page .editor-page .btn:disabled {
+  opacity: 1;
+  color: var(--muted);
+  background: var(--surface-soft);
+  border-color: var(--line);
+  box-shadow: none;
+  transform: none;
+}
+.page .editor-page .btn:disabled .icon { opacity: .8; }
+.page .editor-page .slide-rail { background: transparent; }
+.page .editor-page .thumbnail {
+  border-radius: 11px;
+  transition: border-color .22s, background-color .22s, box-shadow .22s;
+}
+.page .editor-page .thumbnail.active { box-shadow: 0 0 0 2px #0077ff12; }
+.page .editor-page .canvas-top { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-bottom: 14px; }
+.page .editor-page .canvas-top .label { margin: 0; }
+.page .editor-page .canvas-top .badge { border-radius: 7px; }
+.page .editor-page .slide-canvas { animation: editor-slide-reveal .3s ease both; }
+.page .editor-page .source-card { margin-top: 20px; }
+.page .editor-page .source-card .between { flex-wrap: wrap; gap: 12px; }
+.page .editor-page .inspector { border-radius: 16px; }
+.page .editor-page .inspector > .label { padding-bottom: 12px; border-bottom: 1px solid var(--line); }
+@keyframes editor-slide-reveal {
+  from { opacity: .4; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@media (max-width: 1050px) {
+  .page .editor-heading { flex-wrap: wrap; }
+  .page .editor-title-block { flex-basis: 100%; max-width: none; }
+}
+@media (max-width: 640px) {
+  .page .editor-heading { gap: 16px; }
+  .page .editor-heading > .row { width: 100%; }
+  .page .editor-heading > .row .btn { flex: 1; }
+  .page .editor-toolbar-controls { width: 100%; }
+  .page .editor-style-picker { width: 100%; }
+  .page .editor-style-option span { padding-inline: 7px; font-size: 10px; }
+  .page .editor-save-button { width: 100%; margin-left: 0; }
+  .page .editor-page .source-card { padding: 16px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .page .editor-page .slide-canvas { animation: none; }
+  .page .editor-page :is(.project-title, .editor-title-field > .icon, .editor-style-option span, .thumbnail) { transition: none; }
+}

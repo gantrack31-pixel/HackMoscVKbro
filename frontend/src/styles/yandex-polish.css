@@ -1,0 +1,26 @@
+/* The authentication host is outside .page, so its controls own their theme. */
+.yandex-host .yandex-auth-card { gap: 22px; border-radius: 24px; box-shadow: var(--elevation); }
+.yandex-auth-card .yandex-intro { display: grid; gap: 12px; animation: yandex-content-in .45s ease-out both; }
+.yandex-auth-card .yandex-eyebrow { display: flex; align-items: center; gap: 8px; color: var(--accent-text); font-size: 11px; font-weight: 750; letter-spacing: .03em; }
+.yandex-eyebrow .icon { width: 16px; height: 16px; }
+.yandex-auth-card h1 { color: var(--ink); line-height: 1.22; }
+.yandex-auth-card .yandex-auth-status { display: flex; align-items: flex-start; gap: 10px; padding: 14px 16px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface-soft); color: var(--muted); font-size: 12px; }
+.yandex-auth-status > .icon { width: 17px; height: 17px; margin-top: 2px; color: var(--accent-text); }
+.yandex-auth-card .yandex-button { border-radius: 12px; min-height: 50px; font-size: 13px; box-shadow: none; transition: transform .22s ease, background .22s ease, border-color .22s ease; }
+.yandex-auth-card .yandex-button:not(:disabled):hover { transform: translateY(-2px); background: #fff5f3; border-color: #fc3f1d; }
+.yandex-auth-card .yandex-button:disabled { opacity: 1; background: var(--surface-soft); color: var(--muted); border-color: var(--line); }
+.yandex-auth-card .yandex-button:disabled b { opacity: .65; }
+.yandex-host .yandex-auth-card .yandex-email { display: flex; gap: 10px; min-height: 50px; padding: 12px 18px; border: 1px solid #0077ff; border-radius: 12px; background: #0077ff; color: #fff; box-shadow: none; font-weight: 750; transition: transform .22s ease, background .22s ease; }
+.yandex-host .yandex-auth-card .yandex-email:hover { background: #0064d6; color: #fff; transform: translateY(-2px); }
+.yandex-email .icon:last-child { margin-left: auto; transition: transform .22s ease; }
+.yandex-email:hover .icon:last-child { transform: translateX(3px); }
+.yandex-auth-card .yandex-back { display: inline-flex; justify-self: center; align-items: center; gap: 8px; min-height: 36px; color: var(--muted); font-size: 12px; transition: color .2s ease; }
+.yandex-back .icon { width: 16px; height: 16px; transition: transform .22s ease; }
+.yandex-auth-card .yandex-back:hover { color: var(--accent-text); }
+.yandex-back:hover .icon { transform: translateX(-3px); }
+@keyframes yandex-content-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+@media (max-width: 520px) { .yandex-host .yandex-auth-card { padding: 28px 22px; } .yandex-auth-card h1 { font-size: 25px; } }
+@media (prefers-reduced-motion: reduce) {
+  .yandex-auth-card .yandex-intro { animation: none; }
+  .yandex-host .yandex-auth-card :is(a,button,.icon) { transition: none; transform: none; }
+}

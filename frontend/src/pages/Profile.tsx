@@ -3,6 +3,8 @@ import { api } from "../api";
 import { Avatar } from "../components/Brand";
 import { Icon } from "../components/Icon";
 import type { Health, User } from "../types";
+import "../styles/profile-polish.css";
+const profileTabs = ["Личные данные", "Вход и безопасность", "Моя библиотека"];
 const colors = [
   ["#0077FF", "Синий"],
   ["#7851BA", "Фиолетовый"],
@@ -35,6 +37,15 @@ export function Profile({
   const [tab, setTab] = useState(
     location.hash.includes("yandex") ? "Вход и безопасность" : "Личные данные",
   );
+  const [shownTab, setShownTab] = useState(tab);
+  useEffect(() => {
+    if (tab === shownTab) return;
+    const timer = window.setTimeout(
+      () => setShownTab(tab),
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : 140,
+    );
+    return () => window.clearTimeout(timer);
+  }, [tab, shownTab]);
   const [first, setFirst] = useState(user.first_name),
     [last, setLast] = useState(user.last_name),
     [color, setColor] = useState(user.avatar_color);
@@ -114,18 +125,13 @@ export function Profile({
     }
   }
   return (
-    <div className="profile-page">
+    <div className="profile-page profile-refined">
       <div className="heading">
         <span className="eyebrow">ЛИЧНОЕ ПРОСТРАНСТВО</span>
         <h1>Мой профиль</h1>
         <p>Всё, что делает Deckly вашим.</p>
       </div>
       <section className="profile-hero">
-        <div className="profile-hero-pattern" aria-hidden="true">
-          <i />
-          <i />
-          <i />
-        </div>
         <div className="profile-hero-identity">
           <Avatar
             user={{
@@ -177,13 +183,27 @@ export function Profile({
           </a>
         ))}
       </div>
-      <div className="tabs profile-tabs" aria-label="Настройки профиля">
-        {["Личные данные", "Вход и безопасность", "Моя библиотека"].map((t) => (
+      <div className="tabs profile-tabs" role="tablist" aria-label="Настройки профиля">
+        <span className="profile-tab-indicator" aria-hidden="true" style={{ transform: `translateX(${profileTabs.indexOf(tab) * 100}%)` }} />
+        {profileTabs.map((t, index) => (
           <button
             key={t}
-            aria-pressed={t === tab}
+            id={`profile-tab-${index}`}
+            role="tab"
+            aria-selected={t === tab}
+            aria-controls="profile-tab-panel"
+            tabIndex={t === tab ? 0 : -1}
             className={t === tab ? "active" : ""}
             onClick={() => setTab(t)}
+            onKeyDown={(event) => {
+              const next = event.key === "ArrowRight" ? (index + 1) % profileTabs.length
+                : event.key === "ArrowLeft" ? (index + profileTabs.length - 1) % profileTabs.length
+                : event.key === "Home" ? 0 : event.key === "End" ? profileTabs.length - 1 : null;
+              if (next === null) return;
+              event.preventDefault();
+              setTab(profileTabs[next]);
+              document.getElementById(`profile-tab-${next}`)?.focus();
+            }}
           >
             {t}
           </button>
@@ -201,7 +221,11 @@ export function Profile({
           {message}
         </div>
       )}
-      {tab === "Личные данные" && (
+      <div key={shownTab} id="profile-tab-panel" role="tabpanel"
+        aria-labelledby={`profile-tab-${profileTabs.indexOf(shownTab)}`}
+        className={`profile-tab-content${tab !== shownTab ? " is-leaving" : ""}`}
+        inert={tab !== shownTab}>
+      {shownTab === "Личные данные" && (
         <div className="profile-columns">
           <form className="panel profile-form" onSubmit={save}>
             <h2>Личные данные</h2>
@@ -264,7 +288,8 @@ export function Profile({
               </div>
             </fieldset>
             <div className="profile-save">
-              <span>
+              <span className={dirty ? "has-changes" : ""}>
+                <Icon name={dirty ? "edit" : "check"} />
                 {dirty
                   ? "Есть несохранённые изменения"
                   : "Все изменения сохранены"}
@@ -291,15 +316,21 @@ export function Profile({
               К шаблонам
               <Icon name="arrow" />
             </a>
-            <div className="mini-deck" aria-hidden="true">
-              <i />
-              <i />
-              <i />
+            <div className="profile-deck-preview" aria-hidden="true">
+              <span className="profile-preview-back" />
+              <div className="profile-preview-slide">
+                <span className="profile-preview-label">ВАША ПРЕЗЕНТАЦИЯ</span>
+                <strong>Идеям<br />нужна форма.</strong>
+                <span className="profile-preview-rule" />
+                <span className="profile-preview-bars"><i /><i /><i /></span>
+                <span className="profile-preview-number">01</span>
+              </div>
+              <span className="profile-preview-caption">От первого слайда — к целой истории</span>
             </div>
           </aside>
         </div>
       )}
-      {tab === "Вход и безопасность" && (
+      {shownTab === "Вход и безопасность" && (
         <section className="panel profile-security">
           <h2>Способы входа</h2>
           <p className="muted small">
@@ -361,7 +392,7 @@ export function Profile({
           </div>
         </section>
       )}
-      {tab === "Моя библиотека" && (
+      {shownTab === "Моя библиотека" && (
         <section className="panel profile-library">
           <h2>От идеи до готовой презентации</h2>
           <p className="muted">
@@ -403,6 +434,7 @@ export function Profile({
           </div>
         </section>
       )}
+      </div>
     </div>
   );
 }
