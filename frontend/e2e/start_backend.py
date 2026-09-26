@@ -13,6 +13,7 @@ os.environ.update({
     "APP_ENV": "development",
     "LLM_MODE": "demo",
     "COOKIE_SECURE": "false",
+    "EMAIL_VERIFICATION_REQUIRED": "false",
     "DATABASE_PATH": str(run_dir / "deckly-e2e.sqlite3"),
     "STORAGE_PATH": str(run_dir / "data"),
     "CORS_ORIGINS": "http://127.0.0.1:5183",

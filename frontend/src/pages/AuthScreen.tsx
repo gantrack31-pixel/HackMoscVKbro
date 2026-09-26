@@ -14,7 +14,7 @@ import { WordmarkTitle } from "../components/Brand";
 
 import { TemplateCover } from "../components/TemplateCard";
 import type { Template, User } from "../types";
-type Screen = "welcome" | "choice" | "login" | "register";
+type Screen = "welcome" | "choice" | "login" | "register" | "check-email";
 const oauthErrors: Record<string, string> = {
   state: "Сессия входа истекла. Повторите вход через Яндекс.",
   cancelled: "Вход через Яндекс отменён.",
@@ -37,6 +37,9 @@ export function AuthScreen({
         "",
     ),
     [busy, setBusy] = useState(false),
+    [verificationEmail, setVerificationEmail] = useState(""),
+    [resendBusy, setResendBusy] = useState(false),
+    [resendMessage, setResendMessage] = useState(""),
     [showPassword, setShowPassword] = useState(false);
   useEffect(() => {
     api
@@ -94,19 +97,46 @@ export function AuthScreen({
         email: String(data.get("email")),
         password: String(data.get("password")),
       };
-      const result =
-        screen === "register"
-          ? await api.register({
+      if (screen === "register") {
+        const result = await api.register({
               ...credentials,
               first_name: String(data.get("first_name")),
               last_name: String(data.get("last_name")),
-            })
-          : await api.login(credentials.email, credentials.password);
-      if (result.user) onUser(result.user);
+            });
+        if ("verification_required" in result) {
+          setVerificationEmail(result.email);
+          setResendMessage(result.delivery_pending
+            ? "Не удалось отправить письмо. Проверьте SMTP-настройки или попробуйте отправить письмо ещё раз."
+            : result.delivery_mode === "logged"
+              ? "Почта пока не подключена: ссылка подтверждения записана в консоль backend-сервера."
+            : "");
+          setScreen("check-email");
+        } else if (result.user) onUser(result.user);
+      } else {
+        const result = await api.login(credentials.email, credentials.password);
+        if (result.user) onUser(result.user);
+      }
     } catch (e) {
       setError((e as Error).message);
     } finally {
       setBusy(false);
+    }
+  }
+  async function resendVerification() {
+    setResendBusy(true);
+    setError("");
+    setResendMessage("");
+    try {
+      const result = await api.resendVerification(verificationEmail);
+      setResendMessage(result.delivery_mode === "logged"
+        ? "Почта пока не подключена: ссылка подтверждения записана в консоль backend-сервера."
+        : result.delivery_mode === "cooldown"
+          ? "Подождите минуту перед повторной отправкой письма."
+          : "Если адрес ожидает подтверждения, письмо скоро придёт.");
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setResendBusy(false);
     }
   }
   return (
@@ -182,7 +212,23 @@ export function AuthScreen({
             inert={!opened}
             aria-hidden={!opened}
           >
-            {screen === "choice" || screen === "welcome" ? (
+            {screen === "check-email" ? (
+              <section className="auth-form email-pending" aria-live="polite">
+                <button className="auth-back" type="button" onClick={() => go("login")}>
+                  <ArrowLeft size={16} /> Войти
+                </button>
+                <div className="email-pending-icon" aria-hidden="true"><Mail size={24} /></div>
+                <h1>Проверьте почту</h1>
+                <p className="auth-form-hint">Мы отправили ссылку для подтверждения на</p>
+                <strong className="email-pending-address">{verificationEmail}</strong>
+                <p className="password-hint">Перейдите по ссылке в письме, чтобы подтвердить адрес и войти в аккаунт.</p>
+                <button className="auth-submit" type="button" disabled={resendBusy} onClick={resendVerification}>
+                  {resendBusy ? "Отправляем…" : "Отправить письмо ещё раз"}
+                  <ArrowRight size={18} />
+                </button>
+                {resendMessage && <p className="email-resend-message" role="status">{resendMessage}</p>}
+              </section>
+            ) : screen === "choice" || screen === "welcome" ? (
               <>
                 <p className="auth-welcome">
                   Хорошая история
@@ -298,14 +344,23 @@ export function AuthScreen({
                   </div>
                 </label>
                 {screen === "login" && (
-                  <a
-                    className="auth-help"
-                    href="https://t.me/flixyyy"
-                    target="_blank"
-                    rel="noreferrer"
-                  >
-                    Не получается войти? Написать в поддержку
-                  </a>
+                  <>
+                    <button
+                      className="auth-help auth-resend-trigger"
+                      type="button"
+                      onClick={() => {
+                        setVerificationEmail(String(new FormData(contentRef.current?.querySelector("form") ?? undefined).get("email") ?? "").trim());
+                        setScreen("check-email");
+                        setResendMessage("");
+                        setError("");
+                      }}
+                    >
+                      Не получили письмо подтверждения? Запросить повторно
+                    </button>
+                    <a className="auth-help" href="https://t.me/flixyyy" target="_blank" rel="noreferrer">
+                      Не получается войти? Написать в поддержку
+                    </a>
+                  </>
                 )}
                 {screen === "register" && (
                   <p className="password-hint">

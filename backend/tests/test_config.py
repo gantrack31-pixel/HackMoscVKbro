@@ -14,6 +14,12 @@ def production_settings(**overrides):
         'public_url': 'https://deckly.example',
         'cookie_secure': True,
         'origins': ['https://deckly.example', 'https://www.deckly.example'],
+        'email_verification_required': False,
+        'smtp_host': '',
+        'smtp_port': 465,
+        'smtp_username': '',
+        'smtp_password': '',
+        'email_from': '',
     }
     values.update(overrides)
     return replace(Settings(), **values)
@@ -55,6 +61,30 @@ def test_production_profile_requires_explicit_demo_opt_in():
 def test_live_production_requires_provider_api_key():
     with pytest.raises(ValueError, match='LLM_API_KEY'):
         validate_settings(production_settings(api_key=''))
+
+
+def test_production_email_verification_requires_complete_smtp_configuration():
+    with pytest.raises(ValueError, match='SMTP_HOST'):
+        validate_settings(production_settings(email_verification_required=True))
+
+    validate_settings(production_settings(
+        email_verification_required=True,
+        smtp_host='smtp.yandex.ru',
+        smtp_port=465,
+        smtp_username='mail@example.test',
+        smtp_password='application-password',
+        email_from='mail@example.test',
+    ))
+
+    with pytest.raises(ValueError, match='все параметры'):
+        validate_settings(Settings(smtp_host='smtp.yandex.ru', smtp_username='', smtp_password='', email_from=''))
+
+
+def test_settings_repr_does_not_expose_secrets():
+    rendered = repr(Settings(api_key='llm-secret', yandex_secret='oauth-secret', smtp_password='smtp-secret'))
+    assert 'llm-secret' not in rendered
+    assert 'oauth-secret' not in rendered
+    assert 'smtp-secret' not in rendered
 
 
 def test_yandex_oauth_must_use_public_https_origin_when_enabled():
@@ -111,6 +141,7 @@ def test_secure_cookie_setting_applies_to_session_and_yandex_oauth(monkeypatch, 
     monkeypatch.setattr(settings, 'storage', tmp_path / 'storage')
     monkeypatch.setattr(settings, 'cookie_secure', True)
     monkeypatch.setattr(settings, 'yandex_id', 'public-client-id')
+    monkeypatch.setattr(settings, 'email_verification_required', False)
 
     with TestClient(app) as client:
         session = client.post('/api/auth/register', json={

@@ -54,12 +54,18 @@ def initialize():
         );
         CREATE TABLE IF NOT EXISTS auth_attempts (ip_hash TEXT NOT NULL, time INTEGER NOT NULL);
         CREATE INDEX IF NOT EXISTS auth_attempts_lookup ON auth_attempts(ip_hash,time);
+        CREATE TABLE IF NOT EXISTS email_verifications (
+            user_id TEXT PRIMARY KEY, token_hash TEXT NOT NULL UNIQUE,
+            expires_at INTEGER NOT NULL, last_sent_at INTEGER NOT NULL
+        );
+        CREATE INDEX IF NOT EXISTS email_verifications_expiry ON email_verifications(expires_at);
         CREATE TABLE IF NOT EXISTS favorites (user_id TEXT NOT NULL,template_id TEXT NOT NULL,PRIMARY KEY(user_id,template_id));
         ''')
         for table in ['templates','projects','jobs']:
             columns={row['name'] for row in db.execute(f'PRAGMA table_info({table})')}
             if 'user_id' not in columns: db.execute(f'ALTER TABLE {table} ADD COLUMN user_id TEXT')
-        for table, additions in {'users': [('avatar_color', "TEXT NOT NULL DEFAULT '#0077FF'")],
+        for table, additions in {'users': [('avatar_color', "TEXT NOT NULL DEFAULT '#0077FF'"),
+                                            ('email_verified', 'INTEGER NOT NULL DEFAULT 1')],
                                  'oauth_states': [('user_id', 'TEXT'), ('session_hash', 'TEXT')],
                                  'jobs': [('task_type', "TEXT NOT NULL DEFAULT 'legacy'"),
                                           ('payload', 'TEXT'), ('retry_of', 'TEXT'), ('retry_job_id', 'TEXT')]}.items():

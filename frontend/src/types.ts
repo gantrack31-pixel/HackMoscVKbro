@@ -134,6 +134,7 @@ export interface User {
   avatar_color: string;
   yandex_connected: boolean;
   password_enabled: boolean;
+  email_verified: boolean;
 }
 export interface AuthResult {
   user: User | null;

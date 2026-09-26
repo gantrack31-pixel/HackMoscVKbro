@@ -26,6 +26,7 @@ def client(tmp_path,monkeypatch):
     monkeypatch.setattr(settings,'database',tmp_path/'test.sqlite3')
     monkeypatch.setattr(settings,'storage',tmp_path/'data')
     monkeypatch.setattr(settings,'mode','demo')
+    monkeypatch.setattr(settings,'email_verification_required',False)
     with TestClient(app) as client:yield client
 
 def register(client,email='anna@example.test'):

@@ -88,3 +88,48 @@ test("authentication errors are announced accessibly", async ({ page }) => {
   await page.getByRole("button", { name: "Войти", exact: true }).click();
   await expect(page.getByRole("alert")).toContainText("Неверная почта или пароль");
 });
+
+test("registration shows the email confirmation screen and allows resending", async ({ page }) => {
+  await page.route("**/api/auth/register", (route) => route.fulfill({
+    status: 201,
+    contentType: "application/json",
+    body: JSON.stringify({ verification_required: true, email: "confirm@example.test", delivery_mode: "logged" }),
+  }));
+  await page.route("**/api/auth/verification/resend", (route) => route.fulfill({
+    status: 200,
+    contentType: "application/json",
+    body: JSON.stringify({ ok: true }),
+  }));
+  await page.goto("/");
+  await page.getByRole("button", { name: "Начать работу" }).click();
+  await page.getByRole("button", { name: "Регистрация" }).click();
+  await page.getByLabel("Электронная почта").fill("confirm@example.test");
+  await page.getByLabel("Имя", { exact: true }).fill("Тест");
+  await page.getByLabel("Фамилия", { exact: true }).fill("Подтверждения");
+  await page.getByLabel("Пароль", { exact: true }).fill("Example-Password-1947");
+  await page.getByRole("button", { name: "Зарегистрироваться", exact: true }).click();
+
+  await expect(page.getByRole("heading", { name: "Проверьте почту" })).toBeVisible();
+  await expect(page.getByText(/ссылка подтверждения записана в консоль backend-сервера/)).toBeVisible();
+  await page.getByRole("button", { name: "Отправить письмо ещё раз" }).click();
+  await expect(page.getByRole("status")).toContainText("письмо скоро придёт");
+});
+
+test("email verification needs an explicit button click", async ({ page }) => {
+  let verificationRequests = 0;
+  await page.route("**/api/auth/verify-email", async (route) => {
+    verificationRequests += 1;
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ verified: true }),
+    });
+  });
+  await page.goto("/#verify-email=abcdefghijklmnopqrstuvwxyz0123456789ABCDEFG");
+  await expect(page.getByRole("heading", { name: "Подтверждение почты" })).toBeVisible();
+  await expect.poll(() => verificationRequests).toBe(0);
+
+  await page.getByRole("button", { name: "Подтвердить адрес" }).click();
+  await expect(page.getByRole("heading", { name: "Почта подтверждена" })).toBeVisible();
+  await expect.poll(() => verificationRequests).toBe(1);
+});

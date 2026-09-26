@@ -46,7 +46,7 @@ class Settings:
     allow_demo_in_production: bool = field(default_factory=lambda: os.getenv('ALLOW_DEMO_IN_PRODUCTION', 'false').strip().lower() == 'true')
     mode: str = field(default_factory=lambda: os.getenv('LLM_MODE', 'demo'))
     base_url: str = field(default_factory=lambda: os.getenv('LLM_BASE_URL', 'http://127.0.0.1:8001/v1').rstrip('/'))
-    api_key: str = field(default_factory=lambda: os.getenv('LLM_API_KEY', ''))
+    api_key: str = field(default_factory=lambda: os.getenv('LLM_API_KEY', ''), repr=False)
     model: str = field(default_factory=lambda: os.getenv('LLM_MODEL', 'Qwen/Qwen3-32B'))
     timeout: int = field(default_factory=lambda: int(os.getenv('LLM_TIMEOUT_SECONDS', '180')))
     max_tokens: int = field(default_factory=lambda: int(os.getenv('LLM_MAX_TOKENS', '9000')))
@@ -56,14 +56,20 @@ class Settings:
     extra_body: dict = field(default_factory=lambda: json.loads(os.getenv('LLM_EXTRA_BODY', '{}')))
     storage: Path = field(default_factory=lambda: resolve_path(os.getenv('STORAGE_PATH', 'data')))
     database: Path = field(default_factory=lambda: resolve_path(os.getenv('DATABASE_PATH', 'data/deckly.sqlite3')))
-    cloud_database_url: str = field(default_factory=lambda: os.getenv('CLOUD_DATABASE_URL', ''))
+    cloud_database_url: str = field(default_factory=lambda: os.getenv('CLOUD_DATABASE_URL', ''), repr=False)
     max_upload_mb: int = field(default_factory=lambda: int(os.getenv('MAX_UPLOAD_MB', '50')))
     origins: list[str] = field(default_factory=lambda: [origin.strip().rstrip('/') for origin in os.getenv('CORS_ORIGINS', 'http://127.0.0.1:5173,http://localhost:5173').split(',') if origin.strip()])
     public_url: str = field(default_factory=lambda: os.getenv('PUBLIC_BASE_URL','http://127.0.0.1:8000').rstrip('/'))
     cookie_secure: bool = field(default_factory=lambda: os.getenv('COOKIE_SECURE','false').lower()=='true')
     yandex_id: str = field(default_factory=lambda: os.getenv('YANDEX_CLIENT_ID',''))
-    yandex_secret: str = field(default_factory=lambda: os.getenv('YANDEX_CLIENT_SECRET',''))
+    yandex_secret: str = field(default_factory=lambda: os.getenv('YANDEX_CLIENT_SECRET',''), repr=False)
     yandex_redirect: str = field(default_factory=lambda: os.getenv('YANDEX_REDIRECT_URI','http://127.0.0.1:8000/api/auth/yandex/callback'))
+    email_verification_required: bool = field(default_factory=lambda: os.getenv('EMAIL_VERIFICATION_REQUIRED','true').lower() == 'true')
+    smtp_host: str = field(default_factory=lambda: os.getenv('SMTP_HOST',''))
+    smtp_port: int = field(default_factory=lambda: int(os.getenv('SMTP_PORT','465')))
+    smtp_username: str = field(default_factory=lambda: os.getenv('SMTP_USERNAME',''))
+    smtp_password: str = field(default_factory=lambda: os.getenv('SMTP_PASSWORD',''), repr=False)
+    email_from: str = field(default_factory=lambda: os.getenv('EMAIL_FROM',''))
 
 
 def validate_settings(config: Settings = None) -> None:
@@ -73,6 +79,11 @@ def validate_settings(config: Settings = None) -> None:
         raise ValueError('APP_ENV должен быть development или production.')
     if config.mode not in {'demo', 'live'}:
         raise ValueError('LLM_MODE должен быть demo или live.')
+    if config.smtp_port < 1 or config.smtp_port > 65535:
+        raise ValueError('SMTP_PORT должен быть в диапазоне 1–65535.')
+    smtp_values=(config.smtp_host.strip(),config.smtp_username.strip(),config.smtp_password,config.email_from.strip())
+    if any(smtp_values) and not all(smtp_values):
+        raise ValueError('Для SMTP задайте все параметры: SMTP_HOST, SMTP_USERNAME, SMTP_PASSWORD и EMAIL_FROM.')
     if config.app_env != 'production':
         return
 
@@ -92,6 +103,9 @@ def validate_settings(config: Settings = None) -> None:
         raise ValueError('LLM_MODE=demo в production запрещён; для осознанного demo-режима задайте ALLOW_DEMO_IN_PRODUCTION=true.')
     if config.mode == 'live' and not config.api_key.strip():
         raise ValueError('Для LLM_MODE=live в production требуется LLM_API_KEY.')
+    if config.email_verification_required and not all((config.smtp_host.strip(), config.smtp_username.strip(),
+                                                        config.smtp_password, config.email_from.strip())):
+        raise ValueError('Для подтверждения email в production задайте SMTP_HOST, SMTP_USERNAME, SMTP_PASSWORD и EMAIL_FROM.')
     if config.yandex_id:
         try:
             parsed = urlsplit(config.yandex_redirect)
