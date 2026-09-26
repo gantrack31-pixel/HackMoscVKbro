@@ -46,7 +46,8 @@ export default function App() {
     window.addEventListener("session-expired", expired);
     return () => window.removeEventListener("session-expired", expired);
   }, []);
-  if (location.pathname.replace(/\/$/, "") === "/auth/yandex") return <YandexAuth />;
+  if (location.pathname.replace(/\/$/, "") === "/auth/yandex")
+    return <YandexAuth />;
   if (!ready)
     return (
       <div className="boot-screen">
@@ -364,7 +365,11 @@ function Workspace({
         />
       </Shell>
       {preview && (
-        <Modal title={preview.name} onClose={() => setPreview(null)}>
+        <Modal
+          title={preview.name}
+          className="template-preview-dialog"
+          onClose={() => setPreview(null)}
+        >
           <TemplateCover template={preview} />
           <div className="template-details">
             <span className="badge blue">
@@ -404,8 +409,15 @@ function Workspace({
       )}
       {pending && (
         <Modal
-          title={pending === "logout" ? "Вы уверены, что хотите выйти?" : "Изменения ещё не сохранены"}
-          onClose={() => { if (!logoutLock.current) setPending(null); }}
+          closeDisabled={loggingOut}
+          title={
+            pending === "logout"
+              ? "Вы уверены, что хотите выйти?"
+              : "Изменения ещё не сохранены"
+          }
+          onClose={() => {
+            if (!logoutLock.current) setPending(null);
+          }}
         >
           <p className="muted">
             {pending === "logout"
@@ -424,9 +436,15 @@ function Workspace({
                 if (next === "logout") {
                   logoutLock.current = true;
                   setLoggingOut(true);
-                  try { await onLogout(); }
-                  catch (e) { setError((e as Error).message); setPending(null); }
-                  finally { logoutLock.current = false; setLoggingOut(false); }
+                  try {
+                    await onLogout();
+                  } catch (e) {
+                    setError((e as Error).message);
+                    setPending(null);
+                  } finally {
+                    logoutLock.current = false;
+                    setLoggingOut(false);
+                  }
                 } else {
                   setPending(null);
                   setDirty(false);
@@ -436,9 +454,18 @@ function Workspace({
                 }
               }}
             >
-              {loggingOut ? "Выходим…" : pending === "logout" ? "Выйти из аккаунта" : "Уйти без сохранения"}
+              {loggingOut
+                ? "Выходим…"
+                : pending === "logout"
+                  ? "Выйти из аккаунта"
+                  : "Уйти без сохранения"}
             </button>
-            <button className="btn primary" disabled={loggingOut} autoFocus onClick={() => setPending(null)}>
+            <button
+              className="btn primary"
+              disabled={loggingOut}
+              autoFocus
+              onClick={() => setPending(null)}
+            >
               {pending === "logout" ? "Остаться" : "Остаться на странице"}
             </button>
           </div>

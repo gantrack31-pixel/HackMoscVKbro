@@ -1,0 +1,75 @@
+.slide-field-sections,
+.slide-field-sections > .slide-field-panel {
+  display: contents;
+}
+.page .slide-field-sections.is-sectioned {
+  min-width: 0;
+  display: grid;
+  gap: 18px;
+  grid-column: 1 / -1;
+}
+.page .slide-field-sections.is-sectioned > .slide-field-panel {
+  display: grid;
+  gap: 16px;
+  min-width: 0;
+  animation: slide-fields-enter 0.22s ease;
+}
+.page .slide-field-sections > .slide-field-panel[hidden] {
+  display: none;
+}
+.page .slide-field-tabs {
+  display: flex;
+  gap: 3px;
+  padding: 3px;
+  border-radius: 10px;
+  background: var(--surface-soft);
+  border: 1px solid var(--line);
+}
+.page .slide-field-tabs > button {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  border-radius: 7px;
+  padding: 8px 3px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--muted);
+  background: transparent;
+  transition:
+    background 0.2s,
+    color 0.2s,
+    box-shadow 0.2s;
+}
+.page .slide-field-tabs > button[aria-selected="true"] {
+  color: var(--accent-text);
+  background: var(--surface);
+  box-shadow: 0 1px 4px #0001;
+}
+.page .slide-field-tabs > button:hover:not([aria-selected="true"]) {
+  color: var(--ink);
+}
+.page .slide-field-tabs > button:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 2px;
+}
+.page .slide-field-panel > .field {
+  margin: 0;
+}
+@keyframes slide-fields-enter {
+  from {
+    opacity: 0.4;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .page .slide-field-sections.is-sectioned > .slide-field-panel {
+    animation: none;
+  }
+  .page .slide-field-tabs > button {
+    transition: none;
+  }
+}

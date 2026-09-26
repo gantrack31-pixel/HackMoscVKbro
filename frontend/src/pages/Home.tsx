@@ -3,6 +3,7 @@ import { api } from "../api";
 import { Icon } from "../components/Icon";
 import { TemplateCard, TemplateCover } from "../components/TemplateCard";
 import type { Template, Project, ProjectSummary } from "../types";
+import "../styles/navigation-modern.css";
 export interface CatalogActions {
   templates: Template[];
   favorites: string[];
@@ -22,7 +23,10 @@ export function Home(
   const [shownTab, setShownTab] = useState(tab);
   useEffect(() => {
     if (shownTab === tab) return;
-    const timer = setTimeout(() => setShownTab(tab), matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : 140);
+    const timer = setTimeout(
+      () => setShownTab(tab),
+      matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : 140,
+    );
     return () => clearTimeout(timer);
   }, [tab, shownTab]);
   const [recent, setRecent] = useState<ProjectSummary[]>([]),
@@ -105,6 +109,13 @@ export function Home(
         role="tablist"
         aria-label="Разделы главной"
       >
+        <span
+          className="home-tab-indicator"
+          aria-hidden="true"
+          style={{
+            transform: `translateX(${["Обзор", "Быстрый старт", "Вдохновение"].indexOf(tab) * 100}%)`,
+          }}
+        />
         {["Обзор", "Быстрый старт", "Вдохновение"].map((name, index) => (
           <button
             key={name}
@@ -144,7 +155,9 @@ export function Home(
       <div
         id="home-tab-content"
         key={shownTab}
-        className={tab === shownTab ? "home-tab-panel" : "home-tab-panel is-exiting"}
+        className={
+          tab === shownTab ? "home-tab-panel" : "home-tab-panel is-exiting"
+        }
         role="tabpanel"
         aria-labelledby={`home-tab-${["Обзор", "Быстрый старт", "Вдохновение"].indexOf(shownTab)}`}
         inert={tab !== shownTab}
@@ -401,16 +414,20 @@ export function Catalog(
           <Icon name="star" />
           <h2>Пока пусто</h2>
           <p>Попробуйте другую категорию или сохраните шаблон звёздочкой.</p>
-          {props.onlyFavorites && props.favorites.length === 0 ? <a className="btn primary" href="#templates">Выбрать шаблоны</a> : (
-          <button
-            className="btn"
-            onClick={() => {
-              setSearch("");
-              setCategory("Все шаблоны");
-            }}
-          >
-            Сбросить фильтры
-          </button>
+          {props.onlyFavorites && props.favorites.length === 0 ? (
+            <a className="btn primary" href="#templates">
+              Выбрать шаблоны
+            </a>
+          ) : (
+            <button
+              className="btn"
+              onClick={() => {
+                setSearch("");
+                setCategory("Все шаблоны");
+              }}
+            >
+              Сбросить фильтры
+            </button>
           )}
         </div>
       )}

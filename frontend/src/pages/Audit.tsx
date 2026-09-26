@@ -1,10 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { api } from "../api";
 import { Icon } from "../components/Icon";
-import { SlidePreview } from "../components/SlidePreview";
+import { AuditSlide } from "../components/AuditSlide";
+import { PresentationViewer } from "../components/PresentationViewer";
 import { SlideFields } from "../components/SlideFields";
 import { useLivePreview } from "../components/useLivePreview";
 import type { Health, Issue, Project, Slide } from "../types";
+import "../styles/editor-polish.css";
 
 export function Audit({
   project,
@@ -32,6 +34,7 @@ export function Audit({
   const [notice, setNotice] = useState(""),
     [context, setContext] = useState(false);
   const [selected, setSelected] = useState<string[]>([]);
+  const [viewing, setViewing] = useState(false);
   const contextRequested = useRef(false);
   useEffect(() => {
     onDirty(dirty);
@@ -86,7 +89,6 @@ export function Audit({
   const preview = useLivePreview(project, content, dirty && valid);
   const scene = preview.scenes[index];
   const visible = issues.filter((i) => i.slide === index);
-  const warnings = issues.filter((i) => i.severity !== "info");
   const locked = busy || dirty;
   function inspect(issue: Issue) {
     if (busy || (dirty && focus !== issue.id)) return;
@@ -97,9 +99,12 @@ export function Audit({
       setValid(true);
     }
     requestAnimationFrame(() =>
-      document
-        .getElementById(`issue-${issue.id}`)
-        ?.scrollIntoView({ block: "nearest", behavior: "smooth" }),
+      document.getElementById(`issue-${issue.id}`)?.scrollIntoView({
+        block: "nearest",
+        behavior: matchMedia("(prefers-reduced-motion: reduce)").matches
+          ? "auto"
+          : "smooth",
+      }),
     );
   }
   function slideTo(i: number) {
@@ -161,7 +166,7 @@ export function Audit({
     }
   }
   return (
-    <>
+    <section className="audit-page" aria-label="Проверка презентации">
       <div className="heading between">
         <div>
           <h1>Уверенность в каждом слайде</h1>
@@ -188,7 +193,7 @@ export function Audit({
                 ? "Проверяем…"
                 : loadError
                   ? "Проверка недоступна"
-                  : `${warnings.length} замечаний`}
+                  : `Замечаний: ${issues.length}`}
             </h2>
             <p>Геометрия, контраст и связь с источниками</p>
           </div>
@@ -233,6 +238,14 @@ export function Audit({
             <div className="row">
               <button
                 className="btn sm"
+                onClick={() => setViewing(true)}
+                disabled={!scene}
+              >
+                <Icon name="play" />
+                Смотреть
+              </button>
+              <button
+                className="btn sm"
                 aria-label="Предыдущий слайд"
                 disabled={locked || index === 0}
                 onClick={() => slideTo(index - 1)}
@@ -249,37 +262,25 @@ export function Audit({
               </button>
             </div>
           </div>
-          <div className="audit-slide-wrap">
-            <SlidePreview scene={scene} />
-            {!loading &&
-              !loadError &&
-              visible.map((issue, n) => {
-                const obj = scene.objects.find((o) => o.id === issue.object_id);
-                return (
-                  <button
-                    key={issue.id}
-                    disabled={busy || (dirty && focus !== issue.id)}
-                    className={`audit-pin ${focus === issue.id ? "focused" : ""} ${issue.severity === "info" ? "info" : ""}`}
-                    aria-label={`${n + 1}. ${issue.title}`}
-                    aria-pressed={focus === issue.id}
-                    style={{
-                      left: `${Math.min(93, Math.max(3, ((obj?.x ?? 40) / scene.width) * 100 + n * 5))}%`,
-                      top: `${Math.min(88, Math.max(5, ((obj?.y ?? 40) / scene.height) * 100))}%`,
-                    }}
-                    onClick={() => inspect(issue)}
-                  >
-                    {n + 1}
-                  </button>
-                );
-              })}
-          </div>
+          {scene && (
+            <AuditSlide
+              scene={scene}
+              issues={loading || loadError ? [] : visible}
+              focus={focus}
+              locked={locked}
+              busy={busy}
+              onInspect={inspect}
+            />
+          )}
           <p className="tiny muted" role="status">
             {dirty
               ? preview.error ||
                 (preview.pending
                   ? "Обновляем предпросмотр…"
                   : "Предпросмотр изменений. Нажмите «Сохранить и проверить».")
-              : "Нажмите на метку, чтобы открыть исправление."}
+              : visible.length
+                ? "Выберите метку или замечание. Рамка покажет связанный блок слайда."
+                : "Здесь появятся отметки, если проверка найдёт замечания."}
           </p>
           <div className="slide-select-strip">
             {project.content.slides.map((_, i) => (
@@ -288,6 +289,7 @@ export function Audit({
                 disabled={locked}
                 className={`btn sm ${i === index ? "primary" : ""}`}
                 aria-label={`Перейти к слайду ${i + 1}`}
+                aria-current={i === index ? "true" : undefined}
                 onClick={() => slideTo(i)}
               >
                 {i + 1}
@@ -362,6 +364,7 @@ export function Audit({
                       )}
                       <fieldset disabled={busy}>
                         <SlideFields
+                          sectioned
                           key={`${issue.id}-${project.updated_at}`}
                           slide={draft}
                           onChange={(patch) => {
@@ -425,6 +428,14 @@ export function Audit({
           </p>
         </aside>
       </div>
-    </>
+      {viewing && (
+        <PresentationViewer
+          scenes={preview.scenes}
+          title={project.title}
+          initialIndex={index}
+          onClose={() => setViewing(false)}
+        />
+      )}
+    </section>
   );
 }

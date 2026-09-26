@@ -11,9 +11,9 @@ from fastapi.responses import Response, JSONResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 from .config import settings, BASE, validate_settings
 from . import database as db
-from .models import OutlineRequest, GenerateRequest, ProjectUpdate, FixRequest, DeckContent, Issue
+from .models import OutlineRequest, GenerateRequest, RegenerateRequest, ProjectUpdate, FixRequest, DeckContent, Issue
 from .services.templates import seed_templates, analyze_template, BUILTIN_IDS
-from .services.llm import make_outline, review_content, configured, LLMError
+from .services.llm import make_outline, review_content, redesign_layout, configured, LLMError
 from .services.layout import build_scene
 from .services.audit import audit_deck, source_status
 from .services.export import export_pptx, export_pdf, export_html
@@ -164,6 +164,42 @@ def job(jid: str,user=Depends(current_user)):
     if not result or result['user_id']!=user['id']: raise HTTPException(404,'Задание не найдено')
     result.pop('user_id',None)
     return result
+
+async def regenerate_job(jid: str, original: dict, instruction: str, user_id: str):
+    async with generation_slots:
+        try:
+            template=get_template(original['template_id'],user_id)
+            db.job_set(jid,'running','design')
+            content=await redesign_layout(DeckContent.model_validate(original['content']),template,instruction)
+            db.job_set(jid,'running','layout')
+            await asyncio.to_thread(lambda:[build_scene(s,template['metadata'],'a',i) for i,s in enumerate(content.slides)])
+            db.job_set(jid,'running','export')
+            for variant in ['a','b','c']:
+                await asyncio.to_thread(export_pptx,content,template,variant)
+            db.job_set(jid,'running','audit')
+            await asyncio.to_thread(audit_deck,content,template,'a',original['source_text'])
+            # Persist only a complete result, as a copy; never overwrite the user's working project.
+            pid=str(uuid4())
+            db.project_create(pid,original['template_id'],content.model_dump(),original['source_text'],user_id)
+            db.job_set(jid,'complete','complete',pid)
+        except LLMError as exc:
+            db.job_set(jid,'failed','failed',error=str(exc))
+        except TimeoutError:
+            db.job_set(jid,'failed','failed',error='Модель не успела подготовить оформление. Предыдущая презентация сохранена.')
+        except Exception:
+            logger.exception('Ошибка нового оформления %s',jid)
+            db.job_set(jid,'failed','failed',error='Не удалось создать новое оформление. Предыдущая презентация сохранена.')
+
+@app.post('/api/projects/{pid}/regenerate',status_code=202)
+def regenerate(pid: str, request: RegenerateRequest, tasks: BackgroundTasks, user=Depends(current_user)):
+    original=get_project(pid,user['id'])
+    get_template(original['template_id'],user['id'])
+    if settings.mode=='live' and not configured():
+        raise HTTPException(409,'Модель ещё не подключена. Настройте её на сервере и повторите.')
+    jid=str(uuid4())
+    db.job_set(jid,'queued','queued',user_id=user['id'])
+    tasks.add_task(regenerate_job,jid,original,request.instruction,user['id'])
+    return {'job_id':jid}
 
 @app.get('/api/projects')
 def projects(user=Depends(current_user)): return db.projects_list(user['id'])

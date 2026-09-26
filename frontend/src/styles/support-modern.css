@@ -1,0 +1,279 @@
+.support-page {
+  max-width: 1320px;
+  margin-inline: auto;
+}
+.support-page .support-heading {
+  margin-bottom: 44px;
+}
+.support-page .support-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  margin-bottom: 18px;
+  color: var(--accent-text);
+  font-size: 12px;
+  font-weight: 700;
+}
+.support-page .support-eyebrow .icon {
+  width: 18px;
+  height: 18px;
+}
+.support-page .support-heading h1 {
+  max-width: 720px;
+  text-wrap: balance;
+}
+.support-page .support-layout {
+  display: grid;
+  grid-template-columns: minmax(250px, 0.8fr) minmax(0, 1.8fr);
+  gap: clamp(32px, 5vw, 88px);
+  align-items: start;
+}
+.support-page .support-aside {
+  display: grid;
+  gap: 22px;
+}
+.support-page .support-guide {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 20px 0;
+  color: var(--ink);
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+}
+.support-page .support-guide-icon,
+.support-page .support-contact-icon {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 42px;
+  height: 42px;
+  border-radius: 14px;
+  background: var(--state-tint);
+  color: var(--accent-text);
+}
+.support-page .support-guide strong {
+  display: block;
+  font-size: 13px;
+}
+.support-page .support-guide small {
+  display: block;
+  margin-top: 5px;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.6;
+}
+.support-page .support-guide > .icon {
+  width: 17px;
+  height: 17px;
+  margin-left: auto;
+  flex-shrink: 0;
+  transition: transform 0.25s var(--motion);
+}
+.support-page .support-guide:hover > .icon {
+  transform: translateX(4px);
+}
+.support-page .support-personal {
+  padding: 26px;
+  border-radius: 22px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+}
+.support-page .support-contact-icon {
+  background: #0077ff;
+  color: #fff;
+}
+.support-page .support-personal h2 {
+  margin: 22px 0 12px;
+  font-size: clamp(22px, 2vw, 28px);
+  letter-spacing: -0.8px;
+  line-height: 1.2;
+  text-wrap: balance;
+}
+.support-page .support-personal p {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.8;
+  margin: 0 0 24px;
+}
+.support-page .support-personal .btn {
+  width: 100%;
+  min-height: 44px;
+  font-size: 12px;
+  padding: 12px;
+}
+.support-page .support-section-heading {
+  display: flex;
+  gap: 16px;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 2px 0 24px;
+}
+.support-page .support-section-heading h2 {
+  margin: 0;
+  font-size: 24px;
+  letter-spacing: -0.6px;
+}
+.support-page .support-section-heading > span {
+  color: var(--muted);
+  font-size: 11px;
+}
+.support-page .support-faq-item {
+  border-top: 1px solid var(--line);
+  transition:
+    background-color 0.3s,
+    border-radius 0.3s;
+}
+.support-page .support-faq-item:last-child {
+  border-bottom: 1px solid var(--line);
+}
+.support-page .support-faq-item h3 {
+  margin: 0;
+}
+.support-page .support-faq-item h3 > button {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  text-align: left;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  padding: 24px 12px;
+  font: inherit;
+  cursor: pointer;
+}
+.support-page .support-faq-item h3 > button:focus-visible {
+  outline: 2px solid #0077ff;
+  outline-offset: -2px;
+  border-radius: 12px;
+}
+.support-page .support-question-number {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.support-page .support-question-text {
+  min-width: 0;
+  flex: 1;
+}
+.support-page .support-question-text small {
+  display: block;
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+.support-page .support-question-text strong {
+  font-size: clamp(15px, 1.3vw, 18px);
+  font-weight: 750;
+  letter-spacing: -0.25px;
+  line-height: 1.5;
+}
+.support-page .support-question-toggle {
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--surface-soft);
+  color: var(--muted);
+  flex-shrink: 0;
+  transition:
+    transform 0.4s var(--motion),
+    background-color 0.2s,
+    color 0.2s;
+}
+.support-page .support-question-toggle .icon {
+  width: 17px;
+  height: 17px;
+}
+.support-page .support-faq-item.is-open .support-question-toggle {
+  transform: rotate(45deg);
+  background: var(--state-tint);
+  color: var(--accent-text);
+}
+.support-page .support-faq-answer {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  transition:
+    grid-template-rows 0.38s var(--motion),
+    opacity 0.24s;
+}
+.support-page .support-faq-item.is-open .support-faq-answer {
+  grid-template-rows: 1fr;
+  opacity: 1;
+}
+.support-page .support-faq-answer > div {
+  overflow: hidden;
+  min-height: 0;
+}
+.support-page .support-answer-content {
+  padding: 0 58px 28px 48px;
+}
+.support-page .support-answer-content p {
+  margin: 0;
+  max-width: 64ch;
+  font-size: 13px;
+  line-height: 1.9;
+  color: var(--muted);
+}
+.support-page .support-answer-content a {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 18px;
+  font-weight: 700;
+  font-size: 12px;
+  color: var(--accent-text);
+}
+.support-page .support-answer-content a .icon {
+  width: 15px;
+  height: 15px;
+  transition: transform 0.25s var(--motion);
+}
+.support-page .support-answer-content a:hover .icon {
+  transform: translateX(4px);
+}
+@media (max-width: 900px) {
+  .support-page .support-layout {
+    grid-template-columns: 1fr;
+    gap: 32px;
+  }
+  .support-page .support-answers {
+    grid-row: 1;
+  }
+  .support-page .support-aside {
+    grid-template-columns: 1fr 1fr;
+    align-items: start;
+  }
+}
+@media (max-width: 560px) {
+  .support-page .support-heading {
+    margin-bottom: 28px;
+  }
+  .support-page .support-section-heading > span {
+    display: none;
+  }
+  .support-page .support-aside {
+    grid-template-columns: 1fr;
+  }
+  .support-page .support-faq-item h3 > button {
+    gap: 12px;
+    padding-inline: 0;
+  }
+  .support-page .support-answer-content {
+    padding-left: 30px;
+    padding-right: 12px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .support-page *,
+  .support-page *::before,
+  .support-page *::after {
+    transition: none !important;
+    animation: none !important;
+  }
+}

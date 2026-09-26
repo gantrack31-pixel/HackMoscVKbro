@@ -1,0 +1,68 @@
+.page .home-tabs {
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  width: min(540px, 100%);
+  padding: 5px;
+  gap: 0;
+  border-radius: 17px;
+  background: var(--surface-soft);
+  border: 1px solid var(--line);
+  overflow: visible;
+}
+.page .home-tabs button {
+  position: relative;
+  z-index: 1;
+  min-width: 0;
+  justify-content: center;
+  border-radius: 12px;
+  padding: 11px 10px;
+  background: transparent;
+  color: var(--muted);
+  transition: color 0.22s;
+}
+.page .home-tabs button.active {
+  background: transparent;
+  color: #fff;
+  box-shadow: none;
+}
+.page .home-tabs button .icon {
+  width: 16px;
+  height: 16px;
+}
+.page .home-tabs .home-tab-indicator {
+  position: absolute;
+  inset: 5px auto 5px 5px;
+  width: calc((100% - 10px) / 3);
+  border-radius: 12px;
+  background: #0077ff;
+  pointer-events: none;
+  transition: transform 0.5s cubic-bezier(0.22, 1.08, 0.36, 1);
+}
+.profile-page.profile-refined .profile-tabs {
+  border-radius: 17px;
+  padding: 5px;
+}
+.profile-page.profile-refined .profile-tab-indicator {
+  inset: 5px auto 5px 5px;
+  width: calc((100% - 10px) / 3);
+  border-radius: 12px;
+}
+.profile-page.profile-refined .profile-tabs button {
+  padding-block: 11px;
+}
+@media (max-width: 600px) {
+  .page .home-tabs button {
+    flex-direction: column;
+    gap: 4px;
+    font-size: 10px;
+    padding: 9px 3px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .page .home-tabs .home-tab-indicator,
+  .page .home-tabs button {
+    transition: none;
+  }
+}

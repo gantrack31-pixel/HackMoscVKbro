@@ -6,9 +6,11 @@ import {
   ArrowLeft,
   Check,
   Layers,
+  Maximize2,
 } from "lucide-react";
 import { api } from "../api";
 import { SlidePreview } from "../components/SlidePreview";
+import { PresentationViewer } from "../components/PresentationViewer";
 import { ExportPanel } from "../components/ExportPanel";
 import { CloudLibrary } from "../components/CloudLibrary";
 import type { CloudReceipt, CloudStatus, Project } from "../types";
@@ -21,6 +23,7 @@ export function Finish({
   onOpen: (p: Project) => void;
 }) {
   const [method, setMethod] = useState<"cloud" | "download">("cloud");
+  const [presenting, setPresenting] = useState(false);
   const [status, setStatus] = useState<CloudStatus | null>(null),
     [receipt, setReceipt] = useState<CloudReceipt | null>(null);
   const [error, setError] = useState(""),
@@ -91,9 +94,13 @@ export function Finish({
         <section className="finish-preview panel">
           <div className="between">
             <h2>{project.title}</h2>
-            <span className="badge">
-              {project.content.slides.length} слайдов
-            </span>
+            <button
+              type="button"
+              className="btn sm"
+              onClick={() => setPresenting(true)}
+            >
+              <Maximize2 size={16} /> Смотреть
+            </button>
           </div>
           <SlidePreview
             scene={project.variants[project.variant][index]}
@@ -118,8 +125,8 @@ export function Finish({
           </div>
           <div className="between small muted">
             <span>
-              {project.template.name} ·{" "}
-              {project.template.metadata.ratio.toFixed(2)}:1
+              {project.template.name} · Слайд {index + 1} из{" "}
+              {project.content.slides.length}
             </span>
             <a className="btn sm" href="#audit">
               Проверить слайды
@@ -236,6 +243,14 @@ export function Finish({
         </section>
       </div>
       <CloudLibrary onOpen={onOpen} refresh={refresh} />
+      {presenting && (
+        <PresentationViewer
+          scenes={project.variants[project.variant]}
+          title={project.title}
+          initialIndex={index}
+          onClose={() => setPresenting(false)}
+        />
+      )}
     </>
   );
 }

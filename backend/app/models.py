@@ -4,6 +4,13 @@ from pydantic import BaseModel, Field, ConfigDict, field_validator, model_valida
 
 Variant = Literal['a', 'b', 'c']
 
+class SlideDesign(BaseModel):
+    """Validated design choices; the model cannot inject text or arbitrary geometry."""
+    model_config = ConfigDict(extra='forbid')
+    composition: Literal['split', 'editorial', 'grid']
+    density: Literal['compact', 'balanced', 'airy'] = 'balanced'
+    layout_shift: Literal[0, 1, 2] = 0
+
 class ChartData(BaseModel):
     model_config = ConfigDict(extra='forbid',allow_inf_nan=False)
     labels: list[str] = Field(min_length=1, max_length=6)
@@ -26,6 +33,7 @@ class Slide(BaseModel):
     source_quote: str = Field(default='', max_length=1500)
     notes: str = Field(default='', max_length=3000)
     layout: Variant | None = None
+    design: SlideDesign | None = None
     fixed: list[str] = Field(default_factory=list)
     @model_validator(mode='after')
     def required_visual_data(self):
@@ -65,6 +73,18 @@ class GenerateRequest(BaseModel):
     template_id: str
     content: DeckContent
     source_text: str = Field(default='', max_length=50000)
+
+class RegenerateRequest(BaseModel):
+    instruction: str = Field(default='', max_length=1000)
+
+class SlideDesignChoice(BaseModel):
+    model_config = ConfigDict(extra='forbid')
+    slide: int = Field(ge=0, le=29)
+    design: SlideDesign
+
+class DesignPlan(BaseModel):
+    model_config = ConfigDict(extra='forbid')
+    slides: list[SlideDesignChoice] = Field(min_length=1, max_length=30)
 
 class ProjectUpdate(BaseModel):
     content: DeckContent

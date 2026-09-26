@@ -4,6 +4,7 @@ import { useLivePreview } from "../components/useLivePreview";
 import { api } from "../api";
 import { Icon } from "../components/Icon";
 import { SlidePreview } from "../components/SlidePreview";
+import { PresentationViewer } from "../components/PresentationViewer";
 import "../styles/editor-polish.css";
 import {
   blankSlide,
@@ -32,6 +33,7 @@ export function Editor({
     [busy, setBusy] = useState(false),
     [dirty, setDirty] = useState(false);
   const [hasDataErrors, setHasDataErrors] = useState(false);
+  const [viewing, setViewing] = useState(false);
   const preview = useLivePreview(project, content, dirty && !hasDataErrors);
   useEffect(() => {
     onDirty(dirty);
@@ -110,7 +112,9 @@ export function Editor({
             <Icon name="edit" />
           </div>
           <p className="editor-document-meta">
-            <span>{project.template.name} · {content.slides.length} слайдов</span>
+            <span>
+              {project.template.name} · {content.slides.length} слайдов
+            </span>
             <span
               className={`editor-save-status ${dirty ? "is-dirty" : ""}`}
               role="status"
@@ -182,7 +186,11 @@ export function Editor({
           onClick={() => save()}
         >
           <Icon name="check" />
-          {busy ? "Сохраняем…" : dirty ? "Сохранить изменения" : "Всё сохранено"}
+          {busy
+            ? "Сохраняем…"
+            : dirty
+              ? "Сохранить изменения"
+              : "Всё сохранено"}
         </button>
       </div>
       <div className="editor-layout">
@@ -224,6 +232,14 @@ export function Editor({
           <div className="canvas-top">
             <span className="label">Слайд {index + 1}</span>
             <span className="badge">{slideKinds[slide.kind]}</span>
+            <button
+              className="btn sm editor-preview-button"
+              onClick={() => setViewing(true)}
+              disabled={!scene}
+            >
+              <Icon name="play" />
+              Смотреть
+            </button>
           </div>
           <div className="slide-canvas" key={index}>
             {scene ? (
@@ -242,10 +258,6 @@ export function Editor({
                     : "Предпросмотр обновлён. Сохраните изменения, чтобы продолжить.")}
             </p>
           )}
-          <div className="canvas-bottom">
-            <span>{scene?.template_layout || "Авторская композиция"}</span>
-            <span>{project.template.metadata.ratio.toFixed(2)}:1</span>
-          </div>
           <section className="source-card">
             <div className="between">
               <h3>
@@ -279,6 +291,7 @@ export function Editor({
         <fieldset className="inspector panel" disabled={busy}>
           <span className="label">Содержание слайда</span>
           <SlideFields
+            sectioned
             key={`${index}-${project.updated_at}`}
             slide={slide}
             onChange={change}
@@ -304,6 +317,14 @@ export function Editor({
           </button>
         </fieldset>
       </div>
+      {viewing && (
+        <PresentationViewer
+          scenes={preview.scenes}
+          title={content.title}
+          initialIndex={index}
+          onClose={() => setViewing(false)}
+        />
+      )}
     </section>
   );
 }

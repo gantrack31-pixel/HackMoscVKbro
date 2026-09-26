@@ -1,9 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import { api } from "../api";
 import { CloudLibrary } from "../components/CloudLibrary";
 import { Icon } from "../components/Icon";
 import { TemplateCover } from "../components/TemplateCard";
 import type { Project, ProjectSummary, Template } from "../types";
+import "../styles/support-modern.css";
 
 export function Projects({
   templates,
@@ -286,66 +287,146 @@ export function Demo({
     </>
   );
 }
+const supportQuestions = [
+  {
+    title: "Как подключить модель?",
+    category: "Создание с AI",
+    answer:
+      "Подключение модели настраивает владелец сервера. Когда модель подключена, добавьте свою идею или материалы — Deckly поможет собрать структуру презентации. Если создание недоступно, напишите в поддержку: поможем проверить подключение.",
+    link: "#create",
+    action: "Создать презентацию",
+  },
+  {
+    title: "Как добавить свой шаблон?",
+    category: "Шаблоны и стиль",
+    answer:
+      "В разделе «Шаблоны» нажмите «Загрузить шаблон» и выберите файл PPTX до 50 МБ. Deckly прочитает палитру, шрифты, пропорции и макеты. После загрузки шаблон появится в вашей библиотеке.",
+    link: "#templates",
+    action: "К шаблонам",
+  },
+  {
+    title: "Можно ли редактировать результат?",
+    category: "Редактирование",
+    answer:
+      "Да. Меняйте заголовки, текст и порядок слайдов в редакторе, а затем сохраните изменения. В скачанном PPTX текст, таблицы и диаграммы остаются отдельными объектами — работу можно продолжить в PowerPoint.",
+    link: "#projects",
+    action: "Мои презентации",
+  },
+  {
+    title: "Почему PDF и PPTX могут отличаться?",
+    category: "Экспорт",
+    answer:
+      "PPTX сохраняет графику и ресурсы мастеров исходного шаблона. PDF и HTML используют общую схему размещения со шрифтом Manrope, поэтому некоторые детали оформления могут отличаться. Перед показом проверьте нужный формат в предпросмотре.",
+    link: "#demo",
+    action: "Как устроен экспорт",
+  },
+];
+
 export function Support() {
+  const [expanded, setExpanded] = useState<number | null>(0);
+  const accordionId = useId();
   return (
-    <>
-      <div className="heading">
+    <section className="support-page">
+      <header className="heading support-heading">
+        <span className="support-eyebrow">
+          <Icon name="help" /> Помощь в нужный момент
+        </span>
         <h1>Мы рядом, если нужна помощь</h1>
         <p>От первого шаблона до готовой презентации.</p>
-      </div>
-      <div className="support-grid">
-        <section className="support-contact">
-          <span className="label">Поддержка Deckly.Ai</span>
-          <div className="telegram-orb">
-            <Icon name="telegram" />
-          </div>
-          <h2>
-            Давайте
-            <br />
-            разберёмся вместе.
-          </h2>
-          <p>
-            Напишите нам о вопросе или пришлите пример. Пока поддержка работает
-            через личный профиль.
-          </p>
-          <a
-            className="btn"
-            href="https://t.me/flixyyy"
-            target="_blank"
-            rel="noreferrer"
-          >
-            <Icon name="telegram" />
-            Написать @flixyyy
-            <Icon name="external" />
+      </header>
+      <div className="support-layout">
+        <aside className="support-aside">
+          <a className="support-guide" href="#demo">
+            <span className="support-guide-icon">
+              <Icon name="play" />
+            </span>
+            <span>
+              <strong>Первый раз в Deckly?</strong>
+              <small>Пройдём путь вместе, шаг за шагом</small>
+            </span>
+            <Icon name="arrow" />
           </a>
-        </section>
-        <section className="panel">
-          <h2>Частые вопросы</h2>
-          {[
-            [
-              "Как подключить модель?",
-              "Подключение модели настраивает владелец сервера. После подключения вы сможете создавать содержание по своим материалам.",
-            ],
-            [
-              "Как добавить свой шаблон?",
-              "Откройте «Шаблоны» → «Загрузить шаблон». Поддерживается PPTX до 50 МБ. Палитра, шрифты, пропорции и макеты считываются на сервере.",
-            ],
-            [
-              "Можно ли редактировать результат?",
-              "Да. В редакторе меняется содержание; в PowerPoint текст, таблицы и диаграммы остаются отдельными объектами.",
-            ],
-            [
-              "Почему PDF и PPTX могут отличаться?",
-              "В PPTX сохраняются ресурсы мастеров исходного шаблона. PDF и HTML используют общую схему размещения с Manrope, без графики мастеров.",
-            ],
-          ].map(([q, a]) => (
-            <details className="faq" key={q}>
-              <summary>{q}</summary>
-              <p>{a}</p>
-            </details>
-          ))}
+          <section className="support-personal">
+            <span className="support-contact-icon">
+              <Icon name="telegram" />
+            </span>
+            <h2>Давайте разберёмся вместе.</h2>
+            <p>
+              Не нашли ответ? Опишите вопрос и приложите скриншот — так нам
+              будет проще помочь.
+            </p>
+            <a
+              className="btn"
+              href="https://t.me/flixyyy"
+              target="_blank"
+              rel="noreferrer"
+            >
+              Написать в Telegram
+              <Icon name="external" />
+            </a>
+          </section>
+        </aside>
+        <section
+          className="support-answers"
+          aria-labelledby={`${accordionId}-title`}
+        >
+          <div className="support-section-heading">
+            <h2 id={`${accordionId}-title`}>Частые вопросы</h2>
+            <span>Коротко о главном</span>
+          </div>
+          <div className="support-faq-list">
+            {supportQuestions.map((question, index) => {
+              const open = expanded === index;
+              const questionId = `${accordionId}-question-${index}`;
+              const answerId = `${accordionId}-answer-${index}`;
+              return (
+                <article
+                  className={`support-faq-item${open ? " is-open" : ""}`}
+                  key={question.title}
+                >
+                  <h3>
+                    <button
+                      id={questionId}
+                      aria-expanded={open}
+                      aria-controls={answerId}
+                      onClick={() => setExpanded(open ? null : index)}
+                    >
+                      <span className="support-question-number">
+                        {String(index + 1).padStart(2, "0")}
+                      </span>
+                      <span className="support-question-text">
+                        <small>{question.category}</small>
+                        <strong>{question.title}</strong>
+                      </span>
+                      <span className="support-question-toggle">
+                        <Icon name="plus" />
+                      </span>
+                    </button>
+                  </h3>
+                  <div
+                    id={answerId}
+                    className="support-faq-answer"
+                    role="region"
+                    aria-labelledby={questionId}
+                    aria-hidden={!open}
+                    inert={!open}
+                  >
+                    <div>
+                      <div className="support-answer-content">
+                        <p>{question.answer}</p>
+                        <a href={question.link}>
+                          {question.action}
+                          <Icon name="arrow" />
+                        </a>
+                      </div>
+                    </div>
+                  </div>
+                </article>
+              );
+            })}
+          </div>
         </section>
       </div>
-    </>
+    </section>
   );
 }

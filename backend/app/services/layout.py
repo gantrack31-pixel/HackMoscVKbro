@@ -81,6 +81,8 @@ def geometry_nodes(obj):
 
 def build_scene(slide: Slide, metadata: dict, variant: str, index: int) -> dict:
     variant=slide.layout or variant
+    if slide.design:
+        variant=['a','b','c'][(['a','b','c'].index(variant)+slide.design.layout_shift)%3]
     width=1280.;height=width/metadata.get('ratio',16/9)
     accent=metadata.get('accent','#0077FF')
     if len(accent)!=7: accent='#0077FF'
@@ -108,7 +110,11 @@ def build_scene(slide: Slide, metadata: dict, variant: str, index: int) -> dict:
         title_size=min(84.,title_size*1.35)
         title_box.update(y=height*.23,h=height*.3)
         body_box.update(y=height*.59,h=height*.22)
-    composition=metadata.get('composition')
+    composition=slide.design.composition if slide.design else metadata.get('composition')
+    if slide.design:
+        scale={'compact':.9,'balanced':1.,'airy':1.04}[slide.design.density]
+        title_size*=scale
+        body_size*=scale
     if composition=='split':
         title_box.update(x=88,w=min(title_box['w'],width-352))
         body_box.update(x=88,w=min(body_box['w'],width-352))

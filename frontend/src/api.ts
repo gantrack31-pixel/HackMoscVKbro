@@ -140,6 +140,11 @@ export const api = {
       json("POST", { template_id, content, source_text }),
     ),
   job: (id: string) => request<Job>(`/jobs/${id}`),
+  regenerate: (id: string, instruction = "") =>
+    request<{ job_id: string }>(
+      `/projects/${id}/regenerate`,
+      json("POST", { instruction }),
+    ),
   projects: () => request<ProjectSummary[]>("/projects"),
   project: (id: string) => request<Project>(`/projects/${id}`),
   update: (id: string, content: DeckContent, variant: Variant) =>

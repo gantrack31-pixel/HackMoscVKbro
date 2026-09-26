@@ -42,6 +42,11 @@ export interface Slide {
   source_quote: string;
   notes: string;
   layout: Variant | null;
+  design?: {
+    composition: "split" | "editorial" | "grid";
+    density: "compact" | "balanced" | "airy";
+    layout_shift: 0 | 1 | 2;
+  } | null;
   fixed: string[];
 }
 export interface DeckContent {
