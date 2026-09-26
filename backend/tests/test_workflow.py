@@ -114,6 +114,17 @@ def test_unseen_template_ratio_private_and_bad_file(client):
     assert template['id'] not in [t['id'] for t in client.get('/api/templates').json()]
     assert client.post('/api/outline',json={'template_id':template['id'],'prompt':'Текст','count':3}).status_code==404
 
+def test_pptx_upload_rejects_zip_bomb_and_cleans_temporary_file(client,monkeypatch):
+    register(client)
+    monkeypatch.setattr('app.main.validate_pptx_archive',lambda path: (_ for _ in ()).throw(ValueError('PPTX превышает допустимый распакованный размер.')))
+
+    response=client.post('/api/templates',files={'file':('oversized-expanded.pptx',b'compressed-input')})
+
+    assert response.status_code==422
+    assert 'распакованный размер' in response.json()['detail']
+    assert list((settings.storage/'templates').glob('*.pptx'))==[]
+    assert not any(template.get('user_id') for template in db.templates_list())
+
 @pytest.mark.parametrize('tid',['tech','workspace','education'])
 def test_original_templates_three_editable_variants(tid):
     path=BASE/'data/templates'/f'{tid}.pptx'

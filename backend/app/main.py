@@ -13,6 +13,7 @@ from .config import settings, BASE, validate_settings
 from . import database as db
 from .models import OutlineRequest, GenerateRequest, RegenerateRequest, ProjectUpdate, FixRequest, DeckContent, Issue
 from .services.templates import seed_templates, analyze_template, BUILTIN_IDS
+from .services.pptx_security import validate_pptx_archive
 from .services.llm import make_outline, review_content, redesign_layout, configured, LLMError
 from .services.layout import build_scene
 from .services.audit import audit_deck, source_status
@@ -111,6 +112,7 @@ async def upload_template(file: UploadFile,user=Depends(current_user)):
                 size+=len(chunk)
                 if size>settings.max_upload_mb*1024**2: raise HTTPException(413,f'Максимум {settings.max_upload_mb} МБ')
                 dest.write(chunk)
+        await asyncio.to_thread(validate_pptx_archive,path)
         metadata=await asyncio.to_thread(analyze_template,path)
         name=Path(file.filename.replace('\\','/')).stem[:120]
         metadata.update(category='Мои шаблоны',cover_title=name)
@@ -120,7 +122,7 @@ async def upload_template(file: UploadFile,user=Depends(current_user)):
         path.unlink(missing_ok=True);raise
     except Exception as exc:
         path.unlink(missing_ok=True)
-        raise HTTPException(422,str(exc) if isinstance(exc,ValueError) else 'Не удалось прочитать структуру PPTX.') from exc
+        raise HTTPException(422,str(exc) if isinstance(exc,ValueError) else 'Не удалось прочитать структуру PPTX.') from None
     finally: await file.close()
 
 @app.post('/api/outline')
