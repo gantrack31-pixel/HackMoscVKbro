@@ -57,6 +57,25 @@ const audiences = [
   "Инвесторы",
   "Студенты",
 ];
+const PENDING_JOB_KEY = "deckly-pending-generation";
+type PendingJob = { id: string; kind: "generate" | "regenerate"; sourceProjectId?: string };
+function readPendingJob(): PendingJob | null {
+  try {
+    const value = JSON.parse(sessionStorage.getItem(PENDING_JOB_KEY) || "null");
+    return value && typeof value.id === "string" &&
+      (value.kind === "generate" || value.kind === "regenerate") ? value : null;
+  } catch {
+    return null;
+  }
+}
+function writePendingJob(job: PendingJob | null) {
+  try {
+    if (job) sessionStorage.setItem(PENDING_JOB_KEY, JSON.stringify(job));
+    else sessionStorage.removeItem(PENDING_JOB_KEY);
+  } catch {
+    // Recovery still works within the current wizard if session storage is unavailable.
+  }
+}
 
 export function Wizard({
   template,
@@ -88,6 +107,7 @@ export function Wizard({
     [result, setResult] = useState<Project | null>(null),
     [variant, setVariant] = useState<Variant>("a");
   const [instruction, setInstruction] = useState("");
+  const [failedJob, setFailedJob] = useState<{ id: string; message: string } | null>(null);
   const [slideKeys, setSlideKeys] = useState<string[]>([]);
   const [movedKey, setMovedKey] = useState<string | null>(null);
   const [reorderNotice, setReorderNotice] = useState("");
@@ -132,6 +152,37 @@ export function Wizard({
       cancelPoll.current?.();
     };
   }, []);
+  useEffect(() => {
+    const pending = readPendingJob();
+    if (!pending || !active.current) return;
+    const id = begin(pending.kind);
+    if (id === null) return;
+    if (pending.kind === "generate") setStep(3);
+    else {
+      setStep(4);
+      if (pending.sourceProjectId)
+        api.project(pending.sourceProjectId).then(setResult).catch(() => undefined);
+    }
+    void (async () => {
+      try {
+        const recovered = await poll(pending.id, id);
+        if (!recovered || !isCurrent(id)) return;
+        setResult(recovered);
+        setVariant(recovered.variant);
+        setFailedJob(null);
+        writePendingJob(null);
+        setStep(4);
+      } catch (e) {
+        if (!isCurrent(id)) return;
+        const failure = e as Error & { jobId?: string; retryable?: boolean };
+        const jobId = failure.jobId || pending.id;
+        setFailedJob({ id: jobId, message: failure.message });
+        setStep(pending.kind === "regenerate" ? 4 : 3);
+      } finally {
+        finish(id);
+      }
+    })();
+  }, []);
   function begin(next: NonNullable<typeof operation>) {
     if (locked.current || !active.current) return null;
     locked.current = true;
@@ -153,7 +204,10 @@ export function Wizard({
       if (!isCurrent(id)) return null;
       setStage(job.stage);
       if (job.state === "failed")
-        throw new Error(job.error || "Не удалось создать презентацию");
+        throw Object.assign(new Error(job.error || "Не удалось создать презентацию"), {
+          jobId: job.id,
+          retryable: job.can_retry,
+        });
       if (job.state === "complete" && job.project_id) {
         const project = await api.project(job.project_id);
         return isCurrent(id) ? project : null;
@@ -189,6 +243,7 @@ export function Wizard({
         mode,
       });
       if (isCurrent(id)) {
+        setFailedJob(null);
         setContent(response.content);
         setSlideKeys(response.content.slides.map(newSlideKey));
         setStep(2);
@@ -203,20 +258,31 @@ export function Wizard({
     if (!content) return;
     const id = begin("generate");
     if (id === null) return;
+    setFailedJob(null);
     setStage("queued");
     setStep(3);
     try {
       const { job_id } = await api.generate(template.id, content, prompt);
       if (!isCurrent(id)) return;
+      writePendingJob({ id: job_id, kind: "generate" });
       const project = await poll(job_id, id);
       if (project && isCurrent(id)) {
+        writePendingJob(null);
+        setFailedJob(null);
         setResult(project);
         setVariant(project.variant);
         setStep(4);
       }
     } catch (e) {
       if (isCurrent(id)) {
-        onError((e as Error).message);
+        const failure = e as Error & { jobId?: string; retryable?: boolean };
+        if (failure.jobId && failure.retryable) {
+          writePendingJob({ id: failure.jobId, kind: "generate" });
+          setFailedJob({ id: failure.jobId, message: failure.message });
+        } else {
+          writePendingJob(null);
+          onError(failure.message);
+        }
         setStep(2);
       }
     } finally {
@@ -227,15 +293,66 @@ export function Wizard({
     if (!result) return;
     const id = begin("regenerate");
     if (id === null) return;
+    setFailedJob(null);
     setStage("queued");
     try {
       const { job_id } = await api.regenerate(result.id, instruction.trim());
+      writePendingJob({ id: job_id, kind: "regenerate", sourceProjectId: result.id });
+      setFailedJob(null);
       if (!isCurrent(id)) return;
       const project = await poll(job_id, id);
-      if (project && isCurrent(id)) setResult(project);
+      if (project && isCurrent(id)) {
+        writePendingJob(null);
+        setFailedJob(null);
+        setResult(project);
+      }
     } catch (e) {
-      if (isCurrent(id))
-        onError(`${(e as Error).message} Предыдущие варианты сохранены.`);
+      if (isCurrent(id)) {
+        const failure = e as Error & { jobId?: string; retryable?: boolean };
+        if (failure.jobId && failure.retryable) {
+          writePendingJob({ id: failure.jobId, kind: "regenerate", sourceProjectId: result.id });
+          setFailedJob({ id: failure.jobId, message: failure.message });
+        } else {
+          writePendingJob(null);
+          onError(`${failure.message} Предыдущие варианты сохранены.`);
+        }
+      }
+    } finally {
+      finish(id);
+    }
+  }
+  async function retryFailedJob(keepCurrentResult: boolean) {
+    if (!failedJob) return;
+    const id = begin("generate");
+    if (id === null) return;
+    setStage("queued");
+    setStep(3);
+    try {
+      const { job_id } = await api.retryJob(failedJob.id);
+      if (!isCurrent(id)) return;
+      writePendingJob({
+        id: job_id,
+        kind: keepCurrentResult ? "regenerate" : "generate",
+        ...(keepCurrentResult && result ? { sourceProjectId: result.id } : {}),
+      });
+      const project = await poll(job_id, id);
+      if (project && isCurrent(id)) {
+        writePendingJob(null);
+        setFailedJob(null);
+        setResult(project);
+        setVariant(project.variant);
+        setStep(4);
+      }
+    } catch (e) {
+      if (isCurrent(id)) {
+        const failure = e as Error & { jobId?: string; retryable?: boolean };
+        if (failure.jobId && failure.retryable) setFailedJob({ id: failure.jobId, message: failure.message });
+        else {
+          writePendingJob(null);
+          onError(failure.message);
+        }
+        setStep(keepCurrentResult && result ? 4 : 2);
+      }
     } finally {
       finish(id);
     }
@@ -278,6 +395,7 @@ export function Wizard({
     if (!result) return;
     const id = begin("open");
     if (id === null) return;
+    writePendingJob(null);
     try {
       const project = await api.update(result.id, result.content, variant);
       if (isCurrent(id)) onOpen(project);
@@ -554,6 +672,14 @@ export function Wizard({
       {step === 2 && content && (
         <div className="outline-layout">
           <section>
+            {failedJob && (
+              <div className="error-banner" role="alert">
+                <span>{failedJob.message}</span>
+                <button className="btn sm" disabled={busy} onClick={() => retryFailedJob(false)}>
+                  Повторить создание
+                </button>
+              </div>
+            )}
             <div className="between" style={{ marginBottom: 20 }}>
               <div>
                 <h2>Сначала — история</h2>
@@ -749,6 +875,14 @@ export function Wizard({
       )}
       {step === 4 && result && (
         <section className="wizard-results">
+          {failedJob && (
+            <div className="error-banner" role="alert">
+              <span>{failedJob.message} Предыдущие варианты сохранены.</span>
+              <button className="btn sm" disabled={busy} onClick={() => retryFailedJob(true)}>
+                Повторить оформление
+              </button>
+            </div>
+          )}
           <div className="wizard-results-heading">
             <div>
               <span className="wizard-ready">

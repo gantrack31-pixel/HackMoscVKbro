@@ -140,6 +140,8 @@ export const api = {
       json("POST", { template_id, content, source_text }),
     ),
   job: (id: string) => request<Job>(`/jobs/${id}`),
+  retryJob: (id: string) =>
+    request<{ job_id: string }>(`/jobs/${id}/retry`, { method: "POST" }),
   regenerate: (id: string, instruction = "") =>
     request<{ job_id: string }>(
       `/projects/${id}/regenerate`,
