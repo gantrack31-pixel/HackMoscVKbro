@@ -4,6 +4,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 import json
 import sqlite3
+from uuid import uuid4
 from .config import settings
 
 def now() -> str:
@@ -59,11 +60,16 @@ def initialize():
             columns={row['name'] for row in db.execute(f'PRAGMA table_info({table})')}
             if 'user_id' not in columns: db.execute(f'ALTER TABLE {table} ADD COLUMN user_id TEXT')
         for table, additions in {'users': [('avatar_color', "TEXT NOT NULL DEFAULT '#0077FF'")],
-                                 'oauth_states': [('user_id', 'TEXT'), ('session_hash', 'TEXT')]}.items():
+                                 'oauth_states': [('user_id', 'TEXT'), ('session_hash', 'TEXT')],
+                                 'jobs': [('task_type', "TEXT NOT NULL DEFAULT 'legacy'"),
+                                          ('payload', 'TEXT'), ('retry_of', 'TEXT'), ('retry_job_id', 'TEXT')]}.items():
             columns={row['name'] for row in db.execute(f'PRAGMA table_info({table})')}
             for column, declaration in additions:
                 if column not in columns: db.execute(f'ALTER TABLE {table} ADD COLUMN {column} {declaration}')
-        db.execute("UPDATE jobs SET state='failed', error='Сервер перезапущен. Повторите создание.' WHERE state IN ('queued','running')")
+        db.execute("""UPDATE jobs SET state='failed',
+          error=CASE WHEN payload IS NULL THEN 'Сервер перезапущен. Старое задание нельзя восстановить; создайте презентацию заново.'
+                     ELSE COALESCE(error, 'Сервер перезапущен. Задание можно повторить.') END,
+          updated_at=? WHERE state IN ('queued','running','retrying')""", (now(),))
 
 def template_save(tid: str, name: str, path: str | None, metadata: dict, user_id=None):
     with connection() as db:
@@ -116,12 +122,109 @@ def project_undo(pid: str):
 def project_delete(pid: str):
     with connection() as db: db.execute('DELETE FROM projects WHERE id=?', (pid,))
 
+def job_create(jid: str, user_id: str, task_type: str, payload: dict, retry_of=None):
+    with connection() as db:
+        db.execute('''INSERT INTO jobs
+          (id,state,stage,project_id,error,updated_at,user_id,task_type,payload,retry_of)
+          VALUES (?,'queued','queued',NULL,NULL,?,?,?,?,?)''',
+          (jid, now(), user_id, task_type, json.dumps(payload, ensure_ascii=False), retry_of))
+
+
 def job_set(jid: str, state: str, stage: str, project_id=None, error=None, user_id=None):
     with connection() as db:
-        db.execute('''INSERT INTO jobs (id,state,stage,project_id,error,updated_at,user_id) VALUES (?,?,?,?,?,?,?)
-          ON CONFLICT(id) DO UPDATE SET state=excluded.state,stage=excluded.stage,project_id=excluded.project_id,error=excluded.error,updated_at=excluded.updated_at''', (jid, state, stage, project_id, error, now(),user_id))
+        db.execute('''UPDATE jobs SET state=?,stage=?,project_id=COALESCE(?,project_id),
+          error=?,updated_at=?,user_id=COALESCE(?,user_id) WHERE id=?''',
+          (state, stage, project_id, error, now(), user_id, jid))
+        if state=='failed':
+            child=db.execute('SELECT retry_of FROM jobs WHERE id=?',(jid,)).fetchone()
+            if child and child['retry_of']:
+                db.execute('''UPDATE jobs SET state='failed',stage='failed',error=?,updated_at=?
+                  WHERE id=? AND retry_job_id=? AND state='retrying' ''',
+                  (error or 'Повтор задания завершился ошибкой.',now(),child['retry_of'],jid))
 
 def job_get(jid: str):
     with connection() as db:
         row = db.execute('SELECT * FROM jobs WHERE id=?', (jid,)).fetchone()
-        return dict(row) if row else None
+        if not row: return None
+        result=dict(row)
+        if result.get('payload'):
+            result['payload']=json.loads(result['payload'])
+        return result
+
+
+def job_retry_claim(jid: str, user_id: str):
+    """Atomically claim a failed job and reuse one retry child for concurrent callers."""
+    with connection() as db:
+        db.execute('BEGIN IMMEDIATE')
+        row=db.execute('SELECT * FROM jobs WHERE id=? AND user_id=?',(jid,user_id)).fetchone()
+        if not row: return 'not_found',None
+        source=dict(row)
+        if source['state']=='retrying' and source.get('retry_job_id'):
+            child=db.execute('SELECT id FROM jobs WHERE id=? AND user_id=?',(source['retry_job_id'],user_id)).fetchone()
+            if child:return 'existing',child['id']
+        if source['state']=='complete' and source.get('retry_job_id'):
+            child=db.execute('SELECT id FROM jobs WHERE id=? AND user_id=? AND state IN (\'queued\',\'running\',\'complete\')',
+                             (source['retry_job_id'],user_id)).fetchone()
+            if child:return 'existing',child['id']
+        if source['state']=='complete': return 'complete',None
+        if source['state'] in {'queued','running'}: return 'in_progress',None
+        if source['state']!='failed' or not source.get('payload'): return 'unavailable',None
+        child=None
+        if source.get('retry_job_id'):
+            child=db.execute('SELECT * FROM jobs WHERE id=? AND user_id=?',(source['retry_job_id'],user_id)).fetchone()
+        if child and child['state'] in {'queued','running','complete'}:
+            return 'existing',child['id']
+        if child and child['state']=='failed':
+            retry_id=child['id']
+            payload=json.loads(child['payload'])
+            db.execute("UPDATE jobs SET state='queued',stage='queued',error=NULL,updated_at=? WHERE id=?",
+                       (now(),retry_id))
+            return 'claimed',retry_id
+        retry_id=str(uuid4())
+        payload=json.loads(source['payload'])
+        payload.setdefault('result_project_id',str(uuid4()))
+        db.execute('''INSERT INTO jobs
+          (id,state,stage,project_id,error,updated_at,user_id,task_type,payload,retry_of)
+          VALUES (?,'queued','queued',NULL,NULL,?,?,?,?,?)''',
+          (retry_id,now(),user_id,source['task_type'],json.dumps(payload,ensure_ascii=False),jid))
+        db.execute('UPDATE jobs SET retry_job_id=?,updated_at=? WHERE id=?',(retry_id,now(),jid))
+        return 'claimed',retry_id
+
+
+def job_complete_with_project(jid: str, pid: str, template_id: str, content: dict,
+                              source_text: str, user_id: str):
+    """Atomically persist the single result and mark its job complete."""
+    timestamp=now()
+    with connection() as db:
+        db.execute('BEGIN IMMEDIATE')
+        job=db.execute('SELECT state,retry_of FROM jobs WHERE id=? AND user_id=?',(jid,user_id)).fetchone()
+        if not job: raise ValueError('Задание не найдено при сохранении результата.')
+        if job['state']=='complete':
+            return db.execute('SELECT project_id FROM jobs WHERE id=?',(jid,)).fetchone()['project_id']
+        if job['state']!='running':
+            raise ValueError('Нельзя сохранить результат задания, которое не выполняется.')
+        reserved=db.execute('SELECT user_id FROM projects WHERE id=?',(pid,)).fetchone()
+        if reserved and reserved['user_id']!=user_id:
+            raise ValueError('ID результата уже принадлежит другому пользователю.')
+        db.execute('''INSERT OR IGNORE INTO projects
+          (id,title,template_id,content,source_text,variant,revisions,created_at,updated_at,user_id)
+          VALUES (?,?,?,?,?,'a','[]',?,?,?)''',
+          (pid,content['title'],template_id,json.dumps(content,ensure_ascii=False),source_text,timestamp,timestamp,user_id))
+        project=db.execute('SELECT user_id,template_id,content,source_text FROM projects WHERE id=?',(pid,)).fetchone()
+        if (not project or project['user_id']!=user_id or project['template_id']!=template_id
+                or project['content']!=json.dumps(content,ensure_ascii=False) or project['source_text']!=source_text):
+            raise ValueError('ID результата уже занят другой презентацией.')
+        db.execute('UPDATE jobs SET state=\'complete\',stage=\'complete\',project_id=?,error=NULL,updated_at=? WHERE id=?',
+                   (pid,timestamp,jid))
+        if job['retry_of']:
+            db.execute('''UPDATE jobs SET state='complete',stage='complete',project_id=?,error=NULL,updated_at=?
+              WHERE id=? AND retry_job_id=?''',(pid,timestamp,job['retry_of'],jid))
+        return pid
+
+
+def job_start(jid: str, user_id: str) -> bool:
+    """Acquire a single worker lease for a queued job using an atomic transition."""
+    with connection() as db:
+        cursor=db.execute("UPDATE jobs SET state='running',stage='starting',error=NULL,updated_at=? WHERE id=? AND user_id=? AND state='queued'",
+                          (now(),jid,user_id))
+        return cursor.rowcount==1
