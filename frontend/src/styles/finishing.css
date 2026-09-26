@@ -1,4 +1,29 @@
 /* Small refinements shared by the catalogue, library and walkthrough. */
+/* Preview the destination theme, including in the permanently dark sidebar. */
+.theme-toggle[data-target-theme="light"] {
+  background: #fff;
+  color: #263750;
+  border-color: #dbe4ef;
+  color-scheme: light;
+}
+.theme-toggle[data-target-theme="dark"] {
+  background: #101827;
+  color: #edf3ff;
+  border-color: #42516a;
+  color-scheme: dark;
+}
+.theme-toggle[data-target-theme]:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 3px;
+}
+.auth-controls > :is(.theme-toggle, .auth-panel-toggle) {
+  flex: 0 0 44px;
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  min-height: 44px;
+  box-sizing: border-box;
+}
 .page .heading h1 {
   text-wrap: balance;
   line-height: 1.18;

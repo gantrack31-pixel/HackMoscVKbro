@@ -40,6 +40,7 @@ export function ThemeToggle() {
     <button
       type="button"
       className="theme-toggle"
+      data-target-theme={theme === "light" ? "dark" : "light"}
       onClick={toggle}
       aria-label={
         theme === "light" ? "Включить тёмную тему" : "Включить светлую тему"

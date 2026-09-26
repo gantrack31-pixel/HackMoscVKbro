@@ -20,13 +20,6 @@ export function Shell({ route, children, favoriteCount, onLogout }: {
   const sidebarTrigger = useRef<HTMLButtonElement>(null);
   const navigationRef = useRef<HTMLElement>(null);
   const accountNavigationRef = useRef<HTMLElement>(null);
-  const previousRoute = useRef(route);
-  useEffect(() => {
-    if (previousRoute.current === route) return;
-    previousRoute.current = route;
-    const timer = setTimeout(() => setCollapsed(true), matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : 580);
-    return () => clearTimeout(timer);
-  }, [route]);
   useEffect(() => {
     if (collapsed) return;
     const overflow = document.body.style.overflow;
