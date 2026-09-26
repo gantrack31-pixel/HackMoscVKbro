@@ -5,9 +5,12 @@ import hmac
 import re
 import secrets
 import sqlite3
+import smtplib
 import time
+import logging
 from uuid import uuid4
-from urllib.parse import urlencode
+from urllib.parse import urlencode, quote
+from email.message import EmailMessage
 import httpx
 from fastapi import APIRouter, Request, Response, HTTPException, Depends
 from fastapi.responses import RedirectResponse
@@ -17,6 +20,8 @@ from .database import connection, now
 
 router=APIRouter(prefix='/api/auth',tags=['Аккаунт'])
 COOKIE='deckly_session'; OAUTH_COOKIE='deckly_oauth'; TTL=7*24*3600
+VERIFICATION_TTL=24*3600
+logger=logging.getLogger('deckly.auth')
 
 def digest(value): return hashlib.sha256(value.encode()).hexdigest()
 
@@ -57,7 +62,47 @@ class Registration(Credentials):
 def public_user(user):
     return {**{k:user[k] for k in ['id','email','first_name','last_name','created_at']},
             'avatar_color':user.get('avatar_color','#0077FF'), 'yandex_connected':bool(user.get('yandex_id')),
-            'password_enabled':bool(user.get('password_hash'))}
+            'password_enabled':bool(user.get('password_hash')),
+            'email_verified':bool(user.get('email_verified',True))}
+
+def deliver_verification_email(email, url):
+    """Send confirmation through SMTP; local development logs only the one-time URL."""
+    if not settings.smtp_host or not settings.smtp_username or not settings.smtp_password or not settings.email_from:
+        if settings.app_env == 'production':
+            raise RuntimeError('SMTP для подтверждения email не настроен.')
+        logger.warning('Email verification link for %s: %s', email, url)
+        return 'logged'
+    message=EmailMessage()
+    message['Subject']='Подтвердите адрес электронной почты — Deckly.Ai'
+    message['From']=settings.email_from
+    message['To']=email
+    message.set_content(f'Здравствуйте!\n\nПодтвердите адрес электронной почты, перейдя по ссылке (срок действия — 24 часа):\n{url}\n\nЕсли вы не создавали аккаунт Deckly.Ai, проигнорируйте это письмо.')
+    with smtplib.SMTP_SSL(settings.smtp_host,settings.smtp_port,timeout=15) as server:
+        server.login(settings.smtp_username,settings.smtp_password)
+        server.send_message(message)
+    return 'sent'
+
+def create_verification(user_id,email):
+    token=secrets.token_urlsafe(32);timestamp=int(time.time())
+    with connection() as db:
+        db.execute('''INSERT INTO email_verifications (user_id,token_hash,expires_at,last_sent_at)
+          VALUES (?,?,?,?) ON CONFLICT(user_id) DO UPDATE SET token_hash=excluded.token_hash,
+          expires_at=excluded.expires_at,last_sent_at=excluded.last_sent_at''',
+          (user_id,digest(token),timestamp+VERIFICATION_TTL,timestamp))
+    url=settings.public_url+'/#verify-email='+quote(token,safe='')
+    return deliver_verification_email(email,url)
+
+class VerificationToken(BaseModel):
+    token: str=Field(min_length=32,max_length=256)
+
+class ResendVerification(BaseModel):
+    email: str=Field(min_length=3,max_length=254)
+    @field_validator('email')
+    @classmethod
+    def valid_email(cls,value):
+        value=value.strip().lower()
+        if not re.fullmatch(r'[^\s@]+@[^\s@]+\.[^\s@]+',value):raise ValueError('Укажите корректную электронную почту')
+        return value
 
 def rate_limit(request):
     ip=digest(request.client.host if request.client else 'unknown');cutoff=int(time.time())-900
@@ -106,9 +151,23 @@ def register(data:Registration,request:Request,response:Response):
     encoded=password_hash(data.password)
     try:
         with connection() as db:
-            db.execute('INSERT INTO users (id,email,first_name,last_name,password_hash,yandex_id,created_at) VALUES (?,?,?,?,?,?,?)',(user['id'],user['email'],user['first_name'],user['last_name'],encoded,None,user['created_at']))
+            db.execute('INSERT INTO users (id,email,first_name,last_name,password_hash,yandex_id,created_at,email_verified) VALUES (?,?,?,?,?,?,?,?)',
+                       (user['id'],user['email'],user['first_name'],user['last_name'],encoded,None,user['created_at'],int(not settings.email_verification_required)))
     except sqlite3.IntegrityError:raise HTTPException(409,'Аккаунт с этой почтой уже существует. Войдите в него.')
     user['password_hash']=encoded
+    user['email_verified']=not settings.email_verification_required
+    if settings.email_verification_required:
+        delivery_pending=False
+        try:
+            delivery_mode=create_verification(user['id'],user['email'])
+        except (OSError,smtplib.SMTPException,RuntimeError) as exc:
+            logger.exception('Unable to deliver email verification message')
+            with connection() as db:
+                db.execute('UPDATE email_verifications SET last_sent_at=0 WHERE user_id=?',(user['id'],))
+            delivery_pending=True
+        response.headers['Cache-Control']='no-store'
+        return {'verification_required':True,'email':user['email'],
+                'delivery_pending':delivery_pending,'delivery_mode':'pending' if delivery_pending else delivery_mode}
     return set_session(response,user,request)
 
 @router.post('/login')
@@ -116,7 +175,46 @@ def login(data:Credentials,request:Request,response:Response):
     rate_limit(request)
     with connection() as db: row=db.execute('SELECT * FROM users WHERE email=?',(data.email,)).fetchone()
     if not password_valid(data.password,row['password_hash'] if row else None):raise HTTPException(401,'Неверная почта или пароль')
+    if row['password_hash'] and not row['email_verified']:
+        raise HTTPException(403,'Подтвердите адрес электронной почты по ссылке из письма.')
     return set_session(response,dict(row),request)
+
+@router.post('/verify-email')
+def verify_email(data:VerificationToken,response:Response):
+    timestamp=int(time.time())
+    with connection() as db:
+        db.execute('BEGIN IMMEDIATE')
+        verification=db.execute('SELECT user_id,expires_at FROM email_verifications WHERE token_hash=?',(digest(data.token),)).fetchone()
+        if not verification or verification['expires_at']<timestamp:
+            if verification:db.execute('DELETE FROM email_verifications WHERE user_id=?',(verification['user_id'],))
+            raise HTTPException(400,'Ссылка подтверждения недействительна или истекла. Запросите новое письмо.')
+        db.execute('UPDATE users SET email_verified=1 WHERE id=?',(verification['user_id'],))
+        db.execute('DELETE FROM email_verifications WHERE user_id=?',(verification['user_id'],))
+    response.headers['Cache-Control']='no-store'
+    return {'verified':True}
+
+@router.post('/verification/resend')
+def resend_verification(data:ResendVerification,request:Request):
+    rate_limit(request)
+    timestamp=int(time.time())
+    with connection() as db:
+        row=db.execute('''SELECT users.id,users.email,users.email_verified,email_verifications.last_sent_at
+          FROM users LEFT JOIN email_verifications ON users.id=email_verifications.user_id
+          WHERE users.email=? AND users.password_hash IS NOT NULL''',(data.email,)).fetchone()
+        if row and not row['email_verified']:
+            if row['last_sent_at'] is not None and timestamp-row['last_sent_at']<60:
+                return {'ok':True}
+            user_id,email=row['id'],row['email']
+        else:
+            return {'ok':True}
+    try:
+        delivery_mode=create_verification(user_id,email)
+    except (OSError,smtplib.SMTPException,RuntimeError) as exc:
+        logger.exception('Unable to resend email verification message')
+        with connection() as db:
+            db.execute('UPDATE email_verifications SET last_sent_at=0 WHERE user_id=?',(user_id,))
+        raise HTTPException(503,'Не удалось отправить письмо. Попробуйте позже.') from exc
+    return {'ok':True}
 
 @router.post('/logout',status_code=204)
 def logout(request:Request,response:Response,user=Depends(current_user)):

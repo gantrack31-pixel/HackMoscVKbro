@@ -21,6 +21,7 @@ def client(tmp_path, monkeypatch):
     monkeypatch.setattr(settings, 'database', tmp_path/'test.sqlite3')
     monkeypatch.setattr(settings, 'storage', tmp_path/'data')
     monkeypatch.setattr(settings, 'cloud_database_url', '')
+    monkeypatch.setattr(settings, 'email_verification_required', False)
     with TestClient(app) as client:
         response=client.post('/api/auth/register',json={'email':'experience@example.test','password':'Test-Experience-4761','first_name':'Тест','last_name':'Интерфейса'})
         assert response.status_code==201

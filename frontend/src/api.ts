@@ -100,14 +100,18 @@ export const api = {
     password: string;
     first_name: string;
     last_name: string;
-  }) => {
-    const result = await request<AuthResult>(
+  }): Promise<AuthResult | { verification_required: true; email: string; delivery_pending?: boolean; delivery_mode?: string }> => {
+    const result = await request<AuthResult | { verification_required: true; email: string; delivery_pending?: boolean; delivery_mode?: string }>(
       "/auth/register",
       json("POST", data),
     );
-    csrf = result.csrf;
+    if (!("verification_required" in result)) csrf = result.csrf;
     return result;
   },
+  verifyEmail: (token: string) =>
+    request<{ verified: boolean }>("/auth/verify-email", json("POST", { token })),
+  resendVerification: (email: string) =>
+    request<{ ok: boolean; delivery_mode?: string }>("/auth/verification/resend", json("POST", { email })),
   logout: async () => {
     await request<void>("/auth/logout", { method: "POST" });
     csrf = "";

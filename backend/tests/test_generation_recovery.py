@@ -14,6 +14,7 @@ def client(tmp_path, monkeypatch):
     monkeypatch.setattr(settings, 'storage', tmp_path / 'data')
     monkeypatch.setattr(settings, 'mode', 'demo')
     monkeypatch.setattr(settings, 'app_env', 'development')
+    monkeypatch.setattr(settings, 'email_verification_required', False)
     with TestClient(app) as client:
         yield client
 

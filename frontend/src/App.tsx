@@ -48,6 +48,9 @@ export default function App() {
   }, []);
   if (location.pathname.replace(/\/$/, "") === "/auth/yandex")
     return <YandexAuth />;
+  const verificationToken = new URLSearchParams(location.hash.slice(1)).get("verify-email");
+  if (verificationToken)
+    return <EmailVerification token={verificationToken} onComplete={() => { location.assign("/#login"); }} />;
   if (!ready)
     return (
       <div className="boot-screen">
@@ -79,6 +82,40 @@ export default function App() {
     />
   );
 }
+
+function EmailVerification({ token, onComplete }: { token: string; onComplete: () => void }) {
+  const [message, setMessage] = useState("Нажмите кнопку ниже, чтобы подтвердить адрес электронной почты.");
+  const [status, setStatus] = useState<"pending" | "busy" | "verified" | "failed">("pending");
+  async function verify() {
+    setStatus("busy");
+    try {
+      await api.verifyEmail(token);
+      setStatus("verified");
+      setMessage("Почта подтверждена. Теперь можно войти в аккаунт.");
+    } catch (error) {
+      setStatus("failed");
+      setMessage((error as Error).message);
+    } finally {
+      history.replaceState(null, "", location.pathname + location.search + "#login");
+    }
+  }
+  return (
+    <main className="email-verification-page" aria-live="polite">
+      <section className="email-verification-card">
+        <div className={`email-verification-mark ${status === "failed" ? "is-error" : ""}`} aria-hidden="true">
+          {status === "failed" ? "!" : status === "verified" ? "✓" : "✉"}
+        </div>
+        <h1>{status === "failed" ? "Не удалось подтвердить почту" : status === "verified" ? "Почта подтверждена" : "Подтверждение почты"}</h1>
+        <p>{message}</p>
+        {status === "pending" && <button className="auth-submit" onClick={verify}>Подтвердить адрес</button>}
+        {status === "busy" && <button className="auth-submit" disabled>Проверяем…</button>}
+        {status === "verified" && <button className="auth-submit" onClick={onComplete}>Перейти ко входу</button>}
+        {status === "failed" && <a className="auth-submit" href="/#login">Вернуться ко входу</a>}
+      </section>
+    </main>
+  );
+}
+
 function Workspace({
   user,
   onLogout,
