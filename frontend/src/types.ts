@@ -157,6 +157,7 @@ export interface Job {
   stage: string;
   project_id: string | null;
   error: string | null;
+  can_retry?: boolean;
 }
 export const blankSlide = (): Slide => ({
   title: "Новый слайд",

@@ -133,29 +133,32 @@ async def outline(request: OutlineRequest,user=Depends(current_user)):
     except LLMError as exc: raise HTTPException(502,str(exc)) from exc
     except TimeoutError as exc: raise HTTPException(504,'Создание структуры превысило четыре минуты. Попробуйте меньший объём.') from exc
 
-async def generate_job(jid: str, request: GenerateRequest,user_id: str):
+async def generate_job(jid: str, request: GenerateRequest,user_id: str, result_project_id: str | None = None):
+    if not db.job_start(jid,user_id): return
+    result_project_id=result_project_id or str(uuid4())
     async with generation_slots:
-        pid=str(uuid4())
         try:
             template=get_template(request.template_id,user_id)
-            db.job_set(jid,'running','layout')
+            db.job_set(jid,'running','layout',user_id=user_id)
             # Материалы уже согласованы пользователем; LLM не переписывает их при вёрстке.
             await asyncio.to_thread(lambda:[build_scene(s,template['metadata'],'a',i) for i,s in enumerate(request.content.slides)])
-            db.job_set(jid,'running','export')
+            db.job_set(jid,'running','export',user_id=user_id)
             for variant in ['a','b','c']:
                 await asyncio.to_thread(export_pptx,request.content,template,variant)
-            db.job_set(jid,'running','audit')
+            db.job_set(jid,'running','audit',user_id=user_id)
             audit_deck(request.content,template,'a',request.source_text)
-            db.project_create(pid,request.template_id,request.content.model_dump(),request.source_text,user_id)
-            db.job_set(jid,'complete','complete',pid)
+            db.job_complete_with_project(jid,result_project_id,request.template_id,
+                                         request.content.model_dump(),request.source_text,user_id)
         except Exception:
             logger.exception('Ошибка сборки презентации %s',jid)
-            db.job_set(jid,'failed','failed',error='Не удалось собрать презентацию. Проверьте шаблон и структуру, затем повторите.')
+            db.job_set(jid,'failed','failed',error='Не удалось собрать презентацию. Проверьте шаблон и структуру, затем повторите.',user_id=user_id)
 
 @app.post('/api/generate',status_code=202)
 def generate(request: GenerateRequest,tasks: BackgroundTasks,user=Depends(current_user)):
     get_template(request.template_id,user['id'])
-    jid=str(uuid4());db.job_set(jid,'queued','queued',user_id=user['id']);tasks.add_task(generate_job,jid,request,user['id'])
+    jid=str(uuid4());pid=str(uuid4())
+    db.job_create(jid,user['id'],'generate',{'request':request.model_dump(),'result_project_id':pid})
+    tasks.add_task(generate_job,jid,request,user['id'],pid)
     return {'job_id':jid}
 
 @app.get('/api/jobs/{jid}')
@@ -163,32 +166,64 @@ def job(jid: str,user=Depends(current_user)):
     result=db.job_get(jid)
     if not result or result['user_id']!=user['id']: raise HTTPException(404,'Задание не найдено')
     result.pop('user_id',None)
+    result.pop('payload',None)
+    result['can_retry']=result['state']=='failed' and bool(result.get('task_type') in {'generate','regenerate'})
+    result.pop('task_type',None)
+    result.pop('retry_of',None)
+    result.pop('retry_job_id',None)
     return result
 
-async def regenerate_job(jid: str, original: dict, instruction: str, user_id: str):
+
+@app.post('/api/jobs/{jid}/retry',status_code=202)
+def retry_job(jid: str,tasks: BackgroundTasks,user=Depends(current_user)):
+    status,retry_id=db.job_retry_claim(jid,user['id'])
+    if status=='not_found':raise HTTPException(404,'Задание не найдено')
+    if status=='complete':raise HTTPException(409,'Завершённое задание нельзя повторить.')
+    if status=='in_progress':raise HTTPException(409,'Задание ещё выполняется.')
+    if status=='unavailable':raise HTTPException(409,'Для этого задания повтор недоступен.')
+    retry=db.job_get(retry_id)
+    if status=='existing' and retry and retry['state']=='complete':
+        return {'job_id':retry_id}
+    if status=='claimed' and retry and retry['state']=='queued':
+        if retry['retry_of']:
+            source=db.job_get(retry['retry_of'])
+            if source and source['retry_job_id']==retry_id:
+                db.job_set(source['id'],'retrying','retrying',user_id=user['id'])
+        if retry['task_type']=='generate':
+            request=GenerateRequest.model_validate(retry['payload']['request'])
+            tasks.add_task(generate_job,retry_id,request,user['id'],retry['payload']['result_project_id'])
+        elif retry['task_type']=='regenerate':
+            original=retry['payload']['original']
+            tasks.add_task(regenerate_job,retry_id,original,retry['payload']['instruction'],user['id'],retry['payload']['result_project_id'])
+        else:
+            raise HTTPException(409,'Для этого типа задания повтор недоступен.')
+    return {'job_id':retry_id}
+
+async def regenerate_job(jid: str, original: dict, instruction: str, user_id: str, result_project_id=None):
+    if not db.job_start(jid,user_id): return
+    result_project_id=result_project_id or str(uuid4())
     async with generation_slots:
         try:
             template=get_template(original['template_id'],user_id)
-            db.job_set(jid,'running','design')
+            db.job_set(jid,'running','design',user_id=user_id)
             content=await redesign_layout(DeckContent.model_validate(original['content']),template,instruction)
-            db.job_set(jid,'running','layout')
+            db.job_set(jid,'running','layout',user_id=user_id)
             await asyncio.to_thread(lambda:[build_scene(s,template['metadata'],'a',i) for i,s in enumerate(content.slides)])
-            db.job_set(jid,'running','export')
+            db.job_set(jid,'running','export',user_id=user_id)
             for variant in ['a','b','c']:
                 await asyncio.to_thread(export_pptx,content,template,variant)
-            db.job_set(jid,'running','audit')
+            db.job_set(jid,'running','audit',user_id=user_id)
             await asyncio.to_thread(audit_deck,content,template,'a',original['source_text'])
             # Persist only a complete result, as a copy; never overwrite the user's working project.
-            pid=str(uuid4())
-            db.project_create(pid,original['template_id'],content.model_dump(),original['source_text'],user_id)
-            db.job_set(jid,'complete','complete',pid)
+            db.job_complete_with_project(jid,result_project_id,original['template_id'],
+                                         content.model_dump(),original['source_text'],user_id)
         except LLMError as exc:
-            db.job_set(jid,'failed','failed',error=str(exc))
+            db.job_set(jid,'failed','failed',error=str(exc),user_id=user_id)
         except TimeoutError:
-            db.job_set(jid,'failed','failed',error='Модель не успела подготовить оформление. Предыдущая презентация сохранена.')
+            db.job_set(jid,'failed','failed',error='Модель не успела подготовить оформление. Предыдущая презентация сохранена.',user_id=user_id)
         except Exception:
             logger.exception('Ошибка нового оформления %s',jid)
-            db.job_set(jid,'failed','failed',error='Не удалось создать новое оформление. Предыдущая презентация сохранена.')
+            db.job_set(jid,'failed','failed',error='Не удалось создать новое оформление. Предыдущая презентация сохранена.',user_id=user_id)
 
 @app.post('/api/projects/{pid}/regenerate',status_code=202)
 def regenerate(pid: str, request: RegenerateRequest, tasks: BackgroundTasks, user=Depends(current_user)):
@@ -197,8 +232,18 @@ def regenerate(pid: str, request: RegenerateRequest, tasks: BackgroundTasks, use
     if settings.mode=='live' and not configured():
         raise HTTPException(409,'Модель ещё не подключена. Настройте её на сервере и повторите.')
     jid=str(uuid4())
-    db.job_set(jid,'queued','queued',user_id=user['id'])
-    tasks.add_task(regenerate_job,jid,original,request.instruction,user['id'])
+    result_project_id=str(uuid4())
+    regeneration_source={
+        'id':original['id'],
+        'template_id':original['template_id'],
+        'content':original['content'],
+        'source_text':original['source_text'],
+    }
+    db.job_create(jid,user['id'],'regenerate',{
+        'project_id':pid,'instruction':request.instruction,'original':regeneration_source,
+        'result_project_id':result_project_id,
+    })
+    tasks.add_task(regenerate_job,jid,original,request.instruction,user['id'],result_project_id)
     return {'job_id':jid}
 
 @app.get('/api/projects')

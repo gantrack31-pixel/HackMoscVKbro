@@ -114,6 +114,29 @@ def test_unseen_template_ratio_private_and_bad_file(client):
     assert template['id'] not in [t['id'] for t in client.get('/api/templates').json()]
     assert client.post('/api/outline',json={'template_id':template['id'],'prompt':'Текст','count':3}).status_code==404
 
+def test_failed_generation_can_be_retried_without_duplicate_projects(client):
+    register(client)
+    content=DeckContent(title='Повторяемая презентация',slides=[
+        Slide(title='Сохранённый материал',body='Тезис остаётся доступен',source_quote='Тезис остаётся доступен'),
+    ])
+    response=client.post('/api/generate',json={
+        'template_id':'tech','content':content.model_dump(),'source_text':'Тезис остаётся доступен',
+    })
+    failed_id=response.json()['job_id']
+    failed=db.job_get(failed_id)
+    db.project_delete(failed['project_id'])
+    db.job_set(failed_id,'failed','failed',error='Сервер перезапущен. Повторите создание.')
+
+    first=client.post(f'/api/jobs/{failed_id}/retry')
+    second=client.post(f'/api/jobs/{failed_id}/retry')
+
+    assert first.status_code==202 and first.json()['job_id']==second.json()['job_id']
+    retried=client.get('/api/jobs/'+first.json()['job_id']).json()
+    assert retried['state']=='complete' and retried['can_retry'] is False
+    restored=client.get('/api/projects/'+retried['project_id']).json()
+    assert restored['content']==content.model_dump()
+    assert len(client.get('/api/projects').json())==1
+
 @pytest.mark.parametrize('tid',['tech','workspace','education'])
 def test_original_templates_three_editable_variants(tid):
     path=BASE/'data/templates'/f'{tid}.pptx'
