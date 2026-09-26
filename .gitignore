@@ -22,4 +22,6 @@ backend/data/exports/
 !backend/data/templates/*.pptx
 
 frontend/dist/
+frontend/playwright-report/
+frontend/test-results/
 *.log

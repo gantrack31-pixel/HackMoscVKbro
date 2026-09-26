@@ -100,7 +100,10 @@ cd backend
 cd frontend
 npm test
 npm run build
+npm run test:e2e
 ```
+
+Браузерные E2E используют Chromium и поднимают отдельные FastAPI/Vite на портах 8183/5183 с одноразовой SQLite и тестовым хранилищем. Установите браузер перед первым прогоном командой `pnpm exec playwright install chromium`. По умолчанию используется `backend/.venv/bin/python3.12`; другой Python можно указать через `DECKLY_TEST_PYTHON`. Ошибки сохраняют screenshot, video и trace в `frontend/test-results/`; интерактивный HTML-отчёт: `pnpm exec playwright show-report`.
 
 Тесты используют временную отдельную БД. Они не удаляют ваши аккаунты и презентации. Проверяются сессии, CSRF, изоляция аккаунтов, избранное, новый шаблон 4:3, аудит/отмена, LLM/OAuth с тестовыми ответами и девять редактируемых PPTX на трёх исходных шаблонах. Список ручных проверок — [docs/VALIDATION.md](docs/VALIDATION.md).
 
