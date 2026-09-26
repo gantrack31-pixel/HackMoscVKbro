@@ -9,6 +9,7 @@ from fastapi import FastAPI, UploadFile, HTTPException, BackgroundTasks, Query, 
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response, JSONResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
+from fastapi.exceptions import RequestValidationError
 from .config import settings, BASE, validate_settings
 from . import database as db
 from .models import OutlineRequest, GenerateRequest, RegenerateRequest, ProjectUpdate, FixRequest, DeckContent, Issue
@@ -30,10 +31,18 @@ async def lifespan(app):
     db.initialize();seed_templates(settings.storage)
     yield
 
-app=FastAPI(title='Deckly.Ai API',version='0.3.0',lifespan=lifespan)
+app=FastAPI(title='Deckly.Ai API',version='0.3.0',lifespan=lifespan,
+            docs_url=None if settings.app_env=='production' else '/docs',
+            redoc_url=None if settings.app_env=='production' else '/redoc',
+            openapi_url=None if settings.app_env=='production' else '/openapi.json')
 app.add_middleware(CORSMiddleware,allow_origins=settings.origins,allow_credentials=True,
                    allow_methods=['GET','POST','PUT','DELETE'],allow_headers=['Content-Type','X-CSRF-Token'])
 app.include_router(auth_router)
+
+@app.exception_handler(RequestValidationError)
+async def private_validation_error(request: Request, exc: RequestValidationError):
+    # Default validation responses may echo passwords, materials and other input.
+    return JSONResponse({'detail':'Проверьте заполнение полей и допустимый объём данных.'}, status_code=422)
 
 @app.middleware('http')
 async def browser_security(request:Request,call_next):
@@ -45,6 +54,14 @@ async def browser_security(request:Request,call_next):
     response.headers['X-Content-Type-Options']='nosniff'
     response.headers['Referrer-Policy']='no-referrer'
     response.headers['X-Frame-Options']='DENY'
+    response.headers['Permissions-Policy']='camera=(), microphone=(), geolocation=(), payment=(), fullscreen=(self)'
+    if request.url.path not in {'/docs','/redoc','/docs/oauth2-redirect'}:
+        response.headers['Content-Security-Policy']=(
+            "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; "
+            "img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self'; "
+            "object-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'")
+    if settings.app_env=='production':
+        response.headers['Strict-Transport-Security']='max-age=31536000'
     if request.url.path.startswith('/api/'):response.headers['Cache-Control']='no-store'
     return response
 
@@ -148,8 +165,8 @@ async def generate_job(jid: str, request: GenerateRequest,user_id: str):
             audit_deck(request.content,template,'a',request.source_text)
             db.project_create(pid,request.template_id,request.content.model_dump(),request.source_text,user_id)
             db.job_set(jid,'complete','complete',pid)
-        except Exception:
-            logger.exception('Ошибка сборки презентации %s',jid)
+        except Exception as exc:
+            logger.error('Ошибка сборки презентации %s (%s)',jid,type(exc).__name__)
             db.job_set(jid,'failed','failed',error='Не удалось собрать презентацию. Проверьте шаблон и структуру, затем повторите.')
 
 @app.post('/api/generate',status_code=202)
@@ -186,8 +203,8 @@ async def regenerate_job(jid: str, original: dict, instruction: str, user_id: st
             db.job_set(jid,'failed','failed',error=str(exc))
         except TimeoutError:
             db.job_set(jid,'failed','failed',error='Модель не успела подготовить оформление. Предыдущая презентация сохранена.')
-        except Exception:
-            logger.exception('Ошибка нового оформления %s',jid)
+        except Exception as exc:
+            logger.error('Ошибка нового оформления %s (%s)',jid,type(exc).__name__)
             db.job_set(jid,'failed','failed',error='Не удалось создать новое оформление. Предыдущая презентация сохранена.')
 
 @app.post('/api/projects/{pid}/regenerate',status_code=202)

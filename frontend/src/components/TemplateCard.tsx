@@ -9,6 +9,7 @@ export function TemplateCover({
   title?: string;
 }) {
   const meta = template.metadata;
+  const coverTitle = title || meta.cover_title || template.name;
   const style = {
     "--theme-accent": meta.accent,
     "--slide-ink": meta.composition ? meta.accent : undefined,
@@ -27,9 +28,11 @@ export function TemplateCover({
     <div
       className={`slide ${template.id === "workspace" ? "workspace-cover" : template.id} ${meta.composition ? "composition-" + meta.composition : ""}`}
       style={style}
+      data-cover-style={meta.composition || "brand"}
+      data-long-title={coverTitle.length > 60 || undefined}
     >
       <span className="slide-brand">{template.name}</span>
-      <h3>{title || meta.cover_title || template.name}</h3>
+      <h3>{coverTitle}</h3>
       <div className="slide-rule" />
       <div className="slide-layout" aria-hidden="true">
         <i />

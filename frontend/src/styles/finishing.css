@@ -1,0 +1,149 @@
+/* Small refinements shared by the catalogue, library and walkthrough. */
+.page .heading h1 {
+  text-wrap: balance;
+  line-height: 1.18;
+}
+.page .heading p {
+  max-width: 65ch;
+  line-height: 1.7;
+}
+.page .tip-card h3 {
+  color: var(--ink);
+}
+.slide[data-cover-style] h3 {
+  text-wrap: balance;
+  overflow-wrap: anywhere;
+}
+.slide[data-cover-style="editorial"] h3 {
+  font-family: Georgia, "Times New Roman", serif;
+  font-weight: 500;
+  letter-spacing: -0.035em;
+  line-height: 1.08;
+}
+.slide[data-cover-style="grid"] h3 {
+  font-weight: 800;
+  letter-spacing: -0.045em;
+  line-height: 1.12;
+}
+.slide[data-cover-style="split"] h3 {
+  font-weight: 650;
+  letter-spacing: -0.03em;
+  line-height: 1.16;
+}
+.slide[data-cover-style]:not([data-cover-style="brand"]) .slide-brand {
+  font-size: clamp(9px, 2.8cqw, 13px);
+  letter-spacing: 0.08em;
+  font-weight: 700;
+}
+.slide[data-cover-style][data-long-title] h3 {
+  font-size: clamp(14px, 5.7cqw, 26px);
+}
+.page .template {
+  transition:
+    transform 0.32s var(--motion),
+    border-color 0.25s,
+    box-shadow 0.25s;
+}
+.page .template .template-cover {
+  overflow: hidden;
+}
+.page .template .template-cover > .slide {
+  transition: transform 0.5s var(--motion);
+}
+.page .template-body h3 {
+  letter-spacing: -0.025em;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+.page .template-body p {
+  line-height: 1.7;
+}
+.page .template-footer {
+  gap: 12px;
+  align-items: center;
+}
+.page :is(.quick-grid button, .profile-stats > a, .demo-nav button) {
+  transition:
+    transform 0.3s var(--motion),
+    border-color 0.25s,
+    background-color 0.25s;
+}
+.page :is(.quick-grid, .template-footer) .icon {
+  transition: transform 0.3s var(--motion);
+}
+.page .filters {
+  gap: 8px;
+}
+.page .filter {
+  border-radius: 999px;
+  transition:
+    background-color 0.25s,
+    color 0.25s,
+    border-color 0.25s;
+}
+.page .filter:focus-visible,
+.page .template-cover:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 3px;
+}
+.page .demo-visual > :first-child {
+  animation: detail-arrive 0.4s var(--motion) both;
+}
+.page .empty {
+  border-style: dashed;
+  background: var(--surface);
+  border-radius: 20px;
+}
+.page :is(textarea, .slide-rail, .catalog-toolbar) {
+  scrollbar-width: thin;
+  scrollbar-color: var(--muted) transparent;
+}
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .page .template:hover {
+    transform: translateY(-4px);
+    border-color: color-mix(in srgb, var(--blue) 35%, var(--line));
+    box-shadow: 0 10px 28px #07152c10;
+  }
+  .page .template:focus-within {
+    border-color: var(--blue);
+  }
+  .page .template .template-cover:hover > .slide {
+    transform: scale(1.018);
+  }
+  .page .quick-grid button:hover {
+    transform: translateY(-3px);
+  }
+  .page .quick-grid button:hover .icon {
+    transform: rotate(-6deg);
+  }
+  .page .template-footer .btn:hover .icon {
+    transform: translateX(3px);
+  }
+}
+@keyframes detail-arrive {
+  from {
+    opacity: 0.35;
+    transform: translateY(7px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .page .demo-visual > :first-child {
+    animation: none;
+  }
+  .page
+    :is(
+      .template,
+      .template-cover > .slide,
+      .quick-grid button,
+      .profile-stats > a,
+      .demo-nav button,
+      .filter,
+      .icon
+    ) {
+    transition: none;
+  }
+}

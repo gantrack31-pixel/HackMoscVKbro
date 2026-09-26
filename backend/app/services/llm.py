@@ -17,8 +17,10 @@ def configured() -> bool:
 async def complete_json(system: str, payload: dict, client: httpx.AsyncClient | None = None) -> dict:
     if not configured(): raise LLMError('Заполните LLM_BASE_URL, LLM_MODEL и LLM_API_KEY в backend/.env.')
     parsed=urlparse(settings.base_url)
-    if parsed.scheme not in {'http','https'} or parsed.username or parsed.query:
+    if parsed.scheme not in {'http','https'} or not parsed.hostname or parsed.username or parsed.password or parsed.query or parsed.fragment:
         raise LLMError('LLM_BASE_URL должен быть HTTP(S)-адресом API без ключей в URL.')
+    if parsed.scheme=='http' and parsed.hostname not in {'localhost','127.0.0.1','::1'}:
+        raise LLMError('Для внешнего сервера модели требуется HTTPS, чтобы защитить ключ и материалы.')
     headers={'Content-Type':'application/json'}
     if settings.api_key: headers['Authorization']='Bearer '+settings.api_key
     body={**settings.extra_body,'model':settings.model,'temperature':settings.temperature,'max_tokens':settings.max_tokens,

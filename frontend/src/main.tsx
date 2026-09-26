@@ -10,4 +10,9 @@ import "./styles/refinements.css";
 import "./styles/experience.css";
 import "./styles/system.css";
 import "./styles/entry.css";
-ReactDOM.createRoot(document.getElementById("root")!).render(<ThemeProvider><App /></ThemeProvider>);
+import "./styles/finishing.css";
+ReactDOM.createRoot(document.getElementById("root")!).render(
+  <ThemeProvider>
+    <App />
+  </ThemeProvider>,
+);

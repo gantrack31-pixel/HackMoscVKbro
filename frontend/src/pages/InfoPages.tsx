@@ -195,7 +195,7 @@ export function Demo({
           <span className="label">{step + 1} / 6 · Как это работает</span>
           <h2>{stages[step][1]}</h2>
           <p className="muted">{stages[step][2]}</p>
-          <div className="demo-visual">
+          <div className="demo-visual" key={step}>
             {step === 0 ? (
               <div className="demo-templates">
                 {templates.slice(0, 3).map((t) => (
