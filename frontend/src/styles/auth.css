@@ -111,7 +111,7 @@
   color: #0077ff; background: #eaf3ff;
 }
 .email-pending h1 { margin: 0; }
-.email-pending-address { overflow-wrap: anywhere; color: #0f172a; }
+.auth-dark .email-pending-address { overflow-wrap: anywhere; color: #f1f5ff; font-size: 15px; font-weight: 750; line-height: 1.5; }
 .email-resend-message { color: #39724d; font-size: 13px; line-height: 1.5; }
 .email-verification-page {
   min-height: 100vh; display: grid; place-items: center; padding: 24px;

@@ -1,4 +1,4 @@
-import { useEffect, useId, useState } from "react";
+import { useEffect, useId, useState, type FormEvent } from "react";
 import { api } from "../api";
 import { CloudLibrary } from "../components/CloudLibrary";
 import { Icon } from "../components/Icon";
@@ -324,10 +324,35 @@ const supportQuestions = [
 
 export function Support() {
   const [expanded, setExpanded] = useState<number | null>(0);
+  const [contactEmail, setContactEmail] = useState("");
+  const [contactMessage, setContactMessage] = useState("");
+  const [contactStatus, setContactStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
+  const [contactError, setContactError] = useState("");
   const accordionId = useId();
+
+  async function submitSupportMessage(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (contactStatus === "sending") return;
+
+    setContactStatus("sending");
+    setContactError("");
+    try {
+      await api.supportMessage(contactEmail, contactMessage);
+      setContactStatus("sent");
+      setContactEmail("");
+      setContactMessage("");
+    } catch (error) {
+      setContactStatus("error");
+      setContactError((error as Error).message || "Не удалось отправить сообщение.");
+    }
+  }
+
   return (
     <section className="support-page">
-      <a className="btn" href="#requirements">Возможности, требования и пайплайн <Icon name="arrow"/></a>
+      <a className="btn support-requirements-link" href="#requirements">
+        <span>Возможности, требования и пайплайн</span>
+        <Icon name="arrow" />
+      </a>
       <header className="heading support-heading">
         <span className="support-eyebrow">
           <Icon name="help" /> Помощь в нужный момент
@@ -349,22 +374,61 @@ export function Support() {
           </a>
           <section className="support-personal">
             <span className="support-contact-icon">
-              <Icon name="telegram" />
+              <Icon name="mail" />
             </span>
             <h2>Давайте разберёмся вместе.</h2>
             <p>
-              Не нашли ответ? Опишите вопрос и приложите скриншот — так нам
-              будет проще помочь.
+              Не нашли ответ? Оставьте почту для ответа и опишите вопрос — так
+              нам будет проще помочь.
             </p>
-            <a
-              className="btn"
-              href="https://t.me/flixyyy"
-              target="_blank"
-              rel="noreferrer"
-            >
-              Написать в Telegram
-              <Icon name="external" />
-            </a>
+            <form className="support-contact-form" onSubmit={submitSupportMessage}>
+              <label className="support-contact-field">
+                <span>Электронная почта для ответа</span>
+                <input
+                  type="email"
+                  name="email"
+                  autoComplete="email"
+                  maxLength={254}
+                  required
+                  value={contactEmail}
+                  onChange={(event) => {
+                    setContactEmail(event.target.value);
+                    if (contactStatus === "error" || contactStatus === "sent") setContactStatus("idle");
+                  }}
+                  disabled={contactStatus === "sending"}
+                />
+              </label>
+              <label className="support-contact-field">
+                <span>Ваш вопрос</span>
+                <textarea
+                  name="message"
+                  minLength={10}
+                  maxLength={4000}
+                  rows={4}
+                  required
+                  value={contactMessage}
+                  onChange={(event) => {
+                    setContactMessage(event.target.value);
+                    if (contactStatus === "error" || contactStatus === "sent") setContactStatus("idle");
+                  }}
+                  disabled={contactStatus === "sending"}
+                />
+              </label>
+              {contactStatus === "error" && (
+                <p className="support-contact-feedback is-error" role="alert">
+                  {contactError}
+                </p>
+              )}
+              {contactStatus === "sent" && (
+                <p className="support-contact-feedback is-success" role="status">
+                  Сообщение отправлено. Ответим на указанную почту.
+                </p>
+              )}
+              <button className="btn primary" type="submit" disabled={contactStatus === "sending"}>
+                {contactStatus === "sending" ? "Отправляем…" : "Отправить сообщение"}
+                {contactStatus !== "sending" && <Icon name="send" />}
+              </button>
+            </form>
           </section>
         </aside>
         <section

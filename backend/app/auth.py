@@ -9,6 +9,7 @@ import smtplib
 import time
 import logging
 import asyncio
+from html import escape
 from uuid import uuid4
 from urllib.parse import urlencode, quote
 from email.message import EmailMessage
@@ -68,6 +69,58 @@ def public_user(user):
             'password_enabled':bool(user.get('password_hash')),
             'email_verified':bool(user.get('email_verified',True))}
 
+def build_verification_email(email, url):
+    """Build branded HTML confirmation email with a plain-text fallback."""
+    message=EmailMessage()
+    message['Subject']='Подтвердите адрес электронной почты — Deckly.Ai'
+    message['From']=settings.email_from
+    message['To']=email
+    message.set_content(
+        'Здравствуйте!\n\n'
+        'Подтвердите адрес электронной почты, чтобы завершить регистрацию в Deckly.Ai.\n\n'
+        f'Подтвердить почту: {url}\n\n'
+        'Ссылка действует 24 часа и может быть использована только один раз.\n\n'
+        'Если вы не создавали аккаунт Deckly.Ai, просто проигнорируйте это письмо.'
+    )
+    safe_url=escape(url,quote=True)
+    message.add_alternative(f'''<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Подтвердите адрес электронной почты — Deckly.Ai</title>
+  </head>
+  <body style="margin:0;padding:0;background-color:#f1f5f9;font-family:Arial,Helvetica,sans-serif;color:#0f172a;">
+    <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background-color:#f1f5f9;padding:32px 12px;">
+      <tr><td align="center">
+        <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="max-width:560px;background-color:#ffffff;border-radius:16px;overflow:hidden;">
+          <tr><td style="padding:24px 32px;background-color:#0f172a;color:#ffffff;">
+            <div style="font-size:24px;font-weight:700;letter-spacing:-1px;">Deckly<span style="color:#ff817b;">.</span><span style="font-size:14px;">Ai</span></div>
+          </td></tr>
+          <tr><td style="padding:36px 32px 20px;">
+            <div style="margin-bottom:12px;color:#0077ff;font-size:12px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;">Почти готово</div>
+            <h1 style="margin:0 0 16px;font-size:28px;line-height:1.25;letter-spacing:-0.7px;color:#0f172a;">Подтвердите почту</h1>
+            <p style="margin:0;color:#526176;font-size:16px;line-height:1.6;">Подтвердите адрес электронной почты, чтобы завершить регистрацию и войти в Deckly.Ai.</p>
+          </td></tr>
+          <tr><td align="center" style="padding:12px 32px 28px;">
+            <a href="{safe_url}" style="display:inline-block;padding:15px 28px;border-radius:9px;background-color:#0077ff;color:#ffffff;font-size:15px;font-weight:700;line-height:1.2;text-decoration:none;">Подтвердить почту</a>
+          </td></tr>
+          <tr><td style="padding:0 32px 28px;">
+            <p style="margin:0 0 8px;color:#64748b;font-size:13px;line-height:1.6;">Кнопка не работает? Скопируйте ссылку и откройте её в браузере:</p>
+            <p style="margin:0;overflow-wrap:anywhere;word-break:break-word;font-size:13px;line-height:1.6;"><a href="{safe_url}" style="color:#0063d6;text-decoration:underline;">{safe_url}</a></p>
+          </td></tr>
+          <tr><td style="padding:20px 32px;background-color:#f8fafc;border-top:1px solid #e2e8f0;">
+            <p style="margin:0 0 8px;color:#526176;font-size:13px;line-height:1.6;">Ссылка действует 24 часа и используется только один раз.</p>
+            <p style="margin:0;color:#64748b;font-size:12px;line-height:1.6;">Если вы не создавали аккаунт Deckly.Ai, просто проигнорируйте это письмо.</p>
+          </td></tr>
+        </table>
+        <p style="margin:18px 0 0;color:#94a3b8;font-size:11px;line-height:1.5;">Ваши идеи. Ваш стиль. · Deckly.Ai</p>
+      </td></tr>
+    </table>
+  </body>
+</html>''',subtype='html')
+    return message
+
 def deliver_verification_email(email, url):
     """Send confirmation through SMTP; local development logs only the one-time URL."""
     if not settings.smtp_host or not settings.smtp_username or not settings.smtp_password or not settings.email_from:
@@ -75,11 +128,7 @@ def deliver_verification_email(email, url):
             raise RuntimeError('SMTP для подтверждения email не настроен.')
         logger.warning('Email verification link for %s: %s', email, url)
         return 'logged'
-    message=EmailMessage()
-    message['Subject']='Подтвердите адрес электронной почты — Deckly.Ai'
-    message['From']=settings.email_from
-    message['To']=email
-    message.set_content(f'Здравствуйте!\n\nПодтвердите адрес электронной почты, перейдя по ссылке (срок действия — 24 часа):\n{url}\n\nЕсли вы не создавали аккаунт Deckly.Ai, проигнорируйте это письмо.')
+    message=build_verification_email(email,url)
     with smtplib.SMTP_SSL(settings.smtp_host,settings.smtp_port,timeout=15) as server:
         server.login(settings.smtp_username,settings.smtp_password)
         server.send_message(message)

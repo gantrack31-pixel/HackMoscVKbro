@@ -54,6 +54,10 @@ def initialize():
         );
         CREATE TABLE IF NOT EXISTS auth_attempts (ip_hash TEXT NOT NULL, time INTEGER NOT NULL);
         CREATE INDEX IF NOT EXISTS auth_attempts_lookup ON auth_attempts(ip_hash,time);
+        CREATE TABLE IF NOT EXISTS support_attempts (
+            ip_hash TEXT NOT NULL, user_hash TEXT NOT NULL, time INTEGER NOT NULL
+        );
+        CREATE INDEX IF NOT EXISTS support_attempts_lookup ON support_attempts(ip_hash,time,user_hash);
         CREATE TABLE IF NOT EXISTS email_verifications (
             user_id TEXT PRIMARY KEY, token_hash TEXT NOT NULL UNIQUE,
             expires_at INTEGER NOT NULL, last_sent_at INTEGER NOT NULL

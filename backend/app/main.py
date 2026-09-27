@@ -1,10 +1,15 @@
 """HTTP-маршруты. Запуск: python -m uvicorn app.main:app --host 127.0.0.1 --port 8000."""
 import asyncio
+import hashlib
+import logging
+import re
+import smtplib
+import time
 from contextlib import asynccontextmanager
+from email.message import EmailMessage
 from pathlib import Path
 from uuid import uuid4
 from urllib.parse import quote
-import logging
 from time import monotonic
 from fastapi import FastAPI, UploadFile, HTTPException, BackgroundTasks, Query, Depends, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -25,11 +30,13 @@ from .services import cloud
 from .services.materials import read_material, MAX_FILE_BYTES, MAX_PACKET_CHARS
 from .services.workflow import recipe, manifest, generation_budget, OUTLINE_BUDGET_SECONDS
 from .services.images import generate_image, MODEL as IMAGE_MODEL
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 from .auth import router as auth_router, current_user
 
 logger=logging.getLogger('deckly')
 generation_slots=asyncio.Semaphore(2)
+SUPPORT_RATE_WINDOW_SECONDS=900
+SUPPORT_RATE_LIMIT=3
 
 @asynccontextmanager
 async def lifespan(app):
@@ -141,6 +148,84 @@ async def image_generation(request:ImagePrompt,user=Depends(current_user)):
     if not request.prompt.strip():raise HTTPException(422,'Опишите иллюстрацию.')
     async with generation_slots:
         return await generate_image(request.prompt.strip())
+
+class SupportMessage(BaseModel):
+    email: str=Field(min_length=3,max_length=254)
+    message: str=Field(min_length=10,max_length=4000)
+
+    @field_validator('email')
+    @classmethod
+    def valid_email(cls,value):
+        value=value.strip().lower()
+        if not re.fullmatch(r'[^\s@<>]+@[^\s@<>]+\.[^\s@<>]+',value):
+            raise ValueError('Укажите корректную электронную почту.')
+        return value
+
+    @field_validator('message')
+    @classmethod
+    def nonempty_message(cls,value):
+        value=value.strip()
+        if len(value)<10:
+            raise ValueError('Опишите вопрос подробнее — минимум 10 символов.')
+        return value
+
+
+def deliver_support_message(email: str, message: str, user: dict) -> None:
+    if not all((settings.smtp_host.strip(), settings.smtp_username.strip(),
+                settings.smtp_password, settings.email_from.strip())):
+        raise RuntimeError('SMTP для обращений в поддержку не настроен.')
+
+    email_message=EmailMessage()
+    email_message['Subject']='Обращение в поддержку Deckly.Ai'
+    email_message['From']=settings.email_from
+    email_message['To']=settings.email_from
+    email_message['Reply-To']=email
+    email_message.set_content(
+        'Новое обращение в поддержку Deckly.Ai\n\n'
+        f'Почта для ответа: {email}\n'
+        f'Аккаунт: {user["email"]}\n'
+        f'Имя: {user["first_name"]} {user["last_name"]}\n\n'
+        f'Сообщение:\n{message}\n'
+    )
+    with smtplib.SMTP_SSL(settings.smtp_host,settings.smtp_port,timeout=15) as server:
+        server.login(settings.smtp_username,settings.smtp_password)
+        server.send_message(email_message)
+
+
+def rate_limit_support_message(request: Request, user_id: str) -> None:
+    ip=request.client.host if request.client else 'unknown'
+    ip_hash=hashlib.sha256(ip.encode()).hexdigest()
+    user_hash=hashlib.sha256(user_id.encode()).hexdigest()
+    now=int(time.time())
+    cutoff=now-SUPPORT_RATE_WINDOW_SECONDS
+    with db.connection() as connection:
+        connection.execute('BEGIN IMMEDIATE')
+        connection.execute('DELETE FROM support_attempts WHERE time<?',(cutoff,))
+        ip_count=connection.execute(
+            'SELECT COUNT(*) FROM support_attempts WHERE ip_hash=? AND time>=?',
+            (ip_hash,cutoff),
+        ).fetchone()[0]
+        user_count=connection.execute(
+            'SELECT COUNT(*) FROM support_attempts WHERE user_hash=? AND time>=?',
+            (user_hash,cutoff),
+        ).fetchone()[0]
+        if ip_count>=SUPPORT_RATE_LIMIT or user_count>=SUPPORT_RATE_LIMIT:
+            raise HTTPException(429,'Слишком много обращений. Попробуйте отправить сообщение позже.')
+        connection.execute(
+            'INSERT INTO support_attempts (ip_hash,user_hash,time) VALUES (?,?,?)',
+            (ip_hash,user_hash,now),
+        )
+
+
+@app.post('/api/support/messages',status_code=202)
+async def send_support_message(data: SupportMessage, request: Request, user=Depends(current_user)):
+    rate_limit_support_message(request,user['id'])
+    try:
+        await asyncio.to_thread(deliver_support_message,data.email,data.message,user)
+    except Exception:
+        logger.error('Support message delivery failed.')
+        raise HTTPException(503,'Не удалось отправить сообщение. Попробуйте позже.') from None
+    return {'sent':True}
 
 @app.get('/api/public/templates')
 def public_templates(): return [public_template(t) for t in db.templates_list() if t['id'] in BUILTIN_IDS]

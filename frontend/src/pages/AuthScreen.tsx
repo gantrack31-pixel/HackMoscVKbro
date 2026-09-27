@@ -15,6 +15,9 @@ import { WordmarkTitle } from "../components/Brand";
 import { TemplateCover } from "../components/TemplateCard";
 import type { Template, User } from "../types";
 type Screen = "welcome" | "choice" | "login" | "register" | "check-email";
+function isValidEmail(value: string) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
+}
 const oauthErrors: Record<string, string> = {
   state: "Сессия входа истекла. Повторите вход через Яндекс.",
   cancelled: "Вход через Яндекс отменён.",
@@ -123,6 +126,10 @@ export function AuthScreen({
     }
   }
   async function resendVerification() {
+    if (!isValidEmail(verificationEmail)) {
+      setError("Укажите корректную электронную почту, чтобы запросить письмо.");
+      return;
+    }
     setResendBusy(true);
     setError("");
     setResendMessage("");
@@ -138,6 +145,20 @@ export function AuthScreen({
     } finally {
       setResendBusy(false);
     }
+  }
+  function openResendVerification() {
+    const email = contentRef.current
+      ?.querySelector<HTMLInputElement>('input[name="email"]')
+      ?.value.trim() ?? "";
+    if (!isValidEmail(email)) {
+      setError("Укажите корректную электронную почту, чтобы запросить письмо.");
+      contentRef.current?.querySelector<HTMLInputElement>('input[name="email"]')?.focus();
+      return;
+    }
+    setVerificationEmail(email);
+    setScreen("check-email");
+    setResendMessage("");
+    setError("");
   }
   return (
     <div
@@ -348,12 +369,7 @@ export function AuthScreen({
                     <button
                       className="auth-help auth-resend-trigger"
                       type="button"
-                      onClick={() => {
-                        setVerificationEmail(String(new FormData(contentRef.current?.querySelector("form") ?? undefined).get("email") ?? "").trim());
-                        setScreen("check-email");
-                        setResendMessage("");
-                        setError("");
-                      }}
+                      onClick={openResendVerification}
                     >
                       Не получили письмо подтверждения? Запросить повторно
                     </button>

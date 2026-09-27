@@ -6,7 +6,7 @@ import { Finish } from "./pages/Finish";
 import { Icon } from "./components/Icon";
 import { TemplateCover } from "./components/TemplateCard";
 import { Home, Catalog } from "./pages/Home";
-import { Wizard } from "./pages/Wizard";
+import { clearPendingGenerationJob, Wizard } from "./pages/Wizard";
 import { Editor } from "./pages/Editor";
 import { Audit } from "./pages/Audit";
 import { Projects, Demo, Support } from "./pages/InfoPages";
@@ -52,7 +52,7 @@ export default function App() {
     return <YandexAuth />;
   const verificationToken = new URLSearchParams(location.hash.slice(1)).get("verify-email");
   if (verificationToken)
-    return <EmailVerification token={verificationToken} onComplete={() => { location.assign("/#login"); }} />;
+    return <EmailVerification token={verificationToken} onComplete={() => { location.reload(); }} />;
   if (!ready)
     return (
       <div className="boot-screen">
@@ -207,6 +207,7 @@ function Workspace({
     location.hash = "editor";
   }
   function start(m: "text" | "description", t?: Template) {
+    clearPendingGenerationJob();
     setMode(m);
     if (t) setSelected(t);
     setWizardKey((k) => k + 1);
@@ -278,6 +279,7 @@ function Workspace({
           location.hash = "templates";
         }}
         onLogout={() => setPending("logout")}
+        onNewPresentation={() => start("description")}
       >
         {error && (
           <div className="error-banner" role="alert">
@@ -326,6 +328,7 @@ function Workspace({
                 onSelect={setSelected}
                 onOpen={open}
                 onError={setError}
+                onRestart={() => start("description")}
               />
             )}
             {route === "projects" && (
