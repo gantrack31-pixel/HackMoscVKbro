@@ -143,6 +143,11 @@ export const api = {
       "/auth/verification/resend",
       json("POST", { email }),
     ),
+  supportMessage: (email: string, message: string) =>
+    request<{ sent: boolean }>(
+      "/support/messages",
+      json("POST", { email, message }),
+    ),
   logout: async () => {
     await request<void>("/auth/logout", { method: "POST" });
     csrf = "";

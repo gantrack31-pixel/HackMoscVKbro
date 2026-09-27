@@ -1,26 +1,67 @@
 .support-page {
+  display: grid;
+  gap: 32px;
   max-width: 1320px;
   margin-inline: auto;
 }
+.support-page .support-requirements-link {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+  width: fit-content;
+  max-width: 100%;
+  min-height: 64px;
+  margin: 0;
+  padding: 16px 22px 16px 24px;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: var(--surface-soft);
+  color: var(--ink);
+  font-size: 16px;
+  font-weight: 750;
+  letter-spacing: -0.2px;
+  line-height: 1.3;
+  text-align: left;
+  transition:
+    background-color 0.2s,
+    border-color 0.2s,
+    transform 0.2s;
+}
+.support-page .support-requirements-link:hover {
+  transform: translateY(-2px);
+  border-color: var(--accent-text);
+  background: var(--surface);
+}
+.support-page .support-requirements-link .icon {
+  width: 28px;
+  height: 28px;
+}
 .support-page .support-heading {
-  margin-bottom: 44px;
+  display: grid;
+  justify-items: start;
+  gap: 16px;
+  margin: 0;
 }
 .support-page .support-eyebrow {
   display: inline-flex;
   align-items: center;
-  gap: 9px;
-  margin-bottom: 18px;
+  gap: 10px;
+  margin: 0;
   color: var(--accent-text);
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 700;
 }
 .support-page .support-eyebrow .icon {
-  width: 18px;
-  height: 18px;
+  width: 20px;
+  height: 20px;
 }
 .support-page .support-heading h1 {
-  max-width: 720px;
+  max-width: 100%;
   text-wrap: balance;
+}
+.support-page .support-heading p {
+  color: var(--muted);
 }
 .support-page .support-layout {
   display: grid;
@@ -74,6 +115,8 @@
   transform: translateX(4px);
 }
 .support-page .support-personal {
+  display: grid;
+  gap: 14px;
   padding: 26px;
   border-radius: 22px;
   background: var(--surface);
@@ -84,7 +127,7 @@
   color: #fff;
 }
 .support-page .support-personal h2 {
-  margin: 22px 0 12px;
+  margin: 0;
   font-size: clamp(22px, 2vw, 28px);
   letter-spacing: -0.8px;
   line-height: 1.2;
@@ -94,9 +137,61 @@
   color: var(--muted);
   font-size: 13px;
   line-height: 1.8;
-  margin: 0 0 24px;
+  margin: 0;
 }
-.support-page .support-personal .btn {
+.support-page .support-contact-form {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+}
+.support-page .support-contact-field {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 650;
+}
+.support-page .support-contact-field :is(input, textarea) {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 10px 12px;
+  background: var(--app-bg);
+  color: var(--ink);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.5;
+}
+.support-page .support-contact-field textarea {
+  min-height: 104px;
+  resize: vertical;
+}
+.support-page .support-contact-field :is(input, textarea)::placeholder {
+  color: var(--muted);
+}
+.support-page .support-contact-field :is(input, textarea):focus-visible {
+  outline: 2px solid var(--accent-text);
+  outline-offset: 2px;
+}
+.support-page .support-contact-feedback {
+  font-size: 12px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+.support-page .support-contact-feedback.is-error {
+  color: #b42318;
+}
+.support-page .support-contact-feedback.is-success {
+  color: var(--state-success-ink, #16754d);
+}
+:root[data-theme="dark"] .support-page .support-contact-feedback.is-error {
+  color: #ff9288;
+}
+.support-page .support-contact-form .btn {
   width: 100%;
   min-height: 44px;
   font-size: 12px;
@@ -251,8 +346,19 @@
   }
 }
 @media (max-width: 560px) {
+  .support-page .support-requirements-link {
+    min-height: 60px;
+    padding: 14px 16px;
+    border-radius: 15px;
+    font-size: 16px;
+    letter-spacing: -0.3px;
+  }
+  .support-page .support-requirements-link .icon {
+    width: 22px;
+    height: 22px;
+  }
   .support-page .support-heading {
-    margin-bottom: 28px;
+    gap: 14px;
   }
   .support-page .support-section-heading > span {
     display: none;
