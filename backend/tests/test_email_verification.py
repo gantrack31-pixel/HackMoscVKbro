@@ -7,6 +7,7 @@ from fastapi.testclient import TestClient
 from app.config import settings
 from app.main import app
 from app import database as db
+from app.auth import build_verification_email
 
 
 @pytest.fixture
@@ -31,6 +32,26 @@ def register(client, email='new@example.test'):
         'first_name': 'Анна',
         'last_name': 'Тестовая',
     })
+
+
+def test_verification_email_has_branded_html_and_plain_text_fallback():
+    url = 'https://deckly.example/#verify-email=abc&source=<test>'
+
+    message = build_verification_email('person@example.test', url)
+
+    assert message['Subject'] == 'Подтвердите адрес электронной почты — Deckly.Ai'
+    assert message['To'] == 'person@example.test'
+    assert message.is_multipart()
+    plain = message.get_body(preferencelist=('plain',)).get_content()
+    html = message.get_body(preferencelist=('html',)).get_content()
+    assert url in plain
+    assert '24 часа' in plain
+    assert 'Если вы не создавали аккаунт Deckly.Ai' in plain
+    assert 'Deckly.Ai' in html
+    assert 'Подтвердить почту' in html
+    assert 'background-color:#0f172a' in html
+    assert 'href="https://deckly.example/#verify-email=abc&amp;source=&lt;test&gt;"' in html
+    assert 'Если вы не создавали аккаунт Deckly.Ai' in html
 
 
 def test_registration_requires_email_confirmation_before_login(verification_client):

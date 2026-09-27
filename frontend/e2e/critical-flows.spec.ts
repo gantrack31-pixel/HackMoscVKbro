@@ -67,6 +67,33 @@ test("keyboard navigation, visible focus, theme persistence and reduced motion",
   await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
 });
 
+test("authentication logo stays legible on the dark panel in light theme", async ({ page }) => {
+  await page.addInitScript(() => localStorage.setItem("deckly-theme", "light"));
+  await page.goto("/");
+
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
+  await expect(page.getByRole("region", { name: "Примеры шаблонов" }).locator(".auth-feed-group").first().locator(".auth-template")).toHaveCount(3);
+  await page.getByRole("button", { name: "Открыть панель входа" }).click();
+  await expect(page.locator(".auth-shell")).toHaveClass(/auth-dark/);
+  await expect(page.getByRole("button", { name: "Регистрация" })).toBeVisible();
+
+  const logoContrast = () => page.locator(".auth-logo").evaluate((element) => {
+    const luminance = (value: string) => {
+      const channels = value.match(/[\d.]+/g)!.slice(0, 3).map((channel) => {
+        const normalized = Number(channel) / 255;
+        return normalized <= 0.04045 ? normalized / 12.92 : ((normalized + 0.055) / 1.055) ** 2.4;
+      });
+      return 0.2126 * channels[0] + 0.7152 * channels[1] + 0.0722 * channels[2];
+    };
+    const foreground = getComputedStyle(element).color;
+    const background = getComputedStyle(element.closest(".auth-left")!).backgroundColor;
+    const values = [luminance(foreground), luminance(background)].sort((a, b) => b - a);
+    return (values[0] + 0.05) / (values[1] + 0.05);
+  });
+
+  await expect.poll(logoContrast).toBeGreaterThanOrEqual(4.5);
+});
+
 test("workspace navigation opens and closes with keyboard and traps focus", async ({ page }) => {
   const app = new DecklyPage(page);
   await page.goto("/");
@@ -110,9 +137,50 @@ test("registration shows the email confirmation screen and allows resending", as
   await page.getByRole("button", { name: "Зарегистрироваться", exact: true }).click();
 
   await expect(page.getByRole("heading", { name: "Проверьте почту" })).toBeVisible();
+  const emailContrast = await page.locator(".email-pending-address").evaluate((element) => {
+    const rgb = (value: string) => value.match(/[\d.]+/g)!.slice(0, 3).map(Number);
+    const luminance = (value: string) => {
+      const channels = rgb(value).map((channel) => {
+        const normalized = channel / 255;
+        return normalized <= 0.04045 ? normalized / 12.92 : ((normalized + 0.055) / 1.055) ** 2.4;
+      });
+      return 0.2126 * channels[0] + 0.7152 * channels[1] + 0.0722 * channels[2];
+    };
+    const foreground = getComputedStyle(element).color;
+    const background = getComputedStyle(element.closest(".auth-left")!).backgroundColor;
+    const values = [luminance(foreground), luminance(background)].sort((a, b) => b - a);
+    return (values[0] + 0.05) / (values[1] + 0.05);
+  });
+  expect(emailContrast).toBeGreaterThanOrEqual(4.5);
   await expect(page.getByText(/ссылка подтверждения записана в консоль backend-сервера/)).toBeVisible();
   await page.getByRole("button", { name: "Отправить письмо ещё раз" }).click();
   await expect(page.getByRole("status")).toContainText("письмо скоро придёт");
+});
+
+test("resending confirmation requires a valid email and does not call the API otherwise", async ({ page }) => {
+  let resendRequests = 0;
+  await page.route("**/api/auth/verification/resend", async (route) => {
+    resendRequests += 1;
+    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true }) });
+  });
+  await page.goto("/#login");
+  await expect(page.getByRole("heading", { name: "С возвращением" })).toBeVisible();
+  await page.getByRole("button", { name: /Не получили письмо подтверждения/ }).click();
+
+  await expect(page.getByRole("heading", { name: "С возвращением" })).toBeVisible();
+  await expect(page.getByRole("alert")).toContainText("корректную электронную почту");
+  await expect.poll(() => resendRequests).toBe(0);
+
+  await page.getByLabel("Электронная почта").fill("not-an-email");
+  await page.getByRole("button", { name: /Не получили письмо подтверждения/ }).click();
+  await expect(page.getByRole("alert")).toContainText("корректную электронную почту");
+  await expect.poll(() => resendRequests).toBe(0);
+
+  await page.getByLabel("Электронная почта").fill("valid@example.test");
+  await page.getByRole("button", { name: /Не получили письмо подтверждения/ }).click();
+  await expect(page.getByRole("heading", { name: "Проверьте почту" })).toBeVisible();
+  await page.getByRole("button", { name: "Отправить письмо ещё раз" }).click();
+  await expect.poll(() => resendRequests).toBe(1);
 });
 
 test("email verification needs an explicit button click", async ({ page }) => {
@@ -132,4 +200,8 @@ test("email verification needs an explicit button click", async ({ page }) => {
   await page.getByRole("button", { name: "Подтвердить адрес" }).click();
   await expect(page.getByRole("heading", { name: "Почта подтверждена" })).toBeVisible();
   await expect.poll(() => verificationRequests).toBe(1);
+
+  await page.getByRole("button", { name: "Перейти ко входу" }).click();
+  await expect(page.getByRole("heading", { name: "С возвращением" })).toBeVisible();
+  await expect(page).toHaveURL(/#login$/);
 });
