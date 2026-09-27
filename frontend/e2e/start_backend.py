@@ -5,7 +5,8 @@ import sys
 
 
 backend = Path(__file__).resolve().parents[2] / "backend"
-run_dir = Path(__file__).resolve().parents[1] / "test-results" / "runtime"
+run_dir = Path(os.environ["DECKLY_E2E_RUN_DIR"])
+run_dir.mkdir(parents=True, exist_ok=True)
 sys.path.insert(0, str(backend))
 os.chdir(backend)
 
@@ -16,6 +17,13 @@ os.environ.update({
     "EMAIL_VERIFICATION_REQUIRED": "false",
     "DATABASE_PATH": str(run_dir / "deckly-e2e.sqlite3"),
     "STORAGE_PATH": str(run_dir / "data"),
+    "CLOUD_DATABASE_URL": "",
+    "IMAGE_BASE_URL": "",
+    "YANDEX_CLIENT_ID": "",
+    "SMTP_HOST": "",
+    "SMTP_USERNAME": "",
+    "SMTP_PASSWORD": "",
+    "EMAIL_FROM": "",
     "CORS_ORIGINS": "http://127.0.0.1:5183",
 })
 

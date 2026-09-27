@@ -151,3 +151,49 @@ def test_recipe_is_versioned_and_manifest_is_immutable(client,monkeypatch):
     monkeypatch.setattr(workflow,'RECIPE_VERSION','future-version')
     assert workflow.recipe()['version']=='future-version'
     assert client.get('/api/projects/'+p['id']).json()['provenance']==before
+
+
+def test_docx_table_keeps_cells_rows_and_inline_breaks(client):
+    document = BytesIO()
+    with ZipFile(document, 'w') as archive:
+        archive.writestr('word/document.xml', '''<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
+          <w:body><w:p><w:r><w:t>Бриф</w:t><w:br/><w:t>Пилот</w:t></w:r></w:p>
+            <w:tbl><w:tr><w:tc><w:p><w:r><w:t>Период</w:t></w:r></w:p></w:tc>
+              <w:tc><w:p><w:r><w:t>Минуты</w:t></w:r></w:p></w:tc></w:tr>
+              <w:tr><w:tc><w:p><w:r><w:t>После</w:t></w:r></w:p></w:tc>
+              <w:tc><w:p><w:r><w:t>8</w:t></w:r></w:p></w:tc></w:tr></w:tbl>
+          </w:body></w:document>''')
+    response = client.post('/api/materials/import', files={
+        'files': ('brief.docx', document.getvalue(), 'application/octet-stream')})
+    assert response.status_code == 200
+    assert response.json()['text'] == 'Источник: brief.docx\nБриф\nПилот\nПериод | Минуты\nПосле | 8'
+
+
+def test_audit_detects_nonadjacent_overlap_once(monkeypatch):
+    def block(name, x, y):
+        return {'id': name, 'type': 'text', 'x': x, 'y': y, 'w': 100, 'h': 80,
+                'text': name, 'used_height': 30, 'font_size': 24, 'color': '#000000'}
+    scene = {'width': 1280, 'height': 720, 'objects': [
+        {'id': 'background', 'type': 'rect', 'x': 0, 'y': 0, 'w': 1280, 'h': 720, 'fill': '#FFFFFF'},
+        block('title', 20, 20), block('distant', 500, 400), block('body', 30, 30),
+        block('other', 35, 35)]}
+    monkeypatch.setattr('app.services.audit.build_scene', lambda *args: scene)
+    issues = audit_deck(DeckContent(title='Test', slides=[Slide(title='Test')]), {'metadata': {}}, 'a', '')
+    overlaps = [issue for issue in issues if issue.code == 'overlap']
+    assert {issue.object_id for issue in overlaps} == {'body', 'other'}
+    assert len({issue.id for issue in overlaps}) == len(overlaps) == 2
+
+
+def test_deadline_includes_waiting_for_generation_slot(client, monkeypatch):
+    monkeypatch.setattr(workflow, 'ASSEMBLY_BUDGET_SECONDS', .02)
+    class OccupiedSlots:
+        async def __aenter__(self):
+            await asyncio.sleep(1)
+        async def __aexit__(self, *args):
+            pass
+    monkeypatch.setattr('app.main.generation_slots', OccupiedSlots())
+    response = client.post('/api/generate', json={
+        'template_id': 'tech', 'content': {'title': 'Queue deadline', 'slides': [{'title': 'Test'}]}})
+    job = client.get('/api/jobs/' + response.json()['job_id']).json()
+    assert job['state'] == 'failed' and job['can_retry'] and not job['project_id']
+    assert client.get('/api/projects').json() == []
