@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { SlideFields, slideKinds } from "../components/SlideFields";
 import { useLivePreview } from "../components/useLivePreview";
 import { api } from "../api";
+import { GenerationPassport } from "../components/GenerationPassport";
+import "../styles/requirements.css";
 import { Icon } from "../components/Icon";
 import { SlidePreview } from "../components/SlidePreview";
 import { PresentationViewer } from "../components/PresentationViewer";
@@ -21,12 +23,14 @@ export function Editor({
   onError,
   onExport,
   onDirty,
+  imageGenerationAvailable = false,
 }: {
   project: Project;
   onUpdate: (p: Project) => void;
   onError: (m: string) => void;
   onExport: () => void;
   onDirty: (value: boolean) => void;
+  imageGenerationAvailable?: boolean;
 }) {
   const [content, setContent] = useState(project.content),
     [index, setIndex] = useState(0),
@@ -51,12 +55,12 @@ export function Editor({
   const slide = content.slides[index];
   const scene = preview.scenes[index];
   function change(update: Partial<Slide>) {
-    setContent({
-      ...content,
-      slides: content.slides.map((s, i) =>
+    setContent((current) => ({
+      ...current,
+      slides: current.slides.map((s, i) =>
         i === index ? { ...s, ...update } : s,
       ),
-    });
+    }));
     setDirty(true);
   }
   async function save(variant: Variant = project.variant) {
@@ -193,6 +197,7 @@ export function Editor({
               : "Всё сохранено"}
         </button>
       </div>
+      <GenerationPassport project={project}/>
       <div className="editor-layout">
         <aside className="slide-rail" aria-label="Слайды">
           {content.slides.map((s, i) => (
@@ -292,6 +297,7 @@ export function Editor({
           <span className="label">Содержание слайда</span>
           <SlideFields
             sectioned
+            imageGenerationAvailable={imageGenerationAvailable}
             key={`${index}-${project.updated_at}`}
             slide={slide}
             onChange={change}

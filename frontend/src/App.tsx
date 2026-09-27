@@ -12,10 +12,12 @@ import { Audit } from "./pages/Audit";
 import { Projects, Demo, Support } from "./pages/InfoPages";
 import { AuthScreen } from "./pages/AuthScreen";
 import { Profile } from "./pages/Profile";
+import { Requirements } from "./pages/Requirements";
 import { YandexAuth } from "./pages/YandexAuth";
 import type { Health, Project, Route, Template, User } from "./types";
 
 const routes: Route[] = [
+  "requirements",
   "home",
   "templates",
   "favorites",
@@ -337,6 +339,7 @@ function Workspace({
               <Editor
                 key={project.id}
                 project={project}
+                imageGenerationAvailable={health?.image_generation}
                 onUpdate={update}
                 onError={setError}
                 onDirty={setDirty}
@@ -382,6 +385,7 @@ function Workspace({
               <Demo templates={templates} start={() => start("text")} />
             )}
             {route === "support" && <Support />}
+            {route === "requirements" && <Requirements health={health} templates={templates}/>}
             {route === "profile" && (
               <Profile
                 user={user}
@@ -431,6 +435,16 @@ function Workspace({
               Обложка — пример подачи. Предпросмотр схемы и PDF используют
               Manrope; исходные шрифты и ресурсы мастеров сохраняются в PPTX.
             </p>
+            <details className="template-passport"><summary>Правила и токены шаблона</summary>
+              <dl><dt>Пропорции</dt><dd>{preview.metadata.ratio.toFixed(3)}:1</dd>
+                <dt>Типографика</dt><dd>{preview.metadata.font} · заголовок {preview.metadata.heading_pt||32} pt · основной текст {preview.metadata.body_pt||18} pt</dd>
+                <dt>Мастера и макеты</dt><dd>{preview.metadata.master_count||1} / {preview.metadata.layouts.length}</dd>
+                <dt>Палитра</dt><dd>{Object.entries(preview.metadata.colors).slice(0,8).map(([name,value])=>`${name}: ${value}`).join(" · ")}</dd>
+                <dt>Визуальные элементы</dt><dd>{Object.entries(preview.metadata.visual_elements||{}).map(([name,value])=>`${name}: ${value}`).join(" · ")||"Сведения появятся при новом импорте PPTX"}</dd>
+              </dl>
+              <details><summary>Нормализованные зоны макетов</summary><pre style={{whiteSpace:"pre-wrap",maxHeight:240,overflow:"auto",fontSize:11}}>{JSON.stringify(preview.metadata.layouts,null,2)}</pre></details>
+              {preview.metadata.warnings.map(w=><p key={w} className="small muted">{w}</p>)}
+            </details>
             <button
               className="btn primary"
               onClick={() => {

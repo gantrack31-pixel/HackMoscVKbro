@@ -30,6 +30,13 @@ def analyze_template(path: Path) -> dict:
     width, height = int(prs.slide_width), int(prs.slide_height)
     if width <= 0 or height <= 0: raise ValueError('Некорректный размер слайда.')
     fonts, sizes = Counter(), Counter()
+    visual_counts=Counter()
+    for slide in prs.slides:
+        for shape in slide.shapes:
+            if shape.has_chart:visual_counts['charts']+=1
+            elif shape.has_table:visual_counts['tables']+=1
+            elif shape.shape_type==13:visual_counts['pictures']+=1
+            elif not shape.has_text_frame:visual_counts['shapes']+=1
     colors, theme_font = {}, 'Arial'
     with ZipFile(path) as archive:
         theme_names = sorted(n for n in archive.namelist() if re.fullmatch(r'ppt/theme/theme\d+\.xml',n))
@@ -75,6 +82,7 @@ def analyze_template(path: Path) -> dict:
             'heading_pt':max(headings,key=lambda x:x[1])[0] if headings else 32,
             'body_pt':max(bodies,key=lambda x:x[1])[0] if bodies else 18,
             'layouts':layouts,'master_count':len(prs.slide_masters),'source':'pptx',
+            'visual_elements':dict(visual_counts),'normalization_version':'2',
             'warnings':['Предпросмотр показывает содержимое и размещение. Графика мастера сохраняется в PPTX; проверьте итоговый файл в PowerPoint.']}
 
 BUILTINS=[

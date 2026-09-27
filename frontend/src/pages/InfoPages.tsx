@@ -327,6 +327,7 @@ export function Support() {
   const accordionId = useId();
   return (
     <section className="support-page">
+      <a className="btn" href="#requirements">Возможности, требования и пайплайн <Icon name="arrow"/></a>
       <header className="heading support-heading">
         <span className="support-eyebrow">
           <Icon name="help" /> Помощь в нужный момент

@@ -7,6 +7,7 @@ from pathlib import Path
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 from ..models import Slide
+from .visuals import diagram_nodes, pictogram_nodes
 
 FONTS=Path(__file__).parent
 for name,file in [('Deckly','Manrope-Regular.ttf'),('DecklyBold','Manrope-Bold.ttf')]:
@@ -30,7 +31,7 @@ def wrap(text: str, width: float, size: float, bold=False) -> list[str]:
         lines.append(line)
     return lines or ['']
 
-def selected_layout(metadata: dict) -> dict | None:
+def selected_layout(metadata: dict, kind='text', variant='a') -> dict | None:
     candidates=[]
     for layout in metadata.get('layouts',[]):
         titles=[b for b in layout['boxes'] if 'TITLE' in b['type'] and 'SUBTITLE' not in b['type'] and b['w']>.35]
@@ -38,11 +39,12 @@ def selected_layout(metadata: dict) -> dict | None:
         if titles and bodies:
             score=bodies[0]['w']*bodies[0]['h']-layout['static_shapes']*.008
             candidates.append((score,layout))
-    return max(candidates,key=lambda x:x[0])[1] if candidates else None
+    candidates.sort(key=lambda x:x[0],reverse=True)
+    return candidates[min('abc'.index(variant),len(candidates)-1)][1] if candidates else None
 
 def geometry_nodes(obj):
     """Одна отрисовка для браузера, PDF и HTML; PPTX сохраняет нативные объекты."""
-    if obj['type'] in {'text','rect'}: return [obj]
+    if obj['type'] in {'text','rect','ellipse','line','image'}: return [obj]
     nodes=[]
     def rect(x,y,w,h,fill):
         nodes.append({'type':'rect','x':x,'y':y,'w':w,'h':h,'fill':fill})
@@ -51,6 +53,26 @@ def geometry_nodes(obj):
         nodes.append({'type':'text','x':x,'y':y,'w':w,'h':h,'lines':lines,'text':str(value),
                       'font_size':size,'bold':bold,'color':color,'used_height':len(lines)*size*1.28})
     if obj['type']=='chart':
+        if obj.get('chart_type') in {'column','line'}:
+            low=min(0,*obj['values']);high=max(1,*obj['values']);span=high-low
+            px=obj['x']+60;py=obj['y']+30;pw=obj['w']-100;ph=obj['h']-98
+            zero=py+high/span*ph;step=pw/max(1,len(obj['values']))
+            points=[]
+            for tick in range(5):
+                value=low+span*tick/4;y=py+(high-value)/span*ph
+                rect(px,y,pw,1,'#E2E8F0');text(f'{value:.2g}',obj['x'],y-10,55,22,14,'#64748B')
+            for i,(label,value) in enumerate(zip(obj['labels'],obj['values'])):
+                x=px+(i+.5)*step;y=py+(high-value)/span*ph
+                points.append((x,y))
+                if obj['chart_type']=='column':rect(x-step*.28,min(y,zero),step*.56,max(1,abs(zero-y)),obj['fill'])
+                else: nodes.append({'type':'ellipse','x':x-5,'y':y-5,'w':10,'h':10,'fill':obj['fill']})
+                text(label,x-step*.45,py+ph+12,step*.9,40,14)
+                text(f"{value:g}",x-26,max(obj['y'],y-24),76,22,14,bold=True)
+            if obj['chart_type']=='line':
+                for (x1,y1),(x2,y2) in zip(points,points[1:]):
+                    nodes.append({'type':'line','x':min(x1,x2),'y':min(y1,y2),'w':abs(x2-x1),'h':abs(y2-y1),
+                                  'x1':x1,'y1':y1,'x2':x2,'y2':y2,'stroke':obj['fill'],'stroke_width':3})
+            return [{**n,'id':f'{obj["id"]}-{i}'} for i,n in enumerate(nodes)]
         low=min(0,*obj['values']);high=max(1,*obj['values']);span=high-low
         label_w=min(176,obj['w']*.24);value_w=112
         plot_x=obj['x']+label_w+16;plot_w=max(64,obj['w']-label_w-value_w-32)
@@ -90,7 +112,7 @@ def build_scene(slide: Slide, metadata: dict, variant: str, index: int) -> dict:
     if len(accent)!=7: accent='#0077FF'
     margin=64.;title_box={'x':margin,'y':height*.18,'w':width-margin*2,'h':height*.22}
     body_box={'x':margin,'y':height*.44,'w':width-margin*2,'h':height*.39}
-    layout=selected_layout(metadata)
+    layout=selected_layout(metadata,slide.kind,variant)
     if layout:
         for box in layout['boxes']:
             target=title_box if 'TITLE' in box['type'] and 'SUBTITLE' not in box['type'] else body_box if any(k in box['type'] for k in ['BODY','OBJECT']) else None
@@ -124,7 +146,7 @@ def build_scene(slide: Slide, metadata: dict, variant: str, index: int) -> dict:
         title_box.update(x=104,w=min(title_box['w'],width-208))
         body_box.update(x=104,w=min(body_box['w'],width-208))
     # Данные получают полноценную площадь, титульный — отдельный масштаб и ритм.
-    if slide.kind in {'chart','table','steps'}:
+    if slide.kind in {'chart','table','steps','diagram','icons','image'}:
         title_box.update(y=height*.13,h=height*.16)
         title_size=min(title_size,48.)
         body_box.update(y=height*.32,h=height*.55)
@@ -138,7 +160,7 @@ def build_scene(slide: Slide, metadata: dict, variant: str, index: int) -> dict:
     def rect(id,x,y,w,h,color): objects.append({'id':id,'type':'rect','x':x,'y':y,'w':w,'h':h,'fill':color})
     def text(id,content,box,size,color,bold=False):
         lines=wrap(content,box['w'],size,bold)
-        if slide.designs and id not in {'number','footer'}:
+        if (slide.designs or 'overflow' in slide.fixed) and id not in {'number','footer'}:
             minimum=28 if id=='title' else 20
             while len(lines)*size*1.28>box['h'] and size>minimum:
                 size=max(minimum,size-1)
@@ -166,10 +188,27 @@ def build_scene(slide: Slide, metadata: dict, variant: str, index: int) -> dict:
     title_color='#0F172A' if 'contrast_title' in slide.fixed else accent
     text('title',slide.title,title_box,title_size,title_color,True)
     content=slide.body+ ('\n'+'\n'.join('• '+b for b in slide.bullets) if slide.bullets else '')
-    if slide.kind=='chart' and slide.chart:
+    if slide.kind in {'diagram','icons'}:
+        text('body',slide.body,{**body_box,'h':60},22,'#475569')
+        area={**body_box,'y':body_box['y']+72,'h':max(160,body_box['h']-72)}
+        visual=diagram_nodes(slide,area,accent) if slide.kind=='diagram' else pictogram_nodes(slide,area,accent)
+        for node in visual:
+            if node['type']=='text':
+                size=node['font_size']
+                while len(wrap(node['text'],node['w'],size,True))*size*1.28>node['h'] and size>16:size-=1
+                text(node['id'],node['text'],{k:node[k] for k in ('x','y','w','h')},size,node['color'],True)
+            else: objects.append(node)
+    elif slide.kind=='image':
+        text('body',slide.body,{**body_box,'w':body_box['w']*.4},24,'#475569')
+        if slide.image_data:
+            side=min(body_box['h'],body_box['w']*.55)
+            objects.append({'id':'illustration','type':'image','x':body_box['x']+body_box['w']-side,
+                            'y':body_box['y'],'w':side,'h':side,'src':slide.image_data})
+        else:text('image-placeholder','Добавьте иллюстрацию в редакторе',{**body_box,'x':body_box['x']+body_box['w']*.45,'w':body_box['w']*.55},24,'#64748B')
+    elif slide.kind=='chart' and slide.chart:
         text('body',slide.body,{**body_box,'h':64},22,'#475569')
         objects.append({'id':'chart','type':'chart',**body_box,'y':body_box['y']+70,'h':max(90,body_box['h']-70),
-                        'labels':slide.chart.labels,'values':slide.chart.values,'unit':slide.chart.unit,'fill':accent})
+                        'labels':slide.chart.labels,'values':slide.chart.values,'unit':slide.chart.unit,'fill':accent,'chart_type':slide.chart.chart_type})
     elif slide.kind=='table' and slide.table:
         text('body',slide.body,{**body_box,'h':64},22,'#475569')
         objects.append({'id':'table','type':'table',**body_box,'y':body_box['y']+70,'h':max(90,body_box['h']-70),

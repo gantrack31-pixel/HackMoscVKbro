@@ -10,6 +10,7 @@ export type Route =
   | "demo"
   | "support"
   | "profile"
+  | "requirements"
   | "finish";
 export type Variant = "a" | "b" | "c";
 export interface Template {
@@ -29,15 +30,19 @@ export interface Template {
     colors: Record<string, string>;
     fonts?: string[];
     layouts: unknown[];
+    heading_pt?: number;
+    body_pt?: number;
+    master_count?: number;
+    visual_elements?: Record<string,number>;
     warnings: string[];
   };
 }
 export interface Slide {
   title: string;
   body: string;
-  kind: "title" | "text" | "chart" | "table" | "steps";
+  kind: "title" | "text" | "chart" | "table" | "steps" | "diagram" | "icons" | "image";
   bullets: string[];
-  chart: { labels: string[]; values: number[]; unit: string } | null;
+  chart: { labels: string[]; values: number[]; unit: string; chart_type?: "bar" | "column" | "line" } | null;
   table: string[][];
   source_quote: string;
   notes: string;
@@ -48,6 +53,10 @@ export interface Slide {
     layout_shift: 0 | 1 | 2;
   } | null;
   fixed: string[];
+  diagram_type?: "process" | "cycle" | "hierarchy";
+  icon_names?: string[];
+  image_prompt?: string;
+  image_data?: string;
   designs?: Partial<Record<Variant, NonNullable<Slide["design"]>>>;
 }
 export interface DeckContent {
@@ -57,7 +66,9 @@ export interface DeckContent {
 }
 export interface SceneObject {
   id: string;
-  type: "rect" | "text" | "chart" | "table";
+  type: "rect" | "text" | "chart" | "table" | "ellipse" | "line" | "image";
+  x1?: number; y1?: number; x2?: number; y2?: number;
+  stroke?: string; stroke_width?: number; src?: string;
   x: number;
   y: number;
   w: number;
@@ -97,6 +108,7 @@ export interface CloudReceipt {
   templates_saved?: number;
 }
 export interface Project {
+  provenance?: GenerationManifest;
   id: string;
   title: string;
   template_id: string;
@@ -118,6 +130,9 @@ export interface ProjectSummary {
   updated_at: string;
 }
 export interface Health {
+  image_generation?: boolean;
+  image_model?: string;
+  generation_budget_seconds?: number;
   ok: boolean;
   mode: "demo" | "live";
   model: string;
@@ -126,6 +141,20 @@ export interface Health {
   context_audit: boolean;
   export_note: string;
   yandex_enabled: boolean;
+}
+
+export interface WorkflowRecipe {
+  version: string; fingerprint: string; budget_seconds: number;
+  outline_budget_seconds?: number; assembly_budget_seconds?: number;
+  stages: {id: string; name: string; type: string}[];
+  snippets: {id: string; version: string; text: string}[];
+  variants: {id: string; title: string; layout: string; density: string}[];
+}
+export interface GenerationManifest {
+  job_id: string; recipe: WorkflowRecipe; mode: string; model: string;
+  duration_seconds: number; within_budget: boolean; slides: number;
+  template: {id: string; name: string; fingerprint: string};
+  audit: Record<string, {issues: number; errors: number}>;
 }
 export interface User {
   id: string;

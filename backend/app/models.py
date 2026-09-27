@@ -16,6 +16,7 @@ class ChartData(BaseModel):
     labels: list[str] = Field(min_length=1, max_length=6)
     values: list[float] = Field(min_length=1, max_length=6)
     unit: str = Field(default='', max_length=30)
+    chart_type: Literal['bar', 'column', 'line'] = 'bar'
     @model_validator(mode='after')
     def same_length(self):
         if len(self.labels) != len(self.values):
@@ -26,7 +27,7 @@ class Slide(BaseModel):
     model_config = ConfigDict(extra='forbid')
     title: str = Field(min_length=1, max_length=180)
     body: str = Field(default='', max_length=2400)
-    kind: Literal['title', 'text', 'chart', 'table', 'steps'] = 'text'
+    kind: Literal['title', 'text', 'chart', 'table', 'steps', 'diagram', 'icons', 'image'] = 'text'
     bullets: list[str] = Field(default_factory=list, max_length=10)
     chart: ChartData | None = None
     table: list[list[str]] = Field(default_factory=list, max_length=9)
@@ -36,6 +37,26 @@ class Slide(BaseModel):
     design: SlideDesign | None = None
     designs: dict[Variant, SlideDesign] = Field(default_factory=dict)
     fixed: list[str] = Field(default_factory=list)
+    diagram_type: Literal['process', 'cycle', 'hierarchy'] = 'process'
+    icon_names: list[Literal['idea', 'people', 'target', 'growth', 'shield', 'clock']] = Field(default_factory=list, max_length=6)
+    image_prompt: str = Field(default='', max_length=1000)
+    image_data: str = Field(default='', max_length=1500000)
+    @field_validator('image_data')
+    @classmethod
+    def safe_image(cls, value):
+        if not value: return value
+        import base64
+        from io import BytesIO
+        from PIL import Image
+        prefix='data:image/png;base64,'
+        if not value.startswith(prefix): raise ValueError('Только встроенный PNG')
+        try:
+            data=base64.b64decode(value[len(prefix):],validate=True)
+            with Image.open(BytesIO(data),formats=['PNG']) as im:
+                if max(im.size)>1024: raise ValueError('Размер изображения до 1024 px')
+                im.verify()
+        except Exception as exc: raise ValueError('Некорректное изображение') from exc
+        return value
     @model_validator(mode='after')
     def required_visual_data(self):
         if self.kind=='chart' and self.chart is None:raise ValueError('Добавьте данные диаграммы')
@@ -65,6 +86,7 @@ class OutlineRequest(BaseModel):
     count: int = Field(default=10, ge=3, le=20)
     audience: str = Field(default='Команда и коллеги', max_length=100)
     mode: Literal['description', 'text'] = 'description'
+    purpose: Literal['project', 'product', 'feature', 'initiative'] = 'project'
     @field_validator('prompt')
     @classmethod
     def nonempty(cls, value):

@@ -55,6 +55,12 @@ const json = (method: string, data: unknown): RequestInit => ({
   body: JSON.stringify(data),
 });
 export const api = {
+  workflow: () => request<import("./types").WorkflowRecipe>("/workflow"),
+  importMaterials: (files: File[]) => {
+    const body=new FormData(); files.forEach(file=>body.append("files",file));
+    return request<{text: string; documents: {name: string; characters: number; warnings: string[]; sha256: string}[]}>("/materials/import",{method:"POST",body});
+  },
+  generateImage: (prompt: string) => request<{image_data: string; model: string}>("/images/generate",json("POST",{prompt})),
   cloudStatus: () => request<CloudStatus>("/cloud/status"),
   cloudProjects: () => request<CloudReceipt[]>("/cloud/projects"),
   saveCloud: (id: string) =>
@@ -154,6 +160,7 @@ export const api = {
   },
   outline: (data: {
     template_id: string;
+    purpose?: "project" | "product" | "feature" | "initiative";
     prompt: string;
     count: number;
     audience: string;

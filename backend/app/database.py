@@ -69,7 +69,8 @@ def initialize():
                                             ('email_verified', 'INTEGER NOT NULL DEFAULT 1')],
                                  'oauth_states': [('user_id', 'TEXT'), ('session_hash', 'TEXT')],
                                  'jobs': [('task_type', "TEXT NOT NULL DEFAULT 'legacy'"),
-                                          ('payload', 'TEXT'), ('retry_of', 'TEXT'), ('retry_job_id', 'TEXT')]}.items():
+                                          ('payload', 'TEXT'), ('retry_of', 'TEXT'), ('retry_job_id', 'TEXT')],
+                                 'projects': [('provenance', "TEXT NOT NULL DEFAULT '{}'")]}.items():
             columns={row['name'] for row in db.execute(f'PRAGMA table_info({table})')}
             for column, declaration in additions:
                 if column not in columns: db.execute(f'ALTER TABLE {table} ADD COLUMN {column} {declaration}')
@@ -104,7 +105,7 @@ def project_create(pid: str, template_id: str, content: dict, source_text: str, 
 def project_get(pid: str):
     with connection() as db:
         row = db.execute('SELECT * FROM projects WHERE id=?', (pid,)).fetchone()
-        return decode(row, ['content','revisions']) if row else None
+        return decode(row, ['content','revisions','provenance']) if row else None
 
 def projects_list(user_id):
     with connection() as db:
@@ -199,7 +200,7 @@ def job_retry_claim(jid: str, user_id: str):
 
 
 def job_complete_with_project(jid: str, pid: str, template_id: str, content: dict,
-                              source_text: str, user_id: str):
+                              source_text: str, user_id: str, provenance: dict | None = None):
     """Atomically persist the single result and mark its job complete."""
     timestamp=now()
     with connection() as db:
@@ -223,6 +224,8 @@ def job_complete_with_project(jid: str, pid: str, template_id: str, content: dic
             raise ValueError('ID результата уже занят другой презентацией.')
         db.execute('UPDATE jobs SET state=\'complete\',stage=\'complete\',project_id=?,error=NULL,updated_at=? WHERE id=?',
                    (pid,timestamp,jid))
+        if provenance:
+            db.execute('UPDATE projects SET provenance=? WHERE id=?',(json.dumps(provenance,ensure_ascii=False),pid))
         if job['retry_of']:
             db.execute('''UPDATE jobs SET state='complete',stage='complete',project_id=?,error=NULL,updated_at=?
               WHERE id=? AND retry_job_id=?''',(pid,timestamp,job['retry_of'],jid))

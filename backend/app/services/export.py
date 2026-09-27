@@ -5,11 +5,12 @@ import base64
 from pptx import Presentation
 from pptx.util import Inches, Pt
 from pptx.dml.color import RGBColor
-from pptx.enum.shapes import MSO_SHAPE
+from pptx.enum.shapes import MSO_SHAPE, MSO_CONNECTOR
 from pptx.enum.chart import XL_CHART_TYPE
 from pptx.chart.data import CategoryChartData
 from reportlab.pdfgen import canvas
 from reportlab.lib.colors import HexColor
+from reportlab.lib.utils import ImageReader
 from ..models import DeckContent
 from .layout import build_scene, selected_layout, FONTS, geometry_nodes
 
@@ -20,6 +21,9 @@ def scene_svg(scene):
     for obj in scene['objects']:
         for n in geometry_nodes(obj):
             if n['type']=='rect': parts.append(f'<rect x="{n["x"]}" y="{n["y"]}" width="{n["w"]}" height="{n["h"]}" fill="{n["fill"]}"/>')
+            elif n['type']=='ellipse': parts.append(f'<ellipse cx="{n["x"]+n["w"]/2}" cy="{n["y"]+n["h"]/2}" rx="{n["w"]/2}" ry="{n["h"]/2}" fill="{n["fill"]}"/>')
+            elif n['type']=='line': parts.append(f'<line x1="{n["x1"]}" y1="{n["y1"]}" x2="{n["x2"]}" y2="{n["y2"]}" stroke="{n["stroke"]}" stroke-width="{n["stroke_width"]}"/>')
+            elif n['type']=='image': parts.append(f'<image x="{n["x"]}" y="{n["y"]}" width="{n["w"]}" height="{n["h"]}" href="{escape(n["src"],quote=True)}"/>')
             else:
                 spans=''.join(f'<tspan x="{n["x"]}" y="{n["y"]+n["font_size"]+i*n["font_size"]*1.28}">{escape(line)}</tspan>' for i,line in enumerate(n['lines']))
                 parts.append(f'<text font-family="Manrope, Arial" font-size="{n["font_size"]}" font-weight="{750 if n["bold"] else 400}" fill="{n["color"]}">{spans}</text>')
@@ -40,6 +44,14 @@ def export_pdf(content,template,variant):
             for n in geometry_nodes(obj):
                 if n['type']=='rect':
                     pdf.setFillColor(HexColor(n['fill']));pdf.rect(n['x'],height-n['y']-n['h'],n['w'],n['h'],fill=1,stroke=0)
+                elif n['type']=='ellipse':
+                    pdf.setFillColor(HexColor(n['fill']));pdf.ellipse(n['x'],height-n['y']-n['h'],n['x']+n['w'],height-n['y'],fill=1,stroke=0)
+                elif n['type']=='line':
+                    pdf.setStrokeColor(HexColor(n['stroke']));pdf.setLineWidth(n['stroke_width'])
+                    pdf.line(n['x1'],height-n['y1'],n['x2'],height-n['y2'])
+                elif n['type']=='image':
+                    pdf.drawImage(ImageReader(BytesIO(base64.b64decode(n['src'].split(',',1)[1]))),
+                                  n['x'],height-n['y']-n['h'],n['w'],n['h'],mask='auto')
                 else:
                     pdf.setFont('DecklyBold' if n['bold'] else 'Deckly',n['font_size']);pdf.setFillColor(HexColor(n['color']))
                     for j,line in enumerate(n['lines']):pdf.drawString(n['x'],height-n['y']-n['font_size']-j*n['font_size']*1.28,line)
@@ -55,10 +67,10 @@ def export_pptx(content: DeckContent, template: dict, variant: str):
             prs.part.drop_rel(slide_id.rId);prs.slides._sldIdLst.remove(slide_id)
     else:
         prs.slide_width=Inches(13.333333);prs.slide_height=Inches(13.333333/metadata['ratio'])
-    chosen=selected_layout(metadata)
-    layout=prs.slide_masters[chosen['master']].slide_layouts[chosen['index']] if chosen else min(prs.slide_layouts,key=lambda l:len(l.placeholders))
     scale=prs.slide_width/1280;point_scale=scale/12700
     for index,slide_content in enumerate(content.slides):
+        chosen=selected_layout(metadata,slide_content.kind,slide_content.layout or variant)
+        layout=prs.slide_masters[chosen['master']].slide_layouts[chosen['index']] if chosen else min(prs.slide_layouts,key=lambda l:len(l.placeholders))
         slide=prs.slides.add_slide(layout)
         for ph in list(slide.placeholders):
             element=ph._element;element.getparent().remove(element)
@@ -67,9 +79,14 @@ def export_pptx(content: DeckContent, template: dict, variant: str):
             x,y,w,h=[int(obj[key]*scale) for key in ['x','y','w','h']]
             if obj['id']=='background':
                 slide.background.fill.solid();slide.background.fill.fore_color.rgb=rgb(obj['fill']);continue
-            if obj['type']=='rect':
-                shape=slide.shapes.add_shape(MSO_SHAPE.RECTANGLE,x,y,w,h)
+            if obj['type'] in {'rect','ellipse'}:
+                shape=slide.shapes.add_shape(MSO_SHAPE.OVAL if obj['type']=='ellipse' else MSO_SHAPE.RECTANGLE,x,y,w,h)
                 shape.fill.solid();shape.fill.fore_color.rgb=rgb(obj['fill']);shape.line.fill.background()
+            elif obj['type']=='line':
+                line=slide.shapes.add_connector(MSO_CONNECTOR.STRAIGHT,*[int(obj[k]*scale) for k in ('x1','y1','x2','y2')])
+                line.line.color.rgb=rgb(obj['stroke']);line.line.width=Pt(obj['stroke_width']*point_scale)
+            elif obj['type']=='image':
+                slide.shapes.add_picture(BytesIO(base64.b64decode(obj['src'].split(',',1)[1])),x,y,w,h)
             elif obj['type']=='text':
                 shape=slide.shapes.add_textbox(x,y,w,h);frame=shape.text_frame;frame.clear()
                 frame.margin_left=frame.margin_right=frame.margin_top=frame.margin_bottom=0
@@ -81,7 +98,8 @@ def export_pptx(content: DeckContent, template: dict, variant: str):
                     paragraph.font.color.rgb=rgb(obj['color']);paragraph.space_after=Pt(0);paragraph.line_spacing=1.28
             elif obj['type']=='chart':
                 data=CategoryChartData();data.categories=obj['labels'];data.add_series(obj['unit'] or 'Значение',obj['values'])
-                chart=slide.shapes.add_chart(XL_CHART_TYPE.BAR_CLUSTERED,x,y,w,h,data).chart
+                chart_type={'bar':XL_CHART_TYPE.BAR_CLUSTERED,'column':XL_CHART_TYPE.COLUMN_CLUSTERED,'line':XL_CHART_TYPE.LINE_MARKERS}[obj.get('chart_type','bar')]
+                chart=slide.shapes.add_chart(chart_type,x,y,w,h,data).chart
                 chart.has_legend=False;chart.value_axis.has_title=True;chart.value_axis.axis_title.text_frame.text=obj['unit'] or 'Значение'
                 chart.series[0].format.fill.solid();chart.series[0].format.fill.fore_color.rgb=rgb(obj['fill'])
             elif obj['type']=='table':

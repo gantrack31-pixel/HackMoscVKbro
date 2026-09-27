@@ -30,7 +30,7 @@ def audit_deck(content: DeckContent, template: dict, variant: str, source: str) 
                 add('bounds','Объект выходит за слайд','Измените композицию или сократите содержание.',severity='error',obj=obj['id'])
             if obj['type']=='text' and obj['id'] not in {'number','footer'}:
                 if obj['used_height']>obj['h']:
-                    add('overflow','Текст не помещается в блок','Разделите содержание на слайды или сократите формулировку.',severity='error',obj=obj['id'])
+                    add('overflow','Текст не помещается в блок','Можно уменьшить размер до безопасного минимума. Если этого недостаточно, разделите содержание.',severity='error',fixable='overflow' not in slide.fixed,obj=obj['id'])
                 point_scale=1280/(template['metadata'].get('width_emu',12192000)/914400*72)
                 point_size=obj['font_size']/point_scale
                 threshold=3.0 if point_size>=24 or (obj.get('bold') and point_size>=18) else 4.5
@@ -55,4 +55,18 @@ def audit_deck(content: DeckContent, template: dict, variant: str, source: str) 
                 'Укажите точную цитату из материалов и проверьте, что она подтверждает тезис.',category='source',severity='info' if status=='missing' else 'warning')
         if re.search(r'\blorem ipsum\b|\bTODO\b|вставьте текст',slide.title+' '+slide.body,re.I):
             add('placeholder','Остался служебный текст','Замените заглушку содержанием.',category='content',severity='error')
+        if slide.kind=='image' and not slide.image_data:
+            add('image_missing','Нет иллюстрации','Подключите генератор изображений и создайте иллюстрацию в редакторе.',category='content',severity='error',obj='image-placeholder')
+        if slide.kind in {'icons','diagram'} and len(slide.bullets)>6:
+            add('visual_capacity','Схема содержит больше шести элементов','Разделите схему: на этом слайде показаны только первые шесть пунктов.',category='content',severity='error')
+        essential=[o for o in scene['objects'] if o['type'] in {'text','chart','table','image'}
+                   and o['id'] not in {'number','footer'} and (o['type']!='text' or o.get('text','').strip())]
+        overlapping=set()
+        for left_index,a in enumerate(essential):
+            for b in essential[left_index + 1:]:
+                iw=min(a['x']+a['w'],b['x']+b['w'])-max(a['x'],b['x'])
+                ih=min(a['y']+a['h'],b['y']+b['h'])-max(a['y'],b['y'])
+                if iw>8 and ih>8 and b['id'] not in overlapping:
+                    overlapping.add(b['id'])
+                    add('overlap','Блоки содержания пересекаются','Измените композицию или сократите текст; перекрытие требует проверки.',severity='error',obj=b['id'])
     return issues

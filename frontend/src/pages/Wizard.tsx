@@ -47,6 +47,7 @@ PPTX содержит текстовые блоки, таблицы и диаг�
 const generationStages = [
   ["queued", "Задание принято", "Подготавливаем материал и выбранный шаблон"],
   ["design", "Продумываем оформление", "Выбираем композицию для вашей истории"],
+  ["images", "Готовим иллюстрации", "Опционально: изображения FLUX.1-schnell"],
   ["layout", "Размещаем содержание", "Собираем текст, акценты и графику"],
   ["export", "Создаём три варианта", "Сохраняем редактируемые слайды"],
   ["audit", "Проверяем слайды", "Проверяем расположение и читаемость"],
@@ -106,9 +107,11 @@ export function Wizard({
     [prompt, setPrompt] = useState(""),
     [count, setCount] = useState(10),
     [audience, setAudience] = useState("Команда и коллеги");
+  const [purpose,setPurpose]=useState<"project"|"product"|"feature"|"initiative">("project");
+  const [packetFiles,setPacketFiles]=useState<string[]>([]);
   const [content, setContent] = useState<DeckContent | null>(null),
     [operation, setOperation] = useState<
-      "outline" | "generate" | "regenerate" | "open" | null
+      "outline" | "generate" | "regenerate" | "open" | "import" | null
     >(null),
     [stage, setStage] = useState("queued"),
     [result, setResult] = useState<Project | null>(null),
@@ -263,6 +266,7 @@ export function Wizard({
         prompt: material,
         count,
         audience,
+        purpose,
         mode: example ? "description" : mode,
       });
       if (isCurrent(id)) {
@@ -451,7 +455,8 @@ export function Wizard({
     <div className="wizard-modern wizard-flow">
       <div className="heading">
         <h1>От идеи — к презентации</h1>
-        <p>Ваш текст, ваш шаблон, ваша история.</p>
+        <p>Ваш текст, ваш шаблон, ваша история. Обычно 10–15 слайдов.</p>
+        <a href="#requirements" className="workflow-link">Как устроены генерация и проверка</a>
       </div>
       <ol className="stepper" aria-label="Этапы создания презентации">
         {["Материалы", "Структура", "Создание", "Оформление"].map((name, i) => (
@@ -511,6 +516,13 @@ export function Wizard({
                 </span>
               </span>
             </label>
+            <label className="field">Назначение презентации
+              <select value={purpose} disabled={busy} onChange={e=>setPurpose(e.target.value as typeof purpose)}>
+                <option value="project">Проект</option><option value="product">Продукт</option>
+                <option value="feature">Функция продукта</option><option value="initiative">Инициатива</option>
+              </select>
+            </label>
+            {packetFiles.length>0 && <ul className="packet-receipt" aria-label="Импортированные документы">{packetFiles.map(name=><li key={name}>{name}</li>)}</ul>}
             <div className="row wrap">
               <button
                 className="btn sm"
@@ -521,43 +533,22 @@ export function Wizard({
                 Пример Deckly.Ai
               </button>
               <label className="btn sm file-label">
-                <Icon name="upload" />
-                Добавить TXT / MD
-                <input
-                  hidden
-                  type="file"
-                  disabled={busy}
-                  accept=".txt,.md"
-                  onChange={async (e) => {
-                    const f = e.target.files?.[0];
-                    e.target.value = "";
-                    if (f) {
-                      if (f.size > 200000) {
-                        onError("Выберите текстовый файл до 200 КБ");
-                        return;
-                      }
-                      let text: string;
-                      try {
-                        text = await f.text();
-                      } catch {
-                        if (active.current)
-                          onError(
-                            "Не удалось прочитать файл. Попробуйте другой TXT или MD.",
-                          );
-                        return;
-                      }
-                      if (!active.current || locked.current) return;
-                      if (text.length > 50000) {
-                        onError(
-                          "В файле больше 50 000 символов. Сократите материал, чтобы он поместился полностью.",
-                        );
-                        return;
-                      }
-                      setPrompt(text);
-                      setMode("text");
-                    }
-                  }}
-                />
+                <Icon name="upload" />{operation === "import" ? "Читаем пакет…" : "Добавить пакет материалов"}
+                <input hidden type="file" multiple disabled={busy} accept=".txt,.md,.csv,.docx,.pdf"
+                  onChange={async e=>{
+                    const files=Array.from(e.target.files||[]);e.target.value="";
+                    if(!files.length||locked.current)return;
+                    const id=begin("import");
+                    if(id===null)return;
+                    try {
+                      const packet=await api.importMaterials(files);
+                      if(!isCurrent(id))return;
+                      const combined=[prompt.trim(),packet.text].filter(Boolean).join("\n\n");
+                      if(combined.length>50000)throw new Error("Вместе с введённым текстом пакет превышает 50 000 символов.");
+                      setPrompt(combined);setMode("text");
+                      setPacketFiles(previous=>[...previous,...packet.documents.map(d=>`${d.name} · ${d.characters.toLocaleString("ru-RU")} символов${d.warnings.length ? " · "+d.warnings.join(" ") : ""}`)]);
+                    }catch(error){if(isCurrent(id))onError((error as Error).message);}finally{finish(id);}
+                  }}/>
               </label>
             </div>
             <div className="wizard-options">
@@ -742,6 +733,9 @@ export function Wizard({
                           chart: "Данные и диаграмма",
                           table: "Таблица",
                           steps: "Последовательность",
+                          diagram: "Связанная схема",
+                          icons: "Пиктограммы",
+                          image: "AI-иллюстрация",
                         }[s.kind]
                       }
                     </span>

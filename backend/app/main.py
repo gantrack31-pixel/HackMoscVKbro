@@ -5,6 +5,7 @@ from pathlib import Path
 from uuid import uuid4
 from urllib.parse import quote
 import logging
+from time import monotonic
 from fastapi import FastAPI, UploadFile, HTTPException, BackgroundTasks, Query, Depends, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response, JSONResponse, FileResponse
@@ -20,6 +21,10 @@ from .services.layout import build_scene
 from .services.audit import audit_deck, source_status
 from .services.export import export_pptx, export_pdf, export_html
 from .services import cloud
+from .services.materials import read_material, MAX_FILE_BYTES, MAX_PACKET_CHARS
+from .services.workflow import recipe, manifest, generation_budget, OUTLINE_BUDGET_SECONDS
+from .services.images import generate_image, MODEL as IMAGE_MODEL
+from pydantic import BaseModel, Field
 from .auth import router as auth_router, current_user
 
 logger=logging.getLogger('deckly')
@@ -94,8 +99,40 @@ def project_response(project):
 def health():
     return {'ok':True,'mode':settings.mode,'model':settings.model,'llm_configured':configured(),
             'database':'SQLite','max_upload_mb':settings.max_upload_mb,'context_audit':settings.context_audit,
-            'yandex_enabled':bool(settings.yandex_id),
+            'yandex_enabled':bool(settings.yandex_id), 'image_generation':bool(settings.image_base_url),
+            'image_model':IMAGE_MODEL,'generation_budget_seconds':300,
             'export_note':'PPTX сохраняет ресурсы мастера. PDF и HTML используют схему размещения и Manrope.'}
+
+@app.get('/api/workflow')
+def workflow(user=Depends(current_user)):
+    return recipe()
+
+@app.post('/api/materials/import')
+async def import_materials(files: list[UploadFile], user=Depends(current_user)):
+    try:
+        if not 1<=len(files)<=8:raise HTTPException(422,'Выберите от одного до восьми файлов.')
+        documents=[];total=0
+        for file in files:
+            data=await file.read(MAX_FILE_BYTES+1)
+            total+=len(data)
+            if total>15*1024*1024:raise HTTPException(413,'Пакет должен быть не больше 15 МБ.')
+            name=Path((file.filename or 'Документ').replace('\\','/')).name
+            doc=await asyncio.to_thread(read_material,name,data)
+            documents.append(doc)
+        text='\n\n'.join(f'Источник: {d["name"]}\n{d["text"]}' for d in documents)
+        if len(text)>MAX_PACKET_CHARS:raise HTTPException(413,'В пакете больше 50 000 символов. Уберите часть документов.')
+        return {'text':text,'documents':[{k:v for k,v in d.items() if k!='text'} for d in documents]}
+    finally:
+        for file in files:await file.close()
+
+class ImagePrompt(BaseModel):
+    prompt: str=Field(min_length=3,max_length=1000)
+
+@app.post('/api/images/generate')
+async def image_generation(request:ImagePrompt,user=Depends(current_user)):
+    if not request.prompt.strip():raise HTTPException(422,'Опишите иллюстрацию.')
+    async with generation_slots:
+        return await generate_image(request.prompt.strip())
 
 @app.get('/api/public/templates')
 def public_templates(): return [public_template(t) for t in db.templates_list() if t['id'] in BUILTIN_IDS]
@@ -146,13 +183,16 @@ async def upload_template(file: UploadFile,user=Depends(current_user)):
 async def outline(request: OutlineRequest,user=Depends(current_user)):
     template=get_template(request.template_id,user['id'])
     try:
-        async with generation_slots:
-            result=await make_outline(request,template)
+        async with asyncio.timeout(OUTLINE_BUDGET_SECONDS):
+            async with generation_slots:
+                result=await make_outline(request,template)
         return {'content':result.model_dump(),'mode':settings.mode}
     except LLMError as exc: raise HTTPException(502,str(exc)) from exc
-    except TimeoutError as exc: raise HTTPException(504,'Создание структуры превысило четыре минуты. Попробуйте меньший объём.') from exc
+    except TimeoutError as exc: raise HTTPException(504,'Создание структуры превысило две минуты. Попробуйте меньший объём.') from exc
 
+@generation_budget
 async def generate_job(jid: str, request: GenerateRequest,user_id: str, result_project_id: str | None = None):
+    started=monotonic()
     if not db.job_start(jid,user_id): return
     result_project_id=result_project_id or str(uuid4())
     async with generation_slots:
@@ -161,6 +201,10 @@ async def generate_job(jid: str, request: GenerateRequest,user_id: str, result_p
             db.job_set(jid,'running','design',user_id=user_id)
             source=request.content.model_copy(update={'audience':request.audience})
             content=await create_design_variants(source,template)
+            for slide in content.slides:
+                if slide.kind=='image' and slide.image_prompt and not slide.image_data:
+                    db.job_set(jid,'running','images',user_id=user_id)
+                    slide.image_data=(await generate_image(slide.image_prompt))['image_data']
             db.job_set(jid,'running','layout',user_id=user_id)
             # Материалы уже согласованы пользователем; LLM не переписывает их при вёрстке.
             await asyncio.to_thread(lambda:[build_scene(s,template['metadata'],v,i) for v in ('a','b','c') for i,s in enumerate(content.slides)])
@@ -168,12 +212,17 @@ async def generate_job(jid: str, request: GenerateRequest,user_id: str, result_p
             for variant in ['a','b','c']:
                 await asyncio.to_thread(export_pptx,content,template,variant)
             db.job_set(jid,'running','audit',user_id=user_id)
+            counts={}
             for variant in ('a','b','c'):
-                await asyncio.to_thread(audit_deck,content,template,variant,request.source_text)
+                issues=await asyncio.to_thread(audit_deck,content,template,variant,request.source_text)
+                counts[variant]={'issues':len(issues),'errors':sum(i.severity=='error' for i in issues)}
             db.job_complete_with_project(jid,result_project_id,request.template_id,
-                                         content.model_dump(),request.source_text,user_id)
+                                         content.model_dump(),request.source_text,user_id,
+                                         manifest(template,content,request.source_text,counts,monotonic()-started,jid))
         except LLMError as exc:
             db.job_set(jid,'failed','failed',error=str(exc),user_id=user_id)
+        except HTTPException as exc:
+            db.job_set(jid,'failed','failed',error=str(exc.detail),user_id=user_id)
         except TimeoutError:
             db.job_set(jid,'failed','failed',error='Модель не успела подготовить три варианта. Повторите запрос.',user_id=user_id)
         except Exception as exc:
@@ -228,7 +277,9 @@ def retry_job(jid: str,tasks: BackgroundTasks,user=Depends(current_user)):
             raise HTTPException(409,'Для этого типа задания повтор недоступен.')
     return {'job_id':retry_id}
 
+@generation_budget
 async def regenerate_job(jid: str, original: dict, instruction: str, user_id: str, result_project_id=None):
+    started=monotonic()
     if not db.job_start(jid,user_id): return
     result_project_id=result_project_id or str(uuid4())
     async with generation_slots:
@@ -242,11 +293,14 @@ async def regenerate_job(jid: str, original: dict, instruction: str, user_id: st
             for variant in ['a','b','c']:
                 await asyncio.to_thread(export_pptx,content,template,variant)
             db.job_set(jid,'running','audit',user_id=user_id)
+            counts={}
             for variant in ('a','b','c'):
-                await asyncio.to_thread(audit_deck,content,template,variant,original['source_text'])
+                issues=await asyncio.to_thread(audit_deck,content,template,variant,original['source_text'])
+                counts[variant]={'issues':len(issues),'errors':sum(i.severity=='error' for i in issues)}
             # Persist only a complete result, as a copy; never overwrite the user's working project.
             db.job_complete_with_project(jid,result_project_id,original['template_id'],
-                                         content.model_dump(),original['source_text'],user_id)
+                                         content.model_dump(),original['source_text'],user_id,
+                                         manifest(template,content,original['source_text'],counts,monotonic()-started,jid))
         except LLMError as exc:
             db.job_set(jid,'failed','failed',error=str(exc),user_id=user_id)
         except TimeoutError:

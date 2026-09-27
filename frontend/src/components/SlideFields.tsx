@@ -1,5 +1,6 @@
-import { useId, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import type { Slide } from "../types";
+import { api } from "../api";
 import "../styles/slide-fields.css";
 
 export const slideKinds = {
@@ -8,6 +9,9 @@ export const slideKinds = {
   chart: "Диаграмма",
   table: "Таблица",
   steps: "Шаги",
+  diagram: "Связанная схема",
+  icons: "Пиктограммы",
+  image: "AI-иллюстрация",
 };
 
 export function SlideFields({
@@ -15,14 +19,22 @@ export function SlideFields({
   onChange,
   onValidity,
   sectioned = false,
+  imageGenerationAvailable = false,
 }: {
   slide: Slide;
   onChange: (patch: Partial<Slide>) => void;
   onValidity: (valid: boolean) => void;
   sectioned?: boolean;
+  imageGenerationAvailable?: boolean;
 }) {
   const fieldId = useId();
   const [section, setSection] = useState("content");
+  const [imageBusy,setImageBusy]=useState(false);
+  const [imageError,setImageError]=useState("");
+  const currentChange = useRef(onChange);
+  const mounted = useRef(true);
+  useEffect(() => { currentChange.current = onChange; }, [onChange]);
+  useEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
   const sections = [
     { id: "content", label: "Слайд" },
     { id: "source", label: "Источник" },
@@ -124,6 +136,7 @@ export function SlideFields({
           Тип слайда
           <select
             value={slide.kind}
+            disabled={imageBusy}
             onChange={(e) => kind(e.target.value as Slide["kind"])}
           >
             {Object.entries(slideKinds).map(([key, name]) => (
@@ -133,6 +146,35 @@ export function SlideFields({
             ))}
           </select>
         </label>
+        {slide.kind==="diagram" && <label className="field">Тип схемы
+          <select value={slide.diagram_type||"process"} onChange={e=>onChange({diagram_type:e.target.value as Slide["diagram_type"]})}>
+            <option value="process">Процесс</option><option value="cycle">Цикл</option><option value="hierarchy">Иерархия</option>
+          </select><small>До 6 узлов. Названия — в поле «Тезисы». Фигуры и связи остаются редактируемыми в PPTX.</small>
+        </label>}
+        {slide.kind==="icons" && <label className="field">Набор пиктограмм
+          <select value={(slide.icon_names||[]).join(",")} onChange={e=>onChange({icon_names:e.target.value?e.target.value.split(","):[]})}>
+            {!!slide.icon_names?.length && !["growth,target,clock,people,shield,idea","shield,people,idea,clock,target,growth"].includes(slide.icon_names.join(",")) && <option value={slide.icon_names.join(",")}>Текущий набор</option>}
+            <option value="">Идея · команда · цель · рост · защита · время</option>
+            <option value="growth,target,clock,people,shield,idea">Рост · цель · время · команда · защита · идея</option>
+            <option value="shield,people,idea,clock,target,growth">Защита · команда · идея · время · цель · рост</option>
+          </select><small>Подписи — в поле «Тезисы», до 6 пунктов.</small>
+        </label>}
+        {slide.kind==="chart" && slide.chart && <label className="field">Визуализация данных
+          <select value={slide.chart.chart_type||"bar"} onChange={e=>onChange({chart:{...slide.chart!,chart_type:e.target.value as "bar"|"column"|"line"}})}>
+            <option value="bar">Полосы</option><option value="column">Столбцы</option><option value="line">Линейный график</option>
+          </select>
+        </label>}
+        {slide.kind==="image" && <div className="field">
+          <label>Описание иллюстрации<textarea disabled={imageBusy} maxLength={1000} value={slide.image_prompt||""}
+            onChange={e=>onChange({image_prompt:e.target.value})} placeholder="Например: светлая изометрическая мастерская, без надписей"/></label>
+          <small>{imageGenerationAvailable ? "Иллюстрация создаётся отдельно; текст слайда остаётся редактируемым." : "Генерация изображений пока не подключена. Подробности — в разделе «Как устроен Deckly»."}</small>
+          <button type="button" className="btn" disabled={!imageGenerationAvailable||imageBusy||(slide.image_prompt||"").trim().length<3}
+            onClick={async()=>{setImageBusy(true);setImageError("");try{const result=await api.generateImage(slide.image_prompt!.trim());if(mounted.current)currentChange.current({image_data:result.image_data});}catch(e){if(mounted.current)setImageError((e as Error).message);}finally{if(mounted.current)setImageBusy(false);}}}>
+            {imageBusy?"Создаём иллюстрацию…":"Создать иллюстрацию"}
+          </button>
+          {slide.image_data && <span>Иллюстрация готова. Сохраните изменения слайда.</span>}
+          {imageError && <span className="error-banner" role="alert">{imageError}</span>}
+        </div>}
         <label className="field">
           Заголовок
           <input
@@ -152,23 +194,30 @@ export function SlideFields({
         </label>
         {(slide.kind === "text" ||
           slide.kind === "steps" ||
-          slide.kind === "title") && (
+          slide.kind === "title" ||
+          slide.kind === "diagram" ||
+          slide.kind === "icons") && (
           <label className="field">
             {slide.kind === "steps"
               ? "Шаги · по одному в строке"
-              : "Тезисы · по одному в строке"}
+              : slide.kind === "diagram"
+                ? "Узлы схемы · по одному в строке"
+                : slide.kind === "icons"
+                  ? "Подписи пиктограмм · по одному в строке"
+                  : "Тезисы · по одному в строке"}
             <textarea
               rows={4}
               value={slide.bullets.join("\n")}
               onChange={(e) => {
                 const bullets = e.target.value.split("\n");
-                onValidity(bullets.length <= 10);
+                onValidity(bullets.length <= (slide.kind === "diagram" || slide.kind === "icons" ? 6 : 10));
                 onChange({ bullets });
               }}
             />
             <span className="field-helper">
-              До 10 пунктов. Для одного слайда лучше 3–6.
+              {slide.kind === "diagram" || slide.kind === "icons" ? "До 6 подписей. Каждый пункт соответствует отдельному элементу." : "До 10 пунктов. Для одного слайда лучше 3–6."}
             </span>
+            {(slide.kind === "diagram" || slide.kind === "icons") && slide.bullets.length > 6 && <span className="field-error" role="alert">Оставьте до 6 пунктов или перенесите остальные на другой слайд.</span>}
           </label>
         )}
         {slide.kind === "chart" && slide.chart && (
