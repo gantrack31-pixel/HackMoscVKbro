@@ -11,7 +11,7 @@ from fastapi import HTTPException
 
 MAX_FILE_BYTES = 5 * 1024 * 1024
 MAX_PACKET_CHARS = 50000
-FORMATS = {'.txt', '.md', '.csv', '.docx', '.pdf'}
+FORMATS = {'.txt', '.md', '.csv', '.docx', '.pdf', '.pptx'}
 
 def normalize_text(text):
     text = unicodedata.normalize('NFC', text.replace('\r\n', '\n').replace('\r', '\n'))
@@ -21,7 +21,7 @@ def normalize_text(text):
 def read_material(name, data):
     suffix = PurePath(name).suffix.lower()
     if suffix not in FORMATS:
-        raise HTTPException(422, 'Пакет поддерживает TXT, MD, CSV, DOCX и PDF.')
+        raise HTTPException(422, 'Пакет поддерживает TXT, MD, CSV, DOCX, PDF и PPTX.')
     if not data or len(data) > MAX_FILE_BYTES:
         raise HTTPException(413, 'Каждый файл должен быть непустым и не больше 5 МБ.')
     warnings = []
@@ -33,6 +33,25 @@ def read_material(name, data):
                 text = data.decode('cp1251')
                 warnings.append('Кодировка Windows-1251 преобразована в UTF-8.')
             if '\x00' in text: raise ValueError('binary')
+        elif suffix == '.pptx':
+            from pptx import Presentation
+            from .pptx_security import validate_pptx_archive
+            from .template_context import extract_examples
+            validate_pptx_archive(BytesIO(data))
+            prs = Presentation(BytesIO(data))
+            examples, _ = extract_examples(prs)
+            parts = []
+            for slide in examples:
+                parts.append(f"Слайд {slide['slide']+1}")
+                for obj in slide['objects']:
+                    if obj.get('text'): parts.append(obj['text'])
+                    if obj.get('rows'): parts.extend(' | '.join(row) for row in obj['rows'])
+                    if obj.get('series'):
+                        parts.append('Категории: '+', '.join(obj.get('categories',[])))
+                        parts.extend(s['name']+': '+', '.join(str(v) for v in s['values']) for s in obj['series'])
+                    if obj['type']=='picture': parts.append('Изображение: '+(obj.get('description') or obj['name']))
+            text='\n'.join(parts)
+            warnings.append('Извлечены текст, таблицы и данные графиков первых 12 слайдов. Изображения описаны метаданными PPTX; для использования картинок загрузите PPTX как шаблон.')
         elif suffix == '.docx':
             with ZipFile(BytesIO(data)) as archive:
                 entries = archive.infolist()

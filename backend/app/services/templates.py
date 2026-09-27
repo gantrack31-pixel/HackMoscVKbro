@@ -7,6 +7,7 @@ from lxml import etree
 from pptx import Presentation
 from .. import database as db
 from .theme_catalog import THEMES, theme_metadata
+from .template_context import extract_examples
 
 NS = {'a':'http://schemas.openxmlformats.org/drawingml/2006/main'}
 PARSER = etree.XMLParser(resolve_entities=False, no_network=True)
@@ -73,6 +74,20 @@ def analyze_template(path: Path) -> dict:
                 except (TypeError,ValueError): continue
             layouts.append({'master':master_index,'index':layout_index,'name':layout.name,'boxes':boxes,
                             'static_shapes':sum(not s.is_placeholder for s in layout.shapes)})
+    examples, assets = extract_examples(prs)
+    # Ordinary slides often use free textboxes rather than master placeholders.
+    # Derive zones from their actual geometry, retaining valid export layout indices.
+    for example in examples:
+        texts = [o for o in example['objects'] if o['type']=='text' and o.get('text','').strip()
+                 and not o['grouped'] and o['box']['w']>.35 and o['box']['h']>.03]
+        texts.sort(key=lambda o:o['box']['y'])
+        if len(texts) >= 2:
+            body = max(texts[1:], key=lambda o:o['box']['w']*o['box']['h'])
+            if body['box']['h'] > .2:
+                layouts.insert(0, {'master':example['master'], 'index':example['index'],
+                    'name':f"Композиция исходного слайда {example['slide']+1}", 'static_shapes':0,
+                    'boxes':[{**texts[0]['box'],'type':'TITLE','index':0},
+                             {**body['box'],'type':'BODY','index':1}]})
     headings=[(size,count) for size,count in sizes.items() if 25<=size<=60]
     bodies=[(size,count) for size,count in sizes.items() if 16<=size<=25]
     return {'count':len(prs.slides),'ratio':round(width/height,5),'width_emu':width,'height_emu':height,
@@ -82,7 +97,9 @@ def analyze_template(path: Path) -> dict:
             'heading_pt':max(headings,key=lambda x:x[1])[0] if headings else 32,
             'body_pt':max(bodies,key=lambda x:x[1])[0] if bodies else 18,
             'layouts':layouts,'master_count':len(prs.slide_masters),'source':'pptx',
-            'visual_elements':dict(visual_counts),'normalization_version':'2',
+            'visual_elements':dict(visual_counts),'normalization_version':'3',
+            'slide_examples':examples,'assets':assets,
+            'analysis_limits':{'sampled_slides':len(examples),'total_slides':len(prs.slides),'reusable_images':len(assets)},
             'warnings':['Предпросмотр показывает содержимое и размещение. Графика мастера сохраняется в PPTX; проверьте итоговый файл в PowerPoint.']}
 
 BUILTINS=[

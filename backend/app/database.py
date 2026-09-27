@@ -127,6 +127,23 @@ def project_undo(pid: str):
                    (last['content']['title'], json.dumps(last['content'], ensure_ascii=False), last['variant'], json.dumps(project['revisions'], ensure_ascii=False), now(), pid))
     return True
 
+
+def project_ai_update(pid, user_id, expected_version, draft, content, variant):
+    """Do not overwrite edits from another tab while the model is working."""
+    with connection() as conn:
+        conn.execute('BEGIN IMMEDIATE')
+        row = conn.execute('SELECT * FROM projects WHERE id=? AND user_id=?', (pid,user_id)).fetchone()
+        if not row or row['updated_at'] != expected_version:
+            return False
+        existing = decode(row, ['content','revisions'])
+        revisions = existing['revisions'] + [{'content':existing['content'],'variant':existing['variant']}]
+        if draft != existing['content']:
+            revisions.append({'content':draft,'variant':variant})
+        conn.execute('UPDATE projects SET title=?,content=?,variant=?,revisions=?,updated_at=? WHERE id=?',
+                     (content['title'],json.dumps(content,ensure_ascii=False),variant,
+                      json.dumps(revisions[-12:],ensure_ascii=False),now(),pid))
+    return True
+
 def project_delete(pid: str):
     with connection() as db: db.execute('DELETE FROM projects WHERE id=?', (pid,))
 

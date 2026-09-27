@@ -534,7 +534,7 @@ export function Wizard({
               </button>
               <label className="btn sm file-label">
                 <Icon name="upload" />{operation === "import" ? "Читаем пакет…" : "Добавить пакет материалов"}
-                <input hidden type="file" multiple disabled={busy} accept=".txt,.md,.csv,.docx,.pdf"
+                <input hidden type="file" multiple disabled={busy} accept=".txt,.md,.csv,.docx,.pdf,.pptx"
                   onChange={async e=>{
                     const files=Array.from(e.target.files||[]);e.target.value="";
                     if(!files.length||locked.current)return;

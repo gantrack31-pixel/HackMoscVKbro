@@ -28,12 +28,12 @@ STAGES = [
 
 def recipe():
     snippets = []
-    for name in ('outline', 'design', 'audit'):
+    for name in ('outline', 'design', 'audit', 'assistant'):
         text = (BASE / 'prompts' / f'{name}.txt').read_text('utf-8')
         snippets.append({'id': name, 'version': sha256(text.encode()).hexdigest()[:12], 'text': text})
     code = []
     for name in ('main.py', 'models.py', 'services/workflow.py', 'services/templates.py',
-                 'services/materials.py', 'services/llm.py', 'services/images.py',
+                 'services/materials.py', 'services/llm.py', 'services/images.py', 'services/assistant.py', 'services/template_context.py',
                  'services/layout.py', 'services/visuals.py', 'services/audit.py', 'services/export.py'):
         path = BASE / 'app' / name
         code.append({'id': name, 'sha256': sha256(path.read_bytes()).hexdigest()})

@@ -200,10 +200,12 @@ def build_scene(slide: Slide, metadata: dict, variant: str, index: int) -> dict:
             else: objects.append(node)
     elif slide.kind=='image':
         text('body',slide.body,{**body_box,'w':body_box['w']*.4},24,'#475569')
-        if slide.image_data:
+        asset=next((a for a in metadata.get('assets',[]) if a['id']==slide.template_asset_id),None)
+        image_data=slide.image_data or (asset['data'] if asset else '')
+        if image_data:
             side=min(body_box['h'],body_box['w']*.55)
             objects.append({'id':'illustration','type':'image','x':body_box['x']+body_box['w']-side,
-                            'y':body_box['y'],'w':side,'h':side,'src':slide.image_data})
+                            'y':body_box['y'],'w':side,'h':side,'src':image_data})
         else:text('image-placeholder','Добавьте иллюстрацию в редакторе',{**body_box,'x':body_box['x']+body_box['w']*.45,'w':body_box['w']*.55},24,'#64748B')
     elif slide.kind=='chart' and slide.chart:
         text('body',slide.body,{**body_box,'h':64},22,'#475569')

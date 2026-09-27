@@ -13,7 +13,8 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.exceptions import RequestValidationError
 from .config import settings, BASE, validate_settings
 from . import database as db
-from .models import OutlineRequest, GenerateRequest, RegenerateRequest, ProjectUpdate, FixRequest, DeckContent, Issue
+from .models import OutlineRequest, GenerateRequest, RegenerateRequest, ProjectUpdate, FixRequest, DeckContent, Issue, AssistantRequest
+from .services.assistant import edit_presentation
 from .services.templates import seed_templates, analyze_template, BUILTIN_IDS
 from .services.pptx_security import validate_pptx_archive
 from .services.llm import make_outline, review_content, create_design_variants, configured, LLMError
@@ -78,6 +79,13 @@ def visible_template(template,user_id):
 def get_template(tid,user_id=None):
     result=db.template_get(tid)
     if not result or (user_id and not visible_template(result,user_id)): raise HTTPException(404,'Шаблон не найден')
+    if result.get('path') and result['metadata'].get('normalization_version') != '3':
+        try:
+            fresh=analyze_template(Path(result['path']))
+            result['metadata']={**result['metadata'],**fresh}
+            db.template_save(tid,result['name'],result['path'],result['metadata'],result.get('user_id'))
+        except (OSError,ValueError):
+            pass  # A previously saved project remains readable if its source is unavailable.
     return result
 
 def get_project(pid,user_id=None):
@@ -100,7 +108,7 @@ def health():
     return {'ok':True,'mode':settings.mode,'model':settings.model,'llm_configured':configured(),
             'database':'SQLite','max_upload_mb':settings.max_upload_mb,'context_audit':settings.context_audit,
             'yandex_enabled':bool(settings.yandex_id), 'image_generation':bool(settings.image_base_url),
-            'image_model':IMAGE_MODEL,'generation_budget_seconds':300,
+            'image_model':IMAGE_MODEL,'generation_budget_seconds':300,'vision_enabled':settings.vision,
             'export_note':'PPTX сохраняет ресурсы мастера. PDF и HTML используют схему размещения и Manrope.'}
 
 @app.get('/api/workflow')
@@ -202,7 +210,7 @@ async def generate_job(jid: str, request: GenerateRequest,user_id: str, result_p
             source=request.content.model_copy(update={'audience':request.audience})
             content=await create_design_variants(source,template)
             for slide in content.slides:
-                if slide.kind=='image' and slide.image_prompt and not slide.image_data:
+                if slide.kind=='image' and slide.image_prompt and not slide.image_data and not slide.template_asset_id:
                     db.job_set(jid,'running','images',user_id=user_id)
                     slide.image_data=(await generate_image(slide.image_prompt))['image_data']
             db.job_set(jid,'running','layout',user_id=user_id)
@@ -349,6 +357,39 @@ def preview_project(pid: str, request: ProjectUpdate, user=Depends(current_user)
     project=get_project(pid,user['id']);template=get_template(project['template_id'])
     return {'scenes':[build_scene(slide,template['metadata'],request.variant,i)
                       for i,slide in enumerate(request.content.slides)]}
+
+@app.post('/api/projects/{pid}/assistant')
+async def assistant_edit(pid: str, request: AssistantRequest, user=Depends(current_user)):
+    project=get_project(pid,user['id'])
+    if project['updated_at'] != request.base_updated_at:
+        raise HTTPException(409,'Презентация изменилась в другой вкладке. Откройте актуальную версию перед запросом AI.')
+    if settings.mode!='live' or not configured():
+        raise HTTPException(409,'Редактирование с AI доступно при подключённой модели. Ручные правки работают без неё.')
+    if request.action=='edit' and not request.instruction.strip():
+        raise HTTPException(422,'Напишите, что изменить в презентации.')
+    if request.slide is not None and request.slide >= len(request.content.slides):
+        raise HTTPException(422,'Указанный слайд отсутствует.')
+    template=get_template(project['template_id'])
+    try:
+        async with asyncio.timeout(180):
+            async with generation_slots:
+                result,report=await edit_presentation(request,template,project['source_text'])
+                await asyncio.to_thread(export_pptx,result,template,request.variant)
+                # Verify the full response geometry before publishing a revision.
+                await asyncio.to_thread(lambda:[build_scene(s,template['metadata'],v,i)
+                    for v in ('a','b','c') for i,s in enumerate(result.slides)])
+        if result != request.content:
+            if not db.project_ai_update(pid,user['id'],request.base_updated_at,
+                                        request.content.model_dump(),result.model_dump(),request.variant):
+                raise HTTPException(409,'Во время работы AI презентация изменилась. Результат не перезаписал новые правки; повторите запрос из актуальной версии.')
+        else:
+            # No AI changes: retain unsaved client draft instead of losing it in a saved-project response.
+            return {'project':None, **report}
+        return {'project':project_response(get_project(pid,user['id'])), **report}
+    except LLMError as exc:
+        raise HTTPException(502,str(exc)) from exc
+    except TimeoutError as exc:
+        raise HTTPException(504,'AI не успел за три минуты. Ваши правки не изменены; попробуйте один слайд.') from exc
 
 @app.exception_handler(cloud.CloudError)
 async def cloud_error(request: Request, exc: cloud.CloudError):

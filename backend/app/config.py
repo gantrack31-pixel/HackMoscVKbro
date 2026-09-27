@@ -55,6 +55,7 @@ class Settings:
     max_tokens: int = field(default_factory=lambda: int(os.getenv('LLM_MAX_TOKENS', '9000')))
     temperature: float = field(default_factory=lambda: float(os.getenv('LLM_TEMPERATURE', '0.3')))
     json_mode: bool = field(default_factory=lambda: os.getenv('LLM_JSON_MODE', 'true').lower() == 'true')
+    vision: bool = field(default_factory=lambda: os.getenv('LLM_VISION_ENABLED', 'false').lower() == 'true')
     context_audit: bool = field(default_factory=lambda: os.getenv('LLM_CONTEXT_AUDIT', 'true').lower() == 'true')
     extra_body: dict = field(default_factory=lambda: json.loads(os.getenv('LLM_EXTRA_BODY', '{}')))
     storage: Path = field(default_factory=lambda: resolve_path(os.getenv('STORAGE_PATH', 'data')))

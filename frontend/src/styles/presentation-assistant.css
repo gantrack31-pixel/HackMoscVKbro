@@ -1,0 +1,13 @@
+.presentation-assistant { margin:20px 0; min-width:0; border-color:var(--line); }
+.presentation-assistant h2 { display:flex; align-items:center; gap:10px; font-size:clamp(19px,2vw,24px); }
+.presentation-assistant > p { color:var(--muted); line-height:1.6; max-width:90ch; }
+.presentation-assistant fieldset { border:0; padding:0; margin:16px 0 0; min-width:0; display:grid; gap:14px; }
+.presentation-assistant textarea { width:100%; min-height:96px; resize:vertical; }
+.assistant-suggestions,.assistant-actions { display:flex; flex-wrap:wrap; gap:8px; }
+.presentation-assistant summary { cursor:pointer; padding:8px 0; }
+.assistant-result { margin-top:18px; border-top:1px solid var(--line); padding-top:16px; overflow-wrap:anywhere; }
+.assistant-result li { line-height:1.7; }
+.template-assets { display:flex; flex-wrap:wrap; gap:12px; margin-block:12px; }
+.template-assets img { width:100px; height:80px; object-fit:contain; border:1px solid var(--line); border-radius:8px; }
+.page .slide-field-panel textarea { min-height:120px; resize:vertical; }
+@media(max-width:600px) { .presentation-assistant .between { align-items:flex-start; gap:12px; flex-direction:column; } .assistant-actions > button { width:100%; } }

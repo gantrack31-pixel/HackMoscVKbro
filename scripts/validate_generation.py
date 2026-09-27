@@ -9,14 +9,15 @@ from time import monotonic
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'backend'))
 from app.config import settings, BASE
-from app.models import OutlineRequest
+from app.models import OutlineRequest, AssistantRequest
+from app.services.assistant import edit_presentation
 from app.services.llm import make_outline, create_design_variants
 from app.services.templates import analyze_template
 from app.services.audit import audit_deck
 from app.services.export import export_pptx, export_pdf, export_html
 from pptx import Presentation
 
-async def validate():
+async def validate(check_assistant=False):
     started = monotonic()
     # Unseen template: the same parser used by the upload endpoint.
     import tempfile
@@ -53,19 +54,33 @@ async def validate():
                 results[variant] = {'pptx_bytes': len(pptx), 'pdf_bytes': len(pdf), 'html_bytes': len(html),
                                     'errors': sum(i.severity == 'error' for i in issues),
                                     'issue_codes': sorted(set(i.code for i in issues))}
+        assistant_report = None
+        if check_assistant:
+            draft = content.model_copy(deep=True)
+            draft.slides[0].body = 'Пилот охватил 30 сотрудников. ' * 30
+            edit = AssistantRequest(content=draft,base_updated_at='synthetic',slide=0,action='edit',
+                                    instruction='Сократи повторяющийся основной текст первого слайда до одного предложения. Сохрани число 30.')
+            async with asyncio.timeout(180):
+                edited, report = await edit_presentation(edit,template,material)
+            assert len(edited.slides[0].body) < len(draft.slides[0].body)
+            assert '30' in edited.slides[0].body
+            assert edited.slides[1:] == draft.slides[1:]
+            assistant_report = {'changed_slides':report['changed_slides'], 'summary':report['summary'],
+                                'remaining_errors':sum(i['severity']=='error' for i in report['issues'])}
         elapsed = monotonic() - started
         assert elapsed < 300
         return {'mode': settings.mode, 'slides': len(content.slides),
                 'kinds': sorted(set(s.kind for s in content.slides)),
                 'outline_seconds': round(outline_seconds, 2), 'total_seconds': round(elapsed, 2),
-                'variants': results, 'image_service_configured': bool(settings.image_base_url)}
+                'variants': results, 'assistant':assistant_report, 'image_service_configured': bool(settings.image_base_url)}
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--live', action='store_true', help='Send synthetic material to the configured model')
+    parser.add_argument('--assistant', action='store_true', help='Also verify AI editing on a synthetic manual draft')
     args = parser.parse_args()
     if not args.live:
         parser.error('Use --live to explicitly run the external model check.')
     if settings.mode != 'live':
         parser.error('LLM_MODE=live is required; demo is not a model verification.')
-    print(json.dumps(asyncio.run(validate()), ensure_ascii=False, indent=2))
+    print(json.dumps(asyncio.run(validate(args.assistant)), ensure_ascii=False, indent=2))

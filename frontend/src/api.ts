@@ -55,6 +55,8 @@ const json = (method: string, data: unknown): RequestInit => ({
   body: JSON.stringify(data),
 });
 export const api = {
+  assistant: (id: string, data: {content: DeckContent; variant: Variant; base_updated_at: string; instruction: string; action: "edit" | "repair"; slide: number | null; material: string}) =>
+    request<import("./types").AssistantResult>(`/projects/${id}/assistant`, json("POST", data)),
   workflow: () => request<import("./types").WorkflowRecipe>("/workflow"),
   importMaterials: (files: File[]) => {
     const body=new FormData(); files.forEach(file=>body.append("files",file));

@@ -3,6 +3,7 @@ import { SlideFields, slideKinds } from "../components/SlideFields";
 import { useLivePreview } from "../components/useLivePreview";
 import { api } from "../api";
 import { GenerationPassport } from "../components/GenerationPassport";
+import { PresentationAssistant } from "../components/PresentationAssistant";
 import "../styles/requirements.css";
 import { Icon } from "../components/Icon";
 import { SlidePreview } from "../components/SlidePreview";
@@ -14,6 +15,7 @@ import {
   type Project,
   type Slide,
   type Variant,
+  type Health,
 } from "../types";
 
 // Содержание меняется через React, сохранение и построение слайдов выполняет Python.
@@ -24,6 +26,7 @@ export function Editor({
   onExport,
   onDirty,
   imageGenerationAvailable = false,
+  health = null,
 }: {
   project: Project;
   onUpdate: (p: Project) => void;
@@ -31,6 +34,7 @@ export function Editor({
   onExport: () => void;
   onDirty: (value: boolean) => void;
   imageGenerationAvailable?: boolean;
+  health?: Health | null;
 }) {
   const [content, setContent] = useState(project.content),
     [index, setIndex] = useState(0),
@@ -40,18 +44,18 @@ export function Editor({
   const [viewing, setViewing] = useState(false);
   const preview = useLivePreview(project, content, dirty && !hasDataErrors);
   useEffect(() => {
-    onDirty(dirty);
-  }, [dirty, onDirty]);
+    onDirty(dirty || busy);
+  }, [dirty, busy, onDirty]);
   useEffect(() => {
     const protect = (e: BeforeUnloadEvent) => {
-      if (dirty) {
+      if (dirty || busy) {
         e.preventDefault();
         e.returnValue = "";
       }
     };
     window.addEventListener("beforeunload", protect);
     return () => window.removeEventListener("beforeunload", protect);
-  }, [dirty]);
+  }, [dirty, busy]);
   const slide = content.slides[index];
   const scene = preview.scenes[index];
   function change(update: Partial<Slide>) {
@@ -198,6 +202,9 @@ export function Editor({
         </button>
       </div>
       <GenerationPassport project={project}/>
+      <PresentationAssistant project={project} content={content} index={index} health={health}
+        disabled={hasDataErrors} busy={busy} onBusy={setBusy}
+        onResult={result => { if (result.project) { onUpdate(result.project); setContent(result.project.content); setDirty(false); setHasDataErrors(false); } }} />
       <div className="editor-layout">
         <aside className="slide-rail" aria-label="Слайды">
           {content.slides.map((s, i) => (
@@ -298,6 +305,7 @@ export function Editor({
           <SlideFields
             sectioned
             imageGenerationAvailable={imageGenerationAvailable}
+            templateAssets={project.template.metadata.assets}
             key={`${index}-${project.updated_at}`}
             slide={slide}
             onChange={change}

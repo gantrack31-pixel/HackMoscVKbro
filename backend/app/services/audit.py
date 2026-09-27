@@ -55,7 +55,7 @@ def audit_deck(content: DeckContent, template: dict, variant: str, source: str) 
                 'Укажите точную цитату из материалов и проверьте, что она подтверждает тезис.',category='source',severity='info' if status=='missing' else 'warning')
         if re.search(r'\blorem ipsum\b|\bTODO\b|вставьте текст',slide.title+' '+slide.body,re.I):
             add('placeholder','Остался служебный текст','Замените заглушку содержанием.',category='content',severity='error')
-        if slide.kind=='image' and not slide.image_data:
+        if slide.kind=='image' and not slide.image_data and not any(a['id']==slide.template_asset_id for a in template['metadata'].get('assets',[])):
             add('image_missing','Нет иллюстрации','Подключите генератор изображений и создайте иллюстрацию в редакторе.',category='content',severity='error',obj='image-placeholder')
         if slide.kind in {'icons','diagram'} and len(slide.bullets)>6:
             add('visual_capacity','Схема содержит больше шести элементов','Разделите схему: на этом слайде показаны только первые шесть пунктов.',category='content',severity='error')

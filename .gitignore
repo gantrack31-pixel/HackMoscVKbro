@@ -19,7 +19,10 @@ backend/data/uploads/
 backend/data/exports/
 !backend/data/.gitkeep
 !backend/data/templates/
-!backend/data/templates/*.pptx
+backend/data/templates/*.pptx
+!backend/data/templates/tech.pptx
+!backend/data/templates/workspace.pptx
+!backend/data/templates/education.pptx
 
 frontend/dist/
 frontend/playwright-report/

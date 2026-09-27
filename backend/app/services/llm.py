@@ -7,6 +7,7 @@ import httpx
 from pydantic import ValidationError
 from ..config import settings, BASE
 from ..models import DeckContent, Slide, OutlineRequest, DesignPlan, SlideDesign, ThreeDesignPlans
+from .template_context import model_template, template_images
 
 class LLMError(RuntimeError): pass
 
@@ -14,7 +15,7 @@ def configured() -> bool:
     host=urlparse(settings.base_url).hostname
     return bool(settings.base_url and settings.model and (settings.api_key or host in {'localhost','127.0.0.1','::1'}))
 
-async def complete_json(system: str, payload: dict, client: httpx.AsyncClient | None = None) -> dict:
+async def complete_json(system: str, payload: dict, client: httpx.AsyncClient | None = None, images: list[str] | None = None) -> dict:
     if not configured(): raise LLMError('Заполните LLM_BASE_URL, LLM_MODEL и LLM_API_KEY в backend/.env.')
     parsed=urlparse(settings.base_url)
     if parsed.scheme not in {'http','https'} or not parsed.hostname or parsed.username or parsed.password or parsed.query or parsed.fragment:
@@ -30,6 +31,9 @@ async def complete_json(system: str, payload: dict, client: httpx.AsyncClient | 
         headers['OpenAI-Project']=folder
     body={**settings.extra_body,'model':settings.model,'temperature':settings.temperature,'max_tokens':settings.max_tokens,
           'messages':[{'role':'system','content':system},{'role':'user','content':json.dumps(payload,ensure_ascii=False)}]}
+    if images and settings.vision:
+        body['messages'][1]['content'] = [{'type':'text','text':json.dumps(payload,ensure_ascii=False)},
+            *[{'type':'image_url','image_url':{'url':data}} for data in images[:4]]]
     if settings.json_mode: body['response_format']={'type':'json_object'}
     owned=client is None
     client=client or httpx.AsyncClient(timeout=httpx.Timeout(settings.timeout,connect=15),follow_redirects=False)
@@ -51,6 +55,11 @@ async def complete_json(system: str, payload: dict, client: httpx.AsyncClient | 
     except (ValueError,KeyError,IndexError,TypeError) as exc: raise LLMError('Ответ модели не соответствует формату JSON. Проверьте поддержку JSON у провайдера.') from exc
     finally:
         if owned: await client.aclose()
+
+async def complete_with_template(system, payload, template):
+    if settings.vision:
+        return await complete_json(system, payload, images=template_images(template))
+    return await complete_json(system, payload)
 
 DEMO=[
     ('Deckly.Ai','Цифровой дизайнер презентаций'),
@@ -87,15 +96,17 @@ async def make_outline(request: OutlineRequest, template: dict) -> DeckContent:
     if settings.mode!='live': raise LLMError('LLM_MODE должен быть demo или live.')
     system=(BASE/'prompts/outline.txt').read_text('utf-8')
     metadata=template['metadata']
-    payload={'task':request.model_dump(),'template':{'name':template['name'],'fonts':metadata.get('fonts',[]),
-              'palette':metadata.get('colors',{}),'ratio':metadata['ratio']},
+    payload={'task':request.model_dump(),'template':model_template(template),
              'image_generation_available':bool(settings.image_base_url),'schema':DeckContent.model_json_schema()}
     # Одна попытка + одно исправление формата. Общий лимит ограничен отдельно.
     async with asyncio.timeout(240):
         for attempt in range(2):
-            raw=await complete_json(system,payload)
+            raw=await complete_with_template(system,payload,template)
             try:
                 result=DeckContent.model_validate(raw)
+                assets={a['id'] for a in metadata.get('assets',[])}
+                if any(s.template_asset_id and s.template_asset_id not in assets for s in result.slides):
+                    raise ValueError('Используй только asset_id из выбранного шаблона.')
                 if len(result.slides)!=request.count: raise ValueError(f'Нужно ровно {request.count} слайдов')
                 result.audience=request.audience
                 return result
@@ -124,8 +135,7 @@ async def create_design_variants(content: DeckContent, template: dict, instructi
     payload={
         'instruction':instruction or 'Создай три разных варианта оформления этой презентации.',
         'audience':content.audience,
-        'template':{'name':template['name'],'palette':template['metadata'].get('colors',{}),
-                    'ratio':template['metadata']['ratio'],'fonts':template['metadata'].get('fonts',[])},
+        'template':model_template(template),
         'slides':[{'slide':i,'title':s.title,'body':s.body,'bullets':s.bullets,'kind':s.kind,
                    'previous_designs':{k:v.model_dump() for k,v in s.designs.items()}}
                   for i,s in enumerate(content.slides)],
@@ -133,7 +143,7 @@ async def create_design_variants(content: DeckContent, template: dict, instructi
     }
     async with asyncio.timeout(240):
         for attempt in range(2):
-            raw=await complete_json(system,payload)
+            raw=await complete_with_template(system,payload,template)
             try:
                 plans=ThreeDesignPlans.model_validate(raw)
                 ordered={}

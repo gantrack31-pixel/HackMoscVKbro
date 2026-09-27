@@ -4,6 +4,7 @@ import { Icon } from "../components/Icon";
 import { AuditSlide } from "../components/AuditSlide";
 import { PresentationViewer } from "../components/PresentationViewer";
 import { SlideFields } from "../components/SlideFields";
+import { PresentationAssistant } from "../components/PresentationAssistant";
 import { useLivePreview } from "../components/useLivePreview";
 import type { Health, Issue, Project, Slide } from "../types";
 import "../styles/editor-polish.css";
@@ -37,16 +38,16 @@ export function Audit({
   const [viewing, setViewing] = useState(false);
   const contextRequested = useRef(false);
   useEffect(() => {
-    onDirty(dirty);
+    onDirty(dirty || busy);
     const protect = (e: BeforeUnloadEvent) => {
-      if (dirty) {
+      if (dirty || busy) {
         e.preventDefault();
         e.returnValue = "";
       }
     };
     window.addEventListener("beforeunload", protect);
     return () => window.removeEventListener("beforeunload", protect);
-  }, [dirty, onDirty]);
+  }, [dirty, busy, onDirty]);
   useEffect(() => {
     let active = true;
     setLoading(true);
@@ -221,6 +222,13 @@ export function Audit({
           {notice}
         </p>
       )}
+      <PresentationAssistant audit project={project} content={content} index={index} health={health}
+        disabled={!valid} busy={busy} onBusy={setBusy}
+        onResult={result => { if (result.project) { setDraft(null); setFocus(""); setDirty(false); setValid(true); onUpdate(result.project); } }} />
+      <button className="btn sm" disabled={busy || dirty || !project.can_undo} onClick={async () => {
+        setBusy(true); try { const previous=await api.undo(project.id); setDraft(null); setFocus(""); onUpdate(previous); setNotice("Предыдущая версия восстановлена."); }
+        catch(e) { onError((e as Error).message); } finally { setBusy(false); }
+      }}><Icon name="undo" />Вернуть версию</button>
       {loadError && (
         <div className="error-banner" role="alert">
           {loadError}
@@ -365,6 +373,8 @@ export function Audit({
                       <fieldset disabled={busy}>
                         <SlideFields
                           sectioned
+                          imageGenerationAvailable={health?.image_generation}
+                          templateAssets={project.template.metadata.assets}
                           key={`${issue.id}-${project.updated_at}`}
                           slide={draft}
                           onChange={(patch) => {

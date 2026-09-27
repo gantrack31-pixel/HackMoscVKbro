@@ -67,7 +67,7 @@ def test_unknown_templates_native_exports_and_ten_slides(client,ratio):
     assert uploaded.status_code==201,uploaded.text
     t=uploaded.json()
     assert t['metadata']['ratio']==pytest.approx(ratio,rel=1e-5)
-    assert t['metadata']['normalization_version']=='2'
+    assert t['metadata']['normalization_version']=='3'
     assert t['metadata']['layouts'] and t['metadata']['colors']
     deck=acceptance_deck()
     response=client.post('/api/generate',json={'template_id':t['id'],'content':deck.model_dump(),'source_text':'Синтетический материал'})
@@ -142,7 +142,7 @@ def test_image_provider_is_optional_and_returns_only_bounded_embedded_pixels(cli
 
 def test_recipe_is_versioned_and_manifest_is_immutable(client,monkeypatch):
     original=workflow.recipe()
-    assert len(original['snippets'])==3 and len(original['stages'])==8
+    assert len(original['snippets'])==4 and len(original['stages'])==8
     assert all(len(s['version'])==12 for s in original['snippets'])
     r=client.post('/api/generate',json={'template_id':'tech','content':acceptance_deck().model_dump()})
     job=client.get('/api/jobs/'+r.json()['job_id']).json()

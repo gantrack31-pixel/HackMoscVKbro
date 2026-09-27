@@ -7,6 +7,7 @@ os.environ.update({
     'LLM_BASE_URL': 'http://127.0.0.1:8001/v1', 'LLM_MODEL': 'test-model',
     'LLM_API_KEY': '', 'YANDEX_FOLDER_ID': '', 'LLM_JSON_MODE': 'true',
     'LLM_EXTRA_BODY': '{}', 'LLM_CONTEXT_AUDIT': 'true',
+    'LLM_VISION_ENABLED': 'false',
     'YANDEX_CLIENT_ID': '', 'YANDEX_CLIENT_SECRET': '',
     'YANDEX_REDIRECT_URI': 'http://127.0.0.1:8000/api/auth/yandex/callback',
     'SMTP_HOST': '', 'SMTP_USERNAME': '', 'SMTP_PASSWORD': '', 'EMAIL_FROM': '',

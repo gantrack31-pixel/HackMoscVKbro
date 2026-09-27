@@ -340,6 +340,7 @@ function Workspace({
                 key={project.id}
                 project={project}
                 imageGenerationAvailable={health?.image_generation}
+                health={health}
                 onUpdate={update}
                 onError={setError}
                 onDirty={setDirty}
@@ -441,7 +442,9 @@ function Workspace({
                 <dt>Мастера и макеты</dt><dd>{preview.metadata.master_count||1} / {preview.metadata.layouts.length}</dd>
                 <dt>Палитра</dt><dd>{Object.entries(preview.metadata.colors).slice(0,8).map(([name,value])=>`${name}: ${value}`).join(" · ")}</dd>
                 <dt>Визуальные элементы</dt><dd>{Object.entries(preview.metadata.visual_elements||{}).map(([name,value])=>`${name}: ${value}`).join(" · ")||"Сведения появятся при новом импорте PPTX"}</dd>
+                {preview.metadata.analysis_limits && <><dt>Распознано для AI</dt><dd>{preview.metadata.analysis_limits.sampled_slides} исходных слайдов · {preview.metadata.analysis_limits.reusable_images} доступных изображений</dd></>}
               </dl>
+              {!!preview.metadata.assets?.length && <div className="template-assets">{preview.metadata.assets.map(a=><img key={a.id} src={a.data} alt={a.description || a.name} />)}</div>}
               <details><summary>Нормализованные зоны макетов</summary><pre style={{whiteSpace:"pre-wrap",maxHeight:240,overflow:"auto",fontSize:11}}>{JSON.stringify(preview.metadata.layouts,null,2)}</pre></details>
               {preview.metadata.warnings.map(w=><p key={w} className="small muted">{w}</p>)}
             </details>

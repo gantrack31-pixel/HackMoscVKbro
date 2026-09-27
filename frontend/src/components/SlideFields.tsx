@@ -1,5 +1,5 @@
 import { useEffect, useId, useRef, useState } from "react";
-import type { Slide } from "../types";
+import type { Slide, Template } from "../types";
 import { api } from "../api";
 import "../styles/slide-fields.css";
 
@@ -20,12 +20,14 @@ export function SlideFields({
   onValidity,
   sectioned = false,
   imageGenerationAvailable = false,
+  templateAssets = [],
 }: {
   slide: Slide;
   onChange: (patch: Partial<Slide>) => void;
   onValidity: (valid: boolean) => void;
   sectioned?: boolean;
   imageGenerationAvailable?: boolean;
+  templateAssets?: Template["metadata"]["assets"];
 }) {
   const fieldId = useId();
   const [section, setSection] = useState("content");
@@ -165,6 +167,11 @@ export function SlideFields({
           </select>
         </label>}
         {slide.kind==="image" && <div className="field">
+          {!!templateAssets.length && <label>Изображение из шаблона
+            <select value={slide.template_asset_id || ""} onChange={e=>onChange({template_asset_id:e.target.value,image_data:""})}>
+              <option value="">Без изображения из шаблона</option>
+              {templateAssets.map(a=><option key={a.id} value={a.id}>Слайд {a.slide+1} · {a.description || a.name}</option>)}
+            </select></label>}
           <label>Описание иллюстрации<textarea disabled={imageBusy} maxLength={1000} value={slide.image_prompt||""}
             onChange={e=>onChange({image_prompt:e.target.value})} placeholder="Например: светлая изометрическая мастерская, без надписей"/></label>
           <small>{imageGenerationAvailable ? "Иллюстрация создаётся отдельно; текст слайда остаётся редактируемым." : "Генерация изображений пока не подключена. Подробности — в разделе «Как устроен Deckly»."}</small>
@@ -186,7 +193,7 @@ export function SlideFields({
         <label className="field">
           Основной текст
           <textarea
-            rows={3}
+            rows={6}
             maxLength={2400}
             value={slide.body}
             onChange={(e) => onChange({ body: e.target.value })}

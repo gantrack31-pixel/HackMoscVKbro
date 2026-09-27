@@ -34,6 +34,8 @@ export interface Template {
     body_pt?: number;
     master_count?: number;
     visual_elements?: Record<string,number>;
+    assets?: {id: string; name: string; description: string; data: string; slide: number}[];
+    analysis_limits?: {sampled_slides: number; total_slides: number; reusable_images: number};
     warnings: string[];
   };
 }
@@ -57,6 +59,7 @@ export interface Slide {
   icon_names?: string[];
   image_prompt?: string;
   image_data?: string;
+  template_asset_id?: string;
   designs?: Partial<Record<Variant, NonNullable<Slide["design"]>>>;
 }
 export interface DeckContent {
@@ -130,6 +133,7 @@ export interface ProjectSummary {
   updated_at: string;
 }
 export interface Health {
+  vision_enabled?: boolean;
   image_generation?: boolean;
   image_model?: string;
   generation_budget_seconds?: number;
@@ -141,6 +145,14 @@ export interface Health {
   context_audit: boolean;
   export_note: string;
   yandex_enabled: boolean;
+}
+
+export interface AssistantResult {
+  project: Project | null;
+  summary: string;
+  changed_slides: number[];
+  before: number;
+  issues: Issue[];
 }
 
 export interface WorkflowRecipe {

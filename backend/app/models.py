@@ -40,6 +40,7 @@ class Slide(BaseModel):
     diagram_type: Literal['process', 'cycle', 'hierarchy'] = 'process'
     icon_names: list[Literal['idea', 'people', 'target', 'growth', 'shield', 'clock']] = Field(default_factory=list, max_length=6)
     image_prompt: str = Field(default='', max_length=1000)
+    template_asset_id: str = Field(default='', max_length=32)
     image_data: str = Field(default='', max_length=1500000)
     @field_validator('image_data')
     @classmethod
@@ -124,6 +125,35 @@ class ProjectUpdate(BaseModel):
 class FixRequest(BaseModel):
     issue_ids: list[str] = Field(min_length=1, max_length=200)
     variant: Variant = 'a'
+
+class AssistantRequest(BaseModel):
+    content: DeckContent
+    variant: Variant = 'a'
+    base_updated_at: str = Field(min_length=1, max_length=80)
+    instruction: str = Field(default='', max_length=3000)
+    action: Literal['edit', 'repair'] = 'edit'
+    slide: int | None = Field(default=None, ge=0, le=29)
+    material: str = Field(default='', max_length=15000)
+
+class SlidePatch(BaseModel):
+    model_config = ConfigDict(extra='forbid')
+    slide: int = Field(ge=0, le=29)
+    title: str | None = Field(default=None, min_length=1, max_length=180)
+    body: str | None = Field(default=None, max_length=2400)
+    bullets: list[str] | None = Field(default=None, max_length=10)
+    notes: str | None = Field(default=None, max_length=3000)
+    source_quote: str | None = Field(default=None, max_length=1500)
+    kind: Literal['title','text','chart','table','steps','diagram','icons','image'] | None = None
+    chart: ChartData | None = None
+    table: list[list[str]] | None = None
+    diagram_type: Literal['process','cycle','hierarchy'] | None = None
+    template_asset_id: str | None = Field(default=None, max_length=32)
+    design: SlideDesign | None = None
+
+class AssistantPlan(BaseModel):
+    model_config = ConfigDict(extra='forbid')
+    summary: str = Field(min_length=1, max_length=1200)
+    changes: list[SlidePatch] = Field(default_factory=list, max_length=30)
 
 class Issue(BaseModel):
     id: str
