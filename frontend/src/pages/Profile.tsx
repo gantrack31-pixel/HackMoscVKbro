@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { api } from "../api";
 import { Avatar } from "../components/Brand";
 import { Icon } from "../components/Icon";
@@ -49,6 +49,7 @@ export function Profile({
   const [first, setFirst] = useState(user.first_name),
     [last, setLast] = useState(user.last_name),
     [color, setColor] = useState(user.avatar_color);
+  const avatarInput = useRef<HTMLInputElement>(null);
   const [stats, setStats] = useState<{
     projects: number;
     favorites: number;
@@ -109,6 +110,28 @@ export function Profile({
       setBusy(false);
     }
   }
+  async function changeAvatar(file?: File) {
+    if (busy) return;
+    if (file && file.size > 5 * 1024 * 1024) {
+      setError("Выберите фото до 5 МБ.");
+      return;
+    }
+    setBusy(true);
+    setError("");
+    setMessage("");
+    try {
+      onUser(file ? await api.uploadAvatar(file) : await api.removeAvatar());
+      setMessage(
+        file
+          ? "Фото профиля обновлено"
+          : "Фото удалено. Теперь отображаются инициалы.",
+      );
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  }
   async function connect() {
     if (dirty) {
       setError("Сначала сохраните изменения профиля.");
@@ -133,15 +156,57 @@ export function Profile({
       </div>
       <section className="profile-hero">
         <div className="profile-hero-identity">
-          <Avatar
-            user={{
-              ...user,
-              first_name: first,
-              last_name: last,
-              avatar_color: color,
-            }}
-            large
-          />
+          <div className="profile-avatar-control">
+            <button
+              type="button"
+              className="profile-avatar-button"
+              disabled={busy}
+              onClick={() => avatarInput.current?.click()}
+              aria-label="Изменить фото профиля"
+            >
+              <Avatar
+                user={{
+                  ...user,
+                  first_name: first,
+                  last_name: last,
+                  avatar_color: color,
+                }}
+                large
+              />
+              <span className="profile-avatar-badge">
+                <Icon name="edit" />
+              </span>
+            </button>
+            <button
+              type="button"
+              className="profile-avatar-caption"
+              disabled={busy}
+              onClick={() => avatarInput.current?.click()}
+            >
+              Изменить фото
+            </button>
+            {user.avatar_url && (
+              <button
+                type="button"
+                className="profile-avatar-caption"
+                disabled={busy}
+                onClick={() => void changeAvatar()}
+              >
+                Убрать фото
+              </button>
+            )}
+            <input
+              ref={avatarInput}
+              type="file"
+              hidden
+              accept="image/jpeg,image/png,image/webp"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                e.target.value = "";
+                if (file) void changeAvatar(file);
+              }}
+            />
+          </div>
           <div>
             <span className="profile-hero-label">ВАШ АККАУНТ DECKLY</span>
             <h2>
@@ -183,8 +248,18 @@ export function Profile({
           </a>
         ))}
       </div>
-      <div className="tabs profile-tabs" role="tablist" aria-label="Настройки профиля">
-        <span className="profile-tab-indicator" aria-hidden="true" style={{ transform: `translateX(${profileTabs.indexOf(tab) * 100}%)` }} />
+      <div
+        className="tabs profile-tabs"
+        role="tablist"
+        aria-label="Настройки профиля"
+      >
+        <span
+          className="profile-tab-indicator"
+          aria-hidden="true"
+          style={{
+            transform: `translateX(${profileTabs.indexOf(tab) * 100}%)`,
+          }}
+        />
         {profileTabs.map((t, index) => (
           <button
             key={t}
@@ -196,9 +271,16 @@ export function Profile({
             className={t === tab ? "active" : ""}
             onClick={() => setTab(t)}
             onKeyDown={(event) => {
-              const next = event.key === "ArrowRight" ? (index + 1) % profileTabs.length
-                : event.key === "ArrowLeft" ? (index + profileTabs.length - 1) % profileTabs.length
-                : event.key === "Home" ? 0 : event.key === "End" ? profileTabs.length - 1 : null;
+              const next =
+                event.key === "ArrowRight"
+                  ? (index + 1) % profileTabs.length
+                  : event.key === "ArrowLeft"
+                    ? (index + profileTabs.length - 1) % profileTabs.length
+                    : event.key === "Home"
+                      ? 0
+                      : event.key === "End"
+                        ? profileTabs.length - 1
+                        : null;
               if (next === null) return;
               event.preventDefault();
               setTab(profileTabs[next]);
@@ -221,219 +303,240 @@ export function Profile({
           {message}
         </div>
       )}
-      <div key={shownTab} id="profile-tab-panel" role="tabpanel"
+      <div
+        key={shownTab}
+        id="profile-tab-panel"
+        role="tabpanel"
         aria-labelledby={`profile-tab-${profileTabs.indexOf(shownTab)}`}
         className={`profile-tab-content${tab !== shownTab ? " is-leaving" : ""}`}
-        inert={tab !== shownTab}>
-      {shownTab === "Личные данные" && (
-        <div className="profile-columns">
-          <form className="panel profile-form" onSubmit={save}>
-            <h2>Личные данные</h2>
-            <p className="muted small">
-              Так вы будете отображаться в своём пространстве.
-            </p>
-            <fieldset disabled={busy}>
-              <div className="profile-name-fields">
-                <label>
-                  Имя
-                  <input
-                    required
-                    maxLength={60}
-                    autoComplete="given-name"
-                    value={first}
-                    onChange={(e) => {
-                      setFirst(e.target.value);
-                      setMessage("");
-                    }}
-                  />
-                </label>
-                <label>
-                  Фамилия
-                  <input
-                    maxLength={60}
-                    autoComplete="family-name"
-                    value={last}
-                    onChange={(e) => {
-                      setLast(e.target.value);
-                      setMessage("");
-                    }}
-                  />
-                </label>
-              </div>
-              <label>
-                Электронная почта
-                <input type="email" value={user.email} readOnly />
-                <small>Почта, с которой создан аккаунт.</small>
-              </label>
-              <div className="avatar-editor">
-                <span>Цвет аватара</span>
-                <div>
-                  {colors.map(([c, name]) => (
-                    <button
-                      key={c}
-                      type="button"
-                      aria-label={`Цвет аватара: ${name}`}
-                      aria-pressed={color === c}
-                      className={color === c ? "selected" : ""}
-                      style={{ background: c }}
-                      onClick={() => {
-                        setColor(c);
+        inert={tab !== shownTab}
+      >
+        {shownTab === "Личные данные" && (
+          <div className="profile-columns">
+            <form className="panel profile-form" onSubmit={save}>
+              <h2>Личные данные</h2>
+              <p className="muted small">
+                Так вы будете отображаться в своём пространстве.
+              </p>
+              <fieldset disabled={busy}>
+                <div className="profile-name-fields">
+                  <label>
+                    Имя
+                    <input
+                      required
+                      maxLength={60}
+                      autoComplete="given-name"
+                      value={first}
+                      onChange={(e) => {
+                        setFirst(e.target.value);
                         setMessage("");
                       }}
-                    >
-                      {color === c && <Icon name="check" />}
-                    </button>
-                  ))}
+                    />
+                  </label>
+                  <label>
+                    Фамилия
+                    <input
+                      maxLength={60}
+                      autoComplete="family-name"
+                      value={last}
+                      onChange={(e) => {
+                        setLast(e.target.value);
+                        setMessage("");
+                      }}
+                    />
+                  </label>
                 </div>
-              </div>
-            </fieldset>
-            <div className="profile-save">
-              <span className={dirty ? "has-changes" : ""}>
-                <Icon name={dirty ? "edit" : "check"} />
-                {dirty
-                  ? "Есть несохранённые изменения"
-                  : "Все изменения сохранены"}
-              </span>
-              <button
-                className="btn primary"
-                disabled={busy || !dirty || !first.trim()}
-              >
-                {busy ? <i className="spinner" /> : <Icon name="check" />}
-                Сохранить изменения
-              </button>
-            </div>
-          </form>
-          <aside className="profile-side-card">
-            <span className="profile-side-icon">
-              <Icon name="spark" />
-            </span>
-            <h2>Ваша следующая история</h2>
-            <p>
-              Удачное оформление начинается с задачи. Выберите шаблон для своего
-              проекта.
-            </p>
-            <a className="btn" href="#templates">
-              К шаблонам
-              <Icon name="arrow" />
-            </a>
-            <div className="profile-deck-preview" aria-hidden="true">
-              <span className="profile-preview-back" />
-              <div className="profile-preview-slide">
-                <span className="profile-preview-label">ВАША ПРЕЗЕНТАЦИЯ</span>
-                <strong>Идеям<br />нужна форма.</strong>
-                <span className="profile-preview-rule" />
-                <span className="profile-preview-bars"><i /><i /><i /></span>
-                <span className="profile-preview-number">01</span>
-              </div>
-              <span className="profile-preview-caption">От первого слайда — к целой истории</span>
-            </div>
-          </aside>
-        </div>
-      )}
-      {shownTab === "Вход и безопасность" && (
-        <section className="panel profile-security">
-          <h2>Способы входа</h2>
-          <p className="muted small">
-            Удобный доступ к одному аккаунту и всем вашим презентациям.
-          </p>
-          <div className="login-method">
-            <span className="yandex-symbol">Я</span>
-            <div>
-              <h3>Яндекс ID</h3>
-              <p>
-                {user.yandex_connected
-                  ? "Подключён к вашему аккаунту"
-                  : health?.yandex_enabled
-                    ? "Входите без ввода пароля Deckly"
-                    : "Ожидает настройки владельцем сайта"}
-              </p>
-            </div>
-            {user.yandex_connected ? (
-              <span className="badge green">
-                <Icon name="check" />
-                Подключён
-              </span>
-            ) : (
-              <button
-                className="btn"
-                disabled={busy || !health?.yandex_enabled}
-                onClick={connect}
-              >
-                Подключить Яндекс ID
-                <Icon name="external" />
-              </button>
-            )}
-          </div>
-          <div className="login-method">
-            <span className="login-method-icon">
-              <Icon name="shield" />
-            </span>
-            <div>
-              <h3>Электронная почта и пароль</h3>
-              <p>
-                {user.password_enabled
-                  ? "Вход по почте доступен"
-                  : "Этот аккаунт использует вход через Яндекс ID"}
-              </p>
-            </div>
-            <span className="badge">
-              {user.password_enabled ? "Подключён" : "Яндекс ID"}
-            </span>
-          </div>
-          <div className="security-footer">
-            <p>
-              <Icon name="shield" />
-              Данные профиля и презентации доступны после входа.
-            </p>
-            <button className="btn ghost" onClick={onLogout}>
-              <Icon name="logout" />
-              Выйти из аккаунта
-            </button>
-          </div>
-        </section>
-      )}
-      {shownTab === "Моя библиотека" && (
-        <section className="panel profile-library">
-          <h2>От идеи до готовой презентации</h2>
-          <p className="muted">
-            Проекты, любимые стили и ваши фирменные шаблоны — в одном месте.
-          </p>
-          <div>
-            {(
-              [
-                [
-                  "projects",
-                  "folder",
-                  "Продолжить работу",
-                  "Ваши сохранённые презентации",
-                ],
-                [
-                  "favorites",
-                  "star",
-                  "Любимые стили",
-                  "Шаблоны, отмеченные звёздочкой",
-                ],
-                [
-                  "templates",
-                  "upload",
-                  "Своя коллекция",
-                  "Добавьте PPTX с фирменным стилем",
-                ],
-              ] as const
-            ).map(([id, icon, title, desc]) => (
-              <a href={`#${id}`} key={id}>
-                <Icon name={icon} />
-                <h3>{title}</h3>
-                <p>{desc}</p>
-                <span>
-                  Открыть
-                  <Icon name="arrow" />
+                <label>
+                  Электронная почта
+                  <input type="email" value={user.email} readOnly />
+                  <small>Почта, с которой создан аккаунт.</small>
+                </label>
+                <div className="avatar-editor">
+                  <p className="field-helper">
+                    Нажмите на аватар сверху, чтобы загрузить фото: JPG, PNG или
+                    WebP до 5 МБ, до 4096 × 4096 px. Кадр обрезается по центру и
+                    сохраняется сразу.
+                  </p>
+                  <span>Цвет аватара</span>
+                  <div>
+                    {colors.map(([c, name]) => (
+                      <button
+                        key={c}
+                        type="button"
+                        aria-label={`Цвет аватара: ${name}`}
+                        aria-pressed={color === c}
+                        className={color === c ? "selected" : ""}
+                        style={{ background: c }}
+                        onClick={() => {
+                          setColor(c);
+                          setMessage("");
+                        }}
+                      >
+                        {color === c && <Icon name="check" />}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </fieldset>
+              <div className="profile-save">
+                <span className={dirty ? "has-changes" : ""}>
+                  <Icon name={dirty ? "edit" : "check"} />
+                  {dirty
+                    ? "Есть несохранённые изменения"
+                    : "Все изменения сохранены"}
                 </span>
+                <button
+                  className="btn primary"
+                  disabled={busy || !dirty || !first.trim()}
+                >
+                  {busy ? <i className="spinner" /> : <Icon name="check" />}
+                  Сохранить изменения
+                </button>
+              </div>
+            </form>
+            <aside className="profile-side-card">
+              <span className="profile-side-icon">
+                <Icon name="spark" />
+              </span>
+              <h2>Ваша следующая история</h2>
+              <p>
+                Удачное оформление начинается с задачи. Выберите шаблон для
+                своего проекта.
+              </p>
+              <a className="btn" href="#templates">
+                К шаблонам
+                <Icon name="arrow" />
               </a>
-            ))}
+              <div className="profile-deck-preview" aria-hidden="true">
+                <span className="profile-preview-back" />
+                <div className="profile-preview-slide">
+                  <span className="profile-preview-label">
+                    ВАША ПРЕЗЕНТАЦИЯ
+                  </span>
+                  <strong>
+                    Идеям
+                    <br />
+                    нужна форма.
+                  </strong>
+                  <span className="profile-preview-rule" />
+                  <span className="profile-preview-bars">
+                    <i />
+                    <i />
+                    <i />
+                  </span>
+                  <span className="profile-preview-number">01</span>
+                </div>
+                <span className="profile-preview-caption">
+                  От первого слайда — к целой истории
+                </span>
+              </div>
+            </aside>
           </div>
-        </section>
-      )}
+        )}
+        {shownTab === "Вход и безопасность" && (
+          <section className="panel profile-security">
+            <h2>Способы входа</h2>
+            <p className="muted small">
+              Удобный доступ к одному аккаунту и всем вашим презентациям.
+            </p>
+            <div className="login-method">
+              <span className="yandex-symbol">Я</span>
+              <div>
+                <h3>Яндекс ID</h3>
+                <p>
+                  {user.yandex_connected
+                    ? "Подключён к вашему аккаунту"
+                    : health?.yandex_enabled
+                      ? "Входите без ввода пароля Deckly"
+                      : "Ожидает настройки владельцем сайта"}
+                </p>
+              </div>
+              {user.yandex_connected ? (
+                <span className="badge green">
+                  <Icon name="check" />
+                  Подключён
+                </span>
+              ) : (
+                <button
+                  className="btn"
+                  disabled={busy || !health?.yandex_enabled}
+                  onClick={connect}
+                >
+                  Подключить Яндекс ID
+                  <Icon name="external" />
+                </button>
+              )}
+            </div>
+            <div className="login-method">
+              <span className="login-method-icon">
+                <Icon name="shield" />
+              </span>
+              <div>
+                <h3>Электронная почта и пароль</h3>
+                <p>
+                  {user.password_enabled
+                    ? "Вход по почте доступен"
+                    : "Этот аккаунт использует вход через Яндекс ID"}
+                </p>
+              </div>
+              <span className="badge">
+                {user.password_enabled ? "Подключён" : "Яндекс ID"}
+              </span>
+            </div>
+            <div className="security-footer">
+              <p>
+                <Icon name="shield" />
+                Данные профиля и презентации доступны после входа.
+              </p>
+              <button className="btn ghost" onClick={onLogout}>
+                <Icon name="logout" />
+                Выйти из аккаунта
+              </button>
+            </div>
+          </section>
+        )}
+        {shownTab === "Моя библиотека" && (
+          <section className="panel profile-library">
+            <h2>От идеи до готовой презентации</h2>
+            <p className="muted">
+              Проекты, любимые стили и ваши фирменные шаблоны — в одном месте.
+            </p>
+            <div>
+              {(
+                [
+                  [
+                    "projects",
+                    "folder",
+                    "Продолжить работу",
+                    "Ваши сохранённые презентации",
+                  ],
+                  [
+                    "favorites",
+                    "star",
+                    "Любимые стили",
+                    "Шаблоны, отмеченные звёздочкой",
+                  ],
+                  [
+                    "templates",
+                    "upload",
+                    "Своя коллекция",
+                    "Добавьте PPTX с фирменным стилем",
+                  ],
+                ] as const
+              ).map(([id, icon, title, desc]) => (
+                <a href={`#${id}`} key={id}>
+                  <Icon name={icon} />
+                  <h3>{title}</h3>
+                  <p>{desc}</p>
+                  <span>
+                    Открыть
+                    <Icon name="arrow" />
+                  </span>
+                </a>
+              ))}
+            </div>
+          </section>
+        )}
       </div>
     </div>
   );

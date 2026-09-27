@@ -1,0 +1,142 @@
+/* Click feedback is independent of the sliding selection indicator. */
+@media (prefers-reduced-motion: no-preference) {
+  .sidebar [data-nav] .nav-motion {
+    transform-origin: center;
+    animation-duration: 660ms;
+    animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .sidebar [data-nav="home"] .nav-motion {
+    animation-name: nav-home;
+  }
+  .sidebar [data-nav="projects"] .nav-motion {
+    animation-name: nav-folder;
+  }
+  .sidebar [data-nav="favorites"] .nav-motion {
+    animation-name: nav-star;
+  }
+  .sidebar [data-nav="demo"] .nav-motion {
+    animation-name: nav-play;
+  }
+  .sidebar [data-nav="support"] .nav-motion {
+    animation-name: nav-help;
+  }
+  .sidebar [data-nav="profile"] .nav-motion {
+    animation-name: nav-person;
+  }
+  .sidebar [data-nav="templates"] .nav-motion rect {
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: nav-tile 520ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+  .sidebar [data-nav="templates"] .nav-motion rect:nth-child(2) {
+    animation-delay: 55ms;
+  }
+  .sidebar [data-nav="templates"] .nav-motion rect:nth-child(3) {
+    animation-delay: 110ms;
+  }
+  .sidebar [data-nav="templates"] .nav-motion rect:nth-child(4) {
+    animation-delay: 165ms;
+  }
+  .sidebar [data-nav="profile"] .nav-motion circle {
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: nav-nod 660ms ease;
+  }
+}
+@keyframes nav-home {
+  0%,
+  100% {
+    transform: none;
+  }
+  32% {
+    transform: translateY(-3px) scale(1.12);
+  }
+  64% {
+    transform: translateY(1px) scale(0.96, 1.04);
+  }
+}
+@keyframes nav-folder {
+  0%,
+  100% {
+    transform: none;
+  }
+  30% {
+    transform: translateX(2px) skewY(-9deg) scale(1.12, 0.88);
+  }
+  65% {
+    transform: translateX(-1px) skewY(3deg);
+  }
+}
+@keyframes nav-star {
+  0%,
+  100% {
+    transform: none;
+    fill: transparent;
+  }
+  32%,
+  68% {
+    color: #ffdb70;
+    fill: #ffdb7040;
+    filter: drop-shadow(0 0 3px #ffce6680);
+  }
+  40% {
+    transform: rotate(-14deg) scale(1.22);
+  }
+  72% {
+    transform: rotate(9deg) scale(1.05);
+  }
+}
+@keyframes nav-play {
+  0%,
+  100% {
+    transform: none;
+  }
+  22% {
+    transform: scale(0.78);
+  }
+  54% {
+    transform: translateX(3px) scale(1.12);
+  }
+}
+@keyframes nav-help {
+  0%,
+  100% {
+    transform: none;
+  }
+  40% {
+    transform: rotate(38deg) scale(1.1);
+  }
+  72% {
+    transform: rotate(-10deg);
+  }
+}
+@keyframes nav-person {
+  0%,
+  100% {
+    transform: none;
+  }
+  40% {
+    transform: translateY(-2px) scale(1.1);
+  }
+  72% {
+    transform: translateY(1px);
+  }
+}
+@keyframes nav-nod {
+  0%,
+  100% {
+    transform: none;
+  }
+  35% {
+    transform: translateY(1.5px) scale(0.92);
+  }
+}
+@keyframes nav-tile {
+  0%,
+  100% {
+    transform: none;
+  }
+  45% {
+    transform: rotateY(180deg) scale(0.8);
+  }
+}

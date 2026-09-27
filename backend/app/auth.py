@@ -8,15 +8,17 @@ import sqlite3
 import smtplib
 import time
 import logging
+import asyncio
 from uuid import uuid4
 from urllib.parse import urlencode, quote
 from email.message import EmailMessage
 import httpx
-from fastapi import APIRouter, Request, Response, HTTPException, Depends
+from fastapi import APIRouter, Request, Response, HTTPException, Depends, UploadFile
 from fastapi.responses import RedirectResponse
 from pydantic import BaseModel, Field, field_validator
 from .config import settings
 from .database import connection, now
+from .services.avatar import normalize_avatar, MAX_AVATAR_BYTES
 
 router=APIRouter(prefix='/api/auth',tags=['Аккаунт'])
 COOKIE='deckly_session'; OAUTH_COOKIE='deckly_oauth'; TTL=7*24*3600
@@ -62,6 +64,7 @@ class Registration(Credentials):
 def public_user(user):
     return {**{k:user[k] for k in ['id','email','first_name','last_name','created_at']},
             'avatar_color':user.get('avatar_color','#0077FF'), 'yandex_connected':bool(user.get('yandex_id')),
+            'avatar_url':('/api/auth/avatar?v='+user['avatar_version']) if user.get('avatar_version') else None,
             'password_enabled':bool(user.get('password_hash')),
             'email_verified':bool(user.get('email_verified',True))}
 
@@ -245,6 +248,29 @@ def update_profile(data:ProfileUpdate,user=Depends(current_user)):
         db.execute('UPDATE users SET first_name=?,last_name=?,avatar_color=? WHERE id=?',
                    (data.first_name,data.last_name,data.avatar_color,user['id']))
     return public_user({**user,**data.model_dump()})
+
+@router.get('/avatar')
+def get_avatar(user=Depends(current_user)):
+    if not user.get('avatar_image'): raise HTTPException(404, 'Фото профиля не загружено.')
+    return Response(user['avatar_image'], media_type='image/png')
+
+@router.post('/avatar')
+async def upload_avatar(file: UploadFile, user=Depends(current_user)):
+    try:
+        data=await file.read(MAX_AVATAR_BYTES+1)
+    finally:
+        await file.close()
+    normalized=await asyncio.to_thread(normalize_avatar,data)
+    version=hashlib.sha256(normalized).hexdigest()[:20]
+    with connection() as db:
+        db.execute('UPDATE users SET avatar_image=?,avatar_version=? WHERE id=?',(normalized,version,user['id']))
+    return public_user({**user,'avatar_version':version})
+
+@router.delete('/avatar')
+def remove_avatar(user=Depends(current_user)):
+    with connection() as db:
+        db.execute('UPDATE users SET avatar_image=NULL,avatar_version=NULL WHERE id=?',(user['id'],))
+    return public_user({**user,'avatar_version':None})
 
 @router.get('/profile/stats')
 def profile_stats(user=Depends(current_user)):

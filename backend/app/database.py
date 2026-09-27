@@ -65,6 +65,7 @@ def initialize():
             columns={row['name'] for row in db.execute(f'PRAGMA table_info({table})')}
             if 'user_id' not in columns: db.execute(f'ALTER TABLE {table} ADD COLUMN user_id TEXT')
         for table, additions in {'users': [('avatar_color', "TEXT NOT NULL DEFAULT '#0077FF'"),
+                                            ('avatar_image', 'BLOB'), ('avatar_version', 'TEXT'),
                                             ('email_verified', 'INTEGER NOT NULL DEFAULT 1')],
                                  'oauth_states': [('user_id', 'TEXT'), ('session_hash', 'TEXT')],
                                  'jobs': [('task_type', "TEXT NOT NULL DEFAULT 'legacy'"),

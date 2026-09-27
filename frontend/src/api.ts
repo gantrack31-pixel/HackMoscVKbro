@@ -80,6 +80,12 @@ export const api = {
     request<{ projects: number; favorites: number; templates: number }>(
       "/auth/profile/stats",
     ),
+  uploadAvatar: (file: File) => {
+    const body = new FormData();
+    body.append("file", file);
+    return request<User>("/auth/avatar", { method: "POST", body });
+  },
+  removeAvatar: () => request<User>("/auth/avatar", { method: "DELETE" }),
   linkYandex: () =>
     request<{ url: string }>("/auth/yandex/link", { method: "POST" }),
   me: async () => {

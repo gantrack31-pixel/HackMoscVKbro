@@ -134,6 +134,7 @@ export interface User {
   last_name: string;
   created_at: string;
   avatar_color: string;
+  avatar_url?: string | null;
   yandex_connected: boolean;
   password_enabled: boolean;
   email_verified: boolean;

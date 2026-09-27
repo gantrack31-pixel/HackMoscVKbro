@@ -11,6 +11,7 @@ import "./styles/experience.css";
 import "./styles/system.css";
 import "./styles/entry.css";
 import "./styles/finishing.css";
+import "./styles/nav-motion.css";
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <ThemeProvider>
     <App />

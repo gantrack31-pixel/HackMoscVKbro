@@ -65,7 +65,19 @@ const icons = {
   logout: LogOut,
 };
 export type IconName = keyof typeof icons;
-export function Icon({ name }: { name: IconName }) {
+export function Icon({
+  name,
+  className = "",
+}: {
+  name: IconName;
+  className?: string;
+}) {
   const Component = icons[name];
-  return <Component className="icon" aria-hidden="true" strokeWidth={1.7} />;
+  return (
+    <Component
+      className={`icon ${className}`}
+      aria-hidden="true"
+      strokeWidth={1.7}
+    />
+  );
 }

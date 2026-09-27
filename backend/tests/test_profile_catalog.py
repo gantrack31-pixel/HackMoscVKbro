@@ -121,3 +121,46 @@ def test_new_theme_is_real_editable_export(client,tid):
         deck=Presentation(BytesIO(export_pptx(content,template,variant)))
         assert len(deck.slides)==1
         assert any(s.has_text_frame and 'Редактируемое содержание' in s.text for s in deck.slides[0].shapes)
+
+
+def test_avatar_roundtrip_normalizes_pixels_and_is_private(client):
+    from PIL import Image, PngImagePlugin
+    user=register(client)
+    buf=BytesIO()
+    metadata=PngImagePlugin.PngInfo()
+    metadata.add_text('Comment','private camera metadata')
+    Image.new('RGB',(360,240),'#29745F').save(buf,format='PNG',pnginfo=metadata)
+    files={'file':('portrait.png',buf.getvalue(),'image/png')}
+    assert client.post('/api/auth/avatar',files=files,headers={'X-CSRF-Token':'bad'}).status_code==403
+    response=client.post('/api/auth/avatar',files=files)
+    assert response.status_code==200
+    url=response.json()['avatar_url']
+    assert client.get('/api/auth/me').json()['user']['avatar_url']==url
+    photo=client.get(url)
+    assert photo.status_code==200 and photo.headers['content-type']=='image/png'
+    assert photo.headers['cache-control']=='no-store'
+    with Image.open(BytesIO(photo.content)) as image:
+        assert image.size==(256,256)
+        assert 'Comment' not in image.info and not image.getexif()
+    assert b'private camera metadata' not in photo.content
+    # Editing the name must not erase an uploaded avatar.
+    update=client.put('/api/auth/profile',json={'first_name':'New','last_name':'Name','avatar_color':'#0077FF'})
+    assert update.json()['avatar_url']==url
+    register(client,'another-avatar@example.test')
+    assert client.get(url).status_code==404
+    client.cookies.clear()
+    assert client.get(url).status_code==401
+
+
+def test_avatar_rejects_invalid_oversized_images_and_can_reset(client):
+    from PIL import Image
+    register(client)
+    assert client.post('/api/auth/avatar',files={'file':('bad.png',b'<svg onload="alert(1)"/>','image/png')}).status_code==422
+    assert client.post('/api/auth/avatar',files={'file':('huge.png',b'x'*(5*1024*1024+1),'image/png')}).status_code==413
+    buf=BytesIO(); Image.new('RGB',(4097,1)).save(buf,format='PNG')
+    assert client.post('/api/auth/avatar',files={'file':('wide.png',buf.getvalue(),'image/png')}).status_code==422
+    buf=BytesIO(); Image.new('RGB',(40,40),'blue').save(buf,format='JPEG')
+    assert client.post('/api/auth/avatar',files={'file':('photo.jpg',buf.getvalue(),'image/jpeg')}).status_code==200
+    assert client.delete('/api/auth/avatar',headers={'X-CSRF-Token':'bad'}).status_code==403
+    assert client.delete('/api/auth/avatar').json()['avatar_url'] is None
+    assert client.get('/api/auth/avatar').status_code==404
