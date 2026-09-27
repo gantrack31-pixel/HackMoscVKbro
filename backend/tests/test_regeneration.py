@@ -81,10 +81,10 @@ def test_live_regeneration_uses_validated_plan_not_rewritten_content(client, mon
 
     async def model(system, payload):
         calls.append(payload)
-        return {'slides': [
-            {'slide': i, 'design': {'composition': 'editorial', 'density': 'compact', 'layout_shift': i}}
+        return {variant: {'slides': [
+            {'slide': i, 'design': {'composition': composition, 'density': 'compact', 'layout_shift': i}}
             for i in range(2)
-        ]}
+        ]} for variant,composition in zip(('a','b','c'),('editorial','split','grid'))}
 
     monkeypatch.setattr(settings, 'mode', 'live')
     monkeypatch.setattr(settings, 'api_key', 'test-key')

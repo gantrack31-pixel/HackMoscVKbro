@@ -58,12 +58,19 @@ const audiences = [
   "Студенты",
 ];
 const PENDING_JOB_KEY = "deckly-pending-generation";
-type PendingJob = { id: string; kind: "generate" | "regenerate"; sourceProjectId?: string };
+type PendingJob = {
+  id: string;
+  kind: "generate" | "regenerate";
+  sourceProjectId?: string;
+};
 function readPendingJob(): PendingJob | null {
   try {
     const value = JSON.parse(sessionStorage.getItem(PENDING_JOB_KEY) || "null");
-    return value && typeof value.id === "string" &&
-      (value.kind === "generate" || value.kind === "regenerate") ? value : null;
+    return value &&
+      typeof value.id === "string" &&
+      (value.kind === "generate" || value.kind === "regenerate")
+      ? value
+      : null;
   } catch {
     return null;
   }
@@ -96,7 +103,7 @@ export function Wizard({
 }) {
   const [step, setStep] = useState(1),
     [mode, setMode] = useState(initialMode),
-    [prompt, setPrompt] = useState(sampleMaterial),
+    [prompt, setPrompt] = useState(""),
     [count, setCount] = useState(10),
     [audience, setAudience] = useState("Команда и коллеги");
   const [content, setContent] = useState<DeckContent | null>(null),
@@ -107,7 +114,12 @@ export function Wizard({
     [result, setResult] = useState<Project | null>(null),
     [variant, setVariant] = useState<Variant>("a");
   const [instruction, setInstruction] = useState("");
-  const [failedJob, setFailedJob] = useState<{ id: string; message: string } | null>(null);
+  const [instructionError, setInstructionError] = useState("");
+  const instructionRef = useRef<HTMLTextAreaElement>(null);
+  const [failedJob, setFailedJob] = useState<{
+    id: string;
+    message: string;
+  } | null>(null);
   const [slideKeys, setSlideKeys] = useState<string[]>([]);
   const [movedKey, setMovedKey] = useState<string | null>(null);
   const [reorderNotice, setReorderNotice] = useState("");
@@ -161,7 +173,10 @@ export function Wizard({
     else {
       setStep(4);
       if (pending.sourceProjectId)
-        api.project(pending.sourceProjectId).then(setResult).catch(() => undefined);
+        api
+          .project(pending.sourceProjectId)
+          .then(setResult)
+          .catch(() => undefined);
     }
     void (async () => {
       try {
@@ -204,10 +219,13 @@ export function Wizard({
       if (!isCurrent(id)) return null;
       setStage(job.stage);
       if (job.state === "failed")
-        throw Object.assign(new Error(job.error || "Не удалось создать презентацию"), {
-          jobId: job.id,
-          retryable: job.can_retry,
-        });
+        throw Object.assign(
+          new Error(job.error || "Не удалось создать презентацию"),
+          {
+            jobId: job.id,
+            retryable: job.can_retry,
+          },
+        );
       if (job.state === "complete" && job.project_id) {
         const project = await api.project(job.project_id);
         return isCurrent(id) ? project : null;
@@ -227,20 +245,25 @@ export function Wizard({
     }
     return null;
   }
-  async function outline() {
-    if (!prompt.trim()) {
+  async function outline(example?: string) {
+    const material = example ?? prompt;
+    if (!material.trim()) {
       onError("Добавьте описание или материал.");
       return;
+    }
+    if (example) {
+      setPrompt(example);
+      setMode("description");
     }
     const id = begin("outline");
     if (id === null) return;
     try {
       const response = await api.outline({
         template_id: template.id,
-        prompt,
+        prompt: material,
         count,
         audience,
-        mode,
+        mode: example ? "description" : mode,
       });
       if (isCurrent(id)) {
         setFailedJob(null);
@@ -262,7 +285,12 @@ export function Wizard({
     setStage("queued");
     setStep(3);
     try {
-      const { job_id } = await api.generate(template.id, content, prompt);
+      const { job_id } = await api.generate(
+        template.id,
+        content,
+        prompt,
+        audience,
+      );
       if (!isCurrent(id)) return;
       writePendingJob({ id: job_id, kind: "generate" });
       const project = await poll(job_id, id);
@@ -291,13 +319,22 @@ export function Wizard({
   }
   async function regenerate() {
     if (!result) return;
+    if (!instruction.trim()) {
+      setInstructionError("Опишите, что изменить в композиции.");
+      instructionRef.current?.focus();
+      return;
+    }
     const id = begin("regenerate");
     if (id === null) return;
     setFailedJob(null);
     setStage("queued");
     try {
       const { job_id } = await api.regenerate(result.id, instruction.trim());
-      writePendingJob({ id: job_id, kind: "regenerate", sourceProjectId: result.id });
+      writePendingJob({
+        id: job_id,
+        kind: "regenerate",
+        sourceProjectId: result.id,
+      });
       setFailedJob(null);
       if (!isCurrent(id)) return;
       const project = await poll(job_id, id);
@@ -310,7 +347,11 @@ export function Wizard({
       if (isCurrent(id)) {
         const failure = e as Error & { jobId?: string; retryable?: boolean };
         if (failure.jobId && failure.retryable) {
-          writePendingJob({ id: failure.jobId, kind: "regenerate", sourceProjectId: result.id });
+          writePendingJob({
+            id: failure.jobId,
+            kind: "regenerate",
+            sourceProjectId: result.id,
+          });
           setFailedJob({ id: failure.jobId, message: failure.message });
         } else {
           writePendingJob(null);
@@ -346,7 +387,8 @@ export function Wizard({
     } catch (e) {
       if (isCurrent(id)) {
         const failure = e as Error & { jobId?: string; retryable?: boolean };
-        if (failure.jobId && failure.retryable) setFailedJob({ id: failure.jobId, message: failure.message });
+        if (failure.jobId && failure.retryable)
+          setFailedJob({ id: failure.jobId, message: failure.message });
         else {
           writePendingJob(null);
           onError(failure.message);
@@ -444,29 +486,8 @@ export function Wizard({
                 <h2>О чём ваша презентация?</h2>
               </div>
             </div>
-            <div className="segmented" role="tablist" aria-label="Способ ввода">
-              {(["description", "text"] as const).map((value) => (
-                <button
-                  key={value}
-                  role="tab"
-                  aria-selected={mode === value}
-                  className={mode === value ? "active" : ""}
-                  disabled={busy}
-                  onClick={() => setMode(value)}
-                >
-                  {value === "description" ? (
-                    <Icon name="spark" />
-                  ) : (
-                    <Icon name="file" />
-                  )}
-                  {value === "description" ? "По описанию" : "Готовый текст"}
-                </button>
-              ))}
-            </div>
             <label className="field">
-              {mode === "description"
-                ? "Опишите идею и добавьте материалы"
-                : "Вставьте материал"}
+              Опишите идею и добавьте материалы
               <textarea
                 value={prompt}
                 onChange={(e) => setPrompt(e.target.value)}
@@ -494,7 +515,7 @@ export function Wizard({
               <button
                 className="btn sm"
                 disabled={busy}
-                onClick={() => setPrompt(sampleMaterial)}
+                onClick={() => void outline(sampleMaterial)}
               >
                 <Icon name="spark" />
                 Пример Deckly.Ai
@@ -591,7 +612,7 @@ export function Wizard({
               <button
                 className="btn primary"
                 disabled={busy || !prompt.trim()}
-                onClick={outline}
+                onClick={() => void outline()}
               >
                 {busy ? "Готовим структуру…" : "Создать структуру"}
                 <Icon name="arrow" />
@@ -675,7 +696,11 @@ export function Wizard({
             {failedJob && (
               <div className="error-banner" role="alert">
                 <span>{failedJob.message}</span>
-                <button className="btn sm" disabled={busy} onClick={() => retryFailedJob(false)}>
+                <button
+                  className="btn sm"
+                  disabled={busy}
+                  onClick={() => retryFailedJob(false)}
+                >
                   Повторить создание
                 </button>
               </div>
@@ -878,7 +903,11 @@ export function Wizard({
           {failedJob && (
             <div className="error-banner" role="alert">
               <span>{failedJob.message} Предыдущие варианты сохранены.</span>
-              <button className="btn sm" disabled={busy} onClick={() => retryFailedJob(true)}>
+              <button
+                className="btn sm"
+                disabled={busy}
+                onClick={() => retryFailedJob(true)}
+              >
                 Повторить оформление
               </button>
             </div>
@@ -990,16 +1019,35 @@ export function Wizard({
             <label className="field">
               <span>
                 Пожелания к оформлению{" "}
-                <small className="muted">· необязательно</small>
+                <small className="muted">
+                  · укажите перед новой композицией
+                </small>
               </span>
               <textarea
                 rows={2}
                 maxLength={1000}
+                ref={instructionRef}
                 value={instruction}
                 disabled={busy}
-                onChange={(e) => setInstruction(e.target.value)}
+                aria-invalid={!!instructionError}
+                aria-describedby={
+                  instructionError ? "composition-error" : undefined
+                }
+                onChange={(e) => {
+                  setInstruction(e.target.value);
+                  setInstructionError("");
+                }}
                 placeholder="Например: больше воздуха, крупнее заголовки, выразительнее акценты"
               />
+              {instructionError && (
+                <span
+                  className="error-banner"
+                  id="composition-error"
+                  role="alert"
+                >
+                  {instructionError}
+                </span>
+              )}
             </label>
             <div className="wizard-regenerate-action">
               <span className="tiny muted">

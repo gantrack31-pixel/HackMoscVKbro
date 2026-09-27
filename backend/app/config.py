@@ -47,6 +47,7 @@ class Settings:
     mode: str = field(default_factory=lambda: os.getenv('LLM_MODE', 'demo'))
     base_url: str = field(default_factory=lambda: os.getenv('LLM_BASE_URL', 'http://127.0.0.1:8001/v1').rstrip('/'))
     api_key: str = field(default_factory=lambda: os.getenv('LLM_API_KEY', ''), repr=False)
+    folder_id: str = field(default_factory=lambda: os.getenv('YANDEX_FOLDER_ID', ''), repr=False)
     model: str = field(default_factory=lambda: os.getenv('LLM_MODEL', 'Qwen/Qwen3-32B'))
     timeout: int = field(default_factory=lambda: int(os.getenv('LLM_TIMEOUT_SECONDS', '180')))
     max_tokens: int = field(default_factory=lambda: int(os.getenv('LLM_MAX_TOKENS', '9000')))

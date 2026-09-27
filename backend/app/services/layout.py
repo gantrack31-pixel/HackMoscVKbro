@@ -80,8 +80,10 @@ def geometry_nodes(obj):
 
 
 def build_scene(slide: Slide, metadata: dict, variant: str, index: int) -> dict:
+    if slide.designs:
+        slide=slide.model_copy(update={'design':slide.designs.get(slide.layout or variant,slide.design)})
     variant=slide.layout or variant
-    if slide.design:
+    if slide.design and not slide.designs:
         variant=['a','b','c'][(['a','b','c'].index(variant)+slide.design.layout_shift)%3]
     width=1280.;height=width/metadata.get('ratio',16/9)
     accent=metadata.get('accent','#0077FF')
@@ -127,9 +129,20 @@ def build_scene(slide: Slide, metadata: dict, variant: str, index: int) -> dict:
         title_size=min(title_size,48.)
         body_box.update(y=height*.32,h=height*.55)
     objects=[]
+    if slide.designs and slide.design:
+        # A model's shift adjusts spacing, not the user's selected visual variant.
+        offset=12*slide.design.layout_shift
+        for box in (title_box,body_box):
+            box['x']+=offset
+            box['w']-=2*offset
     def rect(id,x,y,w,h,color): objects.append({'id':id,'type':'rect','x':x,'y':y,'w':w,'h':h,'fill':color})
     def text(id,content,box,size,color,bold=False):
         lines=wrap(content,box['w'],size,bold)
+        if slide.designs and id not in {'number','footer'}:
+            minimum=28 if id=='title' else 20
+            while len(lines)*size*1.28>box['h'] and size>minimum:
+                size=max(minimum,size-1)
+                lines=wrap(content,box['w'],size,bold)
         objects.append({'id':id,'type':'text',**box,'text':content,'lines':lines,'font_size':size,'color':color,
                         'bold':bold,'font_family':metadata.get('font','Manrope'),'used_height':len(lines)*size*1.28})
     rect('background',0,0,width,height,metadata.get('background','#FFFFFF') if composition else '#FFFFFF')

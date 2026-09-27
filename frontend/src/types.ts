@@ -48,10 +48,12 @@ export interface Slide {
     layout_shift: 0 | 1 | 2;
   } | null;
   fixed: string[];
+  designs?: Partial<Record<Variant, NonNullable<Slide["design"]>>>;
 }
 export interface DeckContent {
   title: string;
   slides: Slide[];
+  audience?: string;
 }
 export interface SceneObject {
   id: string;

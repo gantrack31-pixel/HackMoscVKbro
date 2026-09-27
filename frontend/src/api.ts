@@ -100,18 +100,37 @@ export const api = {
     password: string;
     first_name: string;
     last_name: string;
-  }): Promise<AuthResult | { verification_required: true; email: string; delivery_pending?: boolean; delivery_mode?: string }> => {
-    const result = await request<AuthResult | { verification_required: true; email: string; delivery_pending?: boolean; delivery_mode?: string }>(
-      "/auth/register",
-      json("POST", data),
-    );
+  }): Promise<
+    | AuthResult
+    | {
+        verification_required: true;
+        email: string;
+        delivery_pending?: boolean;
+        delivery_mode?: string;
+      }
+  > => {
+    const result = await request<
+      | AuthResult
+      | {
+          verification_required: true;
+          email: string;
+          delivery_pending?: boolean;
+          delivery_mode?: string;
+        }
+    >("/auth/register", json("POST", data));
     if (!("verification_required" in result)) csrf = result.csrf;
     return result;
   },
   verifyEmail: (token: string) =>
-    request<{ verified: boolean }>("/auth/verify-email", json("POST", { token })),
+    request<{ verified: boolean }>(
+      "/auth/verify-email",
+      json("POST", { token }),
+    ),
   resendVerification: (email: string) =>
-    request<{ ok: boolean; delivery_mode?: string }>("/auth/verification/resend", json("POST", { email })),
+    request<{ ok: boolean; delivery_mode?: string }>(
+      "/auth/verification/resend",
+      json("POST", { email }),
+    ),
   logout: async () => {
     await request<void>("/auth/logout", { method: "POST" });
     csrf = "";
@@ -138,10 +157,15 @@ export const api = {
       "/outline",
       json("POST", data),
     ),
-  generate: (template_id: string, content: DeckContent, source_text: string) =>
+  generate: (
+    template_id: string,
+    content: DeckContent,
+    source_text: string,
+    audience = "Команда и коллеги",
+  ) =>
     request<{ job_id: string }>(
       "/generate",
-      json("POST", { template_id, content, source_text }),
+      json("POST", { template_id, content, source_text, audience }),
     ),
   job: (id: string) => request<Job>(`/jobs/${id}`),
   retryJob: (id: string) =>

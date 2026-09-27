@@ -34,6 +34,7 @@ class Slide(BaseModel):
     notes: str = Field(default='', max_length=3000)
     layout: Variant | None = None
     design: SlideDesign | None = None
+    designs: dict[Variant, SlideDesign] = Field(default_factory=dict)
     fixed: list[str] = Field(default_factory=list)
     @model_validator(mode='after')
     def required_visual_data(self):
@@ -56,6 +57,7 @@ class Slide(BaseModel):
 class DeckContent(BaseModel):
     title: str = Field(min_length=1, max_length=180)
     slides: list[Slide] = Field(min_length=1, max_length=30)
+    audience: str = Field(default='Команда и коллеги', max_length=100)
 
 class OutlineRequest(BaseModel):
     template_id: str
@@ -73,6 +75,7 @@ class GenerateRequest(BaseModel):
     template_id: str
     content: DeckContent
     source_text: str = Field(default='', max_length=50000)
+    audience: str = Field(default='Команда и коллеги', max_length=100)
 
 class RegenerateRequest(BaseModel):
     instruction: str = Field(default='', max_length=1000)
@@ -85,6 +88,12 @@ class SlideDesignChoice(BaseModel):
 class DesignPlan(BaseModel):
     model_config = ConfigDict(extra='forbid')
     slides: list[SlideDesignChoice] = Field(min_length=1, max_length=30)
+
+class ThreeDesignPlans(BaseModel):
+    model_config = ConfigDict(extra='forbid')
+    a: DesignPlan
+    b: DesignPlan
+    c: DesignPlan
 
 class ProjectUpdate(BaseModel):
     content: DeckContent

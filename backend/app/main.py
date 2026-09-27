@@ -15,7 +15,7 @@ from . import database as db
 from .models import OutlineRequest, GenerateRequest, RegenerateRequest, ProjectUpdate, FixRequest, DeckContent, Issue
 from .services.templates import seed_templates, analyze_template, BUILTIN_IDS
 from .services.pptx_security import validate_pptx_archive
-from .services.llm import make_outline, review_content, redesign_layout, configured, LLMError
+from .services.llm import make_outline, review_content, create_design_variants, configured, LLMError
 from .services.layout import build_scene
 from .services.audit import audit_deck, source_status
 from .services.export import export_pptx, export_pdf, export_html
@@ -158,16 +158,24 @@ async def generate_job(jid: str, request: GenerateRequest,user_id: str, result_p
     async with generation_slots:
         try:
             template=get_template(request.template_id,user_id)
+            db.job_set(jid,'running','design',user_id=user_id)
+            source=request.content.model_copy(update={'audience':request.audience})
+            content=await create_design_variants(source,template)
             db.job_set(jid,'running','layout',user_id=user_id)
             # Материалы уже согласованы пользователем; LLM не переписывает их при вёрстке.
-            await asyncio.to_thread(lambda:[build_scene(s,template['metadata'],'a',i) for i,s in enumerate(request.content.slides)])
+            await asyncio.to_thread(lambda:[build_scene(s,template['metadata'],v,i) for v in ('a','b','c') for i,s in enumerate(content.slides)])
             db.job_set(jid,'running','export',user_id=user_id)
             for variant in ['a','b','c']:
-                await asyncio.to_thread(export_pptx,request.content,template,variant)
+                await asyncio.to_thread(export_pptx,content,template,variant)
             db.job_set(jid,'running','audit',user_id=user_id)
-            audit_deck(request.content,template,'a',request.source_text)
+            for variant in ('a','b','c'):
+                await asyncio.to_thread(audit_deck,content,template,variant,request.source_text)
             db.job_complete_with_project(jid,result_project_id,request.template_id,
-                                         request.content.model_dump(),request.source_text,user_id)
+                                         content.model_dump(),request.source_text,user_id)
+        except LLMError as exc:
+            db.job_set(jid,'failed','failed',error=str(exc),user_id=user_id)
+        except TimeoutError:
+            db.job_set(jid,'failed','failed',error='Модель не успела подготовить три варианта. Повторите запрос.',user_id=user_id)
         except Exception as exc:
             logger.error('Ошибка сборки презентации %s (%s)',jid,type(exc).__name__)
             db.job_set(jid,'failed','failed',error='Не удалось собрать презентацию. Проверьте шаблон и структуру, затем повторите.',user_id=user_id)
@@ -175,6 +183,8 @@ async def generate_job(jid: str, request: GenerateRequest,user_id: str, result_p
 @app.post('/api/generate',status_code=202)
 def generate(request: GenerateRequest,tasks: BackgroundTasks,user=Depends(current_user)):
     get_template(request.template_id,user['id'])
+    if settings.mode=='live' and not configured():
+        raise HTTPException(409,'Модель ещё не подключена. Настройте её на сервере и повторите.')
     jid=str(uuid4());pid=str(uuid4())
     db.job_create(jid,user['id'],'generate',{'request':request.model_dump(),'result_project_id':pid})
     tasks.add_task(generate_job,jid,request,user['id'],pid)
@@ -225,14 +235,15 @@ async def regenerate_job(jid: str, original: dict, instruction: str, user_id: st
         try:
             template=get_template(original['template_id'],user_id)
             db.job_set(jid,'running','design',user_id=user_id)
-            content=await redesign_layout(DeckContent.model_validate(original['content']),template,instruction)
+            content=await create_design_variants(DeckContent.model_validate(original['content']),template,instruction)
             db.job_set(jid,'running','layout',user_id=user_id)
             await asyncio.to_thread(lambda:[build_scene(s,template['metadata'],'a',i) for i,s in enumerate(content.slides)])
             db.job_set(jid,'running','export',user_id=user_id)
             for variant in ['a','b','c']:
                 await asyncio.to_thread(export_pptx,content,template,variant)
             db.job_set(jid,'running','audit',user_id=user_id)
-            await asyncio.to_thread(audit_deck,content,template,'a',original['source_text'])
+            for variant in ('a','b','c'):
+                await asyncio.to_thread(audit_deck,content,template,variant,original['source_text'])
             # Persist only a complete result, as a copy; never overwrite the user's working project.
             db.job_complete_with_project(jid,result_project_id,original['template_id'],
                                          content.model_dump(),original['source_text'],user_id)
@@ -247,6 +258,9 @@ async def regenerate_job(jid: str, original: dict, instruction: str, user_id: st
 @app.post('/api/projects/{pid}/regenerate',status_code=202)
 def regenerate(pid: str, request: RegenerateRequest, tasks: BackgroundTasks, user=Depends(current_user)):
     original=get_project(pid,user['id'])
+    if not request.instruction.strip():
+        raise HTTPException(422,'Опишите, что изменить в композиции, прежде чем отправлять запрос.')
+    request.instruction=request.instruction.strip()
     get_template(original['template_id'],user['id'])
     if settings.mode=='live' and not configured():
         raise HTTPException(409,'Модель ещё не подключена. Настройте её на сервере и повторите.')
