@@ -17,12 +17,14 @@ export function Shell({
   children,
   favoriteCount,
   onLogout,
+  onNewPresentation,
 }: {
   route: Route;
   health: Health | null;
   user: User;
   children: ReactNode;
   onLogout: () => void;
+  onNewPresentation: () => void;
   onSearch: (s: string) => void;
   templateCount: number;
   favoriteCount: number;
@@ -126,6 +128,10 @@ export function Shell({
             className="sidebar-create"
             aria-label="Новая презентация"
             title="Новая презентация"
+            onClick={(event) => {
+              event.preventDefault();
+              onNewPresentation();
+            }}
           >
             <Icon name="plus" />
             <span>Новая презентация</span>
