@@ -190,7 +190,7 @@ export interface Issue {
   code: string;
   title: string;
   detail: string;
-  category: "layout" | "template" | "content" | "source" | "density" | "integrity";
+  category: "layout" | "template" | "content" | "source";
   severity: "error" | "warning" | "info";
   fixable: boolean;
   deterministic: boolean;
