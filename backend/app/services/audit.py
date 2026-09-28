@@ -21,10 +21,11 @@ def source_status(quote: str, source: str) -> str:
     return 'matched' if normalize(quote) in normalize(source) else 'not_found'
 
 
-def audit_deck(content: DeckContent, template: dict, variant: str, source: str) -> list[Issue]:
+def audit_deck(content: DeckContent, template: dict, variant: str, source: str, *, scenes=None) -> list[Issue]:
+    if scenes is not None and len(scenes)!=len(content.slides): raise ValueError('Scene count does not match content')
     issues=[]
     for index,slide in enumerate(content.slides):
-        scene=build_scene(slide,template['metadata'],variant,index)
+        scene=scenes[index] if scenes is not None else build_scene(slide,template['metadata'],variant,index)
         def add(code,title,detail,category='layout',severity='warning',fixable=False,obj='body'):
             issues.append(Issue(id=f'{index}:{code}:{obj}',slide=index,code=code,title=title,detail=detail,
                                 category=category,severity=severity,fixable=fixable,object_id=obj))

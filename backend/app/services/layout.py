@@ -8,7 +8,7 @@ from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 from ..models import Slide
 from .visuals import diagram_nodes, pictogram_nodes
-from .palette import roles, scene_color
+from .palette import roles, scene_color, contrast
 
 FONTS=Path(__file__).parent
 for name,file in [('Deckly','Manrope-Regular.ttf'),('DecklyBold','Manrope-Bold.ttf')]:
@@ -214,13 +214,17 @@ def build_scene(slide: Slide, metadata: dict, variant: str, index: int) -> dict:
     else: rect('accent',margin*1.5,height*.1,width-margin*3,2,accent)
     if slide.kind=='title':
         rect('title-underline',title_box['x'],height*.55,min(160,title_box['w']),8,accent)
-    title_color='#0F172A' if 'contrast_title' in slide.fixed else accent
+    title_color=theme['text'] if 'contrast_title' in slide.fixed or contrast(accent,theme['background'])<3 else accent
     text('title',slide.title,title_box,title_size,title_color,True)
     content=slide.body+ ('\n'+'\n'.join('• '+b for b in slide.bullets) if slide.bullets else '')
     if slide.kind in {'diagram','icons'}:
-        text('body',slide.body,{**body_box,'h':60},22,'#475569')
-        area={**body_box,'y':body_box['y']+72,'h':max(160,body_box['h']-72)}
-        visual=diagram_nodes(slide,area,accent) if slide.kind=='diagram' else pictogram_nodes(slide,area,accent)
+        intro_height=0
+        if slide.body.strip():
+            text('body',slide.body,{**body_box,'h':min(90,body_box['h']*.22)},22,'#475569')
+            intro_height=min(90,body_box['h']*.22)+16
+        area={**body_box,'y':body_box['y']+intro_height,'h':max(1,body_box['h']-intro_height)}
+        icon_color=accent if contrast(accent,theme['surface'])>=3 else theme['text']
+        visual=diagram_nodes(slide,area,accent) if slide.kind=='diagram' else pictogram_nodes(slide,area,icon_color)
         for node in visual:
             if node['type']=='text':
                 size=node['font_size']

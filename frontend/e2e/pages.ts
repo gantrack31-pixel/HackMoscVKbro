@@ -16,7 +16,7 @@ export class DecklyPage {
     await expect(this.page.getByRole("heading", { name: /Ваша следующая идея/ })).toBeVisible();
   }
 
-  async createPresentation() {
+  async createPresentation(templateName = "VK Education", afterOutline?: () => Promise<void>) {
     await this.page.getByRole("button", { name: "Создать презентацию", exact: true }).click();
     await expect(this.page.getByRole("heading", { name: "О чём ваша презентация?" })).toBeVisible();
 
@@ -25,12 +25,13 @@ export class DecklyPage {
 
     const templatePicker = this.page.locator("details.wizard-template-picker");
     await templatePicker.locator("summary").click();
-    await templatePicker.getByText("VK Education", { exact: true }).click();
+    await templatePicker.getByText(templateName, { exact: true }).click();
     await this.page.getByRole("radio", { name: "8" }).check();
 
     await this.page.getByRole("button", { name: "Создать структуру" }).click();
     await expect(this.page.getByRole("heading", { name: "Сначала — история" })).toBeVisible();
     await expect(this.page.getByText("8 слайдов", { exact: true })).toBeVisible();
+    if (afterOutline) await afterOutline();
     await this.page.getByLabel("Заголовок слайда 1").fill("Стратегия запуска продукта");
     await this.page.getByRole("button", { name: "Создать презентацию", exact: true }).click();
     await expect(this.page.getByRole("heading", { name: "Одна история. Три способа рассказать." })).toBeVisible({ timeout: 30_000 });

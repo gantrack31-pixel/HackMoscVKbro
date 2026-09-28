@@ -31,24 +31,29 @@ export function PresentationAssistant({ project, content, index, health, disable
     finally { lock.current = false; setWorking(false); onBusy(false); }
   }
   return <section className="presentation-assistant panel" aria-label="AI-помощник" aria-busy={working}>
-    <div className="between"><div><span className="eyebrow">ВМЕСТЕ С AI</span>
-      <h2><Icon name="spark" />{audit ? "Исправить презентацию с AI" : "Продолжим работу над слайдами"}</h2></div>
-      <span className="badge">{scope === "all" ? "Вся презентация" : `Слайд ${index + 1}`}</span></div>
-    <p>AI учитывает текущий текст, ваши ручные правки, исходные материалы и загруженный шаблон. Изменения сохраняются новой версией — их можно отменить.</p>
-    {!available && <p className="muted">Для AI-редактирования подключите модель. Ручное редактирование доступно.</p>}
+    <div className="assistant-heading">
+      <h2><Icon name="spark" />{audit ? "Исправить презентацию с AI" : "Редактировать с AI"}</h2>
+      <span className="tiny muted">Учитывает ваши правки и шаблон · можно отменить</span></div>
+    {!available && <p className="tiny muted">Для AI-редактирования подключите модель. Ручное редактирование доступно.</p>}
     <fieldset disabled={busy || disabled || !available}>
-      <label className="field">Область изменений
+      <div className="assistant-composer">
+      <label className="field assistant-scope">Область изменений
         <select value={scope} onChange={e => setScope(e.target.value)}><option value="slide">Текущий слайд</option><option value="all">Вся презентация</option></select>
       </label>
-      <label className="field">Что изменить с помощью AI?
-        <textarea rows={3} maxLength={3000} value={instruction} onChange={e => setInstruction(e.target.value)}
-          placeholder="Например: сократи повторы, сохрани цифры и перенеси подробности в заметки. Или: преврати этот текст в схему из трёх этапов." />
+      <label className="field assistant-prompt">Что изменить с помощью AI?
+        <textarea rows={1} maxLength={3000} value={instruction} onChange={e => setInstruction(e.target.value)}
+          placeholder="Сократи текст, сохрани цифры или сделай схему…" />
       </label>
+      <button type="button" className="btn primary assistant-submit" disabled={!instruction.trim()} onClick={() => void run("edit")}><Icon name="spark" />Применить запрос AI</button>
+      </div>
+      <div className="assistant-tools">
       <div className="assistant-suggestions">
         {["Сократи текст и убери повторы. Сохрани факты и перенеси детали в заметки.", "Перепиши проще и понятнее, сохрани смысл.", "Преврати содержание в наглядную схему, если это уместно."].map((text, i) =>
           <button type="button" className="btn sm" key={text} onClick={() => setInstruction(text)}>{["Убрать лишнее", "Улучшить текст", "Сделать схему"][i]}</button>)}
       </div>
-      <details><summary>Добавить контекст или файл для этой правки</summary>
+      <button type="button" className="btn sm assistant-repair" onClick={() => void run("repair")}><Icon name="shield" />Исправить автоматически с AI</button>
+      </div>
+      <details className="assistant-context"><summary>Добавить контекст или файл</summary>
         <label className="field">Дополнительный материал<textarea rows={3} maxLength={15000} value={material} onChange={e => setMaterial(e.target.value)} /></label>
         <label className="field">Документы для AI<input type="file" multiple accept=".txt,.md,.csv,.docx,.pdf,.pptx" onChange={async e => {
           const files = Array.from(e.target.files || []); e.target.value = "";
@@ -61,15 +66,11 @@ export function PresentationAssistant({ project, content, index, health, disable
           finally { lock.current = false; onBusy(false); }
         }} /></label>
       </details>
-      <div className="assistant-actions">
-        <button type="button" className="btn primary" disabled={!instruction.trim()} onClick={() => void run("edit")}><Icon name="spark" />Применить запрос AI</button>
-        <button type="button" className="btn" onClick={() => void run("repair")}><Icon name="shield" />Исправить автоматически с AI</button>
-      </div>
     </fieldset>
     {working && <p role="status">AI читает слайды, вносит правки и проверяет результат. Это может занять до трёх минут.</p>}
     {error && <p className="error-banner" role="alert">{error}</p>}
     {report && <div className="assistant-result" role="status"><strong>{report.project ? "Правки сохранены" : "Изменения не применены"}</strong><p>{report.summary}</p>
-      {report.project && <p>Изменены слайды: {report.changed_slides.map(i => i + 1).join(", ")}. Вернуть исходный текст можно кнопкой «Вернуть версию».</p>}
+      {report.project && <p>Изменены слайды: {report.changed_slides.map(i => i + 1).join(", ")}. Вернуть исходный текст можно кнопкой «Отменить изменение».</p>}
       <details><summary>После проверки: {report.issues.length} замечаний</summary><ul>{report.issues.slice(0, 20).map(i => <li key={i.id}>Слайд {i.slide + 1}: {i.title}</li>)}</ul></details>
     </div>}
   </section>;

@@ -84,9 +84,7 @@ export function Audit({
   const preview = useLivePreview(project, content, dirty && valid);
   const scene = preview.scenes[index];
   const visible = issues.filter((i) => i.slide === index);
-  const actionable = issues.filter((i) => i.severity !== "info");
-  const [showInfo, setShowInfo] = useState(false);
-  const displayed = visible.filter((i) => showInfo || i.severity !== "info");
+  const displayed = visible.filter((i) => i.severity !== "info");
   const locked = busy || dirty;
   function inspect(issue: Issue) {
     if (busy || (dirty && focus !== issue.id)) return;
@@ -164,8 +162,8 @@ export function Audit({
     <section className="audit-page" aria-label="Проверка презентации">
       <div className="heading between">
         <div>
-          <h1>Уверенность в каждом слайде</h1>
-          <p>Нажмите на замечание и исправьте его здесь же.</p>
+          <h1>{project.title}</h1>
+          <p>Проверка презентации · исправления сохраняются новой версией.</p>
         </div>
         <div className="row presentation-actions">
           <a className="btn" href="#editor">
@@ -176,30 +174,6 @@ export function Audit({
             <Icon name="arrow" />
           </a>
         </div>
-      </div>
-      <div className="audit-summary">
-        <div>
-          <span className="audit-score">
-            <Icon name="shield" />
-          </span>
-          <div>
-            <h2>
-              {loading
-                ? "Проверяем…"
-                : loadError
-                  ? "Проверка недоступна"
-                  : `Замечаний: ${actionable.length} · Справок: ${issues.length-actionable.length}`}
-            </h2>
-            <p>Содержание, типографика, компоновка и связь с источниками. Смысл обсудите с AI-помощником.</p>
-          </div>
-        </div>
-        <button
-          className="btn"
-          disabled={locked || loading}
-          onClick={() => setRevision(r => r + 1)}
-        >
-          <Icon name="shield" />Повторить проверку
-        </button>
       </div>
       {notice && (
         <p className="save-feedback" role="status">
@@ -267,7 +241,7 @@ export function Audit({
                 (preview.pending
                   ? "Обновляем предпросмотр…"
                   : "Предпросмотр изменений. Нажмите «Сохранить и проверить».")
-              : visible.length
+              : displayed.length
                 ? "Выберите метку или замечание. Рамка покажет связанный блок слайда."
                 : "Здесь появятся отметки, если проверка найдёт замечания."}
           </p>
@@ -295,9 +269,7 @@ export function Audit({
             <h2>Что улучшить</h2>
             <span className="badge">{displayed.length}</span>
           </div>
-          <label className="row small"><input type="checkbox" checked={showInfo} disabled={locked} onChange={e=>setShowInfo(e.target.checked)}/>
-            Показывать справки об источниках ({visible.filter(i=>i.severity==="info").length})
-          </label>
+          {loading && <p className="tiny muted" role="status">Проверяем слайды…</p>}
           <div className="audit-items">
             {!loadError &&
               displayed.map((issue, n) => (

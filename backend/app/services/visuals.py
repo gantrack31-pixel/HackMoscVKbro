@@ -1,5 +1,6 @@
 """Code-native diagram and pictogram geometry shared by all output formats."""
 import math
+from .icons import icon_data, choose_icon
 
 def hexagon_points(obj):
     return [(obj['x']+x*obj['w'],obj['y']+y*obj['h']) for x,y in ((.18,0),(.82,0),(1,.5),(.82,1),(.18,1),(0,.5))]
@@ -74,39 +75,31 @@ def diagram_nodes(slide, box, accent):
             for k,offset in enumerate((-.45,.45)):
                 segment(f'arrow-{i}-{j}-{k}',x,y,x-9*math.cos(angle+offset),y-9*math.sin(angle+offset))
     for i,((x,y),(w,h),label) in enumerate(zip(positions,sizes,labels)):
+        inset = w*.22 if kind=='honeycomb' else 16
         nodes.extend([
             {'id':f'node-bg-{i}','type':'hexagon' if kind=='honeycomb' else 'rect','x':x,'y':y,'w':w,'h':h,'fill':'#F1F5F9','group':groups[i]},
-            {'id':f'node-accent-{i}','type':'rect','x':x,'y':y,'w':5,'h':h,'fill':accent,'group':groups[i]},
-            {'id':f'node-label-{i}','type':'text','x':x+16,'y':y+10,'w':max(1,w-28),'h':max(1,h-20),
+            {'id':f'node-label-{i}','type':'text','x':x+inset,'y':y+10,'w':max(1,w-2*inset),'h':max(1,h-20),
              'text':label,'font_size':26 if kind=='kpi' else 20,'bold':True,'color':'#0F172A','group':groups[i]},
         ])
+        if kind!='honeycomb':
+            nodes.append({'id':f'node-accent-{i}','type':'rect','x':x,'y':y,'w':5,'h':h,'fill':accent,'group':groups[i]})
     return nodes
 
 def pictogram_nodes(slide, box, accent):
-    nodes=[];labels=(slide.bullets or ['Идея', 'Команда', 'Результат'])[:6]
-    defaults=['idea','people','target','growth','shield','clock']
+    nodes=[];labels=slide.bullets[:6]
+    if not labels: return nodes
     count=len(labels);columns=min(count,3);rows=math.ceil(count/columns)
     for i,label in enumerate(labels):
         cell_w=box['w']/columns;cell_h=box['h']/rows
-        x=box['x']+(i%columns)*cell_w+20;y=box['y']+(i//columns)*cell_h+12
-        symbol=slide.icon_names[i] if i<len(slide.icon_names) else defaults[i]
-        def shape(t,dx,dy,w,h,fill=accent):
-            nodes.append({'id':f'icon-{i}-{len(nodes)}','type':t,'x':x+dx,'y':y+dy,'w':w,'h':h,'fill':fill})
-        if symbol=='people':
-            for dx in (0,28,56):shape('ellipse',dx+6,0,16,16);shape('rect',dx,22,28,30)
-        elif symbol=='target':
-            for d,color in ((64,accent),(44,'#FFFFFF'),(24,accent)):
-                shape('ellipse',(64-d)/2,(64-d)/2,d,d,color)
-        elif symbol=='growth':
-            for j in range(3):shape('rect',j*24,48-j*16,16,16+j*16)
-        elif symbol=='shield':
-            shape('rect',4,0,58,34);shape('ellipse',4,10,58,48)
-            shape('rect',29,12,8,30,'#FFFFFF');shape('rect',18,23,30,8,'#FFFFFF')
-        elif symbol=='clock':
-            shape('ellipse',0,0,64,64);shape('ellipse',6,6,52,52,'#FFFFFF')
-            shape('rect',30,12,4,22);shape('rect',30,32,18,4)
-        else:
-            shape('ellipse',7,0,48,44);shape('rect',22,40,18,16);shape('rect',24,60,14,4)
-        nodes.append({'id':f'icon-label-{i}','type':'text','x':x,'y':y+78,'w':cell_w-40,'h':cell_h-90,
-                      'text':label,'font_size':22,'bold':True,'color':'#0F172A'})
+        x=box['x']+(i%columns)*cell_w;y=box['y']+(i//columns)*cell_h
+        selected=slide.icon_names[i] if i<len(slide.icon_names) else 'auto'
+        symbol=choose_icon(label) if selected=='auto' else selected
+        side=min(56,cell_h*.3,cell_w*.25)
+        nodes.append({'id':f'icon-card-{i}','type':'rect','x':x,'y':y,'w':cell_w-16,'h':cell_h-16,'fill':'#F1F5F9'})
+        if symbol:
+            nodes.append({'id':f'icon-{i}','type':'image','x':x+18,'y':y+14,'w':side,'h':side,
+                          'src':icon_data(symbol,accent),'icon_name':symbol})
+        label_y=y+side+24 if symbol else y+18
+        nodes.append({'id':f'icon-label-{i}','type':'text','x':x+18,'y':label_y,'w':cell_w-52,'h':max(24,y+cell_h-30-label_y),
+                      'text':label,'font_size':24,'bold':True,'color':'#0F172A'})
     return nodes

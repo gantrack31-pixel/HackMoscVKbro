@@ -315,14 +315,14 @@ async def generate_job(jid: str, request: GenerateRequest,user_id: str, result_p
                     slide.image_data=(await generate_image(slide.image_prompt))['image_data']
             db.job_set(jid,'running','layout',user_id=user_id)
             # Материалы уже согласованы пользователем; LLM не переписывает их при вёрстке.
-            await asyncio.to_thread(lambda:[build_scene(s,template['metadata'],v,i) for v in ('a','b','c') for i,s in enumerate(content.slides)])
+            scenes=await asyncio.to_thread(lambda:{v:[build_scene(s,template['metadata'],v,i) for i,s in enumerate(content.slides)] for v in ('a','b','c')})
             db.job_set(jid,'running','export',user_id=user_id)
             for variant in ['a','b','c']:
-                await asyncio.to_thread(export_pptx,content,template,variant)
+                await asyncio.to_thread(export_pptx,content,template,variant,scenes=scenes[variant])
             db.job_set(jid,'running','audit',user_id=user_id)
             counts={}
             for variant in ('a','b','c'):
-                issues=await asyncio.to_thread(audit_deck,content,template,variant,request.source_text)
+                issues=await asyncio.to_thread(audit_deck,content,template,variant,request.source_text,scenes=scenes[variant])
                 counts[variant]={'issues':len(issues),'errors':sum(i.severity=='error' for i in issues)}
             db.job_complete_with_project(jid,result_project_id,request.template_id,
                                          content.model_dump(),request.source_text,user_id,
@@ -396,14 +396,14 @@ async def regenerate_job(jid: str, original: dict, instruction: str, user_id: st
             db.job_set(jid,'running','design',user_id=user_id)
             content=await create_design_variants(DeckContent.model_validate(original['content']),template,instruction)
             db.job_set(jid,'running','layout',user_id=user_id)
-            await asyncio.to_thread(lambda:[build_scene(s,template['metadata'],'a',i) for i,s in enumerate(content.slides)])
+            scenes=await asyncio.to_thread(lambda:{v:[build_scene(s,template['metadata'],v,i) for i,s in enumerate(content.slides)] for v in ('a','b','c')})
             db.job_set(jid,'running','export',user_id=user_id)
             for variant in ['a','b','c']:
-                await asyncio.to_thread(export_pptx,content,template,variant)
+                await asyncio.to_thread(export_pptx,content,template,variant,scenes=scenes[variant])
             db.job_set(jid,'running','audit',user_id=user_id)
             counts={}
             for variant in ('a','b','c'):
-                issues=await asyncio.to_thread(audit_deck,content,template,variant,original['source_text'])
+                issues=await asyncio.to_thread(audit_deck,content,template,variant,original['source_text'],scenes=scenes[variant])
                 counts[variant]={'issues':len(issues),'errors':sum(i.severity=='error' for i in issues)}
             # Persist only a complete result, as a copy; never overwrite the user's working project.
             db.job_complete_with_project(jid,result_project_id,original['template_id'],

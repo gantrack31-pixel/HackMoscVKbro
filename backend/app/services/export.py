@@ -15,6 +15,7 @@ from reportlab.lib.utils import ImageReader
 from ..models import DeckContent
 from .layout import build_scene, selected_layout, FONTS, geometry_nodes
 from .visuals import hexagon_points
+from .icons import ATTRIBUTION
 
 def rgb(value): return RGBColor.from_string(value.lstrip('#'))
 
@@ -37,12 +38,14 @@ def scene_svg(scene):
 def export_html(content,template,variant):
     font=base64.b64encode((FONTS/'Manrope-Regular.ttf').read_bytes()).decode()
     slides=''.join('<section>'+scene_svg(build_scene(slide,template['metadata'],variant,i))+'</section>' for i,slide in enumerate(content.slides))
-    html=f'<!doctype html><html lang="ru"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>{escape(content.title)}</title><style>@font-face{{font-family:Manrope;src:url(data:font/ttf;base64,{font})}}body{{background:#e2e8f0;margin:0;padding:24px}}section{{max-width:1280px;margin:0 auto 24px;break-after:page}}svg{{display:block;width:100%;background:white}}@media print{{body{{padding:0}}section{{margin:0}}@page{{size:landscape;margin:0}}}}</style>{slides}</html>'
+    attribution=f'<footer>{escape(ATTRIBUTION)}</footer>' if any(s.kind=='icons' for s in content.slides) else ''
+    html=f'<!doctype html><html lang="ru"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>{escape(content.title)}</title><style>@font-face{{font-family:Manrope;src:url(data:font/ttf;base64,{font})}}body{{background:#e2e8f0;margin:0;padding:24px}}section{{max-width:1280px;margin:0 auto 24px;break-after:page}}svg{{display:block;width:100%;background:white}}@media print{{body{{padding:0}}section{{margin:0}}@page{{size:landscape;margin:0}}}}</style>{slides}{attribution}</html>'
     return html.encode('utf-8')
 
 def export_pdf(content,template,variant):
     stream=BytesIO();metadata=template['metadata'];height=1280/metadata['ratio']
     pdf=canvas.Canvas(stream,pagesize=(1280,height));pdf.setTitle(content.title)
+    if any(s.kind=='icons' for s in content.slides): pdf.setSubject(ATTRIBUTION)
     for i,slide in enumerate(content.slides):
         scene=build_scene(slide,metadata,variant,i)
         for obj in scene['objects']:
@@ -67,7 +70,8 @@ def export_pdf(content,template,variant):
         pdf.showPage()
     pdf.save();return stream.getvalue()
 
-def export_pptx(content: DeckContent, template: dict, variant: str):
+def export_pptx(content: DeckContent, template: dict, variant: str, *, scenes=None):
+    if scenes is not None and len(scenes)!=len(content.slides): raise ValueError('Scene count does not match content')
     metadata=template['metadata'];prs=Presentation(template['path']) if template.get('path') else Presentation()
     if template.get('path'):
         # В python-pptx пока нет публичного remove_slide. Удаляем только слайды копии,
@@ -83,7 +87,7 @@ def export_pptx(content: DeckContent, template: dict, variant: str):
         slide=prs.slides.add_slide(layout)
         for ph in list(slide.placeholders):
             element=ph._element;element.getparent().remove(element)
-        scene=build_scene(slide_content,metadata,variant,index)
+        scene=scenes[index] if scenes is not None else build_scene(slide_content,metadata,variant,index)
         for obj in scene['objects']:
             x,y,w,h=[int(obj[key]*scale) for key in ['x','y','w','h']]
             if obj['id']=='background':
@@ -99,7 +103,7 @@ def export_pptx(content: DeckContent, template: dict, variant: str):
             elif obj['type']=='image':
                 image_bytes=base64.b64decode(obj['src'].split(',',1)[1])
                 asset=next((a for a in metadata.get('assets',[]) if a['id']==slide_content.template_asset_id),None)
-                if not slide_content.image_data and asset and asset.get('original_part') and template.get('path'):
+                if obj['id']=='illustration' and not slide_content.image_data and asset and asset.get('original_part') and template.get('path'):
                     with ZipFile(template['path']) as original:
                         full_image=original.read(asset['original_part'])
                     # Native formats preserve full resolution; other formats keep the safe preview.
@@ -131,4 +135,5 @@ def export_pptx(content: DeckContent, template: dict, variant: str):
                             paragraph.font.bold=ri==0;paragraph.font.color.rgb=rgb(obj['header_color'] if ri==0 else obj['theme']['text'])
                         cell.fill.solid();cell.fill.fore_color.rgb=rgb(obj['fill'] if ri==0 else obj['theme']['surface'] if ri%2==0 else obj['theme']['background'])
         slide.notes_slide.notes_text_frame.text=slide_content.notes+('\nИсточник: '+slide_content.source_quote if slide_content.source_quote else '')
+        if slide_content.kind=='icons': slide.notes_slide.notes_text_frame.text+='\n'+ATTRIBUTION
     stream=BytesIO();prs.save(stream);return stream.getvalue()

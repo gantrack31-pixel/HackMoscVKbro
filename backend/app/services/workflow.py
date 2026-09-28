@@ -9,7 +9,7 @@ from ..config import BASE, settings
 BUDGET_SECONDS = 300
 OUTLINE_BUDGET_SECONDS = 120
 ASSEMBLY_BUDGET_SECONDS = 180
-RECIPE_VERSION = '2026.09.28.2'
+RECIPE_VERSION = '2026.09.29.1'
 VARIANT_AXES = [
     {'id': 'a', 'title': 'Классический', 'layout': 'Спокойная иерархия и широкое поле текста', 'density': 'balanced'},
     {'id': 'b', 'title': 'Акцентный', 'layout': 'Контрастная боковая зона и компактные блоки', 'density': 'compact'},
@@ -32,7 +32,7 @@ def recipe():
         text = (BASE / 'prompts' / f'{name}.txt').read_text('utf-8')
         snippets.append({'id': name, 'version': sha256(text.encode()).hexdigest()[:12], 'text': text})
     code = []
-    for name in ('main.py', 'models.py', 'services/workflow.py', 'services/templates.py',
+    for name in ('main.py', 'models.py', 'icon_catalog.py', 'services/icons.py', 'services/workflow.py', 'services/templates.py',
                  'services/materials.py', 'services/llm.py', 'services/images.py', 'services/assistant.py', 'services/template_context.py',
                  'services/layout.py', 'services/visuals.py', 'services/audit.py', 'services/export.py',
                  'services/sources.py', 'services/template_package.py', 'services/template_parser.py', 'services/palette.py'):

@@ -8,6 +8,7 @@ from pydantic import ValidationError
 from ..config import settings, BASE
 from ..models import DeckContent, Slide, OutlineRequest, DesignPlan, SlideDesign, ThreeDesignPlans
 from .template_context import model_template, template_images
+from ..icon_catalog import model_icons
 from .sources import source_chunks, slide_binding, validate_bindings
 
 class LLMError(RuntimeError): pass
@@ -151,6 +152,7 @@ async def make_outline(request: OutlineRequest, template: dict) -> DeckContent:
     system=(BASE/'prompts/outline.txt').read_text('utf-8')
     metadata=template['metadata']
     payload={'task':request.model_dump(),'template':model_template(template),
+             'icon_library':model_icons(),
              'image_generation_available':bool(settings.image_base_url),'schema':DeckContent.model_json_schema()}
     # Одна попытка + одно исправление формата. Общий лимит ограничен отдельно.
     async with asyncio.timeout(240):
@@ -162,6 +164,11 @@ async def make_outline(request: OutlineRequest, template: dict) -> DeckContent:
                 if any(s.template_asset_id and s.template_asset_id not in assets for s in result.slides):
                     raise ValueError('Используй только asset_id из выбранного шаблона.')
                 if len(result.slides)!=request.count: raise ValueError(f'Нужно ровно {request.count} слайдов')
+                for slide in result.slides:
+                    if slide.kind in {'diagram','icons'} and len(slide.bullets)>6:
+                        raise ValueError('Схема или пиктограммы вмещают до 6 тезисов; подробности перенеси в notes.')
+                    if slide.kind=='icons' and slide.icon_names and len(slide.icon_names)!=len(slide.bullets):
+                        raise ValueError('В icon_names нужен один id на каждый bullet в том же порядке.')
                 result.audience=request.audience
                 return result
             except (ValidationError,ValueError,LLMFormatError) as exc:

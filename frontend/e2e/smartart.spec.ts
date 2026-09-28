@@ -19,10 +19,8 @@ test("diagram types survive save and source notices stay separate", async ({page
   await expect(page.locator(".slide-canvas polygon")).toHaveCount(4);
   await page.screenshot({path:"test-results/smartart-editor.png",fullPage:true});
   await page.getByRole("button",{name:"Проверить",exact:true}).click();
-  const toggle=page.getByRole("checkbox",{name:/Показывать справки/});
-  await expect(toggle).not.toBeChecked();
+  await expect(page.locator(".audit-summary")).toHaveCount(0);
+  await expect(page.getByRole("button",{name:"Повторить проверку",exact:true})).toHaveCount(0);
   await expect(page.locator(".audit-issue.info")).toHaveCount(0);
-  await toggle.check();
-  await expect(page.locator(".audit-issue.info")).toHaveCount(1);
   await page.screenshot({path:"test-results/smartart-audit.png",fullPage:true});
 });

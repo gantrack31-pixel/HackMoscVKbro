@@ -6,6 +6,7 @@ from . import llm
 from .audit import audit_deck
 from .layout import build_scene
 from .template_context import model_template
+from ..icon_catalog import model_icons
 
 
 async def edit_presentation(request, template, source):
@@ -32,6 +33,7 @@ async def edit_presentation(request, template, source):
         payload = {'action':request.action,'instruction':request.instruction or 'Исправь презентацию по результатам проверки.',
                    'allowed_slides':allowed,'presentation':safe_content,'source':source,
                    'additional_material':request.material,'template':model_template(template),
+                   'icon_library':model_icons(),
                    'audit_issues':[i.model_dump() for i in issues if i.slide in allowed][:100],
                    'geometry':boxes,'schema':AssistantPlan.model_json_schema(),
                    'pass':iteration + 1}

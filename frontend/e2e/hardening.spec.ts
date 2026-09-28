@@ -45,6 +45,6 @@ test("history boundaries, unified audit and matching action dimensions", async (
   await expect(redo).toBeDisabled();
   await page.getByRole("button", {name:"Проверить",exact:true}).click();
   await expect(page.getByRole("button", {name:"Проверить смысл с LLM"})).toHaveCount(0);
-  await expect(page.getByRole("button", {name:"Повторить проверку",exact:true})).toBeEnabled();
+  await expect(page.getByRole("button", {name:"Повторить проверку",exact:true})).toHaveCount(0);
   await page.screenshot({path:"test-results/unified-audit.png",fullPage:true});
 });

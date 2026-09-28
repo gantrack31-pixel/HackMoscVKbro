@@ -1,6 +1,7 @@
 """Общий контракт: LLM, API и интерфейс работают с одной структурой слайдов."""
 from typing import Literal
 from pydantic import BaseModel, Field, ConfigDict, field_validator, model_validator
+from .icon_catalog import IconName
 
 Variant = Literal['a', 'b', 'c']
 DiagramType = Literal['process', 'vertical', 'cycle', 'hierarchy', 'matrix', 'pyramid', 'honeycomb', 'comparison', 'kpi']
@@ -79,7 +80,7 @@ class Slide(BaseModel):
     designs: dict[Variant, SlideDesign] = Field(default_factory=dict)
     fixed: list[str] = Field(default_factory=list)
     diagram_type: DiagramType = 'process'
-    icon_names: list[Literal['idea', 'people', 'target', 'growth', 'shield', 'clock']] = Field(default_factory=list, max_length=6)
+    icon_names: list[IconName | Literal['auto']] = Field(default_factory=list, max_length=6)
     image_prompt: str = Field(default='', max_length=1000)
     template_asset_id: str = Field(default='', max_length=32)
     image_data: str = Field(default='', max_length=1500000)
@@ -188,6 +189,7 @@ class SlidePatch(BaseModel):
     chart: ChartData | None = None
     table: list[list[str]] | None = None
     diagram_type: DiagramType | None = None
+    icon_names: list[IconName | Literal['auto']] | None = Field(default=None, max_length=6)
     template_asset_id: str | None = Field(default=None, max_length=32)
     design: SlideDesign | None = None
 

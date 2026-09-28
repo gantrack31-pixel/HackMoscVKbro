@@ -30,7 +30,10 @@
 .page .home-tabs button .icon {
   width: 16px;
   height: 16px;
+  color: inherit;
+  flex-shrink: 0;
 }
+.page .home-tabs button.active .icon { color: #fff; }
 .page .home-tabs .home-tab-indicator {
   position: absolute;
   inset: 5px auto 5px 5px;

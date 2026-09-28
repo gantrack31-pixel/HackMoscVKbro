@@ -32,7 +32,7 @@ export function TemplateCover({
       data-long-title={coverTitle.length > 60 || undefined}
     >
       <span className="slide-brand">{template.name}</span>
-      <h3>{coverTitle}</h3>
+      <h3 title={coverTitle}>{coverTitle}</h3>
       <div className="slide-rule" />
       <div className="slide-layout" aria-hidden="true">
         <i />

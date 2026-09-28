@@ -86,13 +86,24 @@ def test_favorites_persist_and_are_private(client):
     assert client.get('/api/favorites').json()==[]
     assert client.put('/api/favorites/nonexistent').status_code==404
 
-def test_outline_audit_selected_fix_undo(client):
+def test_outline_audit_selected_fix_undo(client, monkeypatch):
     register(client)
     template=db.template_get('tech');template['metadata']['accent']='#BBDDEE'
     db.template_save('tech',template['name'],template['path'],template['metadata'])
     outline=client.post('/api/outline',json={'template_id':'tech','prompt':'Тема\nПодтверждённый факт.','count':3,'mode':'text'})
     assert outline.status_code==200 and len(outline.json()['content']['slides'])==3
     project,_=make_project(client);pid=project['id']
+    # New layouts choose accessible heading ink automatically. Simulate a legacy
+    # low-contrast scene to retain coverage of selected repair and its undo.
+    from app.services import audit
+    original_scene = audit.build_scene
+    def legacy_scene(slide, metadata, variant, index):
+        scene = original_scene(slide, metadata, variant, index)
+        if 'contrast_title' not in slide.fixed:
+            for obj in scene['objects']:
+                if obj['id']=='title': obj['color']='#BBDDEE'
+        return scene
+    monkeypatch.setattr(audit, 'build_scene', legacy_scene)
     issues=client.get(f'/api/projects/{pid}/audit').json()['issues']
     fixable=[i['id'] for i in issues if i['fixable']]
     assert fixable

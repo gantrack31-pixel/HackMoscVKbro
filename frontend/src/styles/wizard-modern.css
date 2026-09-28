@@ -450,11 +450,25 @@
   transform: rotate(90deg);
 }
 .wizard-modern.wizard-flow .outline-summary {
+  min-width: 0;
+  grid-template-columns: minmax(0, 1fr);
+  overflow-wrap: anywhere;
   background: var(--surface);
   border-color: var(--line);
   padding: 22px;
   border-radius: 16px;
 }
+.wizard-modern.wizard-flow .outline-summary > * { min-width: 0; max-width: 100%; }
+.wizard-modern.wizard-flow .outline-summary > .slide { width: 100%; box-sizing: border-box; }
+.wizard-modern.wizard-flow .outline-summary .slide-brand { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.wizard-modern.wizard-flow .outline-summary .slide h3 {
+  margin: 0; max-width: 72%; font-size: clamp(9px, 6.8cqw, 18px);
+  display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;
+  overflow: hidden; flex-shrink: 0; line-height: 1.14; letter-spacing: -.025em;
+}
+.wizard-modern.wizard-flow .outline-summary .slide-brand { font-size: clamp(7px, 3cqw, 11px); flex-shrink: 0; }
+.wizard-modern.wizard-flow .outline-summary .slide-meta { font-size: clamp(6px, 2.5cqw, 9px); flex-shrink: 0; }
+.wizard-modern.wizard-flow .outline-summary .slide-rule { height: 2px; flex-shrink: 0; }
 .wizard-modern.wizard-flow .outline-summary .spec-row {
   align-items: start;
   gap: 20px;
