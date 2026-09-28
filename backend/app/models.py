@@ -161,7 +161,7 @@ class Issue(BaseModel):
     code: str
     title: str
     detail: str
-    category: Literal['layout', 'template', 'content', 'source']
+    category: Literal['layout', 'template', 'content', 'source', 'density', 'integrity']
     severity: Literal['error', 'warning', 'info']
     fixable: bool = False
     deterministic: bool = True
