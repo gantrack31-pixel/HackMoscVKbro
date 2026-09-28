@@ -455,6 +455,17 @@ def begin_yandex(request,user=None):
     response.set_cookie(OAUTH_COOKIE,browser,max_age=600,httponly=True,secure=settings.cookie_secure,samesite='lax',path='/api/auth/yandex')
     response.headers['Cache-Control']='no-store';return response
 
+
+def oauth_return_base(request: Request) -> str:
+    """Keep the browser's loopback host in development; production is pinned."""
+    if settings.app_env != 'production':
+        host = request.url.hostname
+        if host in {'127.0.0.1', 'localhost', '::1'}:
+            scheme = request.url.scheme
+            port = request.url.port
+            return f'{scheme}://{host}:{port}' if port else f'{scheme}://{host}'
+    return settings.public_url.rstrip('/')
+
 @router.get('/yandex/start')
 def yandex_start(request:Request):
     return begin_yandex(request)
@@ -471,7 +482,8 @@ def yandex_link(request:Request,response:Response,user=Depends(current_user)):
 async def yandex_callback(request:Request,code:str='',state:str='',error:str=''):
     linking=False
     def fail(reason):
-        response=RedirectResponse(settings.public_url+('/#profile?yandex_error=' if linking else '/#auth-error=')+reason,status_code=302)
+        base=oauth_return_base(request)
+        response=RedirectResponse(base+('/#profile?yandex_error=' if linking else '/#auth-error=')+reason,status_code=302)
         response.delete_cookie(OAUTH_COOKIE,path='/api/auth/yandex');response.headers['Cache-Control']='no-store';return response
     if not state or len(state)>1024:return fail('state')
     with connection() as db:
@@ -510,6 +522,6 @@ async def yandex_callback(request:Request,code:str='',state:str='',error:str='')
                       'last_name':str(info.get('last_name') or '')[:60],'created_at':now()}
                 db.execute('INSERT INTO users (id,email,first_name,last_name,password_hash,yandex_id,created_at) VALUES (?,?,?,?,?,?,?)',(user['id'],email,user['first_name'],user['last_name'],None,yandex_id,user['created_at']))
                 user['yandex_id']=yandex_id
-        response=RedirectResponse(settings.public_url+('/#profile?yandex=connected' if linking else '/#home'),status_code=302)
+        response=RedirectResponse(oauth_return_base(request)+('/#profile?yandex=connected' if linking else '/#home'),status_code=302)
         set_session(response,user,request);response.delete_cookie(OAUTH_COOKIE,path='/api/auth/yandex');return response
     except (httpx.HTTPError,KeyError,ValueError,TypeError,sqlite3.IntegrityError):return fail('provider')
