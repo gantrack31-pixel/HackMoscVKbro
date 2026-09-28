@@ -53,9 +53,10 @@ export interface Slide {
     composition: "split" | "editorial" | "grid";
     density: "compact" | "balanced" | "airy";
     layout_shift: 0 | 1 | 2;
+    smartart?: { type: NonNullable<Slide["diagram_type"]>; nodes: {bullet:number; x:number; y:number; w:number; h:number; group:number}[]; edges: {source:number; target:number; direction:"forward"|"both"|"none"}[] } | null;
   } | null;
   fixed: string[];
-  diagram_type?: "process" | "cycle" | "hierarchy";
+  diagram_type?: "process" | "vertical" | "cycle" | "hierarchy" | "matrix" | "pyramid" | "honeycomb" | "comparison" | "kpi";
   icon_names?: string[];
   image_prompt?: string;
   image_data?: string;
@@ -69,7 +70,7 @@ export interface DeckContent {
 }
 export interface SceneObject {
   id: string;
-  type: "rect" | "text" | "chart" | "table" | "ellipse" | "line" | "image";
+  type: "rect" | "text" | "chart" | "table" | "ellipse" | "hexagon" | "line" | "image";
   x1?: number; y1?: number; x2?: number; y2?: number;
   stroke?: string; stroke_width?: number; src?: string;
   x: number;
@@ -124,7 +125,7 @@ export interface Project {
   can_undo: boolean;
   can_redo: boolean;
   updated_at: string;
-  sources: { slide: number; status: "matched" | "missing" | "not_found"; bindings?: SourceBinding[] }[];
+  sources: { slide: number; status: "matched" | "related" | "missing" | "not_found"; bindings?: SourceBinding[] }[];
 }
 export interface ProjectSummary {
   id: string;

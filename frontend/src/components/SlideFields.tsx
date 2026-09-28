@@ -56,7 +56,7 @@ export function SlideFields({
     setInvalid(false);
     onValidity(true);
     onChange({
-      kind: next,
+      kind: next, designs: {}, design: slide.design ? {...slide.design, smartart:null} : null,
       ...(next === "chart" ? { chart } : {}),
       ...(next === "table" && !slide.table.length
         ? {
@@ -149,8 +149,11 @@ export function SlideFields({
           </select>
         </label>
         {slide.kind==="diagram" && <label className="field">Тип схемы
-          <select value={slide.diagram_type||"process"} onChange={e=>onChange({diagram_type:e.target.value as Slide["diagram_type"]})}>
+          <select value={slide.diagram_type||"process"} onChange={e=>onChange({diagram_type:e.target.value as Slide["diagram_type"], designs:{}, design:slide.design ? {...slide.design,smartart:null} : null})}>
             <option value="process">Процесс</option><option value="cycle">Цикл</option><option value="hierarchy">Иерархия</option>
+            <option value="vertical">Вертикальные этапы</option><option value="matrix">Матрица / SWOT</option>
+            <option value="pyramid">Пирамида</option><option value="honeycomb">Соты</option>
+            <option value="comparison">Сравнение</option><option value="kpi">Карточки KPI</option>
           </select><small>До 6 узлов. Названия — в поле «Тезисы». Фигуры и связи остаются редактируемыми в PPTX.</small>
         </label>}
         {slide.kind==="icons" && <label className="field">Набор пиктограмм

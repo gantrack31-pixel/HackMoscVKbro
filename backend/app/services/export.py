@@ -14,6 +14,7 @@ from reportlab.lib.colors import HexColor
 from reportlab.lib.utils import ImageReader
 from ..models import DeckContent
 from .layout import build_scene, selected_layout, FONTS, geometry_nodes
+from .visuals import hexagon_points
 
 def rgb(value): return RGBColor.from_string(value.lstrip('#'))
 
@@ -23,6 +24,9 @@ def scene_svg(scene):
         for n in geometry_nodes(obj):
             if n['type']=='rect': parts.append(f'<rect x="{n["x"]}" y="{n["y"]}" width="{n["w"]}" height="{n["h"]}" fill="{n["fill"]}"/>')
             elif n['type']=='ellipse': parts.append(f'<ellipse cx="{n["x"]+n["w"]/2}" cy="{n["y"]+n["h"]/2}" rx="{n["w"]/2}" ry="{n["h"]/2}" fill="{n["fill"]}"/>')
+            elif n['type']=='hexagon':
+                points=' '.join(f'{x},{y}' for x,y in hexagon_points(n))
+                parts.append(f'<polygon points="{points}" fill="{n["fill"]}"/>')
             elif n['type']=='line': parts.append(f'<line x1="{n["x1"]}" y1="{n["y1"]}" x2="{n["x2"]}" y2="{n["y2"]}" stroke="{n["stroke"]}" stroke-width="{n["stroke_width"]}"/>')
             elif n['type']=='image': parts.append(f'<image x="{n["x"]}" y="{n["y"]}" width="{n["w"]}" height="{n["h"]}" href="{escape(n["src"],quote=True)}"/>')
             else:
@@ -47,6 +51,10 @@ def export_pdf(content,template,variant):
                     pdf.setFillColor(HexColor(n['fill']));pdf.rect(n['x'],height-n['y']-n['h'],n['w'],n['h'],fill=1,stroke=0)
                 elif n['type']=='ellipse':
                     pdf.setFillColor(HexColor(n['fill']));pdf.ellipse(n['x'],height-n['y']-n['h'],n['x']+n['w'],height-n['y'],fill=1,stroke=0)
+                elif n['type']=='hexagon':
+                    points=hexagon_points(n); path=pdf.beginPath();path.moveTo(points[0][0],height-points[0][1])
+                    for x,y in points[1:]:path.lineTo(x,height-y)
+                    path.close();pdf.setFillColor(HexColor(n['fill']));pdf.drawPath(path,fill=1,stroke=0)
                 elif n['type']=='line':
                     pdf.setStrokeColor(HexColor(n['stroke']));pdf.setLineWidth(n['stroke_width'])
                     pdf.line(n['x1'],height-n['y1'],n['x2'],height-n['y2'])
@@ -81,8 +89,9 @@ def export_pptx(content: DeckContent, template: dict, variant: str):
             if obj['id']=='background':
                 if template.get('path') and metadata.get('preserve_template_background',True): continue
                 slide.background.fill.solid();slide.background.fill.fore_color.rgb=rgb(obj['fill']);continue
-            if obj['type'] in {'rect','ellipse'}:
-                shape=slide.shapes.add_shape(MSO_SHAPE.OVAL if obj['type']=='ellipse' else MSO_SHAPE.RECTANGLE,x,y,w,h)
+            if obj['type'] in {'rect','ellipse','hexagon'}:
+                shape=slide.shapes.add_shape({'ellipse':MSO_SHAPE.OVAL,'hexagon':MSO_SHAPE.HEXAGON,'rect':MSO_SHAPE.RECTANGLE}[obj['type']],x,y,w,h)
+                if obj['type']=='hexagon': shape.adjustments[0]=.18
                 shape.fill.solid();shape.fill.fore_color.rgb=rgb(obj['fill']);shape.line.fill.background()
             elif obj['type']=='line':
                 line=slide.shapes.add_connector(MSO_CONNECTOR.STRAIGHT,*[int(obj[k]*scale) for k in ('x1','y1','x2','y2')])
@@ -119,7 +128,7 @@ def export_pptx(content: DeckContent, template: dict, variant: str):
                         cell=table.cell(ri,ci);cell.text=value
                         for paragraph in cell.text_frame.paragraphs:
                             paragraph.font.size=Pt(obj['font_size']*point_scale);paragraph.font.name=metadata.get('font','Manrope')
-                            paragraph.font.bold=ri==0;paragraph.font.color.rgb=rgb(obj['header_color'] if ri==0 else '#0F172A')
-                        cell.fill.solid();cell.fill.fore_color.rgb=rgb(obj['fill'] if ri==0 else '#F1F5F9' if ri%2==0 else '#FFFFFF')
+                            paragraph.font.bold=ri==0;paragraph.font.color.rgb=rgb(obj['header_color'] if ri==0 else obj['theme']['text'])
+                        cell.fill.solid();cell.fill.fore_color.rgb=rgb(obj['fill'] if ri==0 else obj['theme']['surface'] if ri%2==0 else obj['theme']['background'])
         slide.notes_slide.notes_text_frame.text=slide_content.notes+('\nИсточник: '+slide_content.source_quote if slide_content.source_quote else '')
     stream=BytesIO();prs.save(stream);return stream.getvalue()

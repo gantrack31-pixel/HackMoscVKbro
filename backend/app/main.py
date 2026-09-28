@@ -21,6 +21,7 @@ from . import database as db
 from .models import OutlineRequest, GenerateRequest, RegenerateRequest, ProjectUpdate, FixRequest, DeckContent, Issue, AssistantRequest
 from .services.assistant import edit_presentation
 from .services.templates import seed_templates, analyze_template, BUILTIN_IDS
+from .services.template_parser import NORMALIZATION_VERSION, fingerprint
 from .services.pptx_security import validate_pptx_archive
 from .services.llm import make_outline, review_content, create_design_variants, configured, LLMError
 from .services.layout import build_scene
@@ -87,11 +88,15 @@ def visible_template(template,user_id):
 def get_template(tid,user_id=None):
     result=db.template_get(tid)
     if not result or (user_id and not visible_template(result,user_id)): raise HTTPException(404,'Шаблон не найден')
-    if result.get('path') and result['metadata'].get('normalization_version') != '4':
+    if result.get('path'):
         try:
-            fresh=analyze_template(Path(result['path']))
-            result['metadata']={**result['metadata'],**fresh}
-            db.template_save(tid,result['name'],result['path'],result['metadata'],result.get('user_id'))
+            stale = (result['metadata'].get('normalization_version') != NORMALIZATION_VERSION
+                     or result['metadata'].get('file_fingerprint') != fingerprint(result['path']))
+            if stale:
+                fresh=analyze_template(Path(result['path']))
+                catalog={k:result['metadata'][k] for k in ('category','cover_title') if k in result['metadata']}
+                result['metadata']={**catalog,**fresh}
+                db.template_save(tid,result['name'],result['path'],result['metadata'],result.get('user_id'))
         except (OSError,ValueError):
             pass  # A previously saved project remains readable if its source is unavailable.
     return result

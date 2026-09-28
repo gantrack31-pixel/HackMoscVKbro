@@ -1,6 +1,30 @@
 """Deterministic source locations: Unicode code-point offsets, end exclusive."""
 import re
 from hashlib import sha256
+from difflib import SequenceMatcher
+
+
+def related_chunks(slide, source):
+    """Rank likely source passages. Similarity is explicitly NOT semantic verification."""
+    text = ' '.join([slide.body, *slide.bullets]) or slide.title
+    def tokens(value):
+        stop={'это','как','для','при','или','что','его','она','они','the','and','with','from'}
+        return {t for t in re.findall(r'[\w]+',value.casefold().replace('ё','е')) if len(t)>2 and t not in stop}
+    wanted=tokens(text)
+    if len(wanted)<3 or not source.strip(): return []
+    numbers=set(re.findall(r'\d+(?:[.,]\d+)?',text))
+    ranked=[]
+    for chunk in source_chunks(source):
+        available=tokens(chunk['text'])
+        if not numbers <= set(re.findall(r'\d+(?:[.,]\d+)?',chunk['text'])): continue
+        # Conservative fuzzy token alignment handles inflection and minor paraphrases.
+        common=sum(any(t==s or (min(len(t),len(s))>=5 and abs(len(t)-len(s))<=3
+                               and SequenceMatcher(None,t,s).ratio()>=.8) for s in available) for t in wanted)
+        score=common/len(wanted)
+        if common>=3 and score>=.65: ranked.append((score,chunk))
+    ranked.sort(key=lambda item:item[0],reverse=True)
+    return [{'chunk_id':c['id'],'start':c['start'],'end':c['end'],'quote':c['text'],
+             'similarity':round(score,3)} for score,c in ranked[:2]]
 
 
 def source_chunks(source: str) -> list[dict]:
@@ -33,8 +57,9 @@ def slide_binding(slide, source: str) -> dict:
                 if refs:
                     inferred = True
                     break
-    return {'status':'matched' if refs else 'missing' if not quote.strip() else 'not_found',
-            'bindings':refs, 'inferred_literal':inferred, 'semantic_verified':False}
+    candidates=related_chunks(slide,source) if not refs else []
+    return {'status':'matched' if refs else 'not_found' if quote.strip() else 'related' if candidates else 'missing',
+            'bindings':refs, 'candidates':candidates, 'inferred_literal':inferred, 'semantic_verified':False}
 
 
 def validate_bindings(refs, source: str) -> list[dict]:

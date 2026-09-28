@@ -8,6 +8,7 @@ from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 from ..models import Slide
 from .visuals import diagram_nodes, pictogram_nodes
+from .palette import roles, scene_color
 
 FONTS=Path(__file__).parent
 for name,file in [('Deckly','Manrope-Regular.ttf'),('DecklyBold','Manrope-Bold.ttf')]:
@@ -54,7 +55,7 @@ def selected_layout(metadata: dict, kind='text', variant='a') -> dict | None:
 
 def geometry_nodes(obj):
     """Одна отрисовка для браузера, PDF и HTML; PPTX сохраняет нативные объекты."""
-    if obj['type'] in {'text','rect','ellipse','line','image'}: return [obj]
+    if obj['type'] in {'text','rect','ellipse','hexagon','line','image'}: return [obj]
     nodes=[]
     def rect(x,y,w,h,fill):
         nodes.append({'type':'rect','x':x,'y':y,'w':w,'h':h,'fill':fill})
@@ -82,7 +83,7 @@ def geometry_nodes(obj):
                 for (x1,y1),(x2,y2) in zip(points,points[1:]):
                     nodes.append({'type':'line','x':min(x1,x2),'y':min(y1,y2),'w':abs(x2-x1),'h':abs(y2-y1),
                                   'x1':x1,'y1':y1,'x2':x2,'y2':y2,'stroke':obj['fill'],'stroke_width':3})
-            return [{**n,'id':f'{obj["id"]}-{i}'} for i,n in enumerate(nodes)]
+            return themed_nodes(nodes, obj)
         low=min(0,*obj['values']);high=max(1,*obj['values']);span=high-low
         label_w=min(176,obj['w']*.24);value_w=112
         plot_x=obj['x']+label_w+16;plot_w=max(64,obj['w']-label_w-value_w-32)
@@ -107,8 +108,21 @@ def geometry_nodes(obj):
                 x=obj['x']+c*cell_w;y=obj['y']+r*cell_h
                 rect(x+1,y+1,cell_w-1,cell_h-1,obj['fill'] if r==0 else '#F1F5F9' if r%2==0 else '#FFFFFF')
                 text(value,x+12,y+8,cell_w-24,cell_h-16,obj['font_size'],
-                     obj['header_color'] if r==0 else '#0F172A',r==0)
-    return [{**node,'id':f"{obj.get('id',obj['type'])}-{i}"} for i,node in enumerate(nodes)]
+                     '#HEADER' if r==0 else '#0F172A',r==0)
+    return themed_nodes(nodes, obj)
+
+
+def themed_nodes(nodes, obj):
+    theme = obj.get('theme')
+    result = []
+    for i, node in enumerate(nodes):
+        node = {**node, 'id':f"{obj.get('id',obj['type'])}-{i}"}
+        for key in ('color','fill','stroke'):
+            if node.get(key) == '#HEADER': node[key] = obj['header_color']
+            elif theme and key in node and node[key] != obj.get('fill'):
+                node[key] = scene_color(node[key],theme)
+        result.append(node)
+    return result
 
 
 def build_scene(slide: Slide, metadata: dict, variant: str, index: int) -> dict:
@@ -120,6 +134,8 @@ def build_scene(slide: Slide, metadata: dict, variant: str, index: int) -> dict:
     width=1280.;height=width/metadata.get('ratio',16/9)
     accent=metadata.get('accent','#0077FF')
     if len(accent)!=7: accent='#0077FF'
+    theme=roles(metadata)
+    accent=theme['accent']
     margin=64.;title_box={'x':margin,'y':height*.18,'w':width-margin*2,'h':height*.22}
     body_box={'x':margin,'y':height*.44,'w':width-margin*2,'h':height*.39}
     layout=selected_layout(metadata,slide.kind,variant)
@@ -171,7 +187,7 @@ def build_scene(slide: Slide, metadata: dict, variant: str, index: int) -> dict:
     def text(id,content,box,size,color,bold=False):
         role = 'title' if id=='title' else 'caption' if id in {'number','footer'} else 'subtitle' if slide.kind=='title' else 'body'
         spacing = {'title':1.12,'subtitle':1.18,'body':1.2,'caption':1.16}[role]
-        minimum = {'title':28,'subtitle':22,'body':20,'caption':14}[role]
+        minimum = 16 if id.startswith(('node-label-','icon-label-')) else {'title':28,'subtitle':22,'body':20,'caption':14}[role]
         if role in {'body','subtitle'}:
             heading = next((o['font_size'] for o in objects if o['id']=='title'),title_size)
             size = min(size,heading*.78 if role=='subtitle' else heading*.72)
@@ -180,7 +196,7 @@ def build_scene(slide: Slide, metadata: dict, variant: str, index: int) -> dict:
         objects.append({'id':id,'type':'text',**box,'text':content,'lines':lines,'font_size':size,'color':color,
                         'role':role,'line_spacing':spacing,'bold':bold,'font_family':family,
                         'used_height':len(lines)*size*spacing})
-    rect('background',0,0,width,height,metadata.get('background','#FFFFFF') if composition else '#FFFFFF')
+    rect('background',0,0,width,height,theme['background'])
     if composition=='split':
         rect('theme-panel',width-192,0,192,height,accent)
         rect('theme-stripe',width-224,0,8,height,accent)
@@ -194,7 +210,7 @@ def build_scene(slide: Slide, metadata: dict, variant: str, index: int) -> dict:
     if variant=='a': rect('accent',margin,height*.09,72,6,accent)
     elif variant=='b':
         rect('accent',width-250,0,250,height,accent)
-        text('number',f'{index+1:02}',{'x':width-220,'y':height*.37,'w':200,'h':120},100,'#FFFFFF',True)
+        text('number',f'{index+1:02}',{'x':width-220,'y':height*.37,'w':200,'h':120},100,theme['on_accent'],True)
     else: rect('accent',margin*1.5,height*.1,width-margin*3,2,accent)
     if slide.kind=='title':
         rect('title-underline',title_box['x'],height*.55,min(160,title_box['w']),8,accent)
@@ -228,7 +244,7 @@ def build_scene(slide: Slide, metadata: dict, variant: str, index: int) -> dict:
         text('body',slide.body,{**body_box,'h':64},22,'#475569')
         objects.append({'id':'table','type':'table',**body_box,'y':body_box['y']+70,'h':max(90,body_box['h']-70),
                         'rows':slide.table,'fill':accent,'font_size':min(max(16,body_size*.75),max(14,(body_box['h']-70)/len(slide.table)*.42)),
-                        'header_color':'#0F172A' if sum(int(accent[i:i+2],16)*w for i,w in [(1,.2126),(3,.7152),(5,.0722)])>155 else '#FFFFFF'})
+                        'header_color':theme['on_accent']})
     elif slide.kind=='steps' and slide.bullets:
         text('body',slide.body,{**body_box,'h':64},22,'#475569')
         steps=slide.bullets;columns=min(3,len(steps));rows=(len(steps)+columns-1)//columns
@@ -239,6 +255,12 @@ def build_scene(slide: Slide, metadata: dict, variant: str, index: int) -> dict:
             text(f'step-{i}',f'{i+1:02}  {step}',{'x':x+12,'y':y+8,'w':step_w-40,'h':step_h-28},22,'#0F172A')
     else: text('body',content,body_box,body_size,'#475569')
     text('footer',f'{index+1:02} / Deckly.Ai',{'x':margin,'y':height-44,'w':500,'h':28},16,'#64748B')
+    for obj in objects:
+        if obj['type'] in {'chart','table'}: obj['theme']=theme
+        if obj['id'] in {'background','number'}: continue
+        for key in ('fill','color','stroke'):
+            if key in obj and obj[key] != accent:
+                obj[key]=scene_color(obj[key],theme)
     return {'width':width,'height':height,'variant':variant,'objects':objects,
             'render_objects':[n for obj in objects for n in geometry_nodes(obj)],
             'template_layout':layout['name'] if layout else 'Базовая композиция',

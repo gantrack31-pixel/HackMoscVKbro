@@ -3,6 +3,46 @@ from typing import Literal
 from pydantic import BaseModel, Field, ConfigDict, field_validator, model_validator
 
 Variant = Literal['a', 'b', 'c']
+DiagramType = Literal['process', 'vertical', 'cycle', 'hierarchy', 'matrix', 'pyramid', 'honeycomb', 'comparison', 'kpi']
+
+class SmartArtNode(BaseModel):
+    model_config = ConfigDict(extra='forbid', allow_inf_nan=False)
+    bullet: int = Field(ge=0, le=5)
+    x: float = Field(ge=0, le=1)
+    y: float = Field(ge=0, le=1)
+    w: float = Field(gt=0, le=1)
+    h: float = Field(gt=0, le=1)
+    group: int = Field(default=0, ge=0, le=5)
+    @model_validator(mode='after')
+    def contained(self):
+        if self.x+self.w > 1.00001 or self.y+self.h > 1.00001:
+            raise ValueError('Узел должен помещаться в область схемы 0..1')
+        return self
+
+class SmartArtEdge(BaseModel):
+    model_config = ConfigDict(extra='forbid')
+    source: int = Field(ge=0, le=5)
+    target: int = Field(ge=0, le=5)
+    direction: Literal['forward','both','none'] = 'forward'
+
+class SmartArt(BaseModel):
+    model_config = ConfigDict(extra='forbid')
+    type: DiagramType = 'process'
+    nodes: list[SmartArtNode] = Field(min_length=1, max_length=6)
+    edges: list[SmartArtEdge] = Field(default_factory=list, max_length=12)
+    @model_validator(mode='after')
+    def valid_graph(self):
+        if self.type=='matrix' and len(self.nodes)>4:
+            raise ValueError('Матрица 2x2 вмещает максимум четыре узла')
+        if len({n.bullet for n in self.nodes}) != len(self.nodes):
+            raise ValueError('Тезис может использоваться в схеме только один раз')
+        if any(e.source == e.target or max(e.source,e.target) >= len(self.nodes) for e in self.edges):
+            raise ValueError('Связи должны указывать на разные существующие узлы')
+        for i,a in enumerate(self.nodes):
+            for b in self.nodes[i+1:]:
+                if min(a.x+a.w,b.x+b.w)-max(a.x,b.x)>0.00001 and min(a.y+a.h,b.y+b.h)-max(a.y,b.y)>0.00001:
+                    raise ValueError('Узлы схемы не должны перекрываться')
+        return self
 
 class SlideDesign(BaseModel):
     """Validated design choices; the model cannot inject text or arbitrary geometry."""
@@ -10,6 +50,7 @@ class SlideDesign(BaseModel):
     composition: Literal['split', 'editorial', 'grid']
     density: Literal['compact', 'balanced', 'airy'] = 'balanced'
     layout_shift: Literal[0, 1, 2] = 0
+    smartart: SmartArt | None = None
 
 class ChartData(BaseModel):
     model_config = ConfigDict(extra='forbid',allow_inf_nan=False)
@@ -37,7 +78,7 @@ class Slide(BaseModel):
     design: SlideDesign | None = None
     designs: dict[Variant, SlideDesign] = Field(default_factory=dict)
     fixed: list[str] = Field(default_factory=list)
-    diagram_type: Literal['process', 'cycle', 'hierarchy'] = 'process'
+    diagram_type: DiagramType = 'process'
     icon_names: list[Literal['idea', 'people', 'target', 'growth', 'shield', 'clock']] = Field(default_factory=list, max_length=6)
     image_prompt: str = Field(default='', max_length=1000)
     template_asset_id: str = Field(default='', max_length=32)
@@ -146,7 +187,7 @@ class SlidePatch(BaseModel):
     kind: Literal['title','text','chart','table','steps','diagram','icons','image'] | None = None
     chart: ChartData | None = None
     table: list[list[str]] | None = None
-    diagram_type: Literal['process','cycle','hierarchy'] | None = None
+    diagram_type: DiagramType | None = None
     template_asset_id: str | None = Field(default=None, max_length=32)
     design: SlideDesign | None = None
 

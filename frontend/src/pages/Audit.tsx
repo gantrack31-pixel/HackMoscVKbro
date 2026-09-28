@@ -84,6 +84,9 @@ export function Audit({
   const preview = useLivePreview(project, content, dirty && valid);
   const scene = preview.scenes[index];
   const visible = issues.filter((i) => i.slide === index);
+  const actionable = issues.filter((i) => i.severity !== "info");
+  const [showInfo, setShowInfo] = useState(false);
+  const displayed = visible.filter((i) => showInfo || i.severity !== "info");
   const locked = busy || dirty;
   function inspect(issue: Issue) {
     if (busy || (dirty && focus !== issue.id)) return;
@@ -185,7 +188,7 @@ export function Audit({
                 ? "Проверяем…"
                 : loadError
                   ? "Проверка недоступна"
-                  : `Замечаний: ${issues.length}`}
+                  : `Замечаний: ${actionable.length} · Справок: ${issues.length-actionable.length}`}
             </h2>
             <p>Содержание, типографика, компоновка и связь с источниками. Смысл обсудите с AI-помощником.</p>
           </div>
@@ -251,7 +254,7 @@ export function Audit({
           {scene && (
             <AuditSlide
               scene={scene}
-              issues={loading || loadError ? [] : visible}
+              issues={loading || loadError ? [] : displayed}
               focus={focus}
               locked={locked}
               busy={busy}
@@ -290,11 +293,14 @@ export function Audit({
         <aside className="audit-checklist panel">
           <div className="between">
             <h2>Что улучшить</h2>
-            <span className="badge">{visible.length}</span>
+            <span className="badge">{displayed.length}</span>
           </div>
+          <label className="row small"><input type="checkbox" checked={showInfo} disabled={locked} onChange={e=>setShowInfo(e.target.checked)}/>
+            Показывать справки об источниках ({visible.filter(i=>i.severity==="info").length})
+          </label>
           <div className="audit-items">
             {!loadError &&
-              visible.map((issue, n) => (
+              displayed.map((issue, n) => (
                 <article
                   key={issue.id}
                   id={`issue-${issue.id}`}
@@ -398,7 +404,7 @@ export function Audit({
                   )}
                 </article>
               ))}
-            {!loading && !loadError && !visible.length && (
+            {!loading && !loadError && !displayed.length && (
               <div className="empty">
                 <Icon name="check" />
                 <p>По доступным правилам замечаний нет.</p>

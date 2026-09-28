@@ -271,13 +271,13 @@ export function Editor({
                 Опора на источник
               </h3>
               <span
-                className={`badge ${source === "matched" ? "green" : "coral"}`}
+                className={`badge ${source === "matched" ? "green" : source === "not_found" ? "coral" : ""}`}
               >
                 {source === "matched"
                   ? "Цитата найдена"
                   : source === "not_found"
                     ? "Цитата не найдена"
-                    : "Без цитаты"}
+                    : source === "related" ? "Похожий источник" : "Без цитаты"}
               </span>
             </div>
             <blockquote>

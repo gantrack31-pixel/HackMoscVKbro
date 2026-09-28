@@ -56,7 +56,7 @@ def normalize_design_plans(raw):
         if isinstance(plan, dict) and isinstance(plan.get('slides'), list):
             choices = []
             for choice in plan['slides']:
-                if isinstance(choice, dict) and 'design' not in choice and set(choice) <= {'slide','composition','density','layout_shift'}:
+                if isinstance(choice, dict) and 'design' not in choice and set(choice) <= {'slide','composition','density','layout_shift','smartart'}:
                     choice = {'slide': choice.get('slide'), 'design': {k:v for k,v in choice.items() if k != 'slide'}}
                 choices.append(choice)
             plan = {**plan, 'slides': choices}
@@ -68,19 +68,15 @@ def configured() -> bool:
     return bool(settings.base_url and settings.model and (settings.api_key or host in {'localhost','127.0.0.1','::1'}))
 
 async def complete_json(system: str, payload: dict, client: httpx.AsyncClient | None = None, images: list[str] | None = None) -> dict:
-    if not configured(): raise LLMError('Заполните LLM_BASE_URL, LLM_MODEL и LLM_API_KEY в backend/.env.')
+    if not configured(): raise LLMError('Заполните OPENROUTER_API_KEY и OPENROUTER_MODEL в backend/.env.')
     parsed=urlparse(settings.base_url)
     if parsed.scheme not in {'http','https'} or not parsed.hostname or parsed.username or parsed.password or parsed.query or parsed.fragment:
-        raise LLMError('LLM_BASE_URL должен быть HTTP(S)-адресом API без ключей в URL.')
+        raise LLMError('OPENROUTER_BASE_URL должен быть HTTP(S)-адресом API без ключей в URL.')
     if parsed.scheme=='http' and parsed.hostname not in {'localhost','127.0.0.1','::1'}:
         raise LLMError('Для внешнего сервера модели требуется HTTPS, чтобы защитить ключ и материалы.')
-    headers={'Content-Type':'application/json'}
+    headers={'Content-Type':'application/json', 'HTTP-Referer':settings.openrouter_referer, 'X-Title':'Deckly.Ai'}
     if settings.api_key:
-        headers['Authorization']=('Api-Key ' if parsed.hostname=='ai.api.cloud.yandex.net' else 'Bearer ')+settings.api_key
-    if parsed.hostname=='ai.api.cloud.yandex.net':
-        folder=settings.folder_id or (urlparse(settings.model).netloc if settings.model.startswith('gpt://') else '')
-        if not folder: raise LLMError('Укажите YANDEX_FOLDER_ID или полный gpt:// URI модели в backend/.env.')
-        headers['OpenAI-Project']=folder
+        headers['Authorization']='Bearer '+settings.api_key
     body={**settings.extra_body,'model':settings.model,'temperature':settings.temperature,'max_tokens':settings.max_tokens,
           'messages':[{'role':'system','content':system},{'role':'user','content':json.dumps(payload,ensure_ascii=False)}]}
     if images and settings.vision:
@@ -97,8 +93,10 @@ async def complete_json(system: str, payload: dict, client: httpx.AsyncClient | 
             detail = ''
             try:
                 provider_error = response.json().get('error', {}).get('message', '')
-                if isinstance(provider_error, str): detail = re.sub(r'[^\w\s.,:/-]', '', provider_error)[:180]
-            except ValueError:
+                if isinstance(provider_error, str):
+                    if settings.api_key: provider_error = provider_error.replace(settings.api_key, '[redacted]')
+                    detail = re.sub(r'[^\w\s.,:/-]', '', provider_error)[:180]
+            except (ValueError, AttributeError):
                 pass
             suffix = f' Причина провайдера: {detail}.' if detail else ''
             raise LLMError(f'Провайдер вернул HTTP {response.status_code}.{suffix} Проверьте model URI, URL и LLM_JSON_MODE.')
@@ -226,6 +224,11 @@ async def create_design_variants(content: DeckContent, template: dict, instructi
                     choices=sorted(getattr(plans,variant).slides,key=lambda c:c.slide)
                     if [c.slide for c in choices]!=list(range(len(content.slides))):
                         raise ValueError('В каждом варианте нужны все индексы слайдов ровно по одному разу.')
+                    for choice in choices:
+                        art=choice.design.smartart
+                        original=content.slides[choice.slide]
+                        if art and (original.kind!='diagram' or sorted(n.bullet for n in art.nodes)!=list(range(len(original.bullets)))):
+                            raise ValueError('SmartArt допускается только для diagram и должен включать каждый тезис ровно один раз (до 6).')
                     ordered[variant]=[c.design for c in choices]
                 if len({json.dumps([d.model_dump() for d in designs],sort_keys=True) for designs in ordered.values()})!=3:
                     raise ValueError('Три плана должны различаться композицией, плотностью или layout_shift.')

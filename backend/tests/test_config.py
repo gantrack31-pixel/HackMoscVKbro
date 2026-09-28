@@ -59,7 +59,7 @@ def test_production_profile_requires_explicit_demo_opt_in():
 
 
 def test_live_production_requires_provider_api_key():
-    with pytest.raises(ValueError, match='LLM_API_KEY'):
+    with pytest.raises(ValueError, match='OPENROUTER_API_KEY'):
         validate_settings(production_settings(api_key=''))
 
 

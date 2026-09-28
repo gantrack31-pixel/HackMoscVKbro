@@ -4,8 +4,8 @@ import os
 # Set before test collection imports app.config / load_dotenv (override=False).
 os.environ.update({
     'APP_ENV': 'development', 'LLM_MODE': 'demo', 'ALLOW_DEMO_IN_PRODUCTION': 'false',
-    'LLM_BASE_URL': 'http://127.0.0.1:8001/v1', 'LLM_MODEL': 'test-model',
-    'LLM_API_KEY': '', 'YANDEX_FOLDER_ID': '', 'LLM_JSON_MODE': 'true',
+    'OPENROUTER_BASE_URL': 'http://127.0.0.1:8001/v1', 'OPENROUTER_MODEL': 'test-model',
+    'OPENROUTER_API_KEY': '', 'OPENROUTER_HTTP_REFERER':'http://127.0.0.1:8000', 'LLM_JSON_MODE': 'true',
     'LLM_EXTRA_BODY': '{}', 'LLM_CONTEXT_AUDIT': 'true',
     'LLM_VISION_ENABLED': 'false',
     'YANDEX_CLIENT_ID': '', 'YANDEX_CLIENT_SECRET': '',

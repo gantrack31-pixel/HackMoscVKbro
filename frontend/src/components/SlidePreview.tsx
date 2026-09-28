@@ -4,6 +4,8 @@ function ObjectView({ object: o }: { object: SceneObject }) {
     return <rect x={o.x} y={o.y} width={o.w} height={o.h} fill={o.fill} />;
   if (o.type === "ellipse")
     return <ellipse cx={o.x+o.w/2} cy={o.y+o.h/2} rx={o.w/2} ry={o.h/2} fill={o.fill}/>;
+  if (o.type === "hexagon")
+    return <polygon points={[[.18,0],[.82,0],[1,.5],[.82,1],[.18,1],[0,.5]].map(([x,y])=>`${o.x+x*o.w},${o.y+y*o.h}`).join(" ")} fill={o.fill}/>;
   if (o.type === "line")
     return <line x1={o.x1} y1={o.y1} x2={o.x2} y2={o.y2} stroke={o.stroke} strokeWidth={o.stroke_width}/>;
   if (o.type === "image")
