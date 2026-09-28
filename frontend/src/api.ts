@@ -145,6 +145,16 @@ export const api = {
       "/auth/verification/resend",
       json("POST", { email }),
     ),
+  requestPasswordReset: (email: string) =>
+    request<{ ok: boolean }>(
+      "/auth/password-reset/request",
+      json("POST", { email }),
+    ),
+  confirmPasswordReset: (token: string, password: string) =>
+    request<{ reset: boolean }>(
+      "/auth/password-reset/confirm",
+      json("POST", { token, password }),
+    ),
   supportMessage: (email: string, message: string) =>
     request<{ sent: boolean }>(
       "/support/messages",

@@ -25,7 +25,7 @@ test("AI edits include the manual draft, save a revision and can be undone", asy
   const app = new DecklyPage(page);
   await app.register();
   await app.createPresentation();
-  const text = page.locator(".inspector").getByLabel("Основной текст", { exact: true });
+  const text = page.getByRole("textbox", { name: "Основной текст" });
   await text.fill("Ручной текст с подробностями, который нужно сократить.");
   await page.getByLabel("Что изменить с помощью AI?").fill("Сократи мой текст");
   await page.getByRole("button", { name: "Применить запрос AI", exact: true }).click();
@@ -49,7 +49,7 @@ test("AI failure leaves the unsaved text editable", async ({ page }) => {
   await page.route("**/api/projects/*/assistant", route => route.fulfill({ status: 502, json: { detail: "Модель временно недоступна" } }));
   await page.goto("/");
   const app = new DecklyPage(page); await app.register(); await app.createPresentation();
-  const text = page.locator(".inspector").getByLabel("Основной текст", { exact: true });
+  const text = page.getByRole("textbox", { name: "Основной текст" });
   await text.fill("Моя работа не должна исчезнуть.");
   await page.getByRole("button", { name: "Исправить автоматически с AI", exact: true }).click();
   await expect(page.getByRole("alert")).toContainText("Модель временно недоступна");

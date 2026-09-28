@@ -14,7 +14,7 @@ from uuid import uuid4
 from urllib.parse import urlencode, quote
 from email.message import EmailMessage
 import httpx
-from fastapi import APIRouter, Request, Response, HTTPException, Depends, UploadFile
+from fastapi import APIRouter, Request, Response, HTTPException, Depends, UploadFile, BackgroundTasks
 from fastapi.responses import RedirectResponse
 from pydantic import BaseModel, Field, field_validator
 from .config import settings
@@ -24,6 +24,8 @@ from .services.avatar import normalize_avatar, MAX_AVATAR_BYTES
 router=APIRouter(prefix='/api/auth',tags=['Аккаунт'])
 COOKIE='deckly_session'; OAUTH_COOKIE='deckly_oauth'; TTL=7*24*3600
 VERIFICATION_TTL=24*3600
+PASSWORD_RESET_TTL=60*60
+TOKEN_SEND_COOLDOWN=60
 logger=logging.getLogger('deckly.auth')
 
 def digest(value): return hashlib.sha256(value.encode()).hexdigest()
@@ -121,14 +123,52 @@ def build_verification_email(email, url):
 </html>''',subtype='html')
     return message
 
+def build_password_reset_email(email, url):
+    message=EmailMessage()
+    message['Subject']='Сброс пароля — Deckly.Ai'
+    message['From']=settings.email_from
+    message['To']=email
+    message.set_content(
+        'Здравствуйте!\n\n'
+        'Чтобы задать новый пароль Deckly.Ai, откройте ссылку ниже.\n\n'
+        f'Сбросить пароль: {url}\n\n'
+        'Ссылка действует 1 час и может быть использована только один раз.\n\n'
+        'Если вы не запрашивали сброс пароля, просто проигнорируйте это письмо.'
+    )
+    safe_url=escape(url,quote=True)
+    message.add_alternative(f'''<!doctype html>
+<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Сброс пароля — Deckly.Ai</title></head>
+<body style="margin:0;padding:32px 12px;background-color:#f1f5f9;font-family:Arial,Helvetica,sans-serif;color:#0f172a;">
+<table role="presentation" cellpadding="0" cellspacing="0" width="100%"><tr><td align="center">
+<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="max-width:560px;background:#fff;border-radius:16px;overflow:hidden;">
+<tr><td style="padding:24px 32px;background:#0f172a;color:#fff;font-size:24px;font-weight:700;">Deckly<span style="color:#ff817b;">.</span>Ai</td></tr>
+<tr><td style="padding:36px 32px 20px;"><h1 style="margin:0 0 16px;font-size:28px;">Задайте новый пароль</h1><p style="color:#526176;font-size:16px;line-height:1.6;">Мы получили запрос на сброс пароля вашего аккаунта.</p></td></tr>
+<tr><td align="center" style="padding:12px 32px 28px;"><a href="{safe_url}" style="display:inline-block;padding:15px 28px;border-radius:9px;background:#0077ff;color:#fff;font-weight:700;text-decoration:none;">Сбросить пароль</a></td></tr>
+<tr><td style="padding:20px 32px;background:#f8fafc;border-top:1px solid #e2e8f0;"><p style="margin:0 0 8px;color:#526176;font-size:13px;">Ссылка действует 1 час и используется один раз.</p><p style="margin:0;color:#64748b;font-size:12px;">Если вы не запрашивали сброс пароля, проигнорируйте это письмо.</p></td></tr>
+</table></td></tr></table></body></html>''',subtype='html')
+    return message
+
 def deliver_verification_email(email, url):
-    """Send confirmation through SMTP; local development logs only the one-time URL."""
+    """Send email confirmation through SMTP; never log bearer links or tokens."""
     if not settings.smtp_host or not settings.smtp_username or not settings.smtp_password or not settings.email_from:
         if settings.app_env == 'production':
             raise RuntimeError('SMTP для подтверждения email не настроен.')
-        logger.warning('Email verification link for %s: %s', email, url)
-        return 'logged'
+        logger.warning('Email verification delivery is unavailable: SMTP is not configured.')
+        return 'unavailable'
     message=build_verification_email(email,url)
+    with smtplib.SMTP_SSL(settings.smtp_host,settings.smtp_port,timeout=15) as server:
+        server.login(settings.smtp_username,settings.smtp_password)
+        server.send_message(message)
+    return 'sent'
+
+def deliver_password_reset_email(email, url):
+    """Send a password reset message; bearer URLs and provider errors stay out of logs."""
+    if not settings.smtp_host or not settings.smtp_username or not settings.smtp_password or not settings.email_from:
+        if settings.app_env == 'production':
+            raise RuntimeError('SMTP для сброса пароля не настроен.')
+        logger.warning('Password reset delivery is unavailable: SMTP is not configured.')
+        return 'unavailable'
+    message=build_password_reset_email(email,url)
     with smtplib.SMTP_SSL(settings.smtp_host,settings.smtp_port,timeout=15) as server:
         server.login(settings.smtp_username,settings.smtp_password)
         server.send_message(message)
@@ -144,8 +184,49 @@ def create_verification(user_id,email):
     url=settings.public_url+'/#verify-email='+quote(token,safe='')
     return deliver_verification_email(email,url)
 
+def create_password_reset(email):
+    token=secrets.token_urlsafe(32);timestamp=int(time.time())
+    with connection() as db:
+        db.execute('BEGIN IMMEDIATE')
+        user=db.execute('''SELECT users.id,users.email,password_resets.last_sent_at
+          FROM users LEFT JOIN password_resets ON users.id=password_resets.user_id
+          WHERE users.email=? AND users.password_hash IS NOT NULL AND users.email_verified=1''',
+          (email,)).fetchone()
+        if not user:
+            return None
+        if user['last_sent_at'] is not None and timestamp-user['last_sent_at']<TOKEN_SEND_COOLDOWN:
+            return None
+        user_id,email=user['id'],user['email']
+        db.execute('''INSERT INTO password_resets (user_id,token_hash,expires_at,last_sent_at)
+          VALUES (?,?,?,?) ON CONFLICT(user_id) DO UPDATE SET token_hash=excluded.token_hash,
+          expires_at=excluded.expires_at,last_sent_at=excluded.last_sent_at''',
+          (user_id,digest(token),timestamp+PASSWORD_RESET_TTL,timestamp))
+    url=settings.public_url+'/#reset-password='+quote(token,safe='')
+    try:
+        delivery_mode=deliver_password_reset_email(email,url)
+    except (OSError,smtplib.SMTPException,RuntimeError):
+        logger.warning('Unable to deliver password reset email.')
+        delivery_mode='unavailable'
+    if delivery_mode=='unavailable':
+        with connection() as db:
+            db.execute('UPDATE password_resets SET last_sent_at=0 WHERE user_id=?',(user_id,))
+    return delivery_mode
+
 class VerificationToken(BaseModel):
     token: str=Field(min_length=32,max_length=256)
+
+class PasswordResetRequest(BaseModel):
+    email: str=Field(min_length=3,max_length=254)
+    @field_validator('email')
+    @classmethod
+    def valid_email(cls,value):
+        value=value.strip().lower()
+        if not re.fullmatch(r'[^\s@]+@[^\s@]+\.[^\s@]+',value):raise ValueError('Укажите корректную электронную почту')
+        return value
+
+class PasswordResetConfirmation(BaseModel):
+    token: str=Field(min_length=32,max_length=256)
+    password: str=Field(min_length=10,max_length=128)
 
 class ResendVerification(BaseModel):
     email: str=Field(min_length=3,max_length=254)
@@ -212,8 +293,8 @@ def register(data:Registration,request:Request,response:Response):
         delivery_pending=False
         try:
             delivery_mode=create_verification(user['id'],user['email'])
-        except (OSError,smtplib.SMTPException,RuntimeError) as exc:
-            logger.exception('Unable to deliver email verification message')
+        except (OSError,smtplib.SMTPException,RuntimeError):
+            logger.warning('Unable to deliver email verification message.')
             with connection() as db:
                 db.execute('UPDATE email_verifications SET last_sent_at=0 WHERE user_id=?',(user['id'],))
             delivery_pending=True
@@ -232,7 +313,8 @@ def login(data:Credentials,request:Request,response:Response):
     return set_session(response,dict(row),request)
 
 @router.post('/verify-email')
-def verify_email(data:VerificationToken,response:Response):
+def verify_email(data:VerificationToken,request:Request,response:Response):
+    rate_limit(request)
     timestamp=int(time.time())
     with connection() as db:
         db.execute('BEGIN IMMEDIATE')
@@ -244,6 +326,37 @@ def verify_email(data:VerificationToken,response:Response):
         db.execute('DELETE FROM email_verifications WHERE user_id=?',(verification['user_id'],))
     response.headers['Cache-Control']='no-store'
     return {'verified':True}
+
+@router.post('/password-reset/request')
+def request_password_reset(data:PasswordResetRequest,request:Request,background_tasks:BackgroundTasks):
+    rate_limit(request)
+    background_tasks.add_task(create_password_reset,data.email)
+    return {'ok':True}
+
+@router.post('/password-reset/confirm')
+def confirm_password_reset(data:PasswordResetConfirmation,request:Request,response:Response):
+    rate_limit(request)
+    timestamp=int(time.time())
+    invalid=HTTPException(400,'Ссылка сброса пароля недействительна или истекла. Запросите новую.')
+    accepted=False
+    with connection() as db:
+        db.execute('BEGIN IMMEDIATE')
+        reset=db.execute('SELECT user_id,expires_at FROM password_resets WHERE token_hash=?',(digest(data.token),)).fetchone()
+        if not reset or reset['expires_at']<timestamp:
+            if reset:
+                db.execute('DELETE FROM password_resets WHERE user_id=?',(reset['user_id'],))
+        else:
+            encoded=password_hash(data.password)
+            db.execute('UPDATE users SET password_hash=? WHERE id=? AND password_hash IS NOT NULL',(encoded,reset['user_id']))
+            accepted=db.execute('SELECT changes()').fetchone()[0]==1
+            db.execute('DELETE FROM password_resets WHERE user_id=?',(reset['user_id'],))
+            if accepted:
+                db.execute('DELETE FROM sessions WHERE user_id=?',(reset['user_id'],))
+    if not accepted:
+        raise invalid
+    response.delete_cookie(COOKIE,path='/')
+    response.headers['Cache-Control']='no-store'
+    return {'reset':True}
 
 @router.post('/verification/resend')
 def resend_verification(data:ResendVerification,request:Request):
@@ -261,11 +374,11 @@ def resend_verification(data:ResendVerification,request:Request):
             return {'ok':True}
     try:
         delivery_mode=create_verification(user_id,email)
-    except (OSError,smtplib.SMTPException,RuntimeError) as exc:
-        logger.exception('Unable to resend email verification message')
+    except (OSError,smtplib.SMTPException,RuntimeError):
+        logger.warning('Unable to resend email verification message.')
         with connection() as db:
             db.execute('UPDATE email_verifications SET last_sent_at=0 WHERE user_id=?',(user_id,))
-        raise HTTPException(503,'Не удалось отправить письмо. Попробуйте позже.') from exc
+        return {'ok':True}
     return {'ok':True}
 
 @router.post('/logout',status_code=204)

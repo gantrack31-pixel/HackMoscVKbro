@@ -38,6 +38,8 @@ export default function App() {
   const [user, setUser] = useState<User | null>(null),
     [ready, setReady] = useState(false),
     [error, setError] = useState("");
+  const [hashVersion, setHashVersion] = useState(0);
+  const passwordResetToken = new URLSearchParams(location.hash.slice(1)).get("reset-password");
   useEffect(() => {
     api
       .me()
@@ -46,13 +48,20 @@ export default function App() {
       .finally(() => setReady(true));
     const expired = () => setUser(null);
     window.addEventListener("session-expired", expired);
-    return () => window.removeEventListener("session-expired", expired);
-  }, []);
+    const hashHandler = () => setHashVersion((v) => v + 1);
+    window.addEventListener("hashchange", hashHandler);
+    return () => {
+      window.removeEventListener("session-expired", expired);
+      window.removeEventListener("hashchange", hashHandler);
+    };
+  }, [hashVersion]);
   if (location.pathname.replace(/\/$/, "") === "/auth/yandex")
     return <YandexAuth />;
   const verificationToken = new URLSearchParams(location.hash.slice(1)).get("verify-email");
   if (verificationToken)
     return <EmailVerification token={verificationToken} onComplete={() => { location.reload(); }} />;
+  if (passwordResetToken)
+    return <PasswordReset token={passwordResetToken} />;
   if (!ready)
     return (
       <div className="boot-screen">
@@ -113,6 +122,62 @@ function EmailVerification({ token, onComplete }: { token: string; onComplete: (
         {status === "busy" && <button className="auth-submit" disabled>Проверяем…</button>}
         {status === "verified" && <button className="auth-submit" onClick={onComplete}>Перейти ко входу</button>}
         {status === "failed" && <a className="auth-submit" href="/#login">Вернуться ко входу</a>}
+      </section>
+    </main>
+  );
+}
+
+function PasswordReset({ token }: { token: string }) {
+  const [status, setStatus] = useState<"pending" | "busy" | "done" | "failed">("pending");
+  const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
+
+  async function submit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const form = new FormData(event.currentTarget);
+    const password = String(form.get("password") ?? "");
+    if (password !== String(form.get("confirm_password") ?? "")) {
+      setError("Пароли не совпадают.");
+      return;
+    }
+    setStatus("busy");
+    setError("");
+    try {
+      await api.confirmPasswordReset(token, password);
+      setStatus("done");
+      setMessage("Пароль изменён. Теперь войдите с новым паролем.");
+    } catch (cause) {
+      setStatus("failed");
+      setMessage((cause as Error).message);
+    }
+  }
+
+  return (
+    <main className="email-verification-page" aria-live="polite">
+      <section className="email-verification-card">
+        <div className={`email-verification-mark ${status === "failed" ? "is-error" : ""}`} aria-hidden="true">
+          {status === "failed" ? "!" : status === "done" ? "✓" : "⌑"}
+        </div>
+        <h1>{status === "failed" ? "Не удалось сбросить пароль" : status === "done" ? "Пароль изменён" : "Задайте новый пароль"}</h1>
+        {status === "done" || status === "failed" ? (
+          <>
+            <p role="status">{message}</p>
+            <button className="auth-submit" onClick={() => { location.hash = "#login"; }}>Перейти ко входу</button>
+          </>
+        ) : (
+          <form className="password-reset-form" onSubmit={submit}>
+            <label>
+              Новый пароль
+              <input aria-label="Новый пароль" name="password" type="password" autoComplete="new-password" minLength={10} maxLength={128} required />
+            </label>
+            <label>
+              Повторите новый пароль
+              <input aria-label="Повторите новый пароль" name="confirm_password" type="password" autoComplete="new-password" minLength={10} maxLength={128} required />
+            </label>
+            {error && <p className="auth-error" role="alert">{error}</p>}
+            <button className="auth-submit" disabled={status === "busy"} type="submit">{status === "busy" ? "Сохраняем…" : "Сохранить пароль"}</button>
+          </form>
+        )}
       </section>
     </main>
   );

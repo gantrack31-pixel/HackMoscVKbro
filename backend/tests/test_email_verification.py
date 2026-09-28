@@ -7,7 +7,11 @@ from fastapi.testclient import TestClient
 from app.config import settings
 from app.main import app
 from app import database as db
-from app.auth import build_verification_email
+from app.auth import (
+    build_verification_email,
+    deliver_verification_email as real_deliver_verification_email,
+    digest,
+)
 
 
 @pytest.fixture
@@ -70,6 +74,20 @@ def test_registration_requires_email_confirmation_before_login(verification_clie
     assert len(sent) == 1
 
 
+def test_development_without_smtp_does_not_log_or_return_confirmation_token(verification_client, caplog, monkeypatch):
+    monkeypatch.setattr(settings, 'smtp_host', '')
+    monkeypatch.setattr(settings, 'smtp_username', '')
+    monkeypatch.setattr(settings, 'smtp_password', '')
+    monkeypatch.setattr(settings, 'email_from', '')
+
+    result = real_deliver_verification_email(
+        'new@example.test', 'http://localhost/#verify-email=super-secret-token'
+    )
+
+    assert result == 'unavailable'
+    assert 'super-secret-token' not in caplog.text
+
+
 def test_confirmation_link_is_one_time_and_enables_login(verification_client):
     client, sent = verification_client
     register(client)
@@ -96,6 +114,24 @@ def test_expired_confirmation_token_is_rejected(verification_client):
         connection.execute('UPDATE email_verifications SET expires_at=0')
 
     assert client.post('/api/auth/verify-email', json={'token': token}).status_code == 400
+
+
+def test_confirmation_token_consumption_is_rate_limited(verification_client):
+    client, sent = verification_client
+    register(client)
+    token = parse_qs(urlparse(sent[0][1]).fragment)['verify-email'][0]
+    with db.connection() as connection:
+        connection.executemany(
+            'INSERT INTO auth_attempts (ip_hash,time) VALUES (?,?)',
+            [(digest('testclient'), 9999999999)] * 15,
+        )
+
+    response = client.post('/api/auth/verify-email', json={'token': token})
+
+    assert response.status_code == 429
+    with db.connection() as connection:
+        user = connection.execute('SELECT email_verified FROM users WHERE email=?', ('new@example.test',)).fetchone()
+    assert user['email_verified'] == 0
 
 
 def test_resend_is_generic_and_replaces_previous_token(verification_client):
@@ -150,3 +186,18 @@ def test_delivery_failure_keeps_account_pending_and_allows_retry(verification_cl
     assert client.post('/api/auth/login', json={
         'email': 'new@example.test', 'password': 'Example-password-387'
     }).status_code == 403
+
+
+def test_delivery_failure_does_not_log_exception_text_or_bearer_token(verification_client, caplog, monkeypatch):
+    client, _ = verification_client
+    token = 'private-email-confirmation-token'
+    monkeypatch.setattr(
+        'app.auth.deliver_verification_email',
+        lambda *_: (_ for _ in ()).throw(OSError(f'failed while sending {token}')),
+    )
+
+    response = register(client)
+
+    assert response.status_code == 201
+    assert token not in caplog.text
+    assert 'failed while sending' not in caplog.text

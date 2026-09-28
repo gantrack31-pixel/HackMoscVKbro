@@ -38,7 +38,7 @@ export class DecklyPage {
     await this.page.getByRole("button", { name: "Выбрать акцентный вариант" }).click();
     await expect(this.page.getByRole("button", { name: "Выбран" })).toBeVisible();
     await this.page.getByRole("button", { name: "Открыть презентацию" }).click();
-    await expect(this.page.getByRole("region", { name: "Редактор презентации" })).toBeVisible();
+    await expect(this.page.getByRole("region", { name: "Редактор презентации", exact: true })).toBeVisible();
   }
 
   async changeSlideTitle(value: string) {

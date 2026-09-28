@@ -63,6 +63,11 @@ def initialize():
             expires_at INTEGER NOT NULL, last_sent_at INTEGER NOT NULL
         );
         CREATE INDEX IF NOT EXISTS email_verifications_expiry ON email_verifications(expires_at);
+        CREATE TABLE IF NOT EXISTS password_resets (
+            user_id TEXT PRIMARY KEY, token_hash TEXT NOT NULL UNIQUE,
+            expires_at INTEGER NOT NULL, last_sent_at INTEGER NOT NULL
+        );
+        CREATE INDEX IF NOT EXISTS password_resets_expiry ON password_resets(expires_at);
         CREATE TABLE IF NOT EXISTS favorites (user_id TEXT NOT NULL,template_id TEXT NOT NULL,PRIMARY KEY(user_id,template_id));
         ''')
         for table in ['templates','projects','jobs']:
