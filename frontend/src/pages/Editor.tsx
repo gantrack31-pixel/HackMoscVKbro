@@ -4,6 +4,7 @@ import { useLivePreview } from "../components/useLivePreview";
 import { api } from "../api";
 import { GenerationPassport } from "../components/GenerationPassport";
 import { PresentationAssistant } from "../components/PresentationAssistant";
+import { HistoryControls } from "../components/HistoryControls";
 import "../styles/requirements.css";
 import { Icon } from "../components/Icon";
 import { SlidePreview } from "../components/SlidePreview";
@@ -85,10 +86,10 @@ export function Editor({
       setBusy(false);
     }
   }
-  async function undo() {
+  async function moveHistory(direction: "undo" | "redo") {
     setBusy(true);
     try {
-      const p = await api.undo(project.id);
+      const p = await api[direction](project.id);
       onUpdate(p);
       setContent(p.content);
       setIndex(Math.min(index, p.content.slides.length - 1));
@@ -132,7 +133,7 @@ export function Editor({
             </span>
           </p>
         </div>
-        <div className="row">
+        <div className="row presentation-actions">
           <button
             className="btn"
             disabled={busy || dirty}
@@ -153,14 +154,7 @@ export function Editor({
       </div>
       <div className="editor-toolbar between">
         <div className="row editor-toolbar-controls">
-          <button
-            className="btn sm"
-            disabled={!project.can_undo || busy || dirty}
-            onClick={undo}
-          >
-            <Icon name="undo" />
-            Вернуть версию
-          </button>
+          <HistoryControls project={project} disabled={busy || dirty} onMove={moveHistory} />
           <fieldset
             className="editor-style-picker"
             disabled={busy || hasDataErrors}
@@ -287,7 +281,7 @@ export function Editor({
               </span>
             </div>
             <blockquote>
-              {slide.source_quote ||
+              {slide.source_quote || project.sources[index]?.bindings?.map(ref => ref.quote).join("") ||
                 "Добавьте точную цитату из исходного материала в поле справа."}
             </blockquote>
             <p className="tiny muted">

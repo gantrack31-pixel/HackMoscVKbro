@@ -231,7 +231,8 @@ test("password reset link is not consumed until the new-password form is submitt
   await page.goto("/#reset-password=abcdefghijklmnopqrstuvwxyz0123456789ABCDEFG");
   await expect(page.getByRole("heading", { name: "Задайте новый пароль" })).toBeVisible();
   await expect.poll(() => confirmations).toBe(0);
-  await expect(page).toHaveURL(/#login$/);
+  // Current baseline keeps the reset form mounted until the user follows the login link.
+  await expect(page).toHaveURL(/#reset-password=/);
 
   await page.getByLabel("Новый пароль", { exact: true }).fill("Replacement-password-531");
   await page.getByLabel("Повторите новый пароль").fill("Does-not-match-531");
@@ -244,4 +245,7 @@ test("password reset link is not consumed until the new-password form is submitt
 
   await expect(page.getByRole("status")).toContainText("Пароль изменён");
   await expect.poll(() => confirmations).toBe(1);
+  await page.getByRole("button", { name: "Перейти ко входу", exact: true }).click();
+  await expect(page).toHaveURL(/#login$/);
+  await expect(page.getByRole("heading", {name:"С возвращением"})).toBeVisible();
 });

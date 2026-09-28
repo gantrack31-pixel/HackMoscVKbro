@@ -1,10 +1,11 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { api } from "../api";
 import { Icon } from "../components/Icon";
 import { AuditSlide } from "../components/AuditSlide";
 import { PresentationViewer } from "../components/PresentationViewer";
 import { SlideFields } from "../components/SlideFields";
 import { PresentationAssistant } from "../components/PresentationAssistant";
+import { HistoryControls } from "../components/HistoryControls";
 import { useLivePreview } from "../components/useLivePreview";
 import type { Health, Issue, Project, Slide } from "../types";
 import "../styles/editor-polish.css";
@@ -32,11 +33,9 @@ export function Audit({
     [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(""),
     [revision, setRevision] = useState(0);
-  const [notice, setNotice] = useState(""),
-    [context, setContext] = useState(false);
+  const [notice, setNotice] = useState("");
   const [selected, setSelected] = useState<string[]>([]);
   const [viewing, setViewing] = useState(false);
-  const contextRequested = useRef(false);
   useEffect(() => {
     onDirty(dirty || busy);
     const protect = (e: BeforeUnloadEvent) => {
@@ -52,16 +51,11 @@ export function Audit({
     let active = true;
     setLoading(true);
     setLoadError("");
-    setContext(false);
     api
       .audit(project.id, project.variant)
-      .then(async (r) => {
-        const semantic = contextRequested.current
-          ? await api.contentAudit(project.id)
-          : null;
+      .then((r) => {
         if (active) {
-          setIssues([...r.issues, ...(semantic?.issues || [])]);
-          setContext(!!semantic);
+          setIssues(r.issues);
           setSelected([]);
         }
       })
@@ -150,16 +144,13 @@ export function Audit({
       setBusy(false);
     }
   }
-  async function semantics() {
+  async function moveHistory(direction: "undo" | "redo") {
     setBusy(true);
     try {
-      const result = await api.contentAudit(project.id);
-      contextRequested.current = true;
-      setIssues((prev) => [
-        ...prev.filter((i) => i.deterministic),
-        ...result.issues,
-      ]);
-      setContext(true);
+      const result = await api[direction](project.id);
+      setDraft(null); setFocus(""); setIndex(i => Math.min(i,result.content.slides.length-1));
+      onUpdate(result);
+      setNotice(direction === "undo" ? "Изменение отменено." : "Изменение повторено.");
     } catch (e) {
       onError((e as Error).message);
     } finally {
@@ -173,7 +164,7 @@ export function Audit({
           <h1>Уверенность в каждом слайде</h1>
           <p>Нажмите на замечание и исправьте его здесь же.</p>
         </div>
-        <div className="row">
+        <div className="row presentation-actions">
           <a className="btn" href="#editor">
             <Icon name="back" />В редактор
           </a>
@@ -196,25 +187,15 @@ export function Audit({
                   ? "Проверка недоступна"
                   : `Замечаний: ${issues.length}`}
             </h2>
-            <p>Геометрия, контраст и связь с источниками</p>
+            <p>Содержание, типографика, компоновка и связь с источниками. Смысл обсудите с AI-помощником.</p>
           </div>
         </div>
         <button
           className="btn"
-          disabled={
-            locked ||
-            loading ||
-            health?.mode !== "live" ||
-            !health.context_audit
-          }
-          onClick={semantics}
+          disabled={locked || loading}
+          onClick={() => setRevision(r => r + 1)}
         >
-          <Icon name="spark" />
-          {busy
-            ? "Обрабатываем…"
-            : context
-              ? "Повторить смысловую проверку"
-              : "Проверить смысл с LLM"}
+          <Icon name="shield" />Повторить проверку
         </button>
       </div>
       {notice && (
@@ -225,10 +206,7 @@ export function Audit({
       <PresentationAssistant audit project={project} content={content} index={index} health={health}
         disabled={!valid} busy={busy} onBusy={setBusy}
         onResult={result => { if (result.project) { setDraft(null); setFocus(""); setDirty(false); setValid(true); onUpdate(result.project); } }} />
-      <button className="btn sm" disabled={busy || dirty || !project.can_undo} onClick={async () => {
-        setBusy(true); try { const previous=await api.undo(project.id); setDraft(null); setFocus(""); onUpdate(previous); setNotice("Предыдущая версия восстановлена."); }
-        catch(e) { onError((e as Error).message); } finally { setBusy(false); }
-      }}><Icon name="undo" />Вернуть версию</button>
+      <HistoryControls project={project} disabled={busy || dirty} onMove={moveHistory} />
       {loadError && (
         <div className="error-banner" role="alert">
           {loadError}
@@ -333,6 +311,9 @@ export function Audit({
                     <Icon name="down" />
                   </button>
                   <p>{issue.detail}</p>
+                  {issue.source_bindings?.map(ref => <blockquote key={`${ref.chunk_id}:${ref.start}`}>
+                    {ref.quote}<small>Источник: {ref.chunk_id}, символы {ref.start}–{ref.end}</small>
+                  </blockquote>)}
                   {issue.fixable && (
                     <label className="row small">
                       <input

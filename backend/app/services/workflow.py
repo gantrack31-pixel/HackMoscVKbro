@@ -9,7 +9,7 @@ from ..config import BASE, settings
 BUDGET_SECONDS = 300
 OUTLINE_BUDGET_SECONDS = 120
 ASSEMBLY_BUDGET_SECONDS = 180
-RECIPE_VERSION = '2026.09.27.2'
+RECIPE_VERSION = '2026.09.28.1'
 VARIANT_AXES = [
     {'id': 'a', 'title': 'Классический', 'layout': 'Спокойная иерархия и широкое поле текста', 'density': 'balanced'},
     {'id': 'b', 'title': 'Акцентный', 'layout': 'Контрастная боковая зона и компактные блоки', 'density': 'compact'},
@@ -34,7 +34,8 @@ def recipe():
     code = []
     for name in ('main.py', 'models.py', 'services/workflow.py', 'services/templates.py',
                  'services/materials.py', 'services/llm.py', 'services/images.py', 'services/assistant.py', 'services/template_context.py',
-                 'services/layout.py', 'services/visuals.py', 'services/audit.py', 'services/export.py'):
+                 'services/layout.py', 'services/visuals.py', 'services/audit.py', 'services/export.py',
+                 'services/sources.py', 'services/template_package.py'):
         path = BASE / 'app' / name
         code.append({'id': name, 'sha256': sha256(path.read_bytes()).hexdigest()})
     fingerprint = sha256(json.dumps({'snippets': snippets, 'code': code}, sort_keys=True).encode()).hexdigest()

@@ -2,8 +2,8 @@
 .auth-shell { --entry-ink: #0f172a; --entry-muted: #526176; --entry-surface: #fff; --entry-field: #f5f7fb; --entry-border: #dce3ed; }
 [data-theme="dark"] .auth-shell { --entry-ink: #edf3ff; --entry-muted: #abbad0; --entry-surface: #141e30; --entry-field: #1d2b42; --entry-border: #ffffff26; }
 .auth-shell .auth-left { color: var(--entry-ink); background: var(--entry-surface); transition: background-color .5s, color .5s; }
-.auth-shell.auth-dark .auth-left { color: #f1f5ff; background: #141e30; }
-.auth-shell.auth-dark .email-pending-address { color: #f1f5ff; }
+.auth-shell.auth-dark .auth-left { color: var(--entry-ink); background: var(--entry-surface); }
+.auth-shell.auth-dark .email-pending-address { color: var(--entry-ink); }
 /* В тёмной теме светлым становится край панели, сохраняя контраст текста. */
 .auth-shell .auth-brand-block { animation: none; }
 .auth-shell .auth-logo { color: var(--entry-ink); font-weight: 800; letter-spacing: -.065em; position: relative; }
@@ -16,6 +16,7 @@
 .auth-intro p { font-weight: 500; }
 .auth-shell :is(.auth-eyebrow,.auth-intro p,.auth-footer,.auth-form-hint,.auth-switch,.password-hint,.auth-back,.auth-divider) { color: var(--entry-muted); }
 .auth-shell :is(.auth-help,.auth-switch button) { color: var(--accent-text); }
+.auth-shell .auth-help { background: transparent; }
 .auth-shell .auth-divider::before,.auth-shell .auth-divider::after { background: var(--entry-border); }
 .auth-shell :is(.auth-input,.auth-panel-toggle,.theme-toggle) { background: var(--entry-field); color: var(--entry-muted); border-color: var(--entry-border); }
 .auth-shell .auth-input { color-scheme: light; }
@@ -145,7 +146,7 @@
 }
 .auth-shell .entry-word-title { -webkit-text-stroke: 0; -webkit-text-fill-color: currentColor; }
 .auth-shell .auth-logo { color: var(--entry-ink); }
-.auth-shell.auth-dark .auth-logo { color: #f1f5ff; }
+.auth-shell.auth-dark .auth-logo { color: var(--entry-ink); }
 .auth-shell .auth-left { border: 0; background: var(--entry-surface); }
 .auth-shell .auth-left::before,.auth-shell .auth-left::after { content: none; }
 .workspace-layer::before,.workspace-layer::after { content: none; }

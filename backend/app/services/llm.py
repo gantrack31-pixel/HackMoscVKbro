@@ -8,8 +8,60 @@ from pydantic import ValidationError
 from ..config import settings, BASE
 from ..models import DeckContent, Slide, OutlineRequest, DesignPlan, SlideDesign, ThreeDesignPlans
 from .template_context import model_template, template_images
+from .sources import source_chunks, slide_binding, validate_bindings
 
 class LLMError(RuntimeError): pass
+class LLMFormatError(LLMError): pass
+
+
+def extract_json(text: str) -> dict:
+    """Recover wrappers, never eval/repair content or accept ambiguous objects."""
+    if len(text) > 2_000_000:
+        raise ValueError('Ответ слишком велик')
+    text = text.strip().lstrip('\ufeff')
+    text = re.sub(r'^`{3,}(?:json)?\s*', '', text, flags=re.I)
+    # Reasoning is allowed only before the answer, never stripped inside JSON strings.
+    while re.match(r'^<(think|analysis|reasoning)\b', text, re.I):
+        match = re.match(r'^<(think|analysis|reasoning)\b[^>]*>.*?</\1>\s*', text, re.I | re.S)
+        if not match:
+            raise ValueError('Незавершённый блок рассуждений')
+        text = text[match.end():].lstrip()
+    def unique_pairs(pairs):
+        result = {}
+        for key, value in pairs:
+            if key in result: raise ValueError('Повтор JSON-ключа')
+            result[key] = value
+        return result
+    def reject_constant(value): raise ValueError('Нечисловая константа JSON')
+    decoder = json.JSONDecoder(object_pairs_hook=unique_pairs, parse_constant=reject_constant)
+    # Fallback locates the object after markdown/prose, including broken closing fences.
+    start = text.find('{')
+    if start < 0 or text[:start].lstrip().startswith('['):
+        raise ValueError('JSON должен быть объектом')
+    result, end = decoder.raw_decode(text, start)
+    suffix = text[end:]
+    if '{' in suffix or '}' in suffix or '[' in suffix or re.search(r'<(?:think|analysis|reasoning)\b', suffix, re.I):
+        raise ValueError('Неоднозначный ответ JSON')
+    if not isinstance(result, dict): raise ValueError('JSON должен быть объектом')
+    return result
+
+
+def normalize_design_plans(raw):
+    """Accept only lossless shorthand; Pydantic still validates every choice."""
+    if not isinstance(raw, dict): return raw
+    result = dict(raw)
+    for key in ('a', 'b', 'c'):
+        plan = result.get(key)
+        if isinstance(plan, list): plan = {'slides': plan}
+        if isinstance(plan, dict) and isinstance(plan.get('slides'), list):
+            choices = []
+            for choice in plan['slides']:
+                if isinstance(choice, dict) and 'design' not in choice and set(choice) <= {'slide','composition','density','layout_shift'}:
+                    choice = {'slide': choice.get('slide'), 'design': {k:v for k,v in choice.items() if k != 'slide'}}
+                choices.append(choice)
+            plan = {**plan, 'slides': choices}
+        result[key] = plan
+    return result
 
 def configured() -> bool:
     host=urlparse(settings.base_url).hostname
@@ -45,14 +97,10 @@ async def complete_json(system: str, payload: dict, client: httpx.AsyncClient | 
         data=response.json()
         text=data['choices'][0]['message']['content']
         if not isinstance(text,str): raise ValueError('Нет текстового ответа')
-        text=re.sub(r'^\s*<think>.*?</think>\s*','',text,flags=re.S)
-        text=re.sub(r'^\s*```(?:json)?\s*|\s*```\s*$','',text)
-        result=json.loads(text)
-        if not isinstance(result,dict): raise ValueError('JSON должен быть объектом')
-        return result
+        return extract_json(text)
     except httpx.TimeoutException as exc: raise LLMError('Модель не ответила за отведённое время. Уменьшите материал или повторите запрос.') from exc
     except httpx.HTTPError as exc: raise LLMError('Не удалось подключиться к LLM. Проверьте адрес сервера модели.') from exc
-    except (ValueError,KeyError,IndexError,TypeError) as exc: raise LLMError('Ответ модели не соответствует формату JSON. Проверьте поддержку JSON у провайдера.') from exc
+    except (ValueError,KeyError,IndexError,TypeError) as exc: raise LLMFormatError('Ответ модели не соответствует формату JSON. Проверьте поддержку JSON у провайдера.') from exc
     finally:
         if owned: await client.aclose()
 
@@ -101,8 +149,8 @@ async def make_outline(request: OutlineRequest, template: dict) -> DeckContent:
     # Одна попытка + одно исправление формата. Общий лимит ограничен отдельно.
     async with asyncio.timeout(240):
         for attempt in range(2):
-            raw=await complete_with_template(system,payload,template)
             try:
+                raw=await complete_with_template(system,payload,template)
                 result=DeckContent.model_validate(raw)
                 assets={a['id'] for a in metadata.get('assets',[])}
                 if any(s.template_asset_id and s.template_asset_id not in assets for s in result.slides):
@@ -110,7 +158,7 @@ async def make_outline(request: OutlineRequest, template: dict) -> DeckContent:
                 if len(result.slides)!=request.count: raise ValueError(f'Нужно ровно {request.count} слайдов')
                 result.audience=request.audience
                 return result
-            except (ValidationError,ValueError) as exc:
+            except (ValidationError,ValueError,LLMFormatError) as exc:
                 if attempt: raise LLMError('Модель дважды вернула некорректную структуру. Повторите с более коротким материалом.') from exc
                 payload['format_correction']=str(exc)[:1600]
         raise LLMError('Не удалось создать структуру.')
@@ -118,12 +166,31 @@ async def make_outline(request: OutlineRequest, template: dict) -> DeckContent:
 async def review_content(content: dict, source: str) -> list[dict]:
     if settings.mode!='live' or not settings.context_audit: return []
     system=(BASE/'prompts/audit.txt').read_text('utf-8')
-    raw=await complete_json(system,{'source':source,'presentation':content})
-    issues=raw.get('issues',[])
-    if not isinstance(issues,list): raise LLMError('Некорректный ответ смысловой проверки.')
-    return [item for item in issues[:12] if isinstance(item,dict) and isinstance(item.get('slide'),int)
-            and 0<=item['slide']<len(content['slides']) and isinstance(item.get('title'),str)
-            and isinstance(item.get('detail'),str)]
+    def notice(detail, slide=0):
+        return {'slide':slide,'title':'Смысловая проверка требует внимания','detail':detail,
+                'source_bindings':[], 'grounding':'unavailable'}
+    if not source.strip():
+        return [notice('Исходный материал отсутствует. Смысловая достоверность не проверена; добавьте источник.')]
+    safe = {**content, 'slides':[{k:v for k,v in s.items() if k != 'image_data'} for s in content['slides']]}
+    try:
+        raw=await complete_json(system,{'source_chunks':source_chunks(source),'presentation':safe,
+            'bindings':[slide_binding(Slide.model_validate(s),source) for s in content['slides']]})
+        issues=raw.get('issues')
+        if not isinstance(issues,list): raise LLMFormatError('Нет списка issues')
+    except (LLMError, ValueError):
+        return [notice('Модель не вернула проверяемый результат. Проверки вёрстки доступны; повторите запрос через помощника.')]
+    result=[]
+    for item in issues[:12]:
+        if (not isinstance(item,dict) or type(item.get('slide')) is not int
+            or not 0<=item['slide']<len(content['slides']) or not isinstance(item.get('title'),str)
+            or not isinstance(item.get('detail'),str)):
+            result.append(notice('Некорректное замечание модели пропущено; автоматический вывод о достоверности не сделан.'))
+            continue
+        refs=validate_bindings(item.get('source_bindings',[]),source)
+        result.append({'slide':item['slide'],'title':item['title'][:180],
+            'detail':item['detail'][:1000]+(' Источник замечания не подтверждён; проверьте вручную.' if not refs else ''),
+            'source_bindings':refs, 'grounding':'located' if refs else 'unverified'})
+    return result
 
 
 async def create_design_variants(content: DeckContent, template: dict, instruction: str = '') -> DeckContent:
@@ -143,9 +210,9 @@ async def create_design_variants(content: DeckContent, template: dict, instructi
     }
     async with asyncio.timeout(240):
         for attempt in range(2):
-            raw=await complete_with_template(system,payload,template)
             try:
-                plans=ThreeDesignPlans.model_validate(raw)
+                raw=await complete_with_template(system,payload,template)
+                plans=ThreeDesignPlans.model_validate(normalize_design_plans(raw))
                 ordered={}
                 for variant in ('a','b','c'):
                     choices=sorted(getattr(plans,variant).slides,key=lambda c:c.slide)
@@ -162,7 +229,7 @@ async def create_design_variants(content: DeckContent, template: dict, instructi
                     slide.design=slide.designs['a']
                     slide.layout=None
                 return result
-            except (ValidationError,ValueError) as exc:
+            except (ValidationError,ValueError,LLMFormatError) as exc:
                 if attempt: raise LLMError('Модель не смогла подготовить три корректные композиции. Повторите запрос.') from exc
                 payload['format_correction']=str(exc)[:1600]
     raise LLMError('Не удалось создать оформление.')
@@ -198,8 +265,8 @@ async def redesign_layout(content: DeckContent, template: dict, instruction: str
              'schema':DesignPlan.model_json_schema()}
     async with asyncio.timeout(240):
         for attempt in range(2):
-            raw=await complete_json(system,payload)
             try:
+                raw=await complete_json(system,payload)
                 plan=DesignPlan.model_validate(raw)
                 indices=[choice.slide for choice in plan.slides]
                 if sorted(indices)!=list(range(len(content.slides))):
@@ -210,7 +277,7 @@ async def redesign_layout(content: DeckContent, template: dict, instruction: str
                     result.slides[choice.slide].design=choice.design
                     result.slides[choice.slide].layout=None
                 return result
-            except (ValidationError,ValueError) as exc:
+            except (ValidationError,ValueError,LLMFormatError) as exc:
                 if attempt:
                     raise LLMError('Модель не смогла подготовить новое оформление. Предыдущая презентация сохранена.') from exc
                 payload['format_correction']=str(exc)[:1000]

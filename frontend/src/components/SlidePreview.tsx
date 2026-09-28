@@ -20,7 +20,7 @@ function ObjectView({ object: o }: { object: SceneObject }) {
           <tspan
             key={i}
             x={o.x}
-            y={o.y + (o.font_size || 24) + i * (o.font_size || 24) * 1.28}
+            y={o.y + (o.font_size || 24) + i * (o.font_size || 24) * (o.line_spacing || 1.28)}
           >
             {line}
           </tspan>

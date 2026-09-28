@@ -79,7 +79,8 @@ def initialize():
                                  'oauth_states': [('user_id', 'TEXT'), ('session_hash', 'TEXT')],
                                  'jobs': [('task_type', "TEXT NOT NULL DEFAULT 'legacy'"),
                                           ('payload', 'TEXT'), ('retry_of', 'TEXT'), ('retry_job_id', 'TEXT')],
-                                 'projects': [('provenance', "TEXT NOT NULL DEFAULT '{}'")]}.items():
+                                 'projects': [('provenance', "TEXT NOT NULL DEFAULT '{}'"),
+                                              ('future', "TEXT NOT NULL DEFAULT '[]'")]}.items():
             columns={row['name'] for row in db.execute(f'PRAGMA table_info({table})')}
             for column, declaration in additions:
                 if column not in columns: db.execute(f'ALTER TABLE {table} ADD COLUMN {column} {declaration}')
@@ -114,26 +115,40 @@ def project_create(pid: str, template_id: str, content: dict, source_text: str, 
 def project_get(pid: str):
     with connection() as db:
         row = db.execute('SELECT * FROM projects WHERE id=?', (pid,)).fetchone()
-        return decode(row, ['content','revisions','provenance']) if row else None
+        return decode(row, ['content','revisions','future','provenance']) if row else None
 
 def projects_list(user_id):
     with connection() as db:
         return [decode(row, ['content']) for row in db.execute('SELECT id,title,template_id,content,variant,updated_at FROM projects WHERE user_id=? ORDER BY updated_at DESC',(user_id,))]
 
 def project_update(pid: str, content: dict, variant: str):
-    existing = project_get(pid)
-    revisions = (existing['revisions'] + [{'content': existing['content'], 'variant': existing['variant']}])[-12:]
     with connection() as db:
-        db.execute('UPDATE projects SET title=?, content=?, variant=?, revisions=?, updated_at=? WHERE id=?',
+        db.execute('BEGIN IMMEDIATE')
+        existing = decode(db.execute('SELECT * FROM projects WHERE id=?',(pid,)).fetchone(), ['content','revisions'])
+        if content == existing['content'] and variant == existing['variant']: return
+        revisions = (existing['revisions'] + [{'content': existing['content'], 'variant': existing['variant']}])[-12:]
+        db.execute("UPDATE projects SET title=?, content=?, variant=?, revisions=?, future='[]', updated_at=? WHERE id=?",
                    (content['title'], json.dumps(content, ensure_ascii=False), variant, json.dumps(revisions, ensure_ascii=False), now(), pid))
 
 def project_undo(pid: str):
-    project = project_get(pid)
-    if not project or not project['revisions']: return False
-    last = project['revisions'].pop()
+    return project_history(pid, 'undo')
+
+
+def project_history(pid: str, direction: str):
+    if direction not in {'undo','redo'}: raise ValueError('Invalid history direction')
     with connection() as db:
-        db.execute('UPDATE projects SET title=?,content=?,variant=?,revisions=?,updated_at=? WHERE id=?',
-                   (last['content']['title'], json.dumps(last['content'], ensure_ascii=False), last['variant'], json.dumps(project['revisions'], ensure_ascii=False), now(), pid))
+        db.execute('BEGIN IMMEDIATE')
+        row = db.execute('SELECT * FROM projects WHERE id=?',(pid,)).fetchone()
+        if not row: return False
+        project = decode(row, ['content','revisions','future'])
+        past, future = project['revisions'], project['future']
+        take, put = (past, future) if direction == 'undo' else (future, past)
+        if not take: return False
+        last = take.pop()
+        put.append({'content':project['content'], 'variant':project['variant']})
+        db.execute('UPDATE projects SET title=?,content=?,variant=?,revisions=?,future=?,updated_at=? WHERE id=?',
+                   (last['content']['title'], json.dumps(last['content'], ensure_ascii=False), last['variant'],
+                    json.dumps(past[-12:], ensure_ascii=False), json.dumps(future[-12:], ensure_ascii=False), now(), pid))
     return True
 
 
@@ -148,7 +163,7 @@ def project_ai_update(pid, user_id, expected_version, draft, content, variant):
         revisions = existing['revisions'] + [{'content':existing['content'],'variant':existing['variant']}]
         if draft != existing['content']:
             revisions.append({'content':draft,'variant':variant})
-        conn.execute('UPDATE projects SET title=?,content=?,variant=?,revisions=?,updated_at=? WHERE id=?',
+        conn.execute("UPDATE projects SET title=?,content=?,variant=?,revisions=?,future='[]',updated_at=? WHERE id=?",
                      (content['title'],json.dumps(content,ensure_ascii=False),variant,
                       json.dumps(revisions[-12:],ensure_ascii=False),now(),pid))
     return True

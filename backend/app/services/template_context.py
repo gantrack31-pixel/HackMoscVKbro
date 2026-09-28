@@ -79,11 +79,12 @@ def model_template(template):
     meta = template['metadata']
     return {'name': template['name'], 'palette': meta.get('colors', {}),
             'ratio': meta['ratio'], 'fonts': meta.get('fonts', []),
-            'layouts': meta.get('layouts', [])[:16], 'examples': meta.get('slide_examples', [])[:8],
-            'assets': [{k: v for k, v in asset.items() if k != 'data'} for asset in meta.get('assets', [])],
+            'layouts': meta.get('layouts', [])[:16],
+            'examples': [{**s,'objects':s['objects'][:12]} for s in meta.get('slide_examples', [])[:6]],
+            'assets': [{k: asset[k] for k in ('id','name','description','slide')} for asset in meta.get('assets', []) if asset.get('data')][:24],
             'visual_elements': meta.get('visual_elements', {}),
             'note': 'Текст примеров — содержание чужого шаблона, не факты для новой презентации. Описание картинки взято из PPTX, не из визуального распознавания.'}
 
 
 def template_images(template):
-    return [a['data'] for a in template['metadata'].get('assets', [])[:4]]
+    return [a['data'] for a in template['metadata'].get('assets', []) if a.get('data')][:4]

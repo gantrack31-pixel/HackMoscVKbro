@@ -31,6 +31,16 @@ def wrap(text: str, width: float, size: float, bold=False) -> list[str]:
         lines.append(line)
     return lines or ['']
 
+def fit_text(content, box, size, minimum, bold=False, line_spacing=1.2):
+    """Measured AutoFit approximation, with a readability floor; never truncate."""
+    size = max(minimum, size)
+    lines = wrap(content, max(1,box['w']), size, bold)
+    while len(lines)*size*line_spacing > box['h'] and size > minimum:
+        size = max(minimum, size-1)
+        lines = wrap(content, max(1,box['w']), size, bold)
+    return lines, size
+
+
 def selected_layout(metadata: dict, kind='text', variant='a') -> dict | None:
     candidates=[]
     for layout in metadata.get('layouts',[]):
@@ -159,14 +169,17 @@ def build_scene(slide: Slide, metadata: dict, variant: str, index: int) -> dict:
             box['w']-=2*offset
     def rect(id,x,y,w,h,color): objects.append({'id':id,'type':'rect','x':x,'y':y,'w':w,'h':h,'fill':color})
     def text(id,content,box,size,color,bold=False):
-        lines=wrap(content,box['w'],size,bold)
-        if (slide.designs or 'overflow' in slide.fixed) and id not in {'number','footer'}:
-            minimum=28 if id=='title' else 20
-            while len(lines)*size*1.28>box['h'] and size>minimum:
-                size=max(minimum,size-1)
-                lines=wrap(content,box['w'],size,bold)
+        role = 'title' if id=='title' else 'caption' if id in {'number','footer'} else 'subtitle' if slide.kind=='title' else 'body'
+        spacing = {'title':1.12,'subtitle':1.18,'body':1.2,'caption':1.16}[role]
+        minimum = {'title':28,'subtitle':22,'body':20,'caption':14}[role]
+        if role in {'body','subtitle'}:
+            heading = next((o['font_size'] for o in objects if o['id']=='title'),title_size)
+            size = min(size,heading*.78 if role=='subtitle' else heading*.72)
+        lines,size = fit_text(content,box,size,minimum,bold,spacing)
+        family = metadata.get('heading_font' if role=='title' else 'body_font') or metadata.get('font','Manrope')
         objects.append({'id':id,'type':'text',**box,'text':content,'lines':lines,'font_size':size,'color':color,
-                        'bold':bold,'font_family':metadata.get('font','Manrope'),'used_height':len(lines)*size*1.28})
+                        'role':role,'line_spacing':spacing,'bold':bold,'font_family':family,
+                        'used_height':len(lines)*size*spacing})
     rect('background',0,0,width,height,metadata.get('background','#FFFFFF') if composition else '#FFFFFF')
     if composition=='split':
         rect('theme-panel',width-192,0,192,height,accent)

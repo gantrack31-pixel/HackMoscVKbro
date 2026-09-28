@@ -32,9 +32,12 @@ test("AI edits include the manual draft, save a revision and can be undone", asy
   await expect(text).toHaveValue("AI сократил текст.");
   await expect(page.getByText("Правки сохранены", { exact: true })).toBeVisible();
   expect(calls).toBe(1);
-  await expect(page.getByRole("button", { name: "Вернуть версию", exact: true })).toBeEnabled();
-  await page.getByRole("button", { name: "Вернуть версию", exact: true }).click();
+  await expect(page.getByRole("button", { name: "Отменить изменение", exact: true })).toBeEnabled();
+  await page.getByRole("button", { name: "Отменить изменение", exact: true }).click();
   await expect(text).not.toHaveValue("AI сократил текст.");
+  await page.getByRole("button", { name: "Повторить изменение", exact: true }).click();
+  await expect(text).toHaveValue("AI сократил текст.");
+  await expect(page.getByRole("button", { name: "Повторить изменение", exact: true })).toBeDisabled();
   await page.getByRole("button", { name: "Проверить", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Исправить презентацию с AI", exact: true })).toBeVisible();
   await expect(page.getByLabel("Область изменений")).toHaveValue("all");

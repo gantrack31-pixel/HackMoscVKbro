@@ -67,7 +67,7 @@ def test_unknown_templates_native_exports_and_ten_slides(client,ratio):
     assert uploaded.status_code==201,uploaded.text
     t=uploaded.json()
     assert t['metadata']['ratio']==pytest.approx(ratio,rel=1e-5)
-    assert t['metadata']['normalization_version']=='3'
+    assert t['metadata']['normalization_version']=='4'
     assert t['metadata']['layouts'] and t['metadata']['colors']
     deck=acceptance_deck()
     response=client.post('/api/generate',json={'template_id':t['id'],'content':deck.model_dump(),'source_text':'Синтетический материал'})

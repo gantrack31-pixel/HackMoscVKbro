@@ -79,6 +79,7 @@ export interface SceneObject {
   fill?: string;
   color?: string;
   font_size?: number;
+  line_spacing?: number;
   bold?: boolean;
   lines?: string[];
   used_height?: number;
@@ -121,8 +122,9 @@ export interface Project {
   template: Template;
   variants: Record<Variant, Scene[]>;
   can_undo: boolean;
+  can_redo: boolean;
   updated_at: string;
-  sources: { slide: number; status: "matched" | "missing" | "not_found" }[];
+  sources: { slide: number; status: "matched" | "missing" | "not_found"; bindings?: SourceBinding[] }[];
 }
 export interface ProjectSummary {
   id: string;
@@ -184,7 +186,10 @@ export interface AuthResult {
   user: User | null;
   csrf: string;
 }
+export interface SourceBinding { chunk_id: string; start: number; end: number; quote: string }
 export interface Issue {
+  source_bindings?: SourceBinding[];
+  grounding?: "not_applicable" | "located" | "unverified" | "unavailable";
   id: string;
   slide: number;
   code: string;
