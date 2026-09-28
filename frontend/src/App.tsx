@@ -38,9 +38,8 @@ export default function App() {
   const [user, setUser] = useState<User | null>(null),
     [ready, setReady] = useState(false),
     [error, setError] = useState("");
-  const [passwordResetToken] = useState(() =>
-    new URLSearchParams(location.hash.slice(1)).get("reset-password"),
-  );
+  const [hashVersion, setHashVersion] = useState(0);
+  const passwordResetToken = new URLSearchParams(location.hash.slice(1)).get("reset-password");
   useEffect(() => {
     api
       .me()
@@ -49,8 +48,13 @@ export default function App() {
       .finally(() => setReady(true));
     const expired = () => setUser(null);
     window.addEventListener("session-expired", expired);
-    return () => window.removeEventListener("session-expired", expired);
-  }, []);
+    const hashHandler = () => setHashVersion((v) => v + 1);
+    window.addEventListener("hashchange", hashHandler);
+    return () => {
+      window.removeEventListener("session-expired", expired);
+      window.removeEventListener("hashchange", hashHandler);
+    };
+  }, [hashVersion]);
   if (location.pathname.replace(/\/$/, "") === "/auth/yandex")
     return <YandexAuth />;
   const verificationToken = new URLSearchParams(location.hash.slice(1)).get("verify-email");
@@ -127,9 +131,6 @@ function PasswordReset({ token }: { token: string }) {
   const [status, setStatus] = useState<"pending" | "busy" | "done" | "failed">("pending");
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
-  useEffect(() => {
-    history.replaceState(null, "", location.pathname + location.search + "#login");
-  }, []);
 
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -161,7 +162,7 @@ function PasswordReset({ token }: { token: string }) {
         {status === "done" || status === "failed" ? (
           <>
             <p role="status">{message}</p>
-            <button className="auth-submit" onClick={() => { location.reload(); }}>Перейти ко входу</button>
+            <button className="auth-submit" onClick={() => { location.hash = "#login"; }}>Перейти ко входу</button>
           </>
         ) : (
           <form className="password-reset-form" onSubmit={submit}>

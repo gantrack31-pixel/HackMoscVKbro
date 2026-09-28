@@ -428,9 +428,6 @@ export function AuthScreen({
                     <button className="auth-help" type="button" onClick={openPasswordReset}>
                       Забыли пароль?
                     </button>
-                    <a className="auth-help" href="https://t.me/flixyyy" target="_blank" rel="noreferrer">
-                      Не получается войти? Написать в поддержку
-                    </a>
                   </>
                 )}
                 {screen === "register" && (
@@ -470,9 +467,6 @@ export function AuthScreen({
         </div>
         <footer className="auth-footer">
           <span>Ваши идеи. Ваш стиль. © 2026</span>
-          <a href="https://t.me/flixyyy" target="_blank" rel="noreferrer">
-            Поддержка ↗
-          </a>
         </footer>
       </section>
       <section className="auth-right" aria-label="Примеры шаблонов">
