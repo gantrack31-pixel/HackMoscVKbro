@@ -42,7 +42,7 @@ test("warn before discarding unsaved editor changes and allow staying", async ({
   await expect(dialog.getByText("Сохраните изменения на текущей странице", { exact: false })).toBeVisible();
   await dialog.getByRole("button", { name: "Остаться на странице" }).click();
   await expect(dialog).toHaveCount(0);
-  await expect(page.getByRole("region", { name: "Редактор презентации" })).toBeVisible();
+  await expect(page.getByRole("region", { name: "Редактор презентации", exact: true })).toBeVisible();
   await expect(page.getByRole("status").filter({ hasText: "Есть изменения" })).toBeVisible();
 });
 
@@ -120,7 +120,7 @@ test("registration shows the email confirmation screen and allows resending", as
   await page.route("**/api/auth/register", (route) => route.fulfill({
     status: 201,
     contentType: "application/json",
-    body: JSON.stringify({ verification_required: true, email: "confirm@example.test", delivery_mode: "logged" }),
+    body: JSON.stringify({ verification_required: true, email: "confirm@example.test", delivery_mode: "unavailable" }),
   }));
   await page.route("**/api/auth/verification/resend", (route) => route.fulfill({
     status: 200,
@@ -152,7 +152,7 @@ test("registration shows the email confirmation screen and allows resending", as
     return (values[0] + 0.05) / (values[1] + 0.05);
   });
   expect(emailContrast).toBeGreaterThanOrEqual(4.5);
-  await expect(page.getByText(/ссылка подтверждения записана в консоль backend-сервера/)).toBeVisible();
+  await expect(page.getByText(/Почта не настроена на сервере/)).toBeVisible();
   await page.getByRole("button", { name: "Отправить письмо ещё раз" }).click();
   await expect(page.getByRole("status")).toContainText("письмо скоро придёт");
 });
@@ -204,4 +204,44 @@ test("email verification needs an explicit button click", async ({ page }) => {
   await page.getByRole("button", { name: "Перейти ко входу" }).click();
   await expect(page.getByRole("heading", { name: "С возвращением" })).toBeVisible();
   await expect(page).toHaveURL(/#login$/);
+});
+
+test("password reset request gives a generic confirmation and submits the email", async ({ page }) => {
+  let requestBody: { email?: string } | undefined;
+  await page.route("**/api/auth/password-reset/request", async (route) => {
+    requestBody = route.request().postDataJSON();
+    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true }) });
+  });
+  await page.goto("/#login");
+  await expect(page.getByRole("heading", { name: "С возвращением" })).toBeVisible();
+  await page.getByRole("button", { name: "Забыли пароль?" }).click();
+  await expect(page.getByRole("heading", { name: "Восстановление пароля" })).toBeVisible();
+  await page.getByLabel("Электронная почта").fill("person@example.test");
+  await page.getByRole("button", { name: "Отправить ссылку" }).click();
+  await expect(page.getByRole("status")).toContainText("Если аккаунт с таким адресом существует");
+  expect(requestBody).toEqual({ email: "person@example.test" });
+});
+
+test("password reset link is not consumed until the new-password form is submitted", async ({ page }) => {
+  let confirmations = 0;
+  await page.route("**/api/auth/password-reset/confirm", async (route) => {
+    confirmations += 1;
+    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ reset: true }) });
+  });
+  await page.goto("/#reset-password=abcdefghijklmnopqrstuvwxyz0123456789ABCDEFG");
+  await expect(page.getByRole("heading", { name: "Задайте новый пароль" })).toBeVisible();
+  await expect.poll(() => confirmations).toBe(0);
+  await expect(page).toHaveURL(/#login$/);
+
+  await page.getByLabel("Новый пароль", { exact: true }).fill("Replacement-password-531");
+  await page.getByLabel("Повторите новый пароль").fill("Does-not-match-531");
+  await page.getByRole("button", { name: "Сохранить пароль" }).click();
+  await expect(page.getByRole("alert")).toContainText("Пароли не совпадают");
+  await expect.poll(() => confirmations).toBe(0);
+
+  await page.getByLabel("Повторите новый пароль").fill("Replacement-password-531");
+  await page.getByRole("button", { name: "Сохранить пароль" }).click();
+
+  await expect(page.getByRole("status")).toContainText("Пароль изменён");
+  await expect.poll(() => confirmations).toBe(1);
 });

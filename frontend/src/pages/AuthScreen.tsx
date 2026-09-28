@@ -14,7 +14,7 @@ import { WordmarkTitle } from "../components/Brand";
 
 import { TemplateCover } from "../components/TemplateCard";
 import type { Template, User } from "../types";
-type Screen = "welcome" | "choice" | "login" | "register" | "check-email";
+type Screen = "welcome" | "choice" | "login" | "register" | "check-email" | "request-reset";
 function isValidEmail(value: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
 }
@@ -43,6 +43,9 @@ export function AuthScreen({
     [verificationEmail, setVerificationEmail] = useState(""),
     [resendBusy, setResendBusy] = useState(false),
     [resendMessage, setResendMessage] = useState(""),
+    [resetEmail, setResetEmail] = useState(""),
+    [resetBusy, setResetBusy] = useState(false),
+    [resetMessage, setResetMessage] = useState(""),
     [showPassword, setShowPassword] = useState(false);
   useEffect(() => {
     api
@@ -110,8 +113,8 @@ export function AuthScreen({
           setVerificationEmail(result.email);
           setResendMessage(result.delivery_pending
             ? "Не удалось отправить письмо. Проверьте SMTP-настройки или попробуйте отправить письмо ещё раз."
-            : result.delivery_mode === "logged"
-              ? "Почта пока не подключена: ссылка подтверждения записана в консоль backend-сервера."
+            : result.delivery_mode === "unavailable"
+              ? "Почта не настроена на сервере. Обратитесь в поддержку, чтобы завершить подтверждение."
             : "");
           setScreen("check-email");
         } else if (result.user) onUser(result.user);
@@ -135,8 +138,8 @@ export function AuthScreen({
     setResendMessage("");
     try {
       const result = await api.resendVerification(verificationEmail);
-      setResendMessage(result.delivery_mode === "logged"
-        ? "Почта пока не подключена: ссылка подтверждения записана в консоль backend-сервера."
+      setResendMessage(result.delivery_mode === "unavailable"
+        ? "Почта не настроена на сервере. Обратитесь в поддержку, чтобы завершить подтверждение."
         : result.delivery_mode === "cooldown"
           ? "Подождите минуту перед повторной отправкой письма."
           : "Если адрес ожидает подтверждения, письмо скоро придёт.");
@@ -159,6 +162,34 @@ export function AuthScreen({
     setScreen("check-email");
     setResendMessage("");
     setError("");
+  }
+  function openPasswordReset() {
+    const email = contentRef.current
+      ?.querySelector<HTMLInputElement>('input[name="email"]')
+      ?.value.trim() ?? "";
+    setResetEmail(email);
+    setResetMessage("");
+    setError("");
+    setScreen("request-reset");
+  }
+  async function requestPasswordReset(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const email = String(new FormData(event.currentTarget).get("email") ?? "").trim();
+    if (!isValidEmail(email)) {
+      setError("Укажите корректную электронную почту.");
+      return;
+    }
+    setResetBusy(true);
+    setError("");
+    try {
+      await api.requestPasswordReset(email);
+      setResetEmail(email);
+      setResetMessage("Если аккаунт с таким адресом существует, письмо со ссылкой скоро придёт.");
+    } catch (cause) {
+      setError((cause as Error).message);
+    } finally {
+      setResetBusy(false);
+    }
   }
   return (
     <div
@@ -248,6 +279,27 @@ export function AuthScreen({
                   <ArrowRight size={18} />
                 </button>
                 {resendMessage && <p className="email-resend-message" role="status">{resendMessage}</p>}
+              </section>
+            ) : screen === "request-reset" ? (
+              <section className="auth-form email-pending" aria-live="polite">
+                <button className="auth-back" type="button" onClick={() => go("login")}>
+                  <ArrowLeft size={16} /> Войти
+                </button>
+                <h1>Восстановление пароля</h1>
+                <p className="auth-form-hint">Укажите почту аккаунта. Если он существует, мы отправим ссылку для сброса.</p>
+                <form onSubmit={requestPasswordReset}>
+                  <label>
+                    Электронная почта
+                    <div className="auth-input">
+                      <Mail size={17} />
+                      <input name="email" type="email" autoComplete="email" required maxLength={254} defaultValue={resetEmail} placeholder="name@example.ru" />
+                    </div>
+                  </label>
+                  <button className="auth-submit" type="submit" disabled={resetBusy}>
+                    {resetBusy ? "Отправляем…" : "Отправить ссылку"}
+                  </button>
+                </form>
+                {resetMessage && <p className="email-resend-message" role="status">{resetMessage}</p>}
               </section>
             ) : screen === "choice" || screen === "welcome" ? (
               <>
@@ -372,6 +424,9 @@ export function AuthScreen({
                       onClick={openResendVerification}
                     >
                       Не получили письмо подтверждения? Запросить повторно
+                    </button>
+                    <button className="auth-help" type="button" onClick={openPasswordReset}>
+                      Забыли пароль?
                     </button>
                     <a className="auth-help" href="https://t.me/flixyyy" target="_blank" rel="noreferrer">
                       Не получается войти? Написать в поддержку
