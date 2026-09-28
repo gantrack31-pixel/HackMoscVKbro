@@ -93,7 +93,15 @@ async def complete_json(system: str, payload: dict, client: httpx.AsyncClient | 
         response=await client.post(settings.base_url+'/chat/completions',headers=headers,json=body)
         if response.status_code in {401,403}: raise LLMError('Провайдер отклонил ключ или доступ к модели. Проверьте .env.')
         if response.status_code==429: raise LLMError('Провайдер ограничил запросы. Повторите позже.')
-        if response.status_code>=400: raise LLMError(f'Провайдер вернул HTTP {response.status_code}. Проверьте модель, URL и LLM_JSON_MODE.')
+        if response.status_code>=400:
+            detail = ''
+            try:
+                provider_error = response.json().get('error', {}).get('message', '')
+                if isinstance(provider_error, str): detail = re.sub(r'[^\w\s.,:/-]', '', provider_error)[:180]
+            except ValueError:
+                pass
+            suffix = f' Причина провайдера: {detail}.' if detail else ''
+            raise LLMError(f'Провайдер вернул HTTP {response.status_code}.{suffix} Проверьте model URI, URL и LLM_JSON_MODE.')
         data=response.json()
         text=data['choices'][0]['message']['content']
         if not isinstance(text,str): raise ValueError('Нет текстового ответа')
