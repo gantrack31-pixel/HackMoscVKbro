@@ -9,6 +9,7 @@ from .. import database as db
 from .theme_catalog import THEMES, theme_metadata
 from .template_context import extract_examples
 from .template_package import inspect_package
+from .template_parser import parse_manifest, NORMALIZATION_VERSION
 
 NS = {'a':'http://schemas.openxmlformats.org/drawingml/2006/main'}
 PARSER = etree.XMLParser(resolve_entities=False, no_network=True)
@@ -77,6 +78,10 @@ def analyze_template(path: Path) -> dict:
                             'static_shapes':sum(not s.is_placeholder for s in layout.shapes)})
     examples, sampled_assets = extract_examples(prs)
     package = inspect_package(path)
+    manifest = parse_manifest(path, package)
+    manifest['safe_zones'] = layouts
+    for i, color in enumerate(manifest['palette']):
+        if color.upper() not in {c.upper() for c in colors.values()}: colors[f'extracted_{i}'] = color
     assets = package.pop('assets')
     descriptions = {a['id']:a for a in sampled_assets}
     for asset in assets:
@@ -99,7 +104,8 @@ def analyze_template(path: Path) -> dict:
     headings=[(size,count) for size,count in sizes.items() if 25<=size<=60]
     bodies=[(size,count) for size,count in sizes.items() if 16<=size<=25]
     return {'count':len(prs.slides),'ratio':round(width/height,5),'width_emu':width,'height_emu':height,
-            'colors':colors,'accent':colors.get('accent1','#0077FF'),'background':colors.get('lt1','#FFFFFF'),
+            'colors':colors,'palette':manifest['palette'],'accent':colors.get('accent1','#0077FF'),
+            'background':manifest['background'] or colors.get('lt1','#FFFFFF'),
             'font':fonts.most_common(1)[0][0] if fonts else theme_font,
             'theme_font':theme_font,'fonts':package['fonts'] or [theme_font],
             'heading_font':theme_pair.get('majorFont') or theme_font,
@@ -107,7 +113,8 @@ def analyze_template(path: Path) -> dict:
             'heading_pt':max(headings,key=lambda x:x[1])[0] if headings else 32,
             'body_pt':max(bodies,key=lambda x:x[1])[0] if bodies else 18,
             'layouts':layouts,'master_count':len(prs.slide_masters),'source':'pptx',
-            'visual_elements':dict(visual_counts),'normalization_version':'4', 'package':package,
+            'visual_elements':dict(visual_counts),'normalization_version':NORMALIZATION_VERSION, 'package':package,
+            'manifest':manifest,'file_fingerprint':manifest['fingerprint'],
             'slide_examples':examples,'assets':assets,
             'analysis_limits':{'sampled_slides':len(examples),'total_slides':len(prs.slides),
                                'reusable_images':sum(bool(a['data']) for a in assets),'retained_media':len(assets)},

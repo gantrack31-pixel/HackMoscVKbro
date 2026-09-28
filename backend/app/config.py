@@ -45,14 +45,14 @@ class Settings:
     app_env: str = field(default_factory=lambda: os.getenv('APP_ENV', 'development').strip().lower())
     allow_demo_in_production: bool = field(default_factory=lambda: os.getenv('ALLOW_DEMO_IN_PRODUCTION', 'false').strip().lower() == 'true')
     mode: str = field(default_factory=lambda: os.getenv('LLM_MODE', 'demo'))
-    base_url: str = field(default_factory=lambda: os.getenv('LLM_BASE_URL', 'http://127.0.0.1:8001/v1').rstrip('/'))
-    api_key: str = field(default_factory=lambda: os.getenv('LLM_API_KEY', ''), repr=False)
-    folder_id: str = field(default_factory=lambda: os.getenv('YANDEX_FOLDER_ID', ''), repr=False)
+    base_url: str = field(default_factory=lambda: os.getenv('OPENROUTER_BASE_URL', 'https://openrouter.ai/api/v1').rstrip('/'))
+    api_key: str = field(default_factory=lambda: os.getenv('OPENROUTER_API_KEY', ''), repr=False)
+    openrouter_referer: str = field(default_factory=lambda: os.getenv('OPENROUTER_HTTP_REFERER', os.getenv('PUBLIC_BASE_URL', 'http://127.0.0.1:8000')))
     image_base_url: str = field(default_factory=lambda: os.getenv('IMAGE_BASE_URL', '').rstrip('/'))
     image_api_key: str = field(default_factory=lambda: os.getenv('IMAGE_API_KEY', ''), repr=False)
-    model: str = field(default_factory=lambda: os.getenv('LLM_MODEL', 'Qwen/Qwen3-32B'))
+    model: str = field(default_factory=lambda: os.getenv('OPENROUTER_MODEL', 'qwen/qwen-2.5-72b-instruct'))
     timeout: int = field(default_factory=lambda: int(os.getenv('LLM_TIMEOUT_SECONDS', '180')))
-    max_tokens: int = field(default_factory=lambda: int(os.getenv('LLM_MAX_TOKENS', '9000')))
+    max_tokens: int = field(default_factory=lambda: int(os.getenv('LLM_MAX_TOKENS', '8000')))
     temperature: float = field(default_factory=lambda: float(os.getenv('LLM_TEMPERATURE', '0.3')))
     json_mode: bool = field(default_factory=lambda: os.getenv('LLM_JSON_MODE', 'true').lower() == 'true')
     vision: bool = field(default_factory=lambda: os.getenv('LLM_VISION_ENABLED', 'false').lower() == 'true')
@@ -106,7 +106,7 @@ def validate_settings(config: Settings = None) -> None:
     if config.mode == 'demo' and not config.allow_demo_in_production:
         raise ValueError('LLM_MODE=demo в production запрещён; для осознанного demo-режима задайте ALLOW_DEMO_IN_PRODUCTION=true.')
     if config.mode == 'live' and not config.api_key.strip():
-        raise ValueError('Для LLM_MODE=live в production требуется LLM_API_KEY.')
+        raise ValueError('Для LLM_MODE=live в production требуется OPENROUTER_API_KEY.')
     if config.email_verification_required and not all((config.smtp_host.strip(), config.smtp_username.strip(),
                                                         config.smtp_password, config.email_from.strip())):
         raise ValueError('Для подтверждения email в production задайте SMTP_HOST, SMTP_USERNAME, SMTP_PASSWORD и EMAIL_FROM.')

@@ -9,7 +9,7 @@ from ..config import BASE, settings
 BUDGET_SECONDS = 300
 OUTLINE_BUDGET_SECONDS = 120
 ASSEMBLY_BUDGET_SECONDS = 180
-RECIPE_VERSION = '2026.09.28.1'
+RECIPE_VERSION = '2026.09.28.2'
 VARIANT_AXES = [
     {'id': 'a', 'title': 'Классический', 'layout': 'Спокойная иерархия и широкое поле текста', 'density': 'balanced'},
     {'id': 'b', 'title': 'Акцентный', 'layout': 'Контрастная боковая зона и компактные блоки', 'density': 'compact'},
@@ -35,7 +35,7 @@ def recipe():
     for name in ('main.py', 'models.py', 'services/workflow.py', 'services/templates.py',
                  'services/materials.py', 'services/llm.py', 'services/images.py', 'services/assistant.py', 'services/template_context.py',
                  'services/layout.py', 'services/visuals.py', 'services/audit.py', 'services/export.py',
-                 'services/sources.py', 'services/template_package.py'):
+                 'services/sources.py', 'services/template_package.py', 'services/template_parser.py', 'services/palette.py'):
         path = BASE / 'app' / name
         code.append({'id': name, 'sha256': sha256(path.read_bytes()).hexdigest()})
     fingerprint = sha256(json.dumps({'snippets': snippets, 'code': code}, sort_keys=True).encode()).hexdigest()
@@ -45,9 +45,7 @@ def recipe():
             'native_exports': ['text', 'chart', 'table', 'shape', 'connector', 'picture']}
 
 def manifest(template, content, source, audit_counts, duration, jid):
-    clean_model = settings.model.replace(settings.folder_id, '<folder>') if settings.folder_id else settings.model
-    if clean_model.startswith('gpt://'):
-        clean_model = 'gpt://<folder>/' + clean_model.split('/', 3)[-1]
+    clean_model = settings.model
     return {'job_id': jid, 'recipe': recipe(), 'mode': settings.mode, 'model': clean_model,
             'template': {'id': template['id'], 'name': template['name'],
                          'fingerprint': sha256(json.dumps(template['metadata'], sort_keys=True).encode()).hexdigest()},

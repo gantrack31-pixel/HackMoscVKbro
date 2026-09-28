@@ -4,6 +4,7 @@ from hashlib import sha256
 from io import BytesIO
 from PIL import Image
 from pptx.enum.shapes import MSO_SHAPE_TYPE
+from .palette import roles
 
 
 def extract_examples(prs):
@@ -77,7 +78,12 @@ def extract_examples(prs):
 def model_template(template):
     """No file paths or base64 in textual model context."""
     meta = template['metadata']
-    return {'name': template['name'], 'palette': meta.get('colors', {}),
+    return {'id':template.get('id'), 'name': template['name'], 'palette': meta.get('colors', {}),
+            'fingerprint':meta.get('file_fingerprint'), 'color_roles':roles(meta),
+            'typography':{k:meta.get(k) for k in ('heading_font','body_font','heading_pt','body_pt')},
+            'manifest':{'version':meta.get('normalization_version'),
+                        'primitives':meta.get('package',{}).get('primitives',[])[:24],
+                        'backgrounds':[{'part':b['part'],'xml':b['xml'][:2000]} for b in meta.get('manifest',{}).get('backgrounds',[])[:8]]},
             'ratio': meta['ratio'], 'fonts': meta.get('fonts', []),
             'layouts': meta.get('layouts', [])[:16],
             'examples': [{**s,'objects':s['objects'][:12]} for s in meta.get('slide_examples', [])[:6]],
