@@ -1,0 +1,19 @@
+services:
+  deckly:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    init: true
+    restart: unless-stopped
+    env_file:
+      - .env.docker
+    environment:
+      STORAGE_PATH: data
+      DATABASE_PATH: data/deckly.sqlite3
+    ports:
+      - "127.0.0.1:8000:8000"
+    volumes:
+      - deckly-data:/app/backend/data
+
+volumes:
+  deckly-data:
