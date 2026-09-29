@@ -14,6 +14,7 @@ export type Route =
   | "finish";
 export type Variant = "a" | "b" | "c";
 export interface Template {
+  preview_url?: string;
   id: string;
   name: string;
   metadata: {
@@ -53,6 +54,13 @@ export interface Slide {
     composition: "split" | "editorial" | "grid";
     density: "compact" | "balanced" | "airy";
     layout_shift: 0 | 1 | 2;
+    background_role?: "template" | "light" | "dark" | "accent";
+    heading_role?: "heading" | "body";
+    body_role?: "body" | "heading";
+    heading_scale?: 0.9 | 1 | 1.1;
+    body_scale?: 0.9 | 1 | 1.05;
+    heading_weight?: "normal" | "bold";
+    diagram_style?: NonNullable<Slide["diagram_type"]> | null;
     smartart?: { type: NonNullable<Slide["diagram_type"]>; nodes: {bullet:number; x:number; y:number; w:number; h:number; group:number}[]; edges: {source:number; target:number; direction:"forward"|"both"|"none"}[] } | null;
   } | null;
   fixed: string[];
@@ -97,6 +105,17 @@ export interface Scene {
   render_objects?: SceneObject[];
   template_layout: string;
   preview_note: string;
+}
+export interface DiskStatus {
+  configured: boolean;
+  ready: boolean;
+  provider: "yandex_disk";
+}
+export interface DiskReceipt {
+  name: string;
+  saved_at: string;
+  path?: string;
+  provider?: "yandex_disk";
 }
 export interface CloudStatus {
   configured: boolean;

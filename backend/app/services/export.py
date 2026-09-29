@@ -91,7 +91,7 @@ def export_pptx(content: DeckContent, template: dict, variant: str, *, scenes=No
         for obj in scene['objects']:
             x,y,w,h=[int(obj[key]*scale) for key in ['x','y','w','h']]
             if obj['id']=='background':
-                if template.get('path') and metadata.get('preserve_template_background',True): continue
+                if template.get('path') and metadata.get('preserve_template_background',True) and not obj.get('override_template'): continue
                 slide.background.fill.solid();slide.background.fill.fore_color.rgb=rgb(obj['fill']);continue
             if obj['type'] in {'rect','ellipse','hexagon'}:
                 shape=slide.shapes.add_shape({'ellipse':MSO_SHAPE.OVAL,'hexagon':MSO_SHAPE.HEXAGON,'rect':MSO_SHAPE.RECTANGLE}[obj['type']],x,y,w,h)

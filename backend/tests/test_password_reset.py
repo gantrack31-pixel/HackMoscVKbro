@@ -79,7 +79,8 @@ def test_password_reset_email_uses_configured_smtp_transport(monkeypatch):
     captured = {}
 
     class FakeSMTP:
-        def __init__(self, host, port, timeout):
+        def __init__(self, host, port, timeout, context):
+            assert context.check_hostname
             captured["connection"] = (host, port, timeout)
 
         def __enter__(self):

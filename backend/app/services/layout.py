@@ -8,7 +8,7 @@ from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 from ..models import Slide
 from .visuals import diagram_nodes, pictogram_nodes
-from .palette import roles, scene_color, contrast
+from .palette import roles, scene_color, contrast, design_metadata
 
 FONTS=Path(__file__).parent
 for name,file in [('Deckly','Manrope-Regular.ttf'),('DecklyBold','Manrope-Bold.ttf')]:
@@ -128,6 +128,9 @@ def themed_nodes(nodes, obj):
 def build_scene(slide: Slide, metadata: dict, variant: str, index: int) -> dict:
     if slide.designs:
         slide=slide.model_copy(update={'design':slide.designs.get(slide.layout or variant,slide.design)})
+    metadata=design_metadata(metadata,slide.design)
+    if slide.design and slide.design.diagram_style:
+        slide=slide.model_copy(update={'diagram_type':slide.design.diagram_style})
     variant=slide.layout or variant
     if slide.design and not slide.designs:
         variant=['a','b','c'][(['a','b','c'].index(variant)+slide.design.layout_shift)%3]
@@ -165,6 +168,8 @@ def build_scene(slide: Slide, metadata: dict, variant: str, index: int) -> dict:
         scale={'compact':.9,'balanced':1.,'airy':1.04}[slide.design.density]
         title_size*=scale
         body_size*=scale
+        title_size*=slide.design.heading_scale
+        body_size*=slide.design.body_scale
     if composition=='split':
         title_box.update(x=88,w=min(title_box['w'],width-352))
         body_box.update(x=88,w=min(body_box['w'],width-352))
@@ -185,6 +190,7 @@ def build_scene(slide: Slide, metadata: dict, variant: str, index: int) -> dict:
             box['w']-=2*offset
     def rect(id,x,y,w,h,color): objects.append({'id':id,'type':'rect','x':x,'y':y,'w':w,'h':h,'fill':color})
     def text(id,content,box,size,color,bold=False):
+        if id=='title' and slide.design: bold=slide.design.heading_weight=='bold'
         role = 'title' if id=='title' else 'caption' if id in {'number','footer'} else 'subtitle' if slide.kind=='title' else 'body'
         spacing = {'title':1.12,'subtitle':1.18,'body':1.2,'caption':1.16}[role]
         minimum = 16 if id.startswith(('node-label-','icon-label-')) else {'title':28,'subtitle':22,'body':20,'caption':14}[role]
@@ -197,6 +203,7 @@ def build_scene(slide: Slide, metadata: dict, variant: str, index: int) -> dict:
                         'role':role,'line_spacing':spacing,'bold':bold,'font_family':family,
                         'used_height':len(lines)*size*spacing})
     rect('background',0,0,width,height,theme['background'])
+    objects[-1]['override_template']=bool(slide.design and slide.design.background_role!='template')
     if composition=='split':
         rect('theme-panel',width-192,0,192,height,accent)
         rect('theme-stripe',width-224,0,8,height,accent)

@@ -117,6 +117,7 @@ def test_fuzzy_bindings_are_suggestions_and_numbers_must_match():
 
 
 def test_openrouter_configuration_never_uses_legacy_credentials(monkeypatch):
+    monkeypatch.delenv('LLM_BASE_URL',raising=False)
     monkeypatch.delenv('OPENROUTER_BASE_URL',raising=False)
     monkeypatch.delenv('OPENROUTER_MODEL',raising=False)
     monkeypatch.setenv('OPENROUTER_API_KEY','router-test-key')
@@ -124,8 +125,18 @@ def test_openrouter_configuration_never_uses_legacy_credentials(monkeypatch):
     monkeypatch.setenv('LLM_MODEL','gpt://legacy/model')
     config=Settings()
     assert config.base_url=='https://openrouter.ai/api/v1'
-    assert config.model=='qwen/qwen-2.5-72b-instruct' and config.api_key=='router-test-key'
+    assert config.model=='google/gemma-3-27b-it' and config.api_key=='router-test-key'
     assert config.api_key not in repr(config)
+
+
+def test_explicit_custom_provider_does_not_inherit_openrouter_key(monkeypatch):
+    monkeypatch.setenv('LLM_BASE_URL','http://127.0.0.1:8001/v1')
+    monkeypatch.setenv('LLM_MODEL','gemma-3-27b-it')
+    monkeypatch.delenv('LLM_API_KEY',raising=False)
+    monkeypatch.setenv('OPENROUTER_API_KEY','router-key')
+    config=Settings()
+    assert config.base_url=='http://127.0.0.1:8001/v1' and config.model=='gemma-3-27b-it'
+    assert config.api_key==''
 
 
 @pytest.mark.parametrize('status',[401,429,400])

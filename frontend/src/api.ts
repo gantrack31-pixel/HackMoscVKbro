@@ -10,6 +10,8 @@ import type {
   AuthResult,
   User,
   CloudStatus,
+  DiskStatus,
+  DiskReceipt,
   CloudReceipt,
   Scene,
 } from "./types";
@@ -73,6 +75,10 @@ export const api = {
   },
   generateImage: (prompt: string,ai?:AiOptions) => aiRequest<{image_data: string; model: string}>("/images/generate",json("POST",{prompt}),ai),
   cloudStatus: () => request<CloudStatus>("/cloud/status"),
+  diskStatus: () => request<DiskStatus>("/disk/status"),
+  diskFiles: () => request<DiskReceipt[]>("/disk/files"),
+  connectDisk: () => request<{ url: string }>("/disk/connect", { method: "POST" }),
+  saveDisk: (id: string) => request<DiskReceipt>(`/projects/${id}/disk`, { method: "POST" }),
   cloudProjects: () => request<CloudReceipt[]>("/cloud/projects"),
   saveCloud: (id: string) =>
     request<CloudReceipt>(`/projects/${id}/cloud`, { method: "POST" }),

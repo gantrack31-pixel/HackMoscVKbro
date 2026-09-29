@@ -13,7 +13,7 @@ import { SlidePreview } from "../components/SlidePreview";
 import { PresentationViewer } from "../components/PresentationViewer";
 import { ExportPanel } from "../components/ExportPanel";
 import { CloudLibrary } from "../components/CloudLibrary";
-import type { CloudReceipt, CloudStatus, Project } from "../types";
+import type { DiskReceipt, DiskStatus, Project } from "../types";
 
 export function Finish({
   project,
@@ -24,8 +24,8 @@ export function Finish({
 }) {
   const [method, setMethod] = useState<"cloud" | "download">("cloud");
   const [presenting, setPresenting] = useState(false);
-  const [status, setStatus] = useState<CloudStatus | null>(null),
-    [receipt, setReceipt] = useState<CloudReceipt | null>(null);
+  const [status, setStatus] = useState<DiskStatus | null>(null),
+    [receipt, setReceipt] = useState<DiskReceipt | null>(null);
   const [error, setError] = useState(""),
     [busy, setBusy] = useState(false),
     [checking, setChecking] = useState(true);
@@ -37,7 +37,7 @@ export function Finish({
     setChecking(true);
     setError("");
     api
-      .cloudStatus()
+      .diskStatus()
       .then((value) => {
         if (active) setStatus(value);
       })
@@ -59,11 +59,12 @@ export function Finish({
     setError("");
     setReceipt(null);
     try {
-      const result = await api.saveCloud(project.id);
+      const result = await api.saveDisk(project.id);
       setReceipt(result);
       setRefresh((v) => v + 1);
     } catch (e) {
       setError((e as Error).message);
+      try { setStatus(await api.diskStatus()); } catch { /* Keep the original upload error. */ }
     } finally {
       setBusy(false);
     }
@@ -146,8 +147,8 @@ export function Finish({
               onClick={() => setMethod("cloud")}
             >
               <Cloud size={24} />
-              <strong>В облако</strong>
-              <small>Вернуться с любого устройства</small>
+              <strong>Яндекс.Диск</strong>
+              <small>Редактируемый PPTX в вашем Диске</small>
             </button>
             <button
               className={method === "download" ? "selected" : ""}
@@ -167,10 +168,10 @@ export function Finish({
                 <CloudCheck size={48} />
                 <Layers size={28} />
               </div>
-              <h3>Презентация и её оформление — вместе</h3>
+              <h3>Готовый PPTX — на вашем Яндекс.Диске</h3>
               <p className="small muted">
-                Содержание, выбранная композиция и библиотека шаблонов с
-                исходными PPTX сохранятся в вашем аккаунте.
+                Сохраним выбранный вариант в папку приложения Deckly.
+                Проект и история правок останутся на этом сервере.
               </p>
               <ul className="save-benefits">
                 <li>
@@ -179,23 +180,22 @@ export function Finish({
                 </li>
                 <li>
                   <Check size={16} />
-                  Исходные файлы шаблонов
+                  Нативные таблицы, диаграммы и текст
                 </li>
                 <li>
                   <Check size={16} />
-                  Восстановление через «Мои презентации»
+                  Новая копия при каждом сохранении
                 </li>
               </ul>
               {checking ? (
                 <p className="small muted" role="status">
-                  Проверяем подключение к облаку…
+                  Проверяем подключение к Яндекс.Диску…
                 </p>
               ) : !status?.ready && !error ? (
                 <div className="cloud-unavailable">
-                  <strong>Облако ещё не подключено</strong>
+                  <strong>Яндекс.Диск ещё не подключён</strong>
                   <p>
-                    Владелец сервера должен настроить хранилище. Сейчас
-                    презентация доступна на этом сервере и для скачивания.
+                    {status?.configured ? "Разрешите доступ к папке приложения в вашем Яндекс.Диске." : "Администратору нужно настроить OAuth Яндекса и ключ шифрования. Презентацию можно скачать на устройство."}
                   </p>
                 </div>
               ) : null}
@@ -211,11 +211,18 @@ export function Finish({
               >
                 <Cloud size={20} />
                 {busy
-                  ? "Сохраняем в облако…"
+                  ? "Сохраняем на Яндекс.Диск…"
                   : receipt
-                    ? "Обновить облачную копию"
-                    : "Сохранить в облако"}
+                    ? "Сохранить ещё одну копию"
+                    : "Сохранить на Яндекс.Диск"}
               </button>
+              {status?.configured && !status.ready && !checking && (
+                <button className="btn primary" disabled={busy} onClick={async () => {
+                  setBusy(true); setError("");
+                  try { const { url } = await api.connectDisk(); location.assign(url); }
+                  catch (e) { setError((e as Error).message); setBusy(false); }
+                }}>Подключить Яндекс.Диск</button>
+              )}
               {!status?.ready && !checking && (
                 <button
                   className="btn sm"
@@ -228,12 +235,12 @@ export function Finish({
                 <div className="save-feedback" role="status">
                   <CloudCheck size={24} />
                   <div>
-                    <strong>Сохранено в облаке</strong>
+                    <strong>Сохранено на Яндекс.Диске</strong>
                     <p>
-                      Версия {receipt.revision} ·{" "}
+                      {receipt.name} ·{" "}
                       {new Date(receipt.saved_at).toLocaleString("ru-RU")}
                       <br />
-                      Шаблонов сохранено: {receipt.templates_saved}
+                      <a href="https://disk.yandex.ru/client/disk" target="_blank" rel="noreferrer">Открыть Яндекс.Диск</a>
                     </p>
                   </div>
                 </div>

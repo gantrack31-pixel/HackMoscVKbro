@@ -7,6 +7,7 @@ from .audit import audit_deck
 from .layout import build_scene
 from .template_context import model_template
 from ..icon_catalog import model_icons
+from .visual_grounding import validate_visual, approved_material
 
 
 async def edit_presentation(request, template, source):
@@ -35,7 +36,7 @@ async def edit_presentation(request, template, source):
                    'additional_material':request.material,'template':model_template(template),
                    'icon_library':model_icons(),
                    'audit_issues':[i.model_dump() for i in issues if i.slide in allowed][:100],
-                   'geometry':boxes,'schema':AssistantPlan.model_json_schema(),
+                   'geometry':boxes,'schema':llm.compact_schema(AssistantPlan),
                    'pass':iteration + 1}
         for attempt in range(2):
             try:
@@ -56,6 +57,7 @@ async def edit_presentation(request, template, source):
                     if values.get('template_asset_id'):
                         values['image_data'] = ''
                     updated = Slide.model_validate({**previous.model_dump(), **values})
+                    validate_visual(updated,'\n'.join([source,request.material,approved_material(request.content)]),previous)
                     if updated.kind in {'diagram','icons'} and len(updated.bullets)>6:
                         raise ValueError('В схеме или пиктограммах может быть максимум 6 элементов.')
                     candidate.slides[patch.slide] = updated

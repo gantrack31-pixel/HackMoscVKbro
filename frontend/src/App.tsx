@@ -501,8 +501,8 @@ function Workspace({
                 ))}
             </div>
             <p className="small muted">
-              Обложка — пример подачи. Предпросмотр схемы и PDF используют
-              Manrope; исходные шрифты и ресурсы мастеров сохраняются в PPTX.
+              Для PPTX показан первый слайд исходного файла. Точность шрифтов
+              зависит от их установки на сервере; исходные ресурсы сохраняются в PPTX.
             </p>
             <details className="template-passport"><summary>Правила и токены шаблона</summary>
               <dl><dt>Пропорции</dt><dd>{preview.metadata.ratio.toFixed(3)}:1</dd>

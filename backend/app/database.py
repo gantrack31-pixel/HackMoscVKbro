@@ -52,6 +52,9 @@ def initialize():
             state_hash TEXT PRIMARY KEY, browser_hash TEXT NOT NULL,
             verifier TEXT NOT NULL, expires_at INTEGER NOT NULL
         );
+        CREATE TABLE IF NOT EXISTS yandex_disk_tokens (
+            user_id TEXT PRIMARY KEY, token TEXT NOT NULL, expires_at REAL NOT NULL, yandex_id TEXT NOT NULL
+        );
         CREATE TABLE IF NOT EXISTS auth_attempts (ip_hash TEXT NOT NULL, time INTEGER NOT NULL);
         CREATE INDEX IF NOT EXISTS auth_attempts_lookup ON auth_attempts(ip_hash,time);
         CREATE TABLE IF NOT EXISTS support_attempts (
@@ -76,7 +79,8 @@ def initialize():
         for table, additions in {'users': [('avatar_color', "TEXT NOT NULL DEFAULT '#0077FF'"),
                                             ('avatar_image', 'BLOB'), ('avatar_version', 'TEXT'),
                                             ('email_verified', 'INTEGER NOT NULL DEFAULT 1')],
-                                 'oauth_states': [('user_id', 'TEXT'), ('session_hash', 'TEXT')],
+                                 'oauth_states': [('user_id', 'TEXT'), ('session_hash', 'TEXT'), ('purpose', "TEXT NOT NULL DEFAULT 'login'")],
+                                 'support_attempts': [('result', "TEXT NOT NULL DEFAULT 'accepted'")],
                                  'jobs': [('task_type', "TEXT NOT NULL DEFAULT 'legacy'"),
                                           ('payload', 'TEXT'), ('retry_of', 'TEXT'), ('retry_job_id', 'TEXT')],
                                  'projects': [('provenance', "TEXT NOT NULL DEFAULT '{}'"),

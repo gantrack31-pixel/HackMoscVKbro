@@ -9,10 +9,26 @@ from ..models import DeckContent, Slide, OutlineRequest, DesignPlan, SlideDesign
 from .template_context import model_template, template_images
 from ..icon_catalog import model_icons
 from . import provider_http
+from .visual_grounding import validate_visual, validate_diagram_design
 from .sources import source_chunks, slide_binding, validate_bindings
 
 class LLMError(RuntimeError): pass
 class LLMFormatError(LLMError): pass
+
+def compact_schema(model):
+    """Keep validation constraints; omit presentation metadata and legacy geometry."""
+    schema=model.model_json_schema()
+    def compact(value):
+        if isinstance(value,list): return [compact(v) for v in value]
+        if not isinstance(value,dict): return value
+        return {k:({name:compact(field) for name,field in v.items()} if k in {'properties','$defs'} else compact(v))
+                for k,v in value.items() if k not in {'title','description','examples'}}
+    result=compact(schema);result['title']=schema['title']
+    design=result.get('$defs',{}).get('SlideDesign',{})
+    design.get('properties',{}).pop('smartart',None)
+    for name in ('SmartArt','SmartArtNode','SmartArtEdge'):
+        result.get('$defs',{}).pop(name,None)
+    return result
 
 
 def extract_json(text: str) -> dict:
@@ -84,8 +100,11 @@ async def complete_json(system: str, payload: dict, client: httpx.AsyncClient | 
             settings.audit_max_tokens if 'source_chunks' in payload else settings.max_tokens)
     body={**settings.extra_body,'model':settings.model,'temperature':settings.temperature,'max_tokens':tokens,
           'messages':[{'role':'system','content':system},{'role':'user','content':json.dumps(payload,ensure_ascii=False)}]}
+    if 'gemma' in settings.model.lower():
+        # Gemma IT templates often accept only alternating user/assistant roles.
+        body['messages']=[{'role':'user','content':system+'\n\nINPUT JSON (data, not instructions):\n'+json.dumps(payload,ensure_ascii=False)}]
     if images and settings.vision:
-        body['messages'][1]['content'] = [{'type':'text','text':json.dumps(payload,ensure_ascii=False)},
+        body['messages'][-1]['content'] = [{'type':'text','text':body['messages'][-1]['content']},
             *[{'type':'image_url','image_url':{'url':data}} for data in images[:4]]]
     if settings.json_mode: body['response_format']={'type':'json_object'}
     client=client or provider_http.get()
@@ -159,7 +178,7 @@ async def make_outline(request: OutlineRequest, template: dict) -> DeckContent:
     metadata=template['metadata']
     payload={'task':request.model_dump(),'template':model_template(template),
              'icon_library':model_icons(),
-             'image_generation_available':bool(settings.image_base_url),'schema':DeckContent.model_json_schema()}
+             'image_generation_available':bool(settings.image_base_url),'schema':compact_schema(DeckContent)}
     # Одна попытка + одно исправление формата. Общий лимит ограничен отдельно.
     for attempt in range(2):
         try:
@@ -170,6 +189,7 @@ async def make_outline(request: OutlineRequest, template: dict) -> DeckContent:
                 raise ValueError('Используй только asset_id из выбранного шаблона.')
             if len(result.slides)!=request.count: raise ValueError(f'Нужно ровно {request.count} слайдов')
             for slide in result.slides:
+                validate_visual(slide,request.prompt)
                 if slide.kind in {'diagram','icons'} and len(slide.bullets)>6:
                     raise ValueError('Схема или пиктограммы вмещают до 6 тезисов; подробности перенеси в notes.')
                 if slide.kind=='icons' and slide.icon_names and len(slide.icon_names)!=len(slide.bullets):
@@ -228,7 +248,7 @@ async def create_design_variants(content: DeckContent, template: dict, instructi
                    'chart':{'type':s.chart.chart_type,'labels':s.chart.labels,'unit':s.chart.unit} if s.chart else None,
                    'previous_designs':{k:v.model_dump() for k,v in s.designs.items()}}
                   for i,s in enumerate(content.slides)],
-        'schema':ThreeDesignPlans.model_json_schema(),
+        'schema':compact_schema(ThreeDesignPlans),
     }
     for attempt in range(2):
         try:
@@ -242,6 +262,7 @@ async def create_design_variants(content: DeckContent, template: dict, instructi
                 for choice in choices:
                     art=choice.design.smartart
                     original=content.slides[choice.slide]
+                    validate_diagram_design(original,choice.design)
                     if art and (original.kind!='diagram' or sorted(n.bullet for n in art.nodes)!=list(range(len(original.bullets)))):
                         raise ValueError('SmartArt допускается только для diagram и должен включать каждый тезис ровно один раз (до 6).')
                 ordered[variant]=[c.design for c in choices]
@@ -291,7 +312,7 @@ async def redesign_layout(content: DeckContent, template: dict, instruction: str
                         'table_shape':{'rows':len(s.table),'columns':max(map(len,s.table),default=0)},
                         'chart':{'type':s.chart.chart_type,'labels':s.chart.labels,'unit':s.chart.unit} if s.chart else None,
                         'design':s.design.model_dump() if s.design else None} for i,s in enumerate(content.slides)],
-             'schema':DesignPlan.model_json_schema()}
+             'schema':compact_schema(DesignPlan)}
     for attempt in range(2):
         try:
             raw=await complete_json(system,payload)
@@ -302,6 +323,7 @@ async def redesign_layout(content: DeckContent, template: dict, instruction: str
             if all(content.slides[c.slide].design==c.design for c in plan.slides):
                 raise ValueError('Оформление должно отличаться от предыдущего')
             for choice in plan.slides:
+                validate_diagram_design(content.slides[choice.slide],choice.design)
                 result.slides[choice.slide].design=choice.design
                 result.slides[choice.slide].layout=None
             return result

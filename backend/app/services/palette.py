@@ -44,6 +44,17 @@ def roles(metadata):
             'surface':blend(accent,background,.08), 'border':blend(ink,background,.2),
             'muted':blend(ink,background,.76)}
 
+def design_metadata(metadata,design):
+    if not design: return metadata
+    result=dict(metadata)
+    colors=[c for value in metadata.get('colors',{}).values() if (c:=hex_color(value))]
+    if design.background_role=='accent': result['background']=roles(metadata)['accent']
+    elif colors and design.background_role in {'light','dark'}:
+        result['background']=(max if design.background_role=='light' else min)(colors,key=luminance)
+    result['heading_font']=metadata.get(design.heading_role+'_font') or metadata.get('font','Manrope')
+    result['body_font']=metadata.get(design.body_role+'_font') or metadata.get('font','Manrope')
+    return result
+
 
 def active_palette(metadata):
     values = [*metadata.get('colors', {}).values(), *metadata.get('palette', []), *roles(metadata).values()]

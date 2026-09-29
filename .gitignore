@@ -18,6 +18,7 @@ backend/data/*.sqlite3-*
 backend/data/design/
 backend/data/uploads/
 backend/data/exports/
+backend/data/previews/
 !backend/data/.gitkeep
 !backend/data/templates/
 backend/data/templates/*.pptx

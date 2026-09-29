@@ -45,12 +45,12 @@ class Settings:
     app_env: str = field(default_factory=lambda: os.getenv('APP_ENV', 'development').strip().lower())
     allow_demo_in_production: bool = field(default_factory=lambda: os.getenv('ALLOW_DEMO_IN_PRODUCTION', 'false').strip().lower() == 'true')
     mode: str = field(default_factory=lambda: os.getenv('LLM_MODE', 'demo'))
-    base_url: str = field(default_factory=lambda: os.getenv('OPENROUTER_BASE_URL', 'https://openrouter.ai/api/v1').rstrip('/'))
-    api_key: str = field(default_factory=lambda: os.getenv('OPENROUTER_API_KEY', ''), repr=False)
+    base_url: str = field(default_factory=lambda: (os.getenv('LLM_BASE_URL') or os.getenv('OPENROUTER_BASE_URL','https://openrouter.ai/api/v1')).rstrip('/'))
+    api_key: str = field(default_factory=lambda: os.getenv('LLM_API_KEY','') if os.getenv('LLM_BASE_URL') else os.getenv('OPENROUTER_API_KEY',''), repr=False)
     openrouter_referer: str = field(default_factory=lambda: os.getenv('OPENROUTER_HTTP_REFERER', os.getenv('PUBLIC_BASE_URL', 'http://127.0.0.1:8000')))
     image_base_url: str = field(default_factory=lambda: os.getenv('IMAGE_BASE_URL', '').rstrip('/'))
     image_api_key: str = field(default_factory=lambda: os.getenv('IMAGE_API_KEY', ''), repr=False)
-    model: str = field(default_factory=lambda: os.getenv('OPENROUTER_MODEL', 'qwen/qwen-2.5-72b-instruct'))
+    model: str = field(default_factory=lambda: os.getenv('LLM_MODEL','google/gemma-3-27b-it') if os.getenv('LLM_BASE_URL') else os.getenv('OPENROUTER_MODEL','google/gemma-3-27b-it'))
     timeout: int = field(default_factory=lambda: int(os.getenv('LLM_TIMEOUT_SECONDS', '180')))
     max_tokens: int = field(default_factory=lambda: int(os.getenv('LLM_MAX_TOKENS', '8000')))
     outline_max_tokens: int = field(default_factory=lambda: int(os.getenv('LLM_OUTLINE_MAX_TOKENS','12000')))
@@ -79,6 +79,10 @@ class Settings:
     smtp_username: str = field(default_factory=lambda: os.getenv('SMTP_USERNAME',''))
     smtp_password: str = field(default_factory=lambda: os.getenv('SMTP_PASSWORD',''), repr=False)
     email_from: str = field(default_factory=lambda: os.getenv('EMAIL_FROM',''))
+    support_to: str = field(default_factory=lambda: os.getenv('SUPPORT_TO',''))
+    smtp_security: str = field(default_factory=lambda: os.getenv('SMTP_SECURITY','auto').lower())
+    support_rate_limit: int = field(default_factory=lambda: int(os.getenv('SUPPORT_RATE_LIMIT','5' if os.getenv('APP_ENV')=='production' else '30')))
+    yandex_disk_token_key: str = field(default_factory=lambda: os.getenv('YANDEX_DISK_TOKEN_KEY',''),repr=False)
 
 
 def validate_settings(config: Settings = None) -> None:
@@ -93,6 +97,12 @@ def validate_settings(config: Settings = None) -> None:
         raise ValueError('Сетевой таймаут и лимиты токенов должны быть положительными.')
     if config.smtp_port < 1 or config.smtp_port > 65535:
         raise ValueError('SMTP_PORT должен быть в диапазоне 1–65535.')
+    if config.smtp_security not in {'auto','ssl','starttls'} or config.support_rate_limit<1:
+        raise ValueError('SMTP_SECURITY: auto/ssl/starttls; SUPPORT_RATE_LIMIT должен быть положительным.')
+    if config.yandex_disk_token_key:
+        from cryptography.fernet import Fernet
+        try: Fernet(config.yandex_disk_token_key.encode())
+        except (ValueError, TypeError): raise ValueError('YANDEX_DISK_TOKEN_KEY должен быть ключом Fernet.') from None
     smtp_values=(config.smtp_host.strip(),config.smtp_username.strip(),config.smtp_password,config.email_from.strip())
     if any(smtp_values) and not all(smtp_values):
         raise ValueError('Для SMTP задайте все параметры: SMTP_HOST, SMTP_USERNAME, SMTP_PASSWORD и EMAIL_FROM.')

@@ -29,7 +29,9 @@ from .services.audit import audit_deck
 from .services.sources import slide_binding
 from .services.export import export_pptx, export_pdf, export_html
 from .services import cloud
+from .services import yandex_disk
 from .services import provider_http
+from .services.template_preview import thumbnail, PREVIEW_VERSION
 from .services.operations import standalone_ai, current_operation, checkpoint, OperationCancelled
 from .services.materials import read_material, MAX_FILE_BYTES, MAX_PACKET_CHARS
 from .services.workflow import recipe, manifest, generation_budget
@@ -40,7 +42,6 @@ from .auth import router as auth_router, current_user
 logger=logging.getLogger('deckly')
 generation_slots=asyncio.Semaphore(2)
 SUPPORT_RATE_WINDOW_SECONDS=900
-SUPPORT_RATE_LIMIT=3
 
 @asynccontextmanager
 async def lifespan(app):
@@ -111,7 +112,10 @@ def get_project(pid,user_id=None):
     return result
 
 def public_template(template):
-    return {key:value for key,value in template.items() if key not in {'path','user_id'}}
+    result={key:value for key,value in template.items() if key not in {'path','user_id'}}
+    if template.get('path'):
+        result['preview_url']=f"/api/templates/{template['id']}/thumbnail?v={PREVIEW_VERSION}-{template['metadata'].get('file_fingerprint','')}"
+    return result
 
 def project_response(project):
     content=DeckContent.model_validate(project['content']);template=get_template(project['template_id'])
@@ -190,7 +194,7 @@ def deliver_support_message(email: str, message: str, user: dict) -> None:
     email_message=EmailMessage()
     email_message['Subject']='Обращение в поддержку Deckly.Ai'
     email_message['From']=settings.email_from
-    email_message['To']=settings.email_from
+    email_message['To']=settings.support_to or settings.email_from
     email_message['Reply-To']=email
     email_message.set_content(
         'Новое обращение в поддержку Deckly.Ai\n\n'
@@ -199,12 +203,11 @@ def deliver_support_message(email: str, message: str, user: dict) -> None:
         f'Имя: {user["first_name"]} {user["last_name"]}\n\n'
         f'Сообщение:\n{message}\n'
     )
-    with smtplib.SMTP_SSL(settings.smtp_host,settings.smtp_port,timeout=15) as server:
-        server.login(settings.smtp_username,settings.smtp_password)
-        server.send_message(email_message)
+    from .services.mail import send_message
+    send_message(email_message)
 
 
-def rate_limit_support_message(request: Request, user_id: str) -> None:
+def rate_limit_support_message(request: Request, user_id: str) -> int:
     ip=request.client.host if request.client else 'unknown'
     ip_hash=hashlib.sha256(ip.encode()).hexdigest()
     user_hash=hashlib.sha256(user_id.encode()).hexdigest()
@@ -214,29 +217,35 @@ def rate_limit_support_message(request: Request, user_id: str) -> None:
         connection.execute('BEGIN IMMEDIATE')
         connection.execute('DELETE FROM support_attempts WHERE time<?',(cutoff,))
         ip_count=connection.execute(
-            'SELECT COUNT(*) FROM support_attempts WHERE ip_hash=? AND time>=?',
+            "SELECT COUNT(*) FROM support_attempts WHERE ip_hash=? AND time>=? AND result!='failed'",
             (ip_hash,cutoff),
         ).fetchone()[0]
         user_count=connection.execute(
-            'SELECT COUNT(*) FROM support_attempts WHERE user_hash=? AND time>=?',
+            "SELECT COUNT(*) FROM support_attempts WHERE user_hash=? AND time>=? AND result!='failed'",
             (user_hash,cutoff),
         ).fetchone()[0]
-        if ip_count>=SUPPORT_RATE_LIMIT or user_count>=SUPPORT_RATE_LIMIT:
-            raise HTTPException(429,'Слишком много обращений. Попробуйте отправить сообщение позже.')
-        connection.execute(
-            'INSERT INTO support_attempts (ip_hash,user_hash,time) VALUES (?,?,?)',
+        burst=connection.execute('SELECT COUNT(*) FROM support_attempts WHERE ip_hash=? AND time>=?',(ip_hash,now-60)).fetchone()[0]
+        if ip_count>=settings.support_rate_limit*4 or user_count>=settings.support_rate_limit or burst>=max(10,settings.support_rate_limit*2):
+            raise HTTPException(429,'Слишком много обращений. Попробуйте через 15 минут.',headers={'Retry-After':'900'})
+        cursor=connection.execute(
+            "INSERT INTO support_attempts (ip_hash,user_hash,time,result) VALUES (?,?,?,'pending')",
             (ip_hash,user_hash,now),
         )
+        return cursor.lastrowid
 
 
 @app.post('/api/support/messages',status_code=202)
 async def send_support_message(data: SupportMessage, request: Request, user=Depends(current_user)):
-    rate_limit_support_message(request,user['id'])
+    attempt=rate_limit_support_message(request,user['id'])
     try:
         await asyncio.to_thread(deliver_support_message,data.email,data.message,user)
     except Exception:
+        with db.connection() as connection:
+            connection.execute("UPDATE support_attempts SET result='failed' WHERE rowid=?",(attempt,))
         logger.error('Support message delivery failed.')
         raise HTTPException(503,'Не удалось отправить сообщение. Попробуйте позже.') from None
+    with db.connection() as connection:
+        connection.execute("UPDATE support_attempts SET result='accepted' WHERE rowid=?",(attempt,))
     return {'sent':True}
 
 @app.get('/api/public/templates')
@@ -273,6 +282,7 @@ async def upload_template(file: UploadFile,user=Depends(current_user)):
                 dest.write(chunk)
         await asyncio.to_thread(validate_pptx_archive,path)
         metadata=await asyncio.to_thread(analyze_template,path)
+        await asyncio.to_thread(thumbnail,path)
         name=Path(file.filename.replace('\\','/')).stem[:120]
         metadata.update(category='Мои шаблоны',cover_title=name)
         db.template_save(tid,name,str(path),metadata,user['id'])
@@ -291,6 +301,18 @@ def original_template(tid: str,user=Depends(current_user)):
     if not path or not Path(path).is_file(): raise HTTPException(404,'Исходный PPTX отсутствует')
     return FileResponse(path,media_type='application/vnd.openxmlformats-officedocument.presentationml.presentation',
                         filename='template.pptx',headers={'Cache-Control':'private, no-store'})
+
+@app.get('/api/templates/{tid}/thumbnail')
+def template_thumbnail(tid:str,request:Request):
+    from .auth import session_user
+    user=session_user(request)
+    template=get_template(tid)
+    if tid not in BUILTIN_IDS and (not user or not visible_template(template,user['id'])):
+        raise HTTPException(404,'Шаблон не найден')
+    if not template.get('path'): raise HTTPException(404,'Исходный слайд недоступен')
+    result=thumbnail(Path(template['path']))
+    if not result: raise HTTPException(404,'Предпросмотр недоступен. Установите LibreOffice и Poppler на сервере.')
+    return FileResponse(result,media_type='image/png',headers={'Cache-Control':'private, no-cache','X-Content-Type-Options':'nosniff'})
 
 @app.post('/api/outline')
 @standalone_ai
@@ -506,6 +528,31 @@ async def cloud_error(request: Request, exc: cloud.CloudError):
 @app.get('/api/cloud/status')
 def cloud_status(user=Depends(current_user)):
     return cloud.status(user['id'])
+
+@app.get('/api/disk/status')
+async def disk_status(user=Depends(current_user)):
+    return await yandex_disk.status(user['id'])
+
+@app.get('/api/disk/files')
+async def disk_files(user=Depends(current_user)):
+    return await yandex_disk.files(user['id'])
+
+@app.post('/api/disk/connect')
+def disk_connect(request:Request,response:Response,user=Depends(current_user)):
+    from .auth import begin_yandex
+    if not yandex_disk.configured(): raise HTTPException(503,'Администратору нужно настроить OAuth и ключ шифрования Яндекс.Диска.')
+    redirect=begin_yandex(request,user,purpose='disk')
+    for cookie in redirect.raw_headers:
+        if cookie[0]==b'set-cookie': response.raw_headers.append(cookie)
+    return {'url':redirect.headers['location']}
+
+@app.post('/api/projects/{pid}/disk')
+async def save_disk(pid:str,user=Depends(current_user)):
+    project=get_project(pid,user['id'])
+    yandex_disk.token_for(user['id'])
+    content=DeckContent.model_validate(project['content']);template=get_template(project['template_id'],user['id'])
+    data=await asyncio.to_thread(export_pptx,content,template,project['variant'])
+    return await yandex_disk.upload(user['id'],project['title'],data)
 
 @app.get('/api/cloud/projects')
 def cloud_projects(user=Depends(current_user)):

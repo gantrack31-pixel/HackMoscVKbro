@@ -9,6 +9,15 @@
 .presentation-assistant .assistant-scope select,.presentation-assistant .assistant-submit { height:44px; }
 .assistant-tools,.assistant-suggestions { display:flex; flex-wrap:wrap; align-items:center; gap:8px; }
 .assistant-repair { margin-left:auto; }
+.page .presentation-assistant .btn { min-height:36px; border-radius:10px; font-size:12px; font-weight:600; padding:8px 12px; box-shadow:none; }
+.page .presentation-assistant .assistant-submit { min-height:44px; padding-inline:18px; }
+.page .presentation-assistant .assistant-suggestions .btn { border-color:transparent; background:var(--surface); color:var(--muted); }
+.page .presentation-assistant .assistant-suggestions .btn:hover:not(:disabled) { color:var(--ink); border-color:var(--line); }
+.page .presentation-assistant .assistant-repair { background:transparent; border-style:dashed; color:var(--muted); }
+.page .presentation-assistant .btn:active:not(:disabled) { transform:translateY(1px); }
+.page .presentation-assistant .btn:disabled { opacity:.55; cursor:not-allowed; }
+.ai-operation-status { margin-top:12px; padding:8px 12px; border:1px solid var(--line); border-radius:10px; font-size:13px; gap:12px; }
+.ai-operation-status .btn { margin-left:auto; }
 .presentation-assistant summary { cursor:pointer; padding:0; font-size:12px; color:var(--muted); }
 .presentation-assistant .assistant-context[open] { display:grid; gap:12px; }
 .page .presentation-assistant .assistant-context textarea { height:80px; }

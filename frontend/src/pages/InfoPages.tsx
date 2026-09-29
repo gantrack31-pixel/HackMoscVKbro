@@ -349,10 +349,6 @@ export function Support() {
 
   return (
     <section className="support-page">
-      <a className="btn support-requirements-link" href="#requirements">
-        <span>Возможности, требования и пайплайн</span>
-        <Icon name="arrow" />
-      </a>
       <header className="heading support-heading">
         <span className="support-eyebrow">
           <Icon name="help" /> Помощь в нужный момент
@@ -492,6 +488,9 @@ export function Support() {
           </div>
         </section>
       </div>
+      <a className="btn support-requirements-link" href="#requirements" style={{marginTop:32}}>
+        <span>Возможности, требования и пайплайн</span><Icon name="arrow" />
+      </a>
     </section>
   );
 }

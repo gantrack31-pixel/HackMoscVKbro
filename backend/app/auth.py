@@ -156,9 +156,8 @@ def deliver_verification_email(email, url):
         logger.warning('Email verification delivery is unavailable: SMTP is not configured.')
         return 'unavailable'
     message=build_verification_email(email,url)
-    with smtplib.SMTP_SSL(settings.smtp_host,settings.smtp_port,timeout=15) as server:
-        server.login(settings.smtp_username,settings.smtp_password)
-        server.send_message(message)
+    from .services.mail import send_message
+    send_message(message)
     return 'sent'
 
 def deliver_password_reset_email(email, url):
@@ -169,9 +168,8 @@ def deliver_password_reset_email(email, url):
         logger.warning('Password reset delivery is unavailable: SMTP is not configured.')
         return 'unavailable'
     message=build_password_reset_email(email,url)
-    with smtplib.SMTP_SSL(settings.smtp_host,settings.smtp_port,timeout=15) as server:
-        server.login(settings.smtp_username,settings.smtp_password)
-        server.send_message(message)
+    from .services.mail import send_message
+    send_message(message)
     return 'sent'
 
 def create_verification(user_id,email):
@@ -440,17 +438,18 @@ def profile_stats(user=Depends(current_user)):
         return {key:db.execute(f'SELECT COUNT(*) FROM {table} WHERE user_id=?',(user['id'],)).fetchone()[0]
                 for key,table in [('projects','projects'),('favorites','favorites'),('templates','templates')]}
 
-def begin_yandex(request,user=None):
+def begin_yandex(request,user=None,purpose='login'):
     if not settings.yandex_id:raise HTTPException(503,'Вход через Яндекс пока не подключён. Попробуйте вход по почте.')
     state=secrets.token_urlsafe(32);browser=secrets.token_urlsafe(32);verifier=secrets.token_urlsafe(64)
     challenge=base64.urlsafe_b64encode(hashlib.sha256(verifier.encode()).digest()).decode().rstrip('=')
     with connection() as db:
         db.execute('DELETE FROM oauth_states WHERE expires_at<?',(int(time.time()),))
-        db.execute('INSERT INTO oauth_states (state_hash,browser_hash,verifier,expires_at,user_id,session_hash) VALUES (?,?,?,?,?,?)',
+        db.execute('INSERT INTO oauth_states (state_hash,browser_hash,verifier,expires_at,user_id,session_hash,purpose) VALUES (?,?,?,?,?,?,?)',
                    (digest(state),digest(browser),verifier,int(time.time())+600,user['id'] if user else None,
-                    digest(request.cookies.get(COOKIE,'')) if user else None))
+                    digest(request.cookies.get(COOKIE,'')) if user else None,purpose))
     params={'response_type':'code','client_id':settings.yandex_id,'redirect_uri':settings.yandex_redirect,'scope':'login:info login:email',
             'state':state,'code_challenge':challenge,'code_challenge_method':'S256'}
+    if purpose=='disk': params['scope']+=' cloud_api:disk.app_folder'
     response=RedirectResponse('https://oauth.yandex.ru/authorize?'+urlencode(params),status_code=302)
     response.set_cookie(OAUTH_COOKIE,browser,max_age=600,httponly=True,secure=settings.cookie_secure,samesite='lax',path='/api/auth/yandex')
     response.headers['Cache-Control']='no-store';return response
@@ -511,7 +510,7 @@ async def yandex_callback(request:Request,code:str='',state:str='',error:str='')
             found=db.execute('SELECT * FROM users WHERE yandex_id=?',(yandex_id,)).fetchone()
             if linking:
                 target=db.execute('SELECT * FROM users WHERE id=?',(row['user_id'],)).fetchone()
-                if not target or (found and found['id']!=target['id']) or target['yandex_id']:return fail('linked')
+                if not target or (found and found['id']!=target['id']) or (target['yandex_id'] and (row['purpose']!='disk' or target['yandex_id']!=yandex_id)):return fail('linked')
                 db.execute('UPDATE users SET yandex_id=? WHERE id=?',(yandex_id,target['id']))
                 user={**dict(target),'yandex_id':yandex_id}
             elif found:user=dict(found)
@@ -522,6 +521,10 @@ async def yandex_callback(request:Request,code:str='',state:str='',error:str='')
                       'last_name':str(info.get('last_name') or '')[:60],'created_at':now()}
                 db.execute('INSERT INTO users (id,email,first_name,last_name,password_hash,yandex_id,created_at) VALUES (?,?,?,?,?,?,?)',(user['id'],email,user['first_name'],user['last_name'],None,yandex_id,user['created_at']))
                 user['yandex_id']=yandex_id
-        response=RedirectResponse(oauth_return_base(request)+('/#profile?yandex=connected' if linking else '/#home'),status_code=302)
+        if row['purpose']=='disk':
+            from .services.yandex_disk import save_token
+            save_token(user['id'],access_token,token.json().get('expires_in',0),yandex_id)
+        destination='/#projects' if row['purpose']=='disk' else '/#profile?yandex=connected' if linking else '/#home'
+        response=RedirectResponse(oauth_return_base(request)+destination,status_code=302)
         set_session(response,user,request);response.delete_cookie(OAUTH_COOKIE,path='/api/auth/yandex');return response
     except (httpx.HTTPError,KeyError,ValueError,TypeError,sqlite3.IntegrityError):return fail('provider')

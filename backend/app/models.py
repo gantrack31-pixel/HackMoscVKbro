@@ -52,6 +52,13 @@ class SlideDesign(BaseModel):
     density: Literal['compact', 'balanced', 'airy'] = 'balanced'
     layout_shift: Literal[0, 1, 2] = 0
     smartart: SmartArt | None = None
+    background_role: Literal['template','light','dark','accent'] = 'template'
+    heading_role: Literal['heading','body'] = 'heading'
+    body_role: Literal['body','heading'] = 'body'
+    heading_scale: Literal[0.9,1.0,1.1] = 1.0
+    body_scale: Literal[0.9,1.0,1.05] = 1.0
+    heading_weight: Literal['normal','bold'] = 'bold'
+    diagram_style: DiagramType | None = None
 
 class ChartData(BaseModel):
     model_config = ConfigDict(extra='forbid',allow_inf_nan=False)
