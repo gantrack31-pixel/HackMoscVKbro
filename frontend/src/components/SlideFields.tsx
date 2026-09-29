@@ -1,7 +1,7 @@
 import { useEffect, useId, useRef, useState } from "react";
 import type { Slide, Template } from "../types";
 import { api } from "../api";
-import { slideIcons } from "./iconCatalog";
+import { useAiOperation, AiOperationStatus } from "./useAiOperation";
 import "../styles/slide-fields.css";
 
 export const slideKinds = {
@@ -19,6 +19,7 @@ export function SlideFields({
   slide,
   onChange,
   onValidity,
+  onImageBusy,
   sectioned = false,
   imageGenerationAvailable = false,
   templateAssets = [],
@@ -26,6 +27,7 @@ export function SlideFields({
   slide: Slide;
   onChange: (patch: Partial<Slide>) => void;
   onValidity: (valid: boolean) => void;
+  onImageBusy?: (busy: boolean) => void;
   sectioned?: boolean;
   imageGenerationAvailable?: boolean;
   templateAssets?: Template["metadata"]["assets"];
@@ -33,6 +35,7 @@ export function SlideFields({
   const fieldId = useId();
   const [section, setSection] = useState("content");
   const [imageBusy,setImageBusy]=useState(false);
+  const imageOperation=useAiOperation();
   const [imageError,setImageError]=useState("");
   const currentChange = useRef(onChange);
   const mounted = useRef(true);
@@ -99,6 +102,7 @@ export function SlideFields({
               type="button"
               key={item.id}
               role="tab"
+              disabled={imageBusy}
               id={`${fieldId}-${item.id}-tab`}
               aria-controls={`${fieldId}-${item.id}-panel`}
               aria-selected={section === item.id}
@@ -157,19 +161,6 @@ export function SlideFields({
             <option value="comparison">Сравнение</option><option value="kpi">Карточки KPI</option>
           </select><small>До 6 узлов. Названия — в поле «Тезисы». Фигуры и связи остаются редактируемыми в PPTX.</small>
         </label>}
-        {slide.kind==="icons" && <div className="field">
-          <strong>Пиктограммы IconaMoon</strong>
-          {slide.bullets.slice(0,6).map((bullet,i)=><label className="field" key={i}>
-            <span className="tiny">{i+1}. {bullet}</span>
-            <select aria-label={`Иконка для тезиса ${i+1}`} value={slide.icon_names?.[i] || "auto"}
-              onChange={e=>onChange({icon_names:slide.bullets.slice(0,6).map((_,j)=>j===i?e.target.value:slide.icon_names?.[j]||"auto")})}>
-              <option value="auto">По смыслу текста</option>
-              {Object.entries(slideIcons).map(([id,label])=><option value={id} key={id}>{label}</option>)}
-            </select>
-          </label>)}
-          <small>До 6 тезисов. AI выбирает иконки по смыслу; любой выбор можно изменить.</small>
-          <a className="tiny" href="https://github.com/dariushhpg1/IconaMoon" target="_blank" rel="noreferrer">IconaMoon · Dariush Habibpour</a>
-        </div>}
         {slide.kind==="chart" && slide.chart && <label className="field">Визуализация данных
           <select value={slide.chart.chart_type||"bar"} onChange={e=>onChange({chart:{...slide.chart!,chart_type:e.target.value as "bar"|"column"|"line"}})}>
             <option value="bar">Полосы</option><option value="column">Столбцы</option><option value="line">Линейный график</option>
@@ -185,9 +176,10 @@ export function SlideFields({
             onChange={e=>onChange({image_prompt:e.target.value})} placeholder="Например: светлая изометрическая мастерская, без надписей"/></label>
           <small>{imageGenerationAvailable ? "Иллюстрация создаётся отдельно; текст слайда остаётся редактируемым." : "Генерация изображений пока не подключена. Подробности — в разделе «Как устроен Deckly»."}</small>
           <button type="button" className="btn" disabled={!imageGenerationAvailable||imageBusy||(slide.image_prompt||"").trim().length<3}
-            onClick={async()=>{setImageBusy(true);setImageError("");try{const result=await api.generateImage(slide.image_prompt!.trim());if(mounted.current)currentChange.current({image_data:result.image_data});}catch(e){if(mounted.current)setImageError((e as Error).message);}finally{if(mounted.current)setImageBusy(false);}}}>
+            onClick={async()=>{setImageBusy(true);onImageBusy?.(true);setImageError("");try{const result=await imageOperation.run(options=>api.generateImage(slide.image_prompt!.trim(),options));if(result&&mounted.current)currentChange.current({image_data:result.image_data});}catch(e){if(mounted.current)setImageError((e as Error).message);}finally{if(mounted.current)setImageBusy(false);onImageBusy?.(false);}}}>
             {imageBusy?"Создаём иллюстрацию…":"Создать иллюстрацию"}
           </button>
+          <AiOperationStatus operation={imageOperation}/>
           {slide.image_data && <span>Иллюстрация готова. Сохраните изменения слайда.</span>}
           {imageError && <span className="error-banner" role="alert">{imageError}</span>}
         </div>}

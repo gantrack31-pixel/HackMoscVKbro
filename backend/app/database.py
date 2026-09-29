@@ -152,10 +152,13 @@ def project_history(pid: str, direction: str):
     return True
 
 
-def project_ai_update(pid, user_id, expected_version, draft, content, variant):
+def project_ai_update(pid, user_id, expected_version, draft, content, variant, operation_id=None):
     """Do not overwrite edits from another tab while the model is working."""
     with connection() as conn:
         conn.execute('BEGIN IMMEDIATE')
+        if operation_id:
+            operation=conn.execute('SELECT state FROM jobs WHERE id=? AND user_id=?',(operation_id,user_id)).fetchone()
+            if not operation or operation['state']!='running': return False
         row = conn.execute('SELECT * FROM projects WHERE id=? AND user_id=?', (pid,user_id)).fetchone()
         if not row or row['updated_at'] != expected_version:
             return False
@@ -166,6 +169,8 @@ def project_ai_update(pid, user_id, expected_version, draft, content, variant):
         conn.execute("UPDATE projects SET title=?,content=?,variant=?,revisions=?,future='[]',updated_at=? WHERE id=?",
                      (content['title'],json.dumps(content,ensure_ascii=False),variant,
                       json.dumps(revisions[-12:],ensure_ascii=False),now(),pid))
+        if operation_id:
+            conn.execute("UPDATE jobs SET state='complete',stage='complete',updated_at=? WHERE id=?",(now(),operation_id))
     return True
 
 def project_delete(pid: str):
@@ -181,10 +186,10 @@ def job_create(jid: str, user_id: str, task_type: str, payload: dict, retry_of=N
 
 def job_set(jid: str, state: str, stage: str, project_id=None, error=None, user_id=None):
     with connection() as db:
-        db.execute('''UPDATE jobs SET state=?,stage=?,project_id=COALESCE(?,project_id),
-          error=?,updated_at=?,user_id=COALESCE(?,user_id) WHERE id=?''',
+        updated=db.execute('''UPDATE jobs SET state=?,stage=?,project_id=COALESCE(?,project_id),
+          error=?,updated_at=?,user_id=COALESCE(?,user_id) WHERE id=? AND state NOT IN ('cancelled','complete')''',
           (state, stage, project_id, error, now(), user_id, jid))
-        if state=='failed':
+        if state=='failed' and updated.rowcount:
             child=db.execute('SELECT retry_of FROM jobs WHERE id=?',(jid,)).fetchone()
             if child and child['retry_of']:
                 db.execute('''UPDATE jobs SET state='failed',stage='failed',error=?,updated_at=?
@@ -199,6 +204,26 @@ def job_get(jid: str):
         if result.get('payload'):
             result['payload']=json.loads(result['payload'])
         return result
+
+
+def job_cancel(jid, user_id):
+    with connection() as conn:
+        conn.execute('BEGIN IMMEDIATE')
+        row=conn.execute('SELECT * FROM jobs WHERE id=? AND user_id=?',(jid,user_id)).fetchone()
+        if not row: return None
+        if row['state'] in {'queued','running'}:
+            conn.execute("UPDATE jobs SET state='cancelled',stage='cancelled',error=NULL,updated_at=? WHERE id=?",(now(),jid))
+            if row['retry_of']:
+                conn.execute("UPDATE jobs SET state='cancelled',stage='cancelled',error=NULL,updated_at=? WHERE id=? AND retry_job_id=? AND state='retrying'",(now(),row['retry_of'],jid))
+            return 'cancelled'
+        return row['state']
+
+
+def job_finish_ai(jid):
+    with connection() as conn:
+        conn.execute("UPDATE jobs SET state='complete',stage='complete',updated_at=? WHERE id=? AND state='running' AND task_type='ai'",(now(),jid))
+        row=conn.execute('SELECT state FROM jobs WHERE id=?',(jid,)).fetchone()
+        return bool(row and row['state']=='complete')
 
 
 def job_retry_claim(jid: str, user_id: str):
@@ -243,7 +268,9 @@ def job_retry_claim(jid: str, user_id: str):
 def job_complete_with_project(jid: str, pid: str, template_id: str, content: dict,
                               source_text: str, user_id: str, provenance: dict | None = None):
     """Atomically persist the single result and mark its job complete."""
-    timestamp=now()
+    from time import monotonic
+    from .services.operations import check_deadline
+    persist_started=monotonic();timestamp=now()
     with connection() as db:
         db.execute('BEGIN IMMEDIATE')
         job=db.execute('SELECT state,retry_of FROM jobs WHERE id=? AND user_id=?',(jid,user_id)).fetchone()
@@ -252,6 +279,7 @@ def job_complete_with_project(jid: str, pid: str, template_id: str, content: dic
             return db.execute('SELECT project_id FROM jobs WHERE id=?',(jid,)).fetchone()['project_id']
         if job['state']!='running':
             raise ValueError('Нельзя сохранить результат задания, которое не выполняется.')
+        check_deadline()
         reserved=db.execute('SELECT user_id FROM projects WHERE id=?',(pid,)).fetchone()
         if reserved and reserved['user_id']!=user_id:
             raise ValueError('ID результата уже принадлежит другому пользователю.')
@@ -266,10 +294,15 @@ def job_complete_with_project(jid: str, pid: str, template_id: str, content: dic
         db.execute('UPDATE jobs SET state=\'complete\',stage=\'complete\',project_id=?,error=NULL,updated_at=? WHERE id=?',
                    (pid,timestamp,jid))
         if provenance:
+            elapsed=monotonic()-persist_started
+            provenance['timings']={**provenance.get('timings',{}),'persist':round(elapsed,4),
+                                   'total':round(provenance.get('timings',{}).get('total',provenance['duration_seconds'])+elapsed,4)}
+            provenance['duration_seconds']=round(provenance['timings']['total'],2)
             db.execute('UPDATE projects SET provenance=? WHERE id=?',(json.dumps(provenance,ensure_ascii=False),pid))
         if job['retry_of']:
             db.execute('''UPDATE jobs SET state='complete',stage='complete',project_id=?,error=NULL,updated_at=?
               WHERE id=? AND retry_job_id=?''',(pid,timestamp,job['retry_of'],jid))
+        check_deadline()  # rollback if synchronous serialization crossed the deadline
         return pid
 
 

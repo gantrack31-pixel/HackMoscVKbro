@@ -137,18 +137,21 @@ def test_pptx_upload_rejects_zip_bomb_and_cleans_temporary_file(client,monkeypat
     assert list((settings.storage/'templates').glob('*.pptx'))==[]
     assert not any(template.get('user_id') for template in db.templates_list())
 
-def test_failed_generation_can_be_retried_without_duplicate_projects(client):
+def test_failed_generation_can_be_retried_without_duplicate_projects(client, monkeypatch):
     register(client)
     content=DeckContent(title='Повторяемая презентация',slides=[
         Slide(title='Сохранённый материал',body='Тезис остаётся доступен',source_quote='Тезис остаётся доступен'),
     ])
-    response=client.post('/api/generate',json={
-        'template_id':'tech','content':content.model_dump(),'source_text':'Тезис остаётся доступен',
-    })
+    from app.services.llm import LLMError
+    async def interrupted(*args): raise LLMError('Тестовое прерывание до публикации.')
+    with monkeypatch.context() as patch:
+        patch.setattr('app.main.create_design_variants',interrupted)
+        response=client.post('/api/generate',json={
+            'template_id':'tech','content':content.model_dump(),'source_text':'Тезис остаётся доступен',
+        })
     failed_id=response.json()['job_id']
     failed=db.job_get(failed_id)
-    db.project_delete(failed['project_id'])
-    db.job_set(failed_id,'failed','failed',error='Сервер перезапущен. Повторите создание.')
+    assert failed['state']=='failed' and not failed['project_id']
 
     first=client.post(f'/api/jobs/{failed_id}/retry')
     second=client.post(f'/api/jobs/{failed_id}/retry')

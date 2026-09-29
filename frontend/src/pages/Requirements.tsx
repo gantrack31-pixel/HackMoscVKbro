@@ -31,7 +31,7 @@ export function Requirements({health,templates}:{health:Health|null;templates:Te
       <div><strong>≤ 5 мин</strong><span>бюджет генерации</span></div>
       <div><strong>{health?.mode==="live"?"AI подключён":"Демо"}</strong><span>{health?.mode==="live"?"структура и композиции":"модель не используется"}</span></div>
     </div>
-    <p className="muted">На структуру отведено до 2 минут, на три оформления, сборку PPTX и аудит — ещё до 3 минут, включая ожидание очереди. Время ваших правок между этапами не учитывается. Превышение завершает запрос ошибкой с возможностью повтора. Скорость реальной модели зависит от подключённого сервиса.</p>
+    <p className="muted">Полная сборка и пересборка ограничены 5 минутами, включая очередь. Структура и отдельные AI-правки не имеют лимита выполнения: их можно остановить кнопкой «Стоп». Сетевые таймауты защищают от зависшего соединения. PPTX создаётся при скачивании.</p>
     <div className="requirements-grid">{requirements.map(([id,title,body,link])=><article className="panel" key={id}><span className="label">{id}</span><h2>{title}</h2><p>{body}</p><a href={link}>Открыть раздел <Icon name="arrow"/></a></article>)}</div>
     <section className="panel image-capability"><span className="label">ДОПОЛНИТЕЛЬНО · ПУНКТ СО ЗВЁЗДОЧКОЙ</span><h2>Изображение внутри слайда</h2>
       <p>Выбрана FLUX.1-schnell — text-to-image модель на 12 млрд параметров, до 4 шагов. Её изображение занимает один блок; остальной слайд остаётся редактируемым.</p>

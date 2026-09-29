@@ -160,7 +160,7 @@ export interface AssistantResult {
 
 export interface WorkflowRecipe {
   version: string; fingerprint: string; budget_seconds: number;
-  outline_budget_seconds?: number; assembly_budget_seconds?: number;
+  outline_budget_seconds?: number | null; assembly_budget_seconds?: number;
   stages: {id: string; name: string; type: string}[];
   snippets: {id: string; version: string; text: string}[];
   variants: {id: string; title: string; layout: string; density: string}[];
@@ -168,6 +168,7 @@ export interface WorkflowRecipe {
 export interface GenerationManifest {
   job_id: string; recipe: WorkflowRecipe; mode: string; model: string;
   duration_seconds: number; within_budget: boolean; slides: number;
+  timings?: Partial<Record<"template" | "design" | "images" | "layout" | "audit" | "persist" | "total", number>>;
   template: {id: string; name: string; fingerprint: string};
   audit: Record<string, {issues: number; errors: number}>;
 }
@@ -204,7 +205,7 @@ export interface Issue {
 }
 export interface Job {
   id: string;
-  state: "queued" | "running" | "complete" | "failed";
+  state: "queued" | "running" | "complete" | "failed" | "cancelled";
   stage: string;
   project_id: string | null;
   error: string | null;

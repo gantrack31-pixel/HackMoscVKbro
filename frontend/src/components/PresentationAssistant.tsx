@@ -1,6 +1,7 @@
 import { useRef, useState } from "react";
 import { api } from "../api";
 import { Icon } from "./Icon";
+import { useAiOperation, AiOperationStatus } from "./useAiOperation";
 import type { AssistantResult, DeckContent, Health, Project } from "../types";
 import "../styles/presentation-assistant.css";
 
@@ -16,17 +17,18 @@ export function PresentationAssistant({ project, content, index, health, disable
   const [error, setError] = useState("");
   const [working, setWorking] = useState(false);
   const lock = useRef(false);
+  const operation = useAiOperation();
   const available = health?.mode === "live" && health.llm_configured;
   async function run(action: "edit" | "repair") {
     if (lock.current || disabled || busy || !available) return;
     lock.current = true;
     setWorking(true); onBusy(true); setError(""); setReport(null);
     try {
-      const result = await api.assistant(project.id, {
+      const result = await operation.run(options=>api.assistant(project.id, {
         content, variant: project.variant, base_updated_at: project.updated_at,
         instruction: instruction.trim(), action, slide: scope === "all" ? null : index, material,
-      });
-      setReport(result); onResult(result);
+      },options));
+      if(result) { setReport(result); onResult(result); }
     } catch (e) { setError((e as Error).message); }
     finally { lock.current = false; setWorking(false); onBusy(false); }
   }
@@ -67,7 +69,7 @@ export function PresentationAssistant({ project, content, index, health, disable
         }} /></label>
       </details>
     </fieldset>
-    {working && <p role="status">AI читает слайды, вносит правки и проверяет результат. Это может занять до трёх минут.</p>}
+    <AiOperationStatus operation={operation}/>
     {error && <p className="error-banner" role="alert">{error}</p>}
     {report && <div className="assistant-result" role="status"><strong>{report.project ? "Правки сохранены" : "Изменения не применены"}</strong><p>{report.summary}</p>
       {report.project && <p>Изменены слайды: {report.changed_slides.map(i => i + 1).join(", ")}. Вернуть исходный текст можно кнопкой «Отменить изменение».</p>}

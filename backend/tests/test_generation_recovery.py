@@ -6,6 +6,11 @@ from app import database as db
 from app.config import settings
 from app.main import app
 from app.models import DeckContent, Slide
+from app.services.llm import LLMError
+
+
+async def interrupted_design(*args):
+    raise LLMError('Тестовое прерывание до публикации результата.')
 
 
 @pytest.fixture
@@ -35,17 +40,17 @@ def create_failed_job(client):
     content = DeckContent(title='Восстанавливаемая презентация', slides=[
         Slide(title='Слайд для повтора', body='Подтверждённый текст', source_quote='Подтверждённый текст'),
     ])
-    response = client.post('/api/generate', json={
-        'template_id': 'tech',
-        'content': content.model_dump(),
-        'source_text': 'Подтверждённый текст',
-    })
+    with pytest.MonkeyPatch.context() as patch:
+        patch.setattr('app.main.create_design_variants', interrupted_design)
+        response = client.post('/api/generate', json={
+            'template_id': 'tech',
+            'content': content.model_dump(),
+            'source_text': 'Подтверждённый текст',
+        })
     assert response.status_code == 202, response.text
     job_id = response.json()['job_id']
-    completed = client.get(f'/api/jobs/{job_id}').json()
-    if completed.get('project_id'):
-        db.project_delete(completed['project_id'])
-    db.job_set(job_id, 'failed', 'failed', error='Сервер перезапущен. Повторите создание.')
+    failed = client.get(f'/api/jobs/{job_id}').json()
+    assert failed['state']=='failed' and not failed['project_id']
     return job_id
 
 
@@ -136,10 +141,12 @@ def test_regeneration_retry_uses_saved_source_project_and_produces_one_copy(clie
     })
     original_job = client.get(f"/api/jobs/{created.json()['job_id']}").json()
     original = client.get(f"/api/projects/{original_job['project_id']}").json()
-    response = client.post(f"/api/projects/{original['id']}/regenerate", json={'instruction': 'Больше воздуха'})
+    with pytest.MonkeyPatch.context() as patch:
+        patch.setattr('app.main.create_design_variants', interrupted_design)
+        response = client.post(f"/api/projects/{original['id']}/regenerate", json={'instruction': 'Больше воздуха'})
     regeneration_id = response.json()['job_id']
     regeneration = client.get(f'/api/jobs/{regeneration_id}').json()
-    db.job_set(regeneration_id, 'failed', 'failed', error='Тестовое прерывание')
+    assert regeneration['state']=='failed' and not regeneration['project_id']
 
     retry = client.post(f'/api/jobs/{regeneration_id}/retry')
     retry_job = client.get(f"/api/jobs/{retry.json()['job_id']}").json()

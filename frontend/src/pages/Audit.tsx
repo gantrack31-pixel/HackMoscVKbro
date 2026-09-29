@@ -29,8 +29,10 @@ export function Audit({
   const [draft, setDraft] = useState<Slide | null>(null);
   const [dirty, setDirty] = useState(false),
     [valid, setValid] = useState(true);
-  const [busy, setBusy] = useState(false),
+  const [actionBusy, setBusy] = useState(false),
     [loading, setLoading] = useState(true);
+  const [imageBusy, setImageBusy] = useState(false);
+  const busy = actionBusy || imageBusy;
   const [loadError, setLoadError] = useState(""),
     [revision, setRevision] = useState(0);
   const [notice, setNotice] = useState("");
@@ -329,8 +331,9 @@ export function Audit({
                           Применить исправление
                         </button>
                       )}
-                      <fieldset disabled={busy}>
+                      <fieldset disabled={actionBusy}>
                         <SlideFields
+                          onImageBusy={setImageBusy}
                           sectioned
                           imageGenerationAvailable={health?.image_generation}
                           templateAssets={project.template.metadata.assets}

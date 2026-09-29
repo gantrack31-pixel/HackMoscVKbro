@@ -1,5 +1,4 @@
 """Единственное место общения с моделью. Совместимо с /v1/chat/completions."""
-import asyncio
 import json
 import re
 from urllib.parse import urlparse
@@ -9,6 +8,7 @@ from ..config import settings, BASE
 from ..models import DeckContent, Slide, OutlineRequest, DesignPlan, SlideDesign, ThreeDesignPlans
 from .template_context import model_template, template_images
 from ..icon_catalog import model_icons
+from . import provider_http
 from .sources import source_chunks, slide_binding, validate_bindings
 
 class LLMError(RuntimeError): pass
@@ -78,16 +78,22 @@ async def complete_json(system: str, payload: dict, client: httpx.AsyncClient | 
     headers={'Content-Type':'application/json', 'HTTP-Referer':settings.openrouter_referer, 'X-Title':'Deckly.Ai'}
     if settings.api_key:
         headers['Authorization']='Bearer '+settings.api_key
-    body={**settings.extra_body,'model':settings.model,'temperature':settings.temperature,'max_tokens':settings.max_tokens,
+    task=payload.get('schema',{}).get('title')
+    tokens={'DeckContent':settings.outline_max_tokens,'ThreeDesignPlans':settings.design_max_tokens,
+            'DesignPlan':settings.design_max_tokens,'AssistantPlan':settings.assistant_max_tokens}.get(task,
+            settings.audit_max_tokens if 'source_chunks' in payload else settings.max_tokens)
+    body={**settings.extra_body,'model':settings.model,'temperature':settings.temperature,'max_tokens':tokens,
           'messages':[{'role':'system','content':system},{'role':'user','content':json.dumps(payload,ensure_ascii=False)}]}
     if images and settings.vision:
         body['messages'][1]['content'] = [{'type':'text','text':json.dumps(payload,ensure_ascii=False)},
             *[{'type':'image_url','image_url':{'url':data}} for data in images[:4]]]
     if settings.json_mode: body['response_format']={'type':'json_object'}
+    client=client or provider_http.get()
     owned=client is None
     client=client or httpx.AsyncClient(timeout=httpx.Timeout(settings.timeout,connect=15),follow_redirects=False)
     try:
-        response=await client.post(settings.base_url+'/chat/completions',headers=headers,json=body)
+        response=await client.post(settings.base_url+'/chat/completions',headers=headers,json=body,
+                                   timeout=httpx.Timeout(settings.timeout,connect=15,pool=15))
         if response.status_code in {401,403}: raise LLMError('Провайдер отклонил ключ или доступ к модели. Проверьте .env.')
         if response.status_code==429: raise LLMError('Провайдер ограничил запросы. Повторите позже.')
         if response.status_code>=400:
@@ -105,7 +111,7 @@ async def complete_json(system: str, payload: dict, client: httpx.AsyncClient | 
         text=data['choices'][0]['message']['content']
         if not isinstance(text,str): raise ValueError('Нет текстового ответа')
         return extract_json(text)
-    except httpx.TimeoutException as exc: raise LLMError('Модель не ответила за отведённое время. Уменьшите материал или повторите запрос.') from exc
+    except httpx.TimeoutException as exc: raise LLMError('Соединение с моделью не передавало данные в пределах сетевого таймаута. Повторите запрос.') from exc
     except httpx.HTTPError as exc: raise LLMError('Не удалось подключиться к LLM. Проверьте адрес сервера модели.') from exc
     except (ValueError,KeyError,IndexError,TypeError) as exc: raise LLMFormatError('Ответ модели не соответствует формату JSON. Проверьте поддержку JSON у провайдера.') from exc
     finally:
@@ -155,26 +161,25 @@ async def make_outline(request: OutlineRequest, template: dict) -> DeckContent:
              'icon_library':model_icons(),
              'image_generation_available':bool(settings.image_base_url),'schema':DeckContent.model_json_schema()}
     # Одна попытка + одно исправление формата. Общий лимит ограничен отдельно.
-    async with asyncio.timeout(240):
-        for attempt in range(2):
-            try:
-                raw=await complete_with_template(system,payload,template)
-                result=DeckContent.model_validate(raw)
-                assets={a['id'] for a in metadata.get('assets',[])}
-                if any(s.template_asset_id and s.template_asset_id not in assets for s in result.slides):
-                    raise ValueError('Используй только asset_id из выбранного шаблона.')
-                if len(result.slides)!=request.count: raise ValueError(f'Нужно ровно {request.count} слайдов')
-                for slide in result.slides:
-                    if slide.kind in {'diagram','icons'} and len(slide.bullets)>6:
-                        raise ValueError('Схема или пиктограммы вмещают до 6 тезисов; подробности перенеси в notes.')
-                    if slide.kind=='icons' and slide.icon_names and len(slide.icon_names)!=len(slide.bullets):
-                        raise ValueError('В icon_names нужен один id на каждый bullet в том же порядке.')
-                result.audience=request.audience
-                return result
-            except (ValidationError,ValueError,LLMFormatError) as exc:
-                if attempt: raise LLMError('Модель дважды вернула некорректную структуру. Повторите с более коротким материалом.') from exc
-                payload['format_correction']=str(exc)[:1600]
-        raise LLMError('Не удалось создать структуру.')
+    for attempt in range(2):
+        try:
+            raw=await complete_with_template(system,payload,template)
+            result=DeckContent.model_validate(raw)
+            assets={a['id'] for a in metadata.get('assets',[])}
+            if any(s.template_asset_id and s.template_asset_id not in assets for s in result.slides):
+                raise ValueError('Используй только asset_id из выбранного шаблона.')
+            if len(result.slides)!=request.count: raise ValueError(f'Нужно ровно {request.count} слайдов')
+            for slide in result.slides:
+                if slide.kind in {'diagram','icons'} and len(slide.bullets)>6:
+                    raise ValueError('Схема или пиктограммы вмещают до 6 тезисов; подробности перенеси в notes.')
+                if slide.kind=='icons' and slide.icon_names and len(slide.icon_names)!=len(slide.bullets):
+                    raise ValueError('В icon_names нужен один id на каждый bullet в том же порядке.')
+            result.audience=request.audience
+            return result
+        except (ValidationError,ValueError,LLMFormatError) as exc:
+            if attempt: raise LLMError('Модель дважды вернула некорректную структуру. Повторите с более коротким материалом.') from exc
+            payload['format_correction']=str(exc)[:1600]
+    raise LLMError('Не удалось создать структуру.')
 
 async def review_content(content: dict, source: str) -> list[dict]:
     if settings.mode!='live' or not settings.context_audit: return []
@@ -216,40 +221,43 @@ async def create_design_variants(content: DeckContent, template: dict, instructi
         'instruction':instruction or 'Создай три разных варианта оформления этой презентации.',
         'audience':content.audience,
         'template':model_template(template),
-        'slides':[{'slide':i,'title':s.title,'body':s.body,'bullets':s.bullets,'kind':s.kind,
+        'slides':[{'slide':i,'title':s.title,'body_preview':s.body[:400],'body_length':len(s.body),
+                   'bullet_count':len(s.bullets),'bullets':s.bullets,'kind':s.kind,
+                   'table_shape':{'rows':len(s.table),'columns':max(map(len,s.table),default=0),
+                                  'max_cell_length':max((len(c) for r in s.table for c in r),default=0)},
+                   'chart':{'type':s.chart.chart_type,'labels':s.chart.labels,'unit':s.chart.unit} if s.chart else None,
                    'previous_designs':{k:v.model_dump() for k,v in s.designs.items()}}
                   for i,s in enumerate(content.slides)],
         'schema':ThreeDesignPlans.model_json_schema(),
     }
-    async with asyncio.timeout(240):
-        for attempt in range(2):
-            try:
-                raw=await complete_with_template(system,payload,template)
-                plans=ThreeDesignPlans.model_validate(normalize_design_plans(raw))
-                ordered={}
-                for variant in ('a','b','c'):
-                    choices=sorted(getattr(plans,variant).slides,key=lambda c:c.slide)
-                    if [c.slide for c in choices]!=list(range(len(content.slides))):
-                        raise ValueError('В каждом варианте нужны все индексы слайдов ровно по одному разу.')
-                    for choice in choices:
-                        art=choice.design.smartart
-                        original=content.slides[choice.slide]
-                        if art and (original.kind!='diagram' or sorted(n.bullet for n in art.nodes)!=list(range(len(original.bullets)))):
-                            raise ValueError('SmartArt допускается только для diagram и должен включать каждый тезис ровно один раз (до 6).')
-                    ordered[variant]=[c.design for c in choices]
-                if len({json.dumps([d.model_dump() for d in designs],sort_keys=True) for designs in ordered.values()})!=3:
-                    raise ValueError('Три плана должны различаться композицией, плотностью или layout_shift.')
-                if instruction and all(s.designs.get(v)==ordered[v][i] for i,s in enumerate(content.slides) for v in ordered):
-                    raise ValueError('Новые планы должны отличаться от предыдущих.')
-                result=content.model_copy(deep=True)
-                for i,slide in enumerate(result.slides):
-                    slide.designs={v:ordered[v][i] for v in ordered}
-                    slide.design=slide.designs['a']
-                    slide.layout=None
-                return result
-            except (ValidationError,ValueError,LLMFormatError) as exc:
-                if attempt: raise LLMError('Модель не смогла подготовить три корректные композиции. Повторите запрос.') from exc
-                payload['format_correction']=str(exc)[:1600]
+    for attempt in range(2):
+        try:
+            raw=await complete_with_template(system,payload,template)
+            plans=ThreeDesignPlans.model_validate(normalize_design_plans(raw))
+            ordered={}
+            for variant in ('a','b','c'):
+                choices=sorted(getattr(plans,variant).slides,key=lambda c:c.slide)
+                if [c.slide for c in choices]!=list(range(len(content.slides))):
+                    raise ValueError('В каждом варианте нужны все индексы слайдов ровно по одному разу.')
+                for choice in choices:
+                    art=choice.design.smartart
+                    original=content.slides[choice.slide]
+                    if art and (original.kind!='diagram' or sorted(n.bullet for n in art.nodes)!=list(range(len(original.bullets)))):
+                        raise ValueError('SmartArt допускается только для diagram и должен включать каждый тезис ровно один раз (до 6).')
+                ordered[variant]=[c.design for c in choices]
+            if len({json.dumps([d.model_dump() for d in designs],sort_keys=True) for designs in ordered.values()})!=3:
+                raise ValueError('Три плана должны различаться композицией, плотностью или layout_shift.')
+            if instruction and all(s.designs.get(v)==ordered[v][i] for i,s in enumerate(content.slides) for v in ordered):
+                raise ValueError('Новые планы должны отличаться от предыдущих.')
+            result=content.model_copy(deep=True)
+            for i,slide in enumerate(result.slides):
+                slide.designs={v:ordered[v][i] for v in ordered}
+                slide.design=slide.designs['a']
+                slide.layout=None
+            return result
+        except (ValidationError,ValueError,LLMFormatError) as exc:
+            if attempt: raise LLMError('Модель не смогла подготовить три корректные композиции. Повторите запрос.') from exc
+            payload['format_correction']=str(exc)[:1600]
     raise LLMError('Не удалось создать оформление.')
 
 
@@ -278,25 +286,27 @@ async def redesign_layout(content: DeckContent, template: dict, instruction: str
     payload={'instruction':instruction or 'Создай новое, спокойное и выразительное оформление.',
              'template':{'name':template['name'],'palette':metadata.get('colors',{}),
                          'ratio':metadata['ratio'],'composition':metadata.get('composition')},
-             'slides':[{'slide':i,'title':s.title,'body':s.body,'bullets':s.bullets,'kind':s.kind,
+             'slides':[{'slide':i,'title':s.title,'body_preview':s.body[:400],'body_length':len(s.body),
+                        'bullet_count':len(s.bullets),'bullets':s.bullets,'kind':s.kind,
+                        'table_shape':{'rows':len(s.table),'columns':max(map(len,s.table),default=0)},
+                        'chart':{'type':s.chart.chart_type,'labels':s.chart.labels,'unit':s.chart.unit} if s.chart else None,
                         'design':s.design.model_dump() if s.design else None} for i,s in enumerate(content.slides)],
              'schema':DesignPlan.model_json_schema()}
-    async with asyncio.timeout(240):
-        for attempt in range(2):
-            try:
-                raw=await complete_json(system,payload)
-                plan=DesignPlan.model_validate(raw)
-                indices=[choice.slide for choice in plan.slides]
-                if sorted(indices)!=list(range(len(content.slides))):
-                    raise ValueError('Нужен ровно один вариант оформления для каждого слайда')
-                if all(content.slides[c.slide].design==c.design for c in plan.slides):
-                    raise ValueError('Оформление должно отличаться от предыдущего')
-                for choice in plan.slides:
-                    result.slides[choice.slide].design=choice.design
-                    result.slides[choice.slide].layout=None
-                return result
-            except (ValidationError,ValueError,LLMFormatError) as exc:
-                if attempt:
-                    raise LLMError('Модель не смогла подготовить новое оформление. Предыдущая презентация сохранена.') from exc
-                payload['format_correction']=str(exc)[:1000]
+    for attempt in range(2):
+        try:
+            raw=await complete_json(system,payload)
+            plan=DesignPlan.model_validate(raw)
+            indices=[choice.slide for choice in plan.slides]
+            if sorted(indices)!=list(range(len(content.slides))):
+                raise ValueError('Нужен ровно один вариант оформления для каждого слайда')
+            if all(content.slides[c.slide].design==c.design for c in plan.slides):
+                raise ValueError('Оформление должно отличаться от предыдущего')
+            for choice in plan.slides:
+                result.slides[choice.slide].design=choice.design
+                result.slides[choice.slide].layout=None
+            return result
+        except (ValidationError,ValueError,LLMFormatError) as exc:
+            if attempt:
+                raise LLMError('Модель не смогла подготовить новое оформление. Предыдущая презентация сохранена.') from exc
+            payload['format_correction']=str(exc)[:1000]
     raise LLMError('Не удалось подготовить оформление.')

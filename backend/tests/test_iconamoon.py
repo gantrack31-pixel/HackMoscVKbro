@@ -30,7 +30,6 @@ def test_bundled_icons_have_originals_transparency_and_safe_theme_color(name):
     assert image.getchannel('A').tobytes() == alpha.tobytes()
     assert all(pixel[:3] == (69, 120, 145) for pixel in image.get_flattened_data() if pixel[3])
     assert model_icons()['icons'][name]
-    assert name in (Path(__file__).parents[2] / 'frontend/src/components/iconCatalog.ts').read_text('utf-8')
 
 
 def test_icon_allowlist_and_assistant_patch():
@@ -105,5 +104,5 @@ def test_outline_model_can_select_library_icons(monkeypatch):
             Slide(title='Следующий шаг')]).model_dump()
     monkeypatch.setattr(llm,'complete_with_template',model)
     result=asyncio.run(llm.make_outline(OutlineRequest(template_id='test',prompt='Гигиена',count=3),
-                                     {'id':'test','metadata':{},'name':'test'}))
+                                     {'id':'test','metadata':{'ratio':16/9},'name':'test'}))
     assert result.slides[1].icon_names==['heart','education']

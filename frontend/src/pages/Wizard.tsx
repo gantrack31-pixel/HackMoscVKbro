@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useLayoutEffect } from "react";
 import { api } from "../api";
+import { AiOperationStatus, useAiOperation } from "../components/useAiOperation";
 import { ThinkingSkeleton } from "../components/ThinkingSkeleton";
 import { Icon } from "../components/Icon";
 import { TemplateCover } from "../components/TemplateCard";
@@ -111,6 +112,7 @@ export function Wizard({
   onError: (m: string) => void;
   onRestart: () => void;
 }) {
+  const ai = useAiOperation();
   const [step, setStep] = useState(1),
     [mode, setMode] = useState(initialMode),
     [prompt, setPrompt] = useState(""),
@@ -241,11 +243,20 @@ export function Wizard({
     setOperation(null);
   }
   async function poll(jobId: string, id: number) {
-    const started = Date.now();
+    ai.track(jobId);
+    try {
     while (isCurrent(id)) {
       const job = await api.job(jobId);
       if (!isCurrent(id)) return null;
       setStage(job.stage);
+      if (job.state === "cancelled") {
+        ai.settle("cancelled");
+        const pending = readPendingJob();
+        writePendingJob(null);
+        setFailedJob(null);
+        setStep(result || pending?.kind === "regenerate" ? 4 : 2);
+        return null;
+      }
       if (job.state === "failed")
         throw Object.assign(
           new Error(job.error || "Не удалось создать презентацию"),
@@ -256,12 +267,9 @@ export function Wizard({
         );
       if (job.state === "complete" && job.project_id) {
         const project = await api.project(job.project_id);
+        ai.settle("complete");
         return isCurrent(id) ? project : null;
       }
-      if (Date.now() - started > 300000)
-        throw new Error(
-          "Обработка ещё идёт. Результат появится в разделе «Мои презентации».",
-        );
       await new Promise<void>((resolve) => {
         cancelPoll.current = resolve;
         pollTimer.current = setTimeout(() => {
@@ -272,6 +280,7 @@ export function Wizard({
       });
     }
     return null;
+    } catch (error) { ai.settle("failed"); throw error; }
   }
   async function outline(example?: string) {
     const material = example ?? prompt;
@@ -286,15 +295,15 @@ export function Wizard({
     const id = begin("outline");
     if (id === null) return;
     try {
-      const response = await api.outline({
+      const response = await ai.run(options => api.outline({
         template_id: template.id,
         prompt: material,
         count,
         audience,
         purpose,
         mode: example ? "description" : mode,
-      });
-      if (isCurrent(id)) {
+      }, options));
+      if (response && isCurrent(id)) {
         setFailedJob(null);
         setContent(response.content);
         setSlideKeys(response.content.slides.map(newSlideKey));
@@ -315,12 +324,12 @@ export function Wizard({
     setStep(3);
     writePendingJob(null);
     try {
-      const { job_id } = await api.generate(
+      const { job_id } = await ai.startJob(() => api.generate(
         template.id,
         content,
         prompt,
         audience,
-      );
+      ));
       if (!isCurrent(id)) return;
       writePendingJob({
         id: job_id,
@@ -373,7 +382,7 @@ export function Wizard({
     setFailedJob(null);
     setStage("queued");
     try {
-      const { job_id } = await api.regenerate(result.id, instruction.trim());
+      const { job_id } = await ai.startJob(() => api.regenerate(result.id, instruction.trim()));
       writePendingJob({
         id: job_id,
         kind: "regenerate",
@@ -413,7 +422,7 @@ export function Wizard({
     setStage("queued");
     setStep(3);
     try {
-      const { job_id } = await api.retryJob(failedJob.id);
+      const { job_id } = await ai.startJob(() => api.retryJob(failedJob.id));
       if (!isCurrent(id)) return;
       writePendingJob({
         id: job_id,
@@ -516,6 +525,7 @@ export function Wizard({
           </li>
         ))}
       </ol>
+      <AiOperationStatus operation={ai} />
       {busy && step === 1 && (
         <ThinkingSkeleton
           label={

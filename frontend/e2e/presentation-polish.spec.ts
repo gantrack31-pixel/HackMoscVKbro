@@ -40,10 +40,11 @@ test("themes, narrow outline, aligned actions and enlarged audit", async ({page}
   await page.getByRole("combobox",{name:"Тип слайда",exact:true}).selectOption("icons");
   await page.getByRole("textbox",{name:/Подписи пиктограмм/}).fill("Гигиена рук\nОбучение команды\nПроверка качества");
   await page.getByRole("textbox",{name:"Основной текст"}).fill("");
-  await page.getByRole("combobox",{name:"Иконка для тезиса 1"}).selectOption("heart");
+  await expect(page.getByRole("combobox",{name:/Иконка для тезиса/})).toHaveCount(0);
+  await expect(page.getByText(/IconaMoon/i)).toHaveCount(0);
   await page.getByRole("button",{name:"Сохранить изменения",exact:true}).click();
   await page.reload();
-  await expect(page.getByRole("combobox",{name:"Иконка для тезиса 1"})).toHaveValue("heart");
+  await expect(page.getByText(/IconaMoon/i)).toHaveCount(0);
   await expect(page.locator(".slide-canvas image")).toHaveCount(3);
   await page.getByRole("button",{name:"Проверить",exact:true}).click();
   await expect(page.locator(".audit-summary")).toHaveCount(0);

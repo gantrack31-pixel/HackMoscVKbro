@@ -15,7 +15,8 @@ test("register, create, edit, save, audit and export a presentation", async ({ p
 
   await page.getByRole("button", { name: "Проверить", exact: true }).click();
   await expect(page.getByRole("region", { name: "Проверка презентации" })).toBeVisible();
-  await expect(page.getByRole("heading", { name: /Замечаний:/ })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "E2E стратегия запуска", exact: true })).toBeVisible();
+  await expect(page.locator(".audit-summary")).toHaveCount(0);
 
   await page.getByRole("link", { name: "Завершить", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Ваша история готова к выходу" })).toBeVisible();
@@ -50,8 +51,11 @@ test("keyboard navigation, visible focus, theme persistence and reduced motion",
   await page.emulateMedia({ reducedMotion: "reduce" });
   await page.goto("/");
 
-  await page.keyboard.press("Tab");
-  await page.keyboard.press("Tab");
+  const openLogin=page.getByRole("button",{name:"Открыть панель входа",exact:true});
+  await expect(openLogin).toBeVisible();
+  for(let tabs=0;tabs<12 && !await openLogin.evaluate(el=>el===document.activeElement);tabs++)
+    await page.keyboard.press("Tab");
+  await expect(openLogin).toBeFocused();
   await expect(page.locator(":focus-visible")).toHaveCount(1);
   await expect(page.locator(":focus-visible")).toBeVisible();
   await page.keyboard.press("Enter");

@@ -29,9 +29,11 @@ from .services.audit import audit_deck
 from .services.sources import slide_binding
 from .services.export import export_pptx, export_pdf, export_html
 from .services import cloud
+from .services import provider_http
+from .services.operations import standalone_ai, current_operation, checkpoint, OperationCancelled
 from .services.materials import read_material, MAX_FILE_BYTES, MAX_PACKET_CHARS
-from .services.workflow import recipe, manifest, generation_budget, OUTLINE_BUDGET_SECONDS
-from .services.images import generate_image, MODEL as IMAGE_MODEL
+from .services.workflow import recipe, manifest, generation_budget
+from .services.images import generate_image, fill_missing_images, MODEL as IMAGE_MODEL
 from pydantic import BaseModel, Field, field_validator
 from .auth import router as auth_router, current_user
 
@@ -45,14 +47,16 @@ async def lifespan(app):
     validate_settings()
     settings.storage.mkdir(parents=True,exist_ok=True)
     db.initialize();seed_templates(settings.storage)
-    yield
+    await provider_http.start()
+    try: yield
+    finally: await provider_http.close()
 
 app=FastAPI(title='Deckly.Ai API',version='0.3.0',lifespan=lifespan,
             docs_url=None if settings.app_env=='production' else '/docs',
             redoc_url=None if settings.app_env=='production' else '/redoc',
             openapi_url=None if settings.app_env=='production' else '/openapi.json')
 app.add_middleware(CORSMiddleware,allow_origins=settings.origins,allow_credentials=True,
-                   allow_methods=['GET','POST','PUT','DELETE'],allow_headers=['Content-Type','X-CSRF-Token'])
+                   allow_methods=['GET','POST','PUT','DELETE'],allow_headers=['Content-Type','X-CSRF-Token','X-AI-Operation-ID'])
 app.include_router(auth_router)
 
 @app.exception_handler(RequestValidationError)
@@ -151,7 +155,8 @@ class ImagePrompt(BaseModel):
     prompt: str=Field(min_length=3,max_length=1000)
 
 @app.post('/api/images/generate')
-async def image_generation(request:ImagePrompt,user=Depends(current_user)):
+@standalone_ai
+async def image_generation(request:ImagePrompt,http_request:Request,user=Depends(current_user)):
     if not request.prompt.strip():raise HTTPException(422,'Опишите иллюстрацию.')
     async with generation_slots:
         return await generate_image(request.prompt.strip())
@@ -288,15 +293,30 @@ def original_template(tid: str,user=Depends(current_user)):
                         filename='template.pptx',headers={'Cache-Control':'private, no-store'})
 
 @app.post('/api/outline')
-async def outline(request: OutlineRequest,user=Depends(current_user)):
+@standalone_ai
+async def outline(request: OutlineRequest,http_request:Request,user=Depends(current_user)):
     template=get_template(request.template_id,user['id'])
     try:
-        async with asyncio.timeout(OUTLINE_BUDGET_SECONDS):
-            async with generation_slots:
-                result=await make_outline(request,template)
+        async with generation_slots:
+            result=await make_outline(request,template)
         return {'content':result.model_dump(),'mode':settings.mode}
     except LLMError as exc: raise HTTPException(502,str(exc)) from exc
-    except TimeoutError as exc: raise HTTPException(504,'Создание структуры превысило две минуты. Попробуйте меньший объём.') from exc
+
+async def assemble_variants(jid, content, template, source, user_id, timings):
+    checkpoint()
+    tick=monotonic();db.job_set(jid,'running','images',user_id=user_id)
+    await fill_missing_images(content)
+    timings['images']=monotonic()-tick
+    checkpoint()
+    tick=monotonic();db.job_set(jid,'running','layout',user_id=user_id)
+    scenes=await asyncio.to_thread(lambda:{v:[build_scene(s,template['metadata'],v,i)
+                                           for i,s in enumerate(content.slides)] for v in ('a','b','c')})
+    timings['layout']=monotonic()-tick
+    checkpoint()
+    tick=monotonic();db.job_set(jid,'running','audit',user_id=user_id)
+    checks=await asyncio.gather(*(asyncio.to_thread(audit_deck,content,template,v,source,scenes=scenes[v]) for v in ('a','b','c')))
+    timings['audit']=monotonic()-tick
+    return {v:{'issues':len(issues),'errors':sum(i.severity=='error' for i in issues)} for v,issues in zip(('a','b','c'),checks)}
 
 @generation_budget
 async def generate_job(jid: str, request: GenerateRequest,user_id: str, result_project_id: str | None = None):
@@ -305,34 +325,22 @@ async def generate_job(jid: str, request: GenerateRequest,user_id: str, result_p
     result_project_id=result_project_id or str(uuid4())
     async with generation_slots:
         try:
-            template=get_template(request.template_id,user_id)
+            tick=monotonic();template=await asyncio.to_thread(get_template,request.template_id,user_id)
+            timings={'template':monotonic()-tick};tick=monotonic()
+            checkpoint()
             db.job_set(jid,'running','design',user_id=user_id)
             source=request.content.model_copy(update={'audience':request.audience})
             content=await create_design_variants(source,template)
-            for slide in content.slides:
-                if slide.kind=='image' and slide.image_prompt and not slide.image_data and not slide.template_asset_id:
-                    db.job_set(jid,'running','images',user_id=user_id)
-                    slide.image_data=(await generate_image(slide.image_prompt))['image_data']
-            db.job_set(jid,'running','layout',user_id=user_id)
-            # Материалы уже согласованы пользователем; LLM не переписывает их при вёрстке.
-            scenes=await asyncio.to_thread(lambda:{v:[build_scene(s,template['metadata'],v,i) for i,s in enumerate(content.slides)] for v in ('a','b','c')})
-            db.job_set(jid,'running','export',user_id=user_id)
-            for variant in ['a','b','c']:
-                await asyncio.to_thread(export_pptx,content,template,variant,scenes=scenes[variant])
-            db.job_set(jid,'running','audit',user_id=user_id)
-            counts={}
-            for variant in ('a','b','c'):
-                issues=await asyncio.to_thread(audit_deck,content,template,variant,request.source_text,scenes=scenes[variant])
-                counts[variant]={'issues':len(issues),'errors':sum(i.severity=='error' for i in issues)}
+            timings['design']=monotonic()-tick
+            counts=await assemble_variants(jid,content,template,request.source_text,user_id,timings)
             db.job_complete_with_project(jid,result_project_id,request.template_id,
                                          content.model_dump(),request.source_text,user_id,
-                                         manifest(template,content,request.source_text,counts,monotonic()-started,jid))
+                                         manifest(template,content,request.source_text,counts,monotonic()-started,jid,timings))
         except LLMError as exc:
             db.job_set(jid,'failed','failed',error=str(exc),user_id=user_id)
         except HTTPException as exc:
             db.job_set(jid,'failed','failed',error=str(exc.detail),user_id=user_id)
-        except TimeoutError:
-            db.job_set(jid,'failed','failed',error='Модель не успела подготовить три варианта. Повторите запрос.',user_id=user_id)
+        except (TimeoutError, OperationCancelled): raise
         except Exception as exc:
             logger.error('Ошибка сборки презентации %s (%s)',jid,type(exc).__name__)
             db.job_set(jid,'failed','failed',error='Не удалось собрать презентацию. Проверьте шаблон и структуру, затем повторите.',user_id=user_id)
@@ -358,6 +366,17 @@ def job(jid: str,user=Depends(current_user)):
     result.pop('retry_of',None)
     result.pop('retry_job_id',None)
     return result
+
+@app.post('/api/ai/operations',status_code=201)
+def reserve_ai_operation(user=Depends(current_user)):
+    jid=str(uuid4());db.job_create(jid,user['id'],'ai',{})
+    return {'job_id':jid}
+
+@app.post('/api/jobs/{jid}/cancel')
+def cancel_job(jid:str,user=Depends(current_user)):
+    state=db.job_cancel(jid,user['id'])
+    if state is None: raise HTTPException(404,'Задание не найдено')
+    return {'id':jid,'state':state}
 
 
 @app.post('/api/jobs/{jid}/retry',status_code=202)
@@ -392,27 +411,20 @@ async def regenerate_job(jid: str, original: dict, instruction: str, user_id: st
     result_project_id=result_project_id or str(uuid4())
     async with generation_slots:
         try:
-            template=get_template(original['template_id'],user_id)
+            tick=monotonic();template=await asyncio.to_thread(get_template,original['template_id'],user_id)
+            timings={'template':monotonic()-tick};tick=monotonic()
+            checkpoint()
             db.job_set(jid,'running','design',user_id=user_id)
             content=await create_design_variants(DeckContent.model_validate(original['content']),template,instruction)
-            db.job_set(jid,'running','layout',user_id=user_id)
-            scenes=await asyncio.to_thread(lambda:{v:[build_scene(s,template['metadata'],v,i) for i,s in enumerate(content.slides)] for v in ('a','b','c')})
-            db.job_set(jid,'running','export',user_id=user_id)
-            for variant in ['a','b','c']:
-                await asyncio.to_thread(export_pptx,content,template,variant,scenes=scenes[variant])
-            db.job_set(jid,'running','audit',user_id=user_id)
-            counts={}
-            for variant in ('a','b','c'):
-                issues=await asyncio.to_thread(audit_deck,content,template,variant,original['source_text'],scenes=scenes[variant])
-                counts[variant]={'issues':len(issues),'errors':sum(i.severity=='error' for i in issues)}
+            timings['design']=monotonic()-tick
+            counts=await assemble_variants(jid,content,template,original['source_text'],user_id,timings)
             # Persist only a complete result, as a copy; never overwrite the user's working project.
             db.job_complete_with_project(jid,result_project_id,original['template_id'],
                                          content.model_dump(),original['source_text'],user_id,
-                                         manifest(template,content,original['source_text'],counts,monotonic()-started,jid))
+                                         manifest(template,content,original['source_text'],counts,monotonic()-started,jid,timings))
         except LLMError as exc:
             db.job_set(jid,'failed','failed',error=str(exc),user_id=user_id)
-        except TimeoutError:
-            db.job_set(jid,'failed','failed',error='Модель не успела подготовить оформление. Предыдущая презентация сохранена.',user_id=user_id)
+        except (TimeoutError, OperationCancelled): raise
         except Exception as exc:
             logger.error('Ошибка нового оформления %s (%s)',jid,type(exc).__name__)
             db.job_set(jid,'failed','failed',error='Не удалось создать новое оформление. Предыдущая презентация сохранена.',user_id=user_id)
@@ -459,7 +471,8 @@ def preview_project(pid: str, request: ProjectUpdate, user=Depends(current_user)
                       for i,slide in enumerate(request.content.slides)]}
 
 @app.post('/api/projects/{pid}/assistant')
-async def assistant_edit(pid: str, request: AssistantRequest, user=Depends(current_user)):
+@standalone_ai
+async def assistant_edit(pid: str, request: AssistantRequest,http_request:Request, user=Depends(current_user)):
     project=get_project(pid,user['id'])
     if project['updated_at'] != request.base_updated_at:
         raise HTTPException(409,'Презентация изменилась в другой вкладке. Откройте актуальную версию перед запросом AI.')
@@ -471,16 +484,13 @@ async def assistant_edit(pid: str, request: AssistantRequest, user=Depends(curre
         raise HTTPException(422,'Указанный слайд отсутствует.')
     template=get_template(project['template_id'])
     try:
-        async with asyncio.timeout(180):
-            async with generation_slots:
-                result,report=await edit_presentation(request,template,project['source_text'])
-                await asyncio.to_thread(export_pptx,result,template,request.variant)
-                # Verify the full response geometry before publishing a revision.
-                await asyncio.to_thread(lambda:[build_scene(s,template['metadata'],v,i)
-                    for v in ('a','b','c') for i,s in enumerate(result.slides)])
+        async with generation_slots:
+            result,report=await edit_presentation(request,template,project['source_text'])
+            await asyncio.to_thread(lambda:[build_scene(s,template['metadata'],v,i)
+                for v in ('a','b','c') for i,s in enumerate(result.slides)])
         if result != request.content:
             if not db.project_ai_update(pid,user['id'],request.base_updated_at,
-                                        request.content.model_dump(),result.model_dump(),request.variant):
+                                        request.content.model_dump(),result.model_dump(),request.variant,current_operation.get()):
                 raise HTTPException(409,'Во время работы AI презентация изменилась. Результат не перезаписал новые правки; повторите запрос из актуальной версии.')
         else:
             # No AI changes: retain unsaved client draft instead of losing it in a saved-project response.
@@ -488,8 +498,6 @@ async def assistant_edit(pid: str, request: AssistantRequest, user=Depends(curre
         return {'project':project_response(get_project(pid,user['id'])), **report}
     except LLMError as exc:
         raise HTTPException(502,str(exc)) from exc
-    except TimeoutError as exc:
-        raise HTTPException(504,'AI не успел за три минуты. Ваши правки не изменены; попробуйте один слайд.') from exc
 
 @app.exception_handler(cloud.CloudError)
 async def cloud_error(request: Request, exc: cloud.CloudError):
@@ -556,7 +564,8 @@ def audit(pid: str,variant: str=Query('a',pattern='^[abc]$'),user=Depends(curren
             'context_status':'available' if settings.mode=='live' and settings.context_audit else 'not_connected'}
 
 @app.post('/api/projects/{pid}/audit/content')
-async def content_audit(pid: str,user=Depends(current_user)):
+@standalone_ai
+async def content_audit(pid: str,http_request:Request,user=Depends(current_user)):
     project=get_project(pid,user['id'])
     if settings.mode!='live' or not settings.context_audit: raise HTTPException(409,'Смысловая проверка доступна при подключённой LLM.')
     try:

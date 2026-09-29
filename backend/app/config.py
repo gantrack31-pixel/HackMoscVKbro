@@ -53,6 +53,11 @@ class Settings:
     model: str = field(default_factory=lambda: os.getenv('OPENROUTER_MODEL', 'qwen/qwen-2.5-72b-instruct'))
     timeout: int = field(default_factory=lambda: int(os.getenv('LLM_TIMEOUT_SECONDS', '180')))
     max_tokens: int = field(default_factory=lambda: int(os.getenv('LLM_MAX_TOKENS', '8000')))
+    outline_max_tokens: int = field(default_factory=lambda: int(os.getenv('LLM_OUTLINE_MAX_TOKENS','12000')))
+    design_max_tokens: int = field(default_factory=lambda: int(os.getenv('LLM_DESIGN_MAX_TOKENS','16000')))
+    assistant_max_tokens: int = field(default_factory=lambda: int(os.getenv('LLM_ASSISTANT_MAX_TOKENS','8000')))
+    audit_max_tokens: int = field(default_factory=lambda: int(os.getenv('LLM_AUDIT_MAX_TOKENS','4000')))
+    image_concurrency: int = field(default_factory=lambda: max(1,min(8,int(os.getenv('IMAGE_CONCURRENCY','2')))))
     temperature: float = field(default_factory=lambda: float(os.getenv('LLM_TEMPERATURE', '0.3')))
     json_mode: bool = field(default_factory=lambda: os.getenv('LLM_JSON_MODE', 'true').lower() == 'true')
     vision: bool = field(default_factory=lambda: os.getenv('LLM_VISION_ENABLED', 'false').lower() == 'true')
@@ -83,6 +88,9 @@ def validate_settings(config: Settings = None) -> None:
         raise ValueError('APP_ENV должен быть development или production.')
     if config.mode not in {'demo', 'live'}:
         raise ValueError('LLM_MODE должен быть demo или live.')
+    if min(config.timeout, config.max_tokens, config.outline_max_tokens, config.design_max_tokens,
+           config.assistant_max_tokens, config.audit_max_tokens) <= 0:
+        raise ValueError('Сетевой таймаут и лимиты токенов должны быть положительными.')
     if config.smtp_port < 1 or config.smtp_port > 65535:
         raise ValueError('SMTP_PORT должен быть в диапазоне 1–65535.')
     smtp_values=(config.smtp_host.strip(),config.smtp_username.strip(),config.smtp_password,config.email_from.strip())

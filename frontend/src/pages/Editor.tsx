@@ -39,8 +39,10 @@ export function Editor({
 }) {
   const [content, setContent] = useState(project.content),
     [index, setIndex] = useState(0),
-    [busy, setBusy] = useState(false),
+    [actionBusy, setBusy] = useState(false),
     [dirty, setDirty] = useState(false);
+  const [imageBusy, setImageBusy] = useState(false);
+  const busy = actionBusy || imageBusy;
   const [hasDataErrors, setHasDataErrors] = useState(false);
   const [viewing, setViewing] = useState(false);
   const preview = useLivePreview(project, content, dirty && !hasDataErrors);
@@ -294,9 +296,10 @@ export function Editor({
             </details>
           </section>
         </section>
-        <fieldset className="inspector panel" disabled={busy}>
+        <fieldset className="inspector panel" disabled={actionBusy}>
           <span className="label">Содержание слайда</span>
           <SlideFields
+            onImageBusy={setImageBusy}
             sectioned
             imageGenerationAvailable={imageGenerationAvailable}
             templateAssets={project.template.metadata.assets}
@@ -310,7 +313,7 @@ export function Editor({
           />
           <button
             className="btn sm"
-            disabled={content.slides.length === 1 || hasDataErrors}
+            disabled={busy || content.slides.length === 1 || hasDataErrors}
             onClick={() => {
               setContent({
                 ...content,

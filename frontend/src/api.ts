@@ -14,6 +14,11 @@ import type {
   Scene,
 } from "./types";
 let csrf = "";
+export type AiOptions = { operationId: string; signal: AbortSignal };
+function aiRequest<T>(path: string, options: RequestInit, ai?: AiOptions) {
+  return request<T>(path, {...options, signal:ai?.signal,
+    headers:{...options.headers, ...(ai ? {"X-AI-Operation-ID":ai.operationId} : {})}});
+}
 
 // В разработке /api проксирует Vite, после сборки фронтенд раздаёт FastAPI.
 // Ключ LLM здесь не нужен и никогда не передаётся в браузер.
@@ -28,7 +33,8 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
         ...(csrf ? { "X-CSRF-Token": csrf } : {}),
       },
     });
-  } catch {
+  } catch (error) {
+    if (options.signal?.aborted) throw error;
     throw new Error(
       "Сервер недоступен. Запустите Python/FastAPI на порту 8000.",
     );
@@ -37,6 +43,7 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
     const data = await response
       .json()
       .catch(() => ({ detail: "Ошибка сервера" }));
+    if (data.detail?.code === "AI_CANCELLED") throw Object.assign(new Error("Остановлено"), {code:"AI_CANCELLED"});
     const detail =
       typeof data.detail === "string"
         ? data.detail
@@ -55,14 +62,16 @@ const json = (method: string, data: unknown): RequestInit => ({
   body: JSON.stringify(data),
 });
 export const api = {
-  assistant: (id: string, data: {content: DeckContent; variant: Variant; base_updated_at: string; instruction: string; action: "edit" | "repair"; slide: number | null; material: string}) =>
-    request<import("./types").AssistantResult>(`/projects/${id}/assistant`, json("POST", data)),
+  reserveAi: () => request<{job_id:string}>("/ai/operations",{method:"POST"}),
+  cancelJob: (id:string) => request<{id:string;state:import("./types").Job["state"]}>(`/jobs/${id}/cancel`,{method:"POST"}),
+  assistant: (id: string, data: {content: DeckContent; variant: Variant; base_updated_at: string; instruction: string; action: "edit" | "repair"; slide: number | null; material: string}, ai?:AiOptions) =>
+    aiRequest<import("./types").AssistantResult>(`/projects/${id}/assistant`, json("POST", data),ai),
   workflow: () => request<import("./types").WorkflowRecipe>("/workflow"),
   importMaterials: (files: File[]) => {
     const body=new FormData(); files.forEach(file=>body.append("files",file));
     return request<{text: string; documents: {name: string; characters: number; warnings: string[]; sha256: string}[]}>("/materials/import",{method:"POST",body});
   },
-  generateImage: (prompt: string) => request<{image_data: string; model: string}>("/images/generate",json("POST",{prompt})),
+  generateImage: (prompt: string,ai?:AiOptions) => aiRequest<{image_data: string; model: string}>("/images/generate",json("POST",{prompt}),ai),
   cloudStatus: () => request<CloudStatus>("/cloud/status"),
   cloudProjects: () => request<CloudReceipt[]>("/cloud/projects"),
   saveCloud: (id: string) =>
@@ -182,10 +191,10 @@ export const api = {
     count: number;
     audience: string;
     mode: "description" | "text";
-  }) =>
-    request<{ content: DeckContent; mode: string }>(
+  }, ai?:AiOptions) =>
+    aiRequest<{ content: DeckContent; mode: string }>(
       "/outline",
-      json("POST", data),
+      json("POST", data), ai,
     ),
   generate: (
     template_id: string,
@@ -219,10 +228,10 @@ export const api = {
     request<{ issues: Issue[]; context_status: string }>(
       `/projects/${id}/audit?variant=${variant}`,
     ),
-  contentAudit: (id: string) =>
-    request<{ issues: Issue[]; model: string }>(
+  contentAudit: (id: string,ai?:AiOptions) =>
+    aiRequest<{ issues: Issue[]; model: string }>(
       `/projects/${id}/audit/content`,
-      { method: "POST" },
+      { method: "POST" }, ai,
     ),
   fix: (id: string, issue_ids: string[], variant: Variant) =>
     request<Project>(

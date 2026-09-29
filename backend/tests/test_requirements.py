@@ -185,7 +185,7 @@ def test_audit_detects_nonadjacent_overlap_once(monkeypatch):
 
 
 def test_deadline_includes_waiting_for_generation_slot(client, monkeypatch):
-    monkeypatch.setattr(workflow, 'ASSEMBLY_BUDGET_SECONDS', .02)
+    monkeypatch.setattr(workflow, 'BUDGET_SECONDS', .02)
     class OccupiedSlots:
         async def __aenter__(self):
             await asyncio.sleep(1)
