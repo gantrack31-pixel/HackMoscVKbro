@@ -33,13 +33,22 @@ def test_schema_preserves_title_fields_and_removes_only_legacy_geometry():
                 for child in value: check(child)
         check(schema)
 
-def test_gemma_folds_instructions_into_user_turn(monkeypatch):
-    monkeypatch.setattr(settings,'model','google/gemma-3-27b-it')
+
+def test_invalid_model_icon_id_falls_back_without_weakening_public_schema():
+    from app.services.visual_grounding import normalize_model_icons
+    from pydantic import ValidationError
+    raw={'slides':[{'title':'Иконки','kind':'icons','bullets':['Безопасность'], 'icon_names':['https://unsafe.test/icon.svg']}]}
+    cleaned=normalize_model_icons(raw,'slides')
+    assert DeckContent.model_validate({'title':'Тест',**cleaned}).slides[0].icon_names==['auto']
+    with pytest.raises(ValidationError): Slide.model_validate(raw['slides'][0])
+
+def test_qwen_keeps_system_constraints_separate_from_source(monkeypatch):
+    monkeypatch.setattr(settings,'model','qwen/qwen3.8-27b')
     monkeypatch.setattr(settings,'base_url','https://provider.example/v1')
     monkeypatch.setattr(settings,'api_key','test-key')
     def respond(request):
         body=json.loads(request.content)
-        assert [m['role'] for m in body['messages']]==['user']
+        assert [m['role'] for m in body['messages']]==['system','user']
         assert 'Never invent' in body['messages'][0]['content']
         return httpx.Response(200,json={'choices':[{'message':{'content':'```json\n{"ok":true}\n```'}}]})
     async def run():

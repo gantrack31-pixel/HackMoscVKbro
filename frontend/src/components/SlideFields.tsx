@@ -60,7 +60,7 @@ export function SlideFields({
     setInvalid(false);
     onValidity(true);
     onChange({
-      kind: next, designs: {}, design: slide.design ? {...slide.design, smartart:null} : null,
+      kind: next, designs: {}, design: slide.design ? {...slide.design, smartart:null,diagram_style:null} : null,
       ...(next === "chart" ? { chart } : {}),
       ...(next === "table" && !slide.table.length
         ? {
@@ -154,7 +154,7 @@ export function SlideFields({
           </select>
         </label>
         {slide.kind==="diagram" && <label className="field">Тип схемы
-          <select value={slide.diagram_type||"process"} onChange={e=>onChange({diagram_type:e.target.value as Slide["diagram_type"], designs:{}, design:slide.design ? {...slide.design,smartart:null} : null})}>
+          <select value={slide.diagram_type||"process"} onChange={e=>onChange({diagram_type:e.target.value as Slide["diagram_type"], designs:{}, design:slide.design ? {...slide.design,smartart:null,diagram_style:null} : null})}>
             <option value="process">Процесс</option><option value="cycle">Цикл</option><option value="hierarchy">Иерархия</option>
             <option value="vertical">Вертикальные этапы</option><option value="matrix">Матрица / SWOT</option>
             <option value="pyramid">Пирамида</option><option value="honeycomb">Соты</option>

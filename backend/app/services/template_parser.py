@@ -7,7 +7,7 @@ from zipfile import ZipFile
 from lxml import etree
 from .palette import blend, hex_color
 
-NORMALIZATION_VERSION = '5'
+NORMALIZATION_VERSION = '6'
 
 
 def fingerprint(path):
@@ -25,6 +25,7 @@ def local(node):
 def parse_manifest(path, package):
     palette, elements, backgrounds, typography = set(), [], [], []
     background_counts, text_counts = Counter(), Counter()
+    effective_backgrounds={}
     with ZipFile(path) as archive:
         names = set(archive.namelist())
         roots = {}
@@ -63,10 +64,10 @@ def parse_manifest(path, package):
             for ancestor in reversed(chain):
                 for node in read(ancestor).xpath('//*[local-name()="clrMap" or local-name()="overrideClrMapping"]'):
                     mapping.update(node.attrib)
-            def resolve(node):
+            def resolve(node,ph_color=None):
                 kind = local(node)
                 if kind == 'schemeClr':
-                    color = scheme.get(mapping.get(node.get('val'),node.get('val')))
+                    color = ph_color if node.get('val')=='phClr' and ph_color else scheme.get(mapping.get(node.get('val'),node.get('val')))
                 elif kind in {'srgbClr','sysClr'}:
                     color = hex_color('#'+(node.get('lastClr') or node.get('val','')))
                 else: return None
@@ -83,6 +84,28 @@ def parse_manifest(path, package):
                         l = l*amount if local(child)=='lumMod' else min(1,l+amount)
                         color = '#'+''.join(f'{round(v*255):02X}' for v in colorsys.hls_to_rgb(h,l,s))
                 return color
+            # Resolve the actual inheritance chain, never vote across unrelated layouts.
+            for ancestor in chain:
+                backgrounds_here=read(ancestor).xpath('./*[local-name()="cSld"]/*[local-name()="bg"]')
+                if not backgrounds_here: continue
+                bg=backgrounds_here[0]
+                fills=bg.xpath('./*[local-name()="bgPr"]/*[local-name()="solidFill"]/*')
+                refs=bg.xpath('./*[local-name()="bgRef"]')
+                kind='solid' if fills else 'complex'
+                color=resolve(fills[0]) if fills else None
+                if refs and theme is not None:
+                    ref=refs[0]
+                    try: fill_index=int(ref.get('idx','0'))-1001
+                    except ValueError: fill_index=-1
+                    styles=theme.xpath('//*[local-name()="bgFillStyleLst"]/*')
+                    if 0<=fill_index<len(styles) and local(styles[fill_index])=='solidFill':
+                        color_node=styles[fill_index][0]
+                        color=resolve(color_node,resolve(ref[0]) if len(ref) else None)
+                        kind='solid'
+                effective_backgrounds[part]={'color':color,'kind':kind,'part':ancestor}
+                break
+            if part not in effective_backgrounds:
+                effective_backgrounds[part]={'color':scheme.get(mapping.get('bg1','lt1')),'kind':'implicit','part':part}
             for node in root.iter():
                 color = resolve(node)
                 if color:
@@ -101,7 +124,8 @@ def parse_manifest(path, package):
                                  'relationships':[{'type':kind,'target':target} for kind,target in relatives(part)],
                                  'grouped':any(local(a)=='grpSp' for a in node.iterancestors())})
     return {'version':NORMALIZATION_VERSION,'fingerprint':fingerprint(path),'palette':sorted(palette),
-            'background':background_counts.most_common(1)[0][0] if background_counts else None,
+            'background':effective_backgrounds.get('ppt/slides/slide1.xml',{}).get('color'),
+            'effective_backgrounds':effective_backgrounds,
             'text_color':text_counts.most_common(1)[0][0] if text_counts else None,
             'fonts':package['fonts'],'typography':typography,'elements':elements,'backgrounds':backgrounds,
             'themes':package['themes'],'parts':package['parts'],'retention':'original_opc_package',

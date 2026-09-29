@@ -125,17 +125,17 @@ def test_openrouter_configuration_never_uses_legacy_credentials(monkeypatch):
     monkeypatch.setenv('LLM_MODEL','gpt://legacy/model')
     config=Settings()
     assert config.base_url=='https://openrouter.ai/api/v1'
-    assert config.model=='google/gemma-3-27b-it' and config.api_key=='router-test-key'
+    assert config.model=='qwen/qwen3.8-27b' and config.api_key=='router-test-key'
     assert config.api_key not in repr(config)
 
 
 def test_explicit_custom_provider_does_not_inherit_openrouter_key(monkeypatch):
     monkeypatch.setenv('LLM_BASE_URL','http://127.0.0.1:8001/v1')
-    monkeypatch.setenv('LLM_MODEL','gemma-3-27b-it')
+    monkeypatch.setenv('LLM_MODEL','Qwen/Qwen3.8-27B')
     monkeypatch.delenv('LLM_API_KEY',raising=False)
     monkeypatch.setenv('OPENROUTER_API_KEY','router-key')
     config=Settings()
-    assert config.base_url=='http://127.0.0.1:8001/v1' and config.model=='gemma-3-27b-it'
+    assert config.base_url=='http://127.0.0.1:8001/v1' and config.model=='Qwen/Qwen3.8-27B'
     assert config.api_key==''
 
 

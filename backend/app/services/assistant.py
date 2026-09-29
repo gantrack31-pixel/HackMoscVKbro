@@ -7,7 +7,7 @@ from .audit import audit_deck
 from .layout import build_scene
 from .template_context import model_template
 from ..icon_catalog import model_icons
-from .visual_grounding import validate_visual, approved_material
+from .visual_grounding import validate_visual, approved_material, normalize_model_icons
 
 
 async def edit_presentation(request, template, source):
@@ -41,7 +41,7 @@ async def edit_presentation(request, template, source):
         for attempt in range(2):
             try:
                 raw = await llm.complete_with_template(system, payload, template)
-                plan = AssistantPlan.model_validate(raw)
+                plan = AssistantPlan.model_validate(normalize_model_icons(raw,'changes'))
                 indices = [p.slide for p in plan.changes]
                 if len(indices) != len(set(indices)) or any(i not in allowed for i in indices):
                     raise ValueError('Каждый разрешённый индекс может встречаться только один раз.')

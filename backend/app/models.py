@@ -53,6 +53,7 @@ class SlideDesign(BaseModel):
     layout_shift: Literal[0, 1, 2] = 0
     smartart: SmartArt | None = None
     background_role: Literal['template','light','dark','accent'] = 'template'
+    foreground_role: Literal['text','inverse'] = 'text'
     heading_role: Literal['heading','body'] = 'heading'
     body_role: Literal['body','heading'] = 'body'
     heading_scale: Literal[0.9,1.0,1.1] = 1.0

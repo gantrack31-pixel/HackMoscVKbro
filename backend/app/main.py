@@ -282,7 +282,8 @@ async def upload_template(file: UploadFile,user=Depends(current_user)):
                 dest.write(chunk)
         await asyncio.to_thread(validate_pptx_archive,path)
         metadata=await asyncio.to_thread(analyze_template,path)
-        await asyncio.to_thread(thumbnail,path)
+        try: await asyncio.to_thread(thumbnail,path)
+        except Exception: logger.warning('Template thumbnail failed; validated template remains usable.')
         name=Path(file.filename.replace('\\','/')).stem[:120]
         metadata.update(category='Мои шаблоны',cover_title=name)
         db.template_save(tid,name,str(path),metadata,user['id'])

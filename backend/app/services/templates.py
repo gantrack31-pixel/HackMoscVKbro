@@ -79,6 +79,9 @@ def analyze_template(path: Path) -> dict:
     examples, sampled_assets = extract_examples(prs)
     package = inspect_package(path)
     manifest = parse_manifest(path, package)
+    for layout in layouts:
+        part=str(prs.slide_masters[layout['master']].slide_layouts[layout['index']].part.partname).lstrip('/')
+        layout['background_info']=manifest['effective_backgrounds'].get(part,{})
     manifest['safe_zones'] = layouts
     for i, color in enumerate(manifest['palette']):
         if color.upper() not in {c.upper() for c in colors.values()}: colors[f'extracted_{i}'] = color
@@ -99,13 +102,18 @@ def analyze_template(path: Path) -> dict:
             if body['box']['h'] > .2:
                 layouts.insert(0, {'master':example['master'], 'index':example['index'],
                     'name':f"Композиция исходного слайда {example['slide']+1}", 'static_shapes':0,
+                    'source_slide':example['slide'],
+                    'background_info':manifest['effective_backgrounds'].get(str(prs.slides[example['slide']].part.partname).lstrip('/'),{}),
                     'boxes':[{**texts[0]['box'],'type':'TITLE','index':0},
                              {**body['box'],'type':'BODY','index':1}]})
     headings=[(size,count) for size,count in sizes.items() if 25<=size<=60]
     bodies=[(size,count) for size,count in sizes.items() if 16<=size<=25]
     return {'count':len(prs.slides),'ratio':round(width/height,5),'width_emu':width,'height_emu':height,
             'colors':colors,'palette':manifest['palette'],'accent':colors.get('accent1','#0077FF'),
-            'background':manifest['background'] or colors.get('lt1','#FFFFFF'),
+            'background':(manifest['effective_backgrounds'].get(str(prs.slides[0].part.partname).lstrip('/'),{}).get('color') if prs.slides else None) or colors.get('lt1','#FFFFFF'),
+            'text_color':manifest['text_color'],
+            'background_info':manifest['effective_backgrounds'].get(str(prs.slides[0].part.partname).lstrip('/'),{}) if prs.slides else {},
+            'preserve_template_background':True,
             'font':fonts.most_common(1)[0][0] if fonts else theme_font,
             'theme_font':theme_font,'fonts':package['fonts'] or [theme_font],
             'heading_font':theme_pair.get('majorFont') or theme_font,

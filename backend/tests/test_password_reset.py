@@ -97,6 +97,7 @@ def test_password_reset_email_uses_configured_smtp_transport(monkeypatch):
 
     monkeypatch.setattr(settings, "smtp_host", "smtp.example.test")
     monkeypatch.setattr(settings, "smtp_port", 465)
+    monkeypatch.setattr(settings, "smtp_security", "ssl")
     monkeypatch.setattr(settings, "smtp_username", "sender@example.test")
     monkeypatch.setattr(settings, "smtp_password", "smtp-test-password")
     monkeypatch.setattr(settings, "email_from", "sender@example.test")

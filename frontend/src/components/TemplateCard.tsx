@@ -12,8 +12,8 @@ export function TemplateCover({
   const [failed,setFailed]=useState("");
   if(template.preview_url && failed!==template.preview_url)
     return <img className="template-real-preview" src={template.preview_url} alt={`Первый слайд: ${template.name}`} style={{width:"100%",display:"block",aspectRatio:meta.ratio,objectFit:"contain",borderRadius:12}} onError={()=>setFailed(template.preview_url!)} />;
-  if(meta.source==="pptx" && template.preview_url)
-    return <div className="template-preview-unavailable" style={{aspectRatio:meta.ratio,display:"grid",placeContent:"center",padding:24,textAlign:"center"}}><Icon name="file"/><strong>Предпросмотр первого слайда недоступен</strong><span className="muted">Исходный PPTX сохранён. Его можно скачать в карточке шаблона.</span></div>;
+  if(meta.source==="pptx")
+    return <div className="template-preview-placeholder" style={{aspectRatio:meta.ratio,display:"grid",placeContent:"center",gap:8,padding:24,textAlign:"center",background:"var(--surface-soft)",color:"var(--ink)",borderRadius:12}}><Icon name="file"/><strong>Новый шаблон</strong><span className="muted" style={{overflowWrap:"anywhere"}}>{template.name}</span></div>;
   const coverTitle = title || meta.cover_title || template.name;
   const style = {
     "--theme-accent": meta.accent,

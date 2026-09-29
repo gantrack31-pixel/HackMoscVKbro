@@ -55,6 +55,7 @@ export interface Slide {
     density: "compact" | "balanced" | "airy";
     layout_shift: 0 | 1 | 2;
     background_role?: "template" | "light" | "dark" | "accent";
+    foreground_role?: "text" | "inverse";
     heading_role?: "heading" | "body";
     body_role?: "body" | "heading";
     heading_scale?: 0.9 | 1 | 1.1;

@@ -8,7 +8,7 @@ from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 from ..models import Slide
 from .visuals import diagram_nodes, pictogram_nodes
-from .palette import roles, scene_color, contrast, design_metadata
+from .palette import roles, scene_color, contrast, design_metadata, protect_foregrounds, safe_ink
 
 FONTS=Path(__file__).parent
 for name,file in [('Deckly','Manrope-Regular.ttf'),('DecklyBold','Manrope-Bold.ttf')]:
@@ -50,6 +50,8 @@ def selected_layout(metadata: dict, kind='text', variant='a') -> dict | None:
         if titles and bodies:
             score=bodies[0]['w']*bodies[0]['h']-layout['static_shapes']*.008
             candidates.append((score,layout))
+    used=[c for c in candidates if 'source_slide' in c[1]]
+    if used: candidates=used
     candidates.sort(key=lambda x:x[0],reverse=True)
     return candidates[min('abc'.index(variant),len(candidates)-1)][1] if candidates else None
 
@@ -128,12 +130,17 @@ def themed_nodes(nodes, obj):
 def build_scene(slide: Slide, metadata: dict, variant: str, index: int) -> dict:
     if slide.designs:
         slide=slide.model_copy(update={'design':slide.designs.get(slide.layout or variant,slide.design)})
-    metadata=design_metadata(metadata,slide.design)
     if slide.design and slide.design.diagram_style:
         slide=slide.model_copy(update={'diagram_type':slide.design.diagram_style})
     variant=slide.layout or variant
     if slide.design and not slide.designs:
         variant=['a','b','c'][(['a','b','c'].index(variant)+slide.design.layout_shift)%3]
+    layout=selected_layout(metadata,slide.kind,variant)
+    background_info=((layout or {}).get('background_info') if layout and 'source_slide' in layout else metadata.get('background_info')) or (layout or {}).get('background_info',{})
+    metadata={**metadata,'background_info':background_info}
+    if background_info.get('color'): metadata['background']=background_info['color']
+    original_background=roles(metadata)['background']
+    metadata=design_metadata(metadata,slide.design)
     width=1280.;height=width/metadata.get('ratio',16/9)
     accent=metadata.get('accent','#0077FF')
     if len(accent)!=7: accent='#0077FF'
@@ -203,7 +210,7 @@ def build_scene(slide: Slide, metadata: dict, variant: str, index: int) -> dict:
                         'role':role,'line_spacing':spacing,'bold':bold,'font_family':family,
                         'used_height':len(lines)*size*spacing})
     rect('background',0,0,width,height,theme['background'])
-    objects[-1]['override_template']=bool(slide.design and slide.design.background_role!='template')
+    objects[-1]['override_template']=theme['background']!=original_background
     if composition=='split':
         rect('theme-panel',width-192,0,192,height,accent)
         rect('theme-stripe',width-224,0,8,height,accent)
@@ -267,12 +274,20 @@ def build_scene(slide: Slide, metadata: dict, variant: str, index: int) -> dict:
     else: text('body',content,body_box,body_size,'#475569')
     text('footer',f'{index+1:02} / Deckly.Ai',{'x':margin,'y':height-44,'w':500,'h':28},16,'#64748B')
     for obj in objects:
-        if obj['type'] in {'chart','table'}: obj['theme']=theme
+        if obj['type'] in {'chart','table'}:
+            obj['theme']=theme
+            if obj['type']=='chart': obj['fill']=safe_ink(obj['fill'],theme['background'],metadata)
+            else: obj['header_color']=safe_ink(obj['header_color'],obj['fill'],metadata)
         if obj['id'] in {'background','number'}: continue
         for key in ('fill','color','stroke'):
             if key in obj and obj[key] != accent:
                 obj[key]=scene_color(obj[key],theme)
+    corrections=protect_foregrounds(objects,metadata)
+    rendered=[n for obj in objects for n in geometry_nodes(obj)]
+    corrections+=protect_foregrounds(rendered,metadata)
     return {'width':width,'height':height,'variant':variant,'objects':objects,
-            'render_objects':[n for obj in objects for n in geometry_nodes(obj)],
+            'render_objects':rendered,'color_corrections':sorted(set(corrections)),
+            'background_info':background_info,'template_background':original_background,
+            'layout_key':{'master':layout['master'],'index':layout['index']} if layout else None,
             'template_layout':layout['name'] if layout else 'Базовая композиция',
             'preview_note':'Схема размещения. Шрифты и графику исходного мастера проверьте в PPTX.'}

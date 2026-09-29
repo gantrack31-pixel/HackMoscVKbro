@@ -1,5 +1,6 @@
 """Экспорт на Python. Тексты, таблицы и диаграммы PPTX остаются редактируемыми."""
 from io import BytesIO
+from copy import deepcopy
 from html import escape
 import base64
 from zipfile import ZipFile
@@ -21,8 +22,8 @@ def rgb(value): return RGBColor.from_string(value.lstrip('#'))
 
 def scene_svg(scene):
     parts=[]
-    for obj in scene['objects']:
-        for n in geometry_nodes(obj):
+    for obj in scene.get('render_objects',scene['objects']):
+        for n in ([obj] if 'render_objects' in scene else geometry_nodes(obj)):
             if n['type']=='rect': parts.append(f'<rect x="{n["x"]}" y="{n["y"]}" width="{n["w"]}" height="{n["h"]}" fill="{n["fill"]}"/>')
             elif n['type']=='ellipse': parts.append(f'<ellipse cx="{n["x"]+n["w"]/2}" cy="{n["y"]+n["h"]/2}" rx="{n["w"]/2}" ry="{n["h"]/2}" fill="{n["fill"]}"/>')
             elif n['type']=='hexagon':
@@ -48,8 +49,8 @@ def export_pdf(content,template,variant):
     if any(s.kind=='icons' for s in content.slides): pdf.setSubject(ATTRIBUTION)
     for i,slide in enumerate(content.slides):
         scene=build_scene(slide,metadata,variant,i)
-        for obj in scene['objects']:
-            for n in geometry_nodes(obj):
+        for obj in scene.get('render_objects',scene['objects']):
+            for n in ([obj] if 'render_objects' in scene else geometry_nodes(obj)):
                 if n['type']=='rect':
                     pdf.setFillColor(HexColor(n['fill']));pdf.rect(n['x'],height-n['y']-n['h'],n['w'],n['h'],fill=1,stroke=0)
                 elif n['type']=='ellipse':
@@ -73,6 +74,7 @@ def export_pdf(content,template,variant):
 def export_pptx(content: DeckContent, template: dict, variant: str, *, scenes=None):
     if scenes is not None and len(scenes)!=len(content.slides): raise ValueError('Scene count does not match content')
     metadata=template['metadata'];prs=Presentation(template['path']) if template.get('path') else Presentation()
+    retained_parts={str(part.partname).lstrip('/'):part for part in prs.part.package.iter_parts()}
     if template.get('path'):
         # В python-pptx пока нет публичного remove_slide. Удаляем только слайды копии,
         # сохраняя мастера, макеты, тему и связанные с ними ресурсы.
@@ -82,16 +84,30 @@ def export_pptx(content: DeckContent, template: dict, variant: str, *, scenes=No
         prs.slide_width=Inches(13.333333);prs.slide_height=Inches(13.333333/metadata['ratio'])
     scale=prs.slide_width/1280;point_scale=scale/12700
     for index,slide_content in enumerate(content.slides):
-        chosen=selected_layout(metadata,slide_content.kind,slide_content.layout or variant)
+        scene=scenes[index] if scenes is not None else build_scene(slide_content,metadata,variant,index)
+        chosen=scene.get('layout_key') or selected_layout(metadata,slide_content.kind,slide_content.layout or variant)
         layout=prs.slide_masters[chosen['master']].slide_layouts[chosen['index']] if chosen else min(prs.slide_layouts,key=lambda l:len(l.placeholders))
         slide=prs.slides.add_slide(layout)
         for ph in list(slide.placeholders):
             element=ph._element;element.getparent().remove(element)
-        scene=scenes[index] if scenes is not None else build_scene(slide_content,metadata,variant,index)
+        background_info=scene.get('background_info',{})
+        if template.get('path') and not scene['objects'][0].get('override_template') and background_info.get('kind')=='complex':
+            source=retained_parts.get(background_info.get('part'))
+            backgrounds=source._element.xpath('./p:cSld/p:bg') if source is not None else []
+            if backgrounds:
+                bg=deepcopy(backgrounds[0])
+                for node in bg.iter():
+                    for key,value in list(node.attrib.items()):
+                        if key.startswith('{http://schemas.openxmlformats.org/officeDocument/2006/relationships}'):
+                            rel=source.rels[value]
+                            if not rel.is_external: node.set(key,slide.part.relate_to(rel.target_part,rel.reltype))
+                existing=slide._element.cSld.find('{http://schemas.openxmlformats.org/presentationml/2006/main}bg')
+                if existing is not None: slide._element.cSld.remove(existing)
+                slide._element.cSld.insert(0,bg)
         for obj in scene['objects']:
             x,y,w,h=[int(obj[key]*scale) for key in ['x','y','w','h']]
             if obj['id']=='background':
-                if template.get('path') and metadata.get('preserve_template_background',True) and not obj.get('override_template'): continue
+                if template.get('path') and metadata.get('preserve_template_background',True) and not obj.get('override_template') and background_info.get('kind') not in {'solid','implicit'}: continue
                 slide.background.fill.solid();slide.background.fill.fore_color.rgb=rgb(obj['fill']);continue
             if obj['type'] in {'rect','ellipse','hexagon'}:
                 shape=slide.shapes.add_shape({'ellipse':MSO_SHAPE.OVAL,'hexagon':MSO_SHAPE.HEXAGON,'rect':MSO_SHAPE.RECTANGLE}[obj['type']],x,y,w,h)
@@ -125,6 +141,17 @@ def export_pptx(content: DeckContent, template: dict, variant: str, *, scenes=No
                 chart=slide.shapes.add_chart(chart_type,x,y,w,h,data).chart
                 chart.has_legend=False;chart.value_axis.has_title=True;chart.value_axis.axis_title.text_frame.text=obj['unit'] or 'Значение'
                 chart.series[0].format.fill.solid();chart.series[0].format.fill.fore_color.rgb=rgb(obj['fill'])
+                chart.series[0].format.line.color.rgb=rgb(obj['fill'])
+                chart.font.color.rgb=rgb(obj['theme']['text'])
+                for axis in (chart.category_axis,chart.value_axis):
+                    axis.tick_labels.font.color.rgb=rgb(obj['theme']['text'])
+                for paragraph in chart.value_axis.axis_title.text_frame.paragraphs:
+                    paragraph.font.color.rgb=rgb(obj['theme']['text'])
+                # Chart area defaults must not silently use white on a dark slide.
+                from pptx.oxml.xmlchemy import OxmlElement
+                sp=OxmlElement('c:spPr');fill=OxmlElement('a:solidFill');color=OxmlElement('a:srgbClr')
+                color.set('val',obj['theme']['background'].lstrip('#'));fill.append(color);sp.append(fill)
+                chart._chartSpace.insert_element_before(sp,'c:txPr','c:externalData','c:printSettings','c:userShapes','c:extLst')
             elif obj['type']=='table':
                 rows=obj['rows'];table=slide.shapes.add_table(len(rows),len(rows[0]),x,y,w,h).table
                 for ri,row in enumerate(rows):

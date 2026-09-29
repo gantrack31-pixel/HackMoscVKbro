@@ -3,7 +3,7 @@ import re
 from ..models import DeckContent, Issue
 from .layout import build_scene, wrap
 from .sources import slide_binding
-from .palette import allowed_color
+from .palette import allowed_color, surface_at
 
 def luminance(hex_color):
     channels=[int(hex_color[i:i+2],16)/255 for i in (1,3,5)]
@@ -29,6 +29,18 @@ def audit_deck(content: DeckContent, template: dict, variant: str, source: str, 
         def add(code,title,detail,category='layout',severity='warning',fixable=False,obj='body'):
             issues.append(Issue(id=f'{index}:{code}:{obj}',slide=index,code=code,title=title,detail=detail,
                                 category=category,severity=severity,fixable=fixable,object_id=obj))
+        rendered=scene.get('render_objects',scene['objects'])
+        for position,obj in enumerate(rendered):
+            if obj['type']=='text' or obj.get('icon_color'):
+                color=obj.get('icon_color') or obj.get('color')
+                background=surface_at(obj,rendered[:position],scene['objects'][0]['fill'])
+                if color and contrast(color,background)<4.5:
+                    add('contrast_title' if obj['id']=='title' else 'contrast_visual','Недостаточный контраст',
+                        'Контраст ниже 4.5:1. Безопасный цвет применяется при пересборке слайда без изменения текста.',
+                        category='template',fixable=True,obj=obj['id'])
+        if (scene.get('template_background') and not scene['objects'][0].get('override_template')
+                and scene['objects'][0]['fill']!=scene['template_background']):
+            add('background_replaced','Фон отличается от шаблона','Пересоберите визуальные метаданные с исходным фоном.',category='template',fixable=True,obj='background')
         color_issues={}
         color_validity={}
         for obj in scene.get('render_objects',scene['objects']):
@@ -47,14 +59,6 @@ def audit_deck(content: DeckContent, template: dict, variant: str, source: str, 
             if obj['type']=='text' and obj['id'] not in {'number','footer'}:
                 if obj['used_height']>obj['h']:
                     add('overflow','Текст не помещается в блок','Можно уменьшить размер до безопасного минимума. Если этого недостаточно, разделите содержание.',severity='error',fixable='overflow' not in slide.fixed,obj=obj['id'])
-                point_scale=1280/(template['metadata'].get('width_emu',12192000)/914400*72)
-                point_size=obj['font_size']/point_scale
-                threshold=3.0 if point_size>=24 or (obj.get('bold') and point_size>=18) else 4.5
-                surfaces=[o for o in scene['objects'][:scene['objects'].index(obj)] if o['type'] in {'rect','ellipse','hexagon'}
-                          and o['x']<=obj['x'] and o['y']<=obj['y'] and o['x']+o['w']>=obj['x']+obj['w'] and o['y']+o['h']>=obj['y']+obj['h']]
-                background=surfaces[-1]['fill'] if surfaces else scene['objects'][0]['fill']
-                if obj.get('text','').strip() and contrast(obj['color'],background)<threshold:
-                    add('contrast_title','Недостаточный контраст',f'Контраст ниже {threshold:g}:1 для этого размера текста. Выберите более контрастный цвет из шаблона.',category='template',fixable=obj['id']=='title',obj=obj['id'])
             if obj['type']=='table':
                 cell_width=obj['w']/len(obj['rows'][0])-24;cell_height=obj['h']/len(obj['rows'])-16
                 if any(len(wrap(cell,cell_width,obj['font_size']))*obj['font_size']*1.28>cell_height for row in obj['rows'] for cell in row):

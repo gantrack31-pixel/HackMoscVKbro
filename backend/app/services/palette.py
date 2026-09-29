@@ -30,30 +30,63 @@ def contrast(a, b):
     return (high+.05)/(low+.05)
 
 
+def safe_ink(requested, background, metadata, inverse=None, minimum=4.5):
+    palette=[*metadata.get('colors',{}).values(),*metadata.get('palette',[])]
+    candidates=[requested,*palette,inverse,'#000000','#FFFFFF']
+    for value in candidates:
+        color=hex_color(value)
+        if color and contrast(color,background)>=minimum: return color
+    return max(('#000000','#FFFFFF'),key=lambda c:contrast(c,background))
+
 def roles(metadata):
     colors = metadata.get('colors', {})
     background = hex_color(metadata.get('background')) or hex_color(colors.get('lt1')) or '#FFFFFF'
     accent = hex_color(metadata.get('accent')) or hex_color(colors.get('accent1')) or '#0077FF'
     palette = [c for value in colors.values() if (c := hex_color(value))]
     # Black/white are accessibility fallbacks only when the source has no readable ink.
-    ink = max(palette or ['#000000', '#FFFFFF'], key=lambda c:contrast(c, background))
-    if contrast(ink, background) < 4.5:
-        ink = max(('#000000','#FFFFFF'), key=lambda c:contrast(c,background))
-    on_accent = max([*palette, '#000000', '#FFFFFF'], key=lambda c:contrast(c,accent))
+    ink=safe_ink(metadata.get('text_color') or colors.get('dk1'),background,metadata,colors.get('lt1'))
+    on_accent=safe_ink(colors.get('lt1'),accent,metadata,colors.get('dk1'))
+    surface=blend(accent,background,.08)
+    # The same native table body ink is used on both striped surfaces.
+    if contrast(ink,surface)<4.5: surface=background
     return {'background':background, 'accent':accent, 'text':ink, 'on_accent':on_accent,
-            'surface':blend(accent,background,.08), 'border':blend(ink,background,.2),
-            'muted':blend(ink,background,.76)}
+            'surface':surface, 'border':blend(ink,background,.2),
+            'muted':safe_ink(blend(ink,background,.76),background,metadata,ink)}
 
 def design_metadata(metadata,design):
     if not design: return metadata
     result=dict(metadata)
     colors=[c for value in metadata.get('colors',{}).values() if (c:=hex_color(value))]
-    if design.background_role=='accent': result['background']=roles(metadata)['accent']
-    elif colors and design.background_role in {'light','dark'}:
+    supported=metadata.get('source')!='pptx' or metadata.get('background_info',{}).get('kind') in {'solid','implicit'}
+    if supported and design.background_role=='accent': result['background']=roles(metadata)['accent']
+    elif supported and colors and design.background_role in {'light','dark'}:
         result['background']=(max if design.background_role=='light' else min)(colors,key=luminance)
     result['heading_font']=metadata.get(design.heading_role+'_font') or metadata.get('font','Manrope')
+    if design.foreground_role=='inverse': result['text_color']=metadata.get('colors',{}).get('lt1')
     result['body_font']=metadata.get(design.body_role+'_font') or metadata.get('font','Manrope')
     return result
+
+def surface_at(obj,previous,default):
+    surfaces=[o for o in previous if o['type'] in {'rect','ellipse','hexagon'} and hex_color(o.get('fill'))
+              and o['x']<=obj['x']+1 and o['y']<=obj['y']+1
+              and o['x']+o['w']>=obj['x']+obj['w']-1 and o['y']+o['h']>=obj['y']+obj['h']-1]
+    return surfaces[-1]['fill'] if surfaces else default
+
+def protect_foregrounds(objects,metadata):
+    """Last deterministic pass. Never changes text, geometry or template backgrounds."""
+    from .icons import icon_data
+    background=roles(metadata)['background']
+    changes=[]
+    for index,obj in enumerate(objects):
+        surface=surface_at(obj,objects[:index],background)
+        key='color' if obj['type']=='text' else 'stroke' if obj['type']=='line' else None
+        if key and hex_color(obj.get(key)):
+            fixed=safe_ink(obj[key],surface,metadata)
+            if fixed!=obj[key]: changes.append(obj['id']);obj[key]=fixed
+        if obj.get('icon_name'):
+            color=safe_ink(metadata.get('accent'),surface,metadata)
+            obj['src']=icon_data(obj['icon_name'],color);obj['icon_color']=color
+    return changes
 
 
 def active_palette(metadata):

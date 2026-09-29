@@ -5,10 +5,21 @@ pairs in the material. This is a deterministic guard, not semantic fact-checking
 """
 import re
 import csv
+from ..icon_catalog import ICONS
 from decimal import Decimal, InvalidOperation
 
 def normalized(text):
     return re.sub(r'\s+', ' ', str(text).casefold().replace('ё','е')).strip()
+
+def normalize_model_icons(raw,key):
+    """AI-only fallback. Public schemas still strictly reject arbitrary icon IDs/URLs."""
+    if not isinstance(raw,dict) or not isinstance(raw.get(key),list): return raw
+    result={**raw,key:[]}
+    for item in raw[key]:
+        if isinstance(item,dict) and isinstance(item.get('icon_names'),list):
+            item={**item,'icon_names':[name if isinstance(name,str) and (name in ICONS or name=='auto') else 'auto' for name in item['icon_names']]}
+        result[key].append(item)
+    return result
 
 def numbers(text):
     found=set()

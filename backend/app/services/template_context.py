@@ -80,6 +80,9 @@ def model_template(template):
     meta = template['metadata']
     return {'id':template.get('id'), 'name': template['name'], 'palette': meta.get('colors', {}),
             'fingerprint':meta.get('file_fingerprint'), 'color_roles':roles(meta),
+            'background_rules':{'preserve_by_default':meta.get('preserve_template_background',True),
+                'original':meta.get('background_info',{}),'fallback_color':meta.get('background'),
+                'changes':'Only explicit supported solid palette roles; uncertainty means preserve. UI theme is irrelevant.'},
             'typography':{k:meta.get(k) for k in ('heading_font','body_font','heading_pt','body_pt')},
             'manifest':{'version':meta.get('normalization_version'),
                         'primitives':meta.get('package',{}).get('primitives',[])[:24],

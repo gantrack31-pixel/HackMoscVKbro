@@ -111,6 +111,7 @@ export function SlidePreview({
   return (
     <svg
       className="deck-slide"
+      style={{colorScheme:"light",color:scene.objects.find(o=>o.id==="background")?.fill||"initial",background:scene.objects.find(o=>o.id==="background")?.fill||"transparent",isolation:"isolate"}}
       viewBox={`0 0 ${scene.width} ${scene.height}`}
       role="img"
       aria-label={label}

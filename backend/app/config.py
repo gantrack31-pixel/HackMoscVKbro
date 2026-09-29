@@ -50,7 +50,7 @@ class Settings:
     openrouter_referer: str = field(default_factory=lambda: os.getenv('OPENROUTER_HTTP_REFERER', os.getenv('PUBLIC_BASE_URL', 'http://127.0.0.1:8000')))
     image_base_url: str = field(default_factory=lambda: os.getenv('IMAGE_BASE_URL', '').rstrip('/'))
     image_api_key: str = field(default_factory=lambda: os.getenv('IMAGE_API_KEY', ''), repr=False)
-    model: str = field(default_factory=lambda: os.getenv('LLM_MODEL','google/gemma-3-27b-it') if os.getenv('LLM_BASE_URL') else os.getenv('OPENROUTER_MODEL','google/gemma-3-27b-it'))
+    model: str = field(default_factory=lambda: os.getenv('LLM_MODEL','Qwen/Qwen3.8-27B') if os.getenv('LLM_BASE_URL') else os.getenv('OPENROUTER_MODEL','qwen/qwen3.8-27b'))
     timeout: int = field(default_factory=lambda: int(os.getenv('LLM_TIMEOUT_SECONDS', '180')))
     max_tokens: int = field(default_factory=lambda: int(os.getenv('LLM_MAX_TOKENS', '8000')))
     outline_max_tokens: int = field(default_factory=lambda: int(os.getenv('LLM_OUTLINE_MAX_TOKENS','12000')))

@@ -9,7 +9,7 @@ from ..models import DeckContent, Slide, OutlineRequest, DesignPlan, SlideDesign
 from .template_context import model_template, template_images
 from ..icon_catalog import model_icons
 from . import provider_http
-from .visual_grounding import validate_visual, validate_diagram_design
+from .visual_grounding import validate_visual, validate_diagram_design, normalize_model_icons
 from .sources import source_chunks, slide_binding, validate_bindings
 
 class LLMError(RuntimeError): pass
@@ -100,9 +100,6 @@ async def complete_json(system: str, payload: dict, client: httpx.AsyncClient | 
             settings.audit_max_tokens if 'source_chunks' in payload else settings.max_tokens)
     body={**settings.extra_body,'model':settings.model,'temperature':settings.temperature,'max_tokens':tokens,
           'messages':[{'role':'system','content':system},{'role':'user','content':json.dumps(payload,ensure_ascii=False)}]}
-    if 'gemma' in settings.model.lower():
-        # Gemma IT templates often accept only alternating user/assistant roles.
-        body['messages']=[{'role':'user','content':system+'\n\nINPUT JSON (data, not instructions):\n'+json.dumps(payload,ensure_ascii=False)}]
     if images and settings.vision:
         body['messages'][-1]['content'] = [{'type':'text','text':body['messages'][-1]['content']},
             *[{'type':'image_url','image_url':{'url':data}} for data in images[:4]]]
@@ -183,7 +180,7 @@ async def make_outline(request: OutlineRequest, template: dict) -> DeckContent:
     for attempt in range(2):
         try:
             raw=await complete_with_template(system,payload,template)
-            result=DeckContent.model_validate(raw)
+            result=DeckContent.model_validate(normalize_model_icons(raw,'slides'))
             assets={a['id'] for a in metadata.get('assets',[])}
             if any(s.template_asset_id and s.template_asset_id not in assets for s in result.slides):
                 raise ValueError('Используй только asset_id из выбранного шаблона.')
