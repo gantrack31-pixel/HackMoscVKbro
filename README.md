@@ -67,6 +67,34 @@ docker compose up --build -d
 
 Секреты интеграций указывайте только в локальном `.env.docker` (он исключён из Git и Docker build context). Для production нужны публичный HTTPS `PUBLIC_BASE_URL`, соответствующий HTTPS `CORS_ORIGINS`, `COOKIE_SECURE=true`, SMTP для подтверждения почты и настройки модели; не публикуйте контейнер без этих параметров и TLS reverse proxy. Локальный Compose привязывает порт только к `127.0.0.1`.
 
+## Размещение на Railway
+
+Проект собирается из корневого `Dockerfile`: он упаковывает React-интерфейс и FastAPI в один сервис, поэтому сайт и `/api` работают на одном домене. Railway должен собирать репозиторий с корнем проекта (не задавайте `frontend` как Root Directory). Сервер слушает `0.0.0.0` и порт Railway из `PORT` (по умолчанию локально — 8000).
+
+1. Создайте проект Railway и добавьте сервис из GitHub-репозитория. Если Railway спросит каталог исходников, выберите корень репозитория; Dockerfile находится в `./Dockerfile`.
+2. В **Settings → Networking** сгенерируйте публичный домен Railway. Скопируйте его полный HTTPS-адрес, например `https://имя.up.railway.app`.
+3. Создайте и подключите к сервису **Volume** с mount path **`/app/backend/data`**. Там будут храниться SQLite-база, пользовательские загрузки и шаблоны. Без volume локальные данные могут исчезнуть при пересборке или перезапуске.
+4. Добавьте в **Variables** обязательные настройки (подставьте свой адрес):
+
+   ```dotenv
+   APP_ENV=production
+   PUBLIC_BASE_URL=https://имя.up.railway.app
+   CORS_ORIGINS=https://имя.up.railway.app
+   COOKIE_SECURE=true
+   STORAGE_PATH=data
+   DATABASE_PATH=data/deckly.sqlite3
+   LLM_MODE=live
+   OPENROUTER_API_KEY=...
+   ```
+
+   `OPENROUTER_API_KEY` — секрет: вводите его только в Railway Variables, никогда не коммитьте в репозиторий и не задавайте как `VITE_*`. Если пока не подключаете AI, используйте `LLM_MODE=demo` вместе с `ALLOW_DEMO_IN_PRODUCTION=true` — демо-режим будет работать без реальной модели.
+5. По умолчанию подтверждение email включено. Чтобы регистрация и восстановление пароля отправляли письма, добавьте `SMTP_HOST`, `SMTP_PORT`, `SMTP_USERNAME`, `SMTP_PASSWORD`, `EMAIL_FROM` (и при необходимости `SMTP_SECURITY`). Если почта пока не настроена, явно задайте `EMAIL_VERIFICATION_REQUIRED=false`; тогда email не подтверждается.
+6. Запустите деплой. Проверьте `https://имя.up.railway.app/api/health` и откройте главную страницу. Если включаете вход через Яндекс, задайте `YANDEX_CLIENT_ID`, `YANDEX_REDIRECT_URI=https://имя.up.railway.app/api/auth/yandex/callback` и такой же callback в настройках OAuth-приложения.
+
+Если сервис не может создать файлы в подключённом volume из-за прав доступа, Railway предлагает переменную `RAILWAY_RUN_UID=0` как workaround для Docker-образов, запускающихся не от root. Устанавливайте её только если в логах есть ошибка прав на volume: контейнер тогда работает с UID 0. Для production также настройте резервное копирование volume и храните секреты в переменных Railway.
+
+Railway использует платный план и тарификацию ресурсов; проверьте текущие лимиты, стоимость и условия хранения на [странице тарифов](https://railway.com/pricing) до запуска.
+
 ## Что работает
 
 - Регистрация по почте, вход и выход; пароли хешируются scrypt. Серверная сессия хранится в HttpOnly-cookie. Данные разных аккаунтов изолированы.
