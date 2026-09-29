@@ -72,6 +72,13 @@ def initialize():
         );
         CREATE INDEX IF NOT EXISTS password_resets_expiry ON password_resets(expires_at);
         CREATE TABLE IF NOT EXISTS favorites (user_id TEXT NOT NULL,template_id TEXT NOT NULL,PRIMARY KEY(user_id,template_id));
+        CREATE TABLE IF NOT EXISTS materials (
+            id TEXT PRIMARY KEY, user_id TEXT NOT NULL, name TEXT NOT NULL,
+            kind TEXT NOT NULL, path TEXT NOT NULL, metadata TEXT NOT NULL,
+            sha256 TEXT NOT NULL, created_at TEXT NOT NULL,
+            UNIQUE(user_id, sha256)
+        );
+        CREATE INDEX IF NOT EXISTS materials_user_lookup ON materials(user_id, created_at);
         ''')
         for table in ['templates','projects','jobs']:
             columns={row['name'] for row in db.execute(f'PRAGMA table_info({table})')}
@@ -105,6 +112,34 @@ def template_get(tid: str) -> dict | None:
     with connection() as db:
         row = db.execute('SELECT * FROM templates WHERE id=?', (tid,)).fetchone()
         return decode(row, ['metadata']) if row else None
+
+def material_save(mid: str, user_id: str, name: str, kind: str, path: str, metadata: dict, digest: str):
+    with connection() as db:
+        existing = db.execute('SELECT id FROM materials WHERE user_id=? AND sha256=?', (user_id, digest)).fetchone()
+        if existing:
+            return existing['id']
+        db.execute('INSERT INTO materials (id,user_id,name,kind,path,metadata,sha256,created_at) VALUES (?,?,?,?,?,?,?,?)',
+                   (mid,user_id,name,kind,path,json.dumps(metadata, ensure_ascii=False),digest,now()))
+        return mid
+
+def materials_get(ids: list[str], user_id: str) -> list[dict]:
+    if not ids: return []
+    placeholders=','.join('?' for _ in ids)
+    with connection() as db:
+        rows=db.execute(f'SELECT * FROM materials WHERE user_id=? AND id IN ({placeholders})', [user_id,*ids]).fetchall()
+        return [decode(row, ['metadata']) for row in rows]
+
+def materials_list(user_id: str) -> list[dict]:
+    with connection() as db:
+        return [decode(row, ['metadata']) for row in db.execute('SELECT * FROM materials WHERE user_id=? ORDER BY created_at', (user_id,))]
+
+def material_delete(mid: str, user_id: str) -> dict | None:
+    with connection() as db:
+        row=db.execute('SELECT * FROM materials WHERE id=? AND user_id=?',(mid,user_id)).fetchone()
+        if not row: return None
+        item=decode(row,['metadata'])
+        db.execute('DELETE FROM materials WHERE id=? AND user_id=?',(mid,user_id))
+        return item
 
 def decode(row, fields):
     result = dict(row)

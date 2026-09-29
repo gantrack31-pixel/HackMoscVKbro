@@ -91,6 +91,9 @@ class Slide(BaseModel):
     icon_names: list[IconName | Literal['auto']] = Field(default_factory=list, max_length=6)
     image_prompt: str = Field(default='', max_length=1000)
     template_asset_id: str = Field(default='', max_length=32)
+    resource_id: str = Field(default='', max_length=64)
+    resource_icon_ids: list[str] = Field(default_factory=list, max_length=6)
+    resource_icon_data: list[str] = Field(default_factory=list, max_length=6)
     image_data: str = Field(default='', max_length=1500000)
     @field_validator('image_data')
     @classmethod
@@ -130,6 +133,7 @@ class DeckContent(BaseModel):
     title: str = Field(min_length=1, max_length=180)
     slides: list[Slide] = Field(min_length=1, max_length=30)
     audience: str = Field(default='Команда и коллеги', max_length=100)
+    resource_ids: list[str] = Field(default_factory=list, max_length=100)
 
 class OutlineRequest(BaseModel):
     template_id: str
@@ -138,6 +142,7 @@ class OutlineRequest(BaseModel):
     audience: str = Field(default='Команда и коллеги', max_length=100)
     mode: Literal['description', 'text'] = 'description'
     purpose: Literal['project', 'product', 'feature', 'initiative'] = 'project'
+    resource_ids: list[str] = Field(default_factory=list, max_length=100)
     @field_validator('prompt')
     @classmethod
     def nonempty(cls, value):
@@ -199,6 +204,8 @@ class SlidePatch(BaseModel):
     diagram_type: DiagramType | None = None
     icon_names: list[IconName | Literal['auto']] | None = Field(default=None, max_length=6)
     template_asset_id: str | None = Field(default=None, max_length=32)
+    resource_id: str | None = Field(default=None, max_length=64)
+    resource_icon_ids: list[str] | None = Field(default=None, max_length=6)
     design: SlideDesign | None = None
 
 class AssistantPlan(BaseModel):

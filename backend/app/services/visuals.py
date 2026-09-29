@@ -94,11 +94,12 @@ def pictogram_nodes(slide, box, accent):
         x=box['x']+(i%columns)*cell_w;y=box['y']+(i//columns)*cell_h
         selected=slide.icon_names[i] if i<len(slide.icon_names) else 'auto'
         symbol=choose_icon(label) if selected=='auto' else selected
+        uploaded=slide.resource_icon_data[i] if i<len(slide.resource_icon_data) else ''
         side=min(56,cell_h*.3,cell_w*.25)
         nodes.append({'id':f'icon-card-{i}','type':'rect','x':x,'y':y,'w':cell_w-16,'h':cell_h-16,'fill':'#F1F5F9'})
-        if symbol:
+        if symbol or uploaded:
             nodes.append({'id':f'icon-{i}','type':'image','x':x+18,'y':y+14,'w':side,'h':side,
-                          'src':icon_data(symbol,accent),'icon_name':symbol})
+                          'src':uploaded or icon_data(symbol,accent),'icon_name':symbol})
         label_y=y+side+24 if symbol else y+18
         nodes.append({'id':f'icon-label-{i}','type':'text','x':x+18,'y':label_y,'w':cell_w-52,'h':max(24,y+cell_h-30-label_y),
                       'text':label,'font_size':24,'bold':True,'color':'#0F172A'})

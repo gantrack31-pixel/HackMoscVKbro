@@ -14,6 +14,7 @@ import {
   type Project,
   type Template,
   type Variant,
+  type MaterialResource,
 } from "../types";
 export const sampleMaterial = `Deckly.Ai
 Цифровой дизайнер презентаций.
@@ -120,6 +121,7 @@ export function Wizard({
     [audience, setAudience] = useState("Команда и коллеги");
   const [purpose,setPurpose]=useState<"project"|"product"|"feature"|"initiative">("project");
   const [packetFiles,setPacketFiles]=useState<string[]>([]);
+  const [resources,setResources]=useState<MaterialResource[]>([]);
   const [content, setContent] = useState<DeckContent | null>(null),
     [operation, setOperation] = useState<
       "outline" | "generate" | "regenerate" | "open" | "import" | null
@@ -302,6 +304,7 @@ export function Wizard({
         audience,
         purpose,
         mode: example ? "description" : mode,
+        resource_ids: resources.map(resource => resource.id),
       }, options));
       if (response && isCurrent(id)) {
         setFailedJob(null);
@@ -578,7 +581,15 @@ export function Wizard({
                 <option value="feature">Функция продукта</option><option value="initiative">Инициатива</option>
               </select>
             </label>
-            {packetFiles.length>0 && <ul className="packet-receipt" aria-label="Импортированные документы">{packetFiles.map(name=><li key={name}>{name}</li>)}</ul>}
+            {packetFiles.length>0 && <ul className="packet-receipt" aria-label="Импортированные материалы">{packetFiles.map(name=><li key={name}>{name}</li>)}</ul>}
+            {resources.length>0 && <div className="material-resource-list" aria-label="Ресурсы для презентации">
+              {resources.map(resource=><span className={`material-resource material-${resource.kind}`} key={resource.id} title={resource.name}>
+                <Icon name={resource.kind === "palette" ? "palette" : resource.kind === "font" ? "code" : "file"} />
+                {resource.name.replace(/\.[^.]+$/, "")}
+                <button type="button" className="material-resource-remove" aria-label={`Удалить ${resource.name}`} disabled={busy}
+                  onClick={async()=>{try { await api.deleteMaterial(resource.id); setResources(previous=>previous.filter(item=>item.id!==resource.id)); } catch(error) { onError((error as Error).message); }}}>×</button>
+              </span>)}
+            </div>}
             <div className="row wrap">
               <button
                 className="btn sm"
@@ -590,7 +601,7 @@ export function Wizard({
               </button>
               <label className="btn sm file-label">
                 <Icon name="upload" />{operation === "import" ? "Читаем пакет…" : "Добавить пакет материалов"}
-                <input hidden type="file" multiple disabled={busy} accept=".txt,.md,.csv,.docx,.pdf,.pptx"
+                <input hidden type="file" multiple disabled={busy} accept=".txt,.md,.csv,.docx,.pdf,.pptx,.png,.jpg,.jpeg,.webp,.gif,.bmp,.svg,.ico,.zip,.ttf,.otf,.woff,.woff2,.json"
                   onChange={async e=>{
                     const files=Array.from(e.target.files||[]);e.target.value="";
                     if(!files.length||locked.current)return;
@@ -601,8 +612,9 @@ export function Wizard({
                       if(!isCurrent(id))return;
                       const combined=[prompt.trim(),packet.text].filter(Boolean).join("\n\n");
                       if(combined.length>50000)throw new Error("Вместе с введённым текстом пакет превышает 50 000 символов.");
-                      setPrompt(combined);setMode("text");
-                      setPacketFiles(previous=>[...previous,...packet.documents.map(d=>`${d.name} · ${d.characters.toLocaleString("ru-RU")} символов${d.warnings.length ? " · "+d.warnings.join(" ") : ""}`)]);
+                      setPrompt(combined);setMode(packet.text ? "text" : mode);
+                      setResources(previous=>[...previous,...packet.resources.filter(resource=>!previous.some(item=>item.id===resource.id))]);
+                      setPacketFiles(previous=>[...previous,...packet.documents.map(d=>`${d.name} · ${d.kind === "document" ? `${d.characters.toLocaleString("ru-RU")} символов` : d.kind}`)]);
                     }catch(error){if(isCurrent(id))onError((error as Error).message);}finally{finish(id);}
                   }}/>
               </label>

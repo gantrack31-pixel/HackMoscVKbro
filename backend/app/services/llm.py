@@ -11,6 +11,7 @@ from ..icon_catalog import model_icons
 from . import provider_http
 from .visual_grounding import validate_visual, validate_diagram_design, normalize_model_icons
 from .sources import source_chunks, slide_binding, validate_bindings
+from .materials import compact_resource
 
 class LLMError(RuntimeError): pass
 class LLMFormatError(LLMError): pass
@@ -168,13 +169,17 @@ def demo_outline(request: OutlineRequest) -> DeckContent:
     slides[0].kind='title'
     return DeckContent(title=slides[0].title,slides=slides)
 
-async def make_outline(request: OutlineRequest, template: dict) -> DeckContent:
-    if settings.mode=='demo': return demo_outline(request)
+async def make_outline(request: OutlineRequest, template: dict, resources: list[dict] | None = None) -> DeckContent:
+    if settings.mode=='demo':
+        result=demo_outline(request)
+        result.resource_ids=list(request.resource_ids)
+        return result
     if settings.mode!='live': raise LLMError('LLM_MODE должен быть demo или live.')
     system=(BASE/'prompts/outline.txt').read_text('utf-8')
     metadata=template['metadata']
     payload={'task':request.model_dump(),'template':model_template(template),
              'icon_library':model_icons(),
+             'resource_catalog':[compact_resource(item) for item in (resources or [])][:80],
              'image_generation_available':bool(settings.image_base_url),'schema':compact_schema(DeckContent)}
     # Одна попытка + одно исправление формата. Общий лимит ограничен отдельно.
     for attempt in range(2):
@@ -191,7 +196,16 @@ async def make_outline(request: OutlineRequest, template: dict) -> DeckContent:
                     raise ValueError('Схема или пиктограммы вмещают до 6 тезисов; подробности перенеси в notes.')
                 if slide.kind=='icons' and slide.icon_names and len(slide.icon_names)!=len(slide.bullets):
                     raise ValueError('В icon_names нужен один id на каждый bullet в том же порядке.')
+                if slide.resource_id and slide.resource_id not in {item['id'] for item in (resources or [])}:
+                    raise ValueError('Используйте только resource_id из каталога материалов.')
+                if slide.resource_icon_ids:
+                    pack=next((item for item in (resources or []) if item['id']==slide.resource_id and item['kind']=='icon_pack'),None)
+                    allowed={entry['id'] for entry in (pack or {}).get('metadata',{}).get('icons',[])}
+                    if not pack or any(icon_id not in allowed for icon_id in slide.resource_icon_ids):
+                        raise ValueError('Используйте только icon ID выбранного набора.')
+                slide.resource_icon_data=[]
             result.audience=request.audience
+            result.resource_ids=list(request.resource_ids)
             return result
         except (ValidationError,ValueError,LLMFormatError) as exc:
             if attempt: raise LLMError('Модель дважды вернула некорректную структуру. Повторите с более коротким материалом.') from exc
@@ -228,7 +242,7 @@ async def review_content(content: dict, source: str) -> list[dict]:
     return result
 
 
-async def create_design_variants(content: DeckContent, template: dict, instruction: str = '') -> DeckContent:
+async def create_design_variants(content: DeckContent, template: dict, instruction: str = '', resources: list[dict] | None = None) -> DeckContent:
     """One model request plans all three variants; the renderer owns safe geometry."""
     if settings.mode=='demo':
         return await redesign_layout(content,template,instruction) if instruction else content.model_copy(deep=True)
@@ -238,6 +252,7 @@ async def create_design_variants(content: DeckContent, template: dict, instructi
         'instruction':instruction or 'Создай три разных варианта оформления этой презентации.',
         'audience':content.audience,
         'template':model_template(template),
+        'resource_catalog':[compact_resource(item) for item in (resources or [])][:80],
         'slides':[{'slide':i,'title':s.title,'body_preview':s.body[:400],'body_length':len(s.body),
                    'bullet_count':len(s.bullets),'bullets':s.bullets,'kind':s.kind,
                    'table_shape':{'rows':len(s.table),'columns':max(map(len,s.table),default=0),

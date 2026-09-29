@@ -5,6 +5,7 @@ import logging
 import re
 import smtplib
 import time
+import copy
 from contextlib import asynccontextmanager
 from email.message import EmailMessage
 from pathlib import Path
@@ -33,7 +34,7 @@ from .services import yandex_disk
 from .services import provider_http
 from .services.template_preview import thumbnail, PREVIEW_VERSION
 from .services.operations import standalone_ai, current_operation, checkpoint, OperationCancelled
-from .services.materials import read_material, MAX_FILE_BYTES, MAX_PACKET_CHARS
+from .services.materials import process_material, compact_resource, image_data, icon_pack_data, MAX_FILE_BYTES, MAX_PACKET_CHARS
 from .services.workflow import recipe, manifest, generation_budget
 from .services.images import generate_image, fill_missing_images, MODEL as IMAGE_MODEL
 from pydantic import BaseModel, Field, field_validator
@@ -42,6 +43,18 @@ from .auth import router as auth_router, current_user
 logger=logging.getLogger('deckly')
 generation_slots=asyncio.Semaphore(2)
 SUPPORT_RATE_WINDOW_SECONDS=900
+
+def template_with_material_palette(template, resources):
+    """Extend the template palette with user-provided roles while keeping contrast checks authoritative."""
+    palettes=[item.get('metadata',{}) for item in (resources or []) if item.get('kind')=='palette']
+    colors=[]; extra_roles={}
+    for palette in palettes:
+        colors.extend(palette.get('colors',[])); extra_roles.update(palette.get('roles',{}))
+    if not colors and not extra_roles: return template
+    metadata=copy.deepcopy(template['metadata'])
+    metadata['palette']=list(dict.fromkeys([*metadata.get('palette',[]),*colors]))[:40]
+    metadata['colors']={**metadata.get('colors',{}),**extra_roles}
+    return {**template,'metadata':metadata}
 
 @asynccontextmanager
 async def lifespan(app):
@@ -141,19 +154,55 @@ def workflow(user=Depends(current_user)):
 async def import_materials(files: list[UploadFile], user=Depends(current_user)):
     try:
         if not 1<=len(files)<=8:raise HTTPException(422,'Выберите от одного до восьми файлов.')
-        documents=[];total=0
+        documents=[];resources=[];total=0
+        folder=settings.storage/'materials'/user['id'];folder.mkdir(parents=True,exist_ok=True)
         for file in files:
             data=await file.read(MAX_FILE_BYTES+1)
             total+=len(data)
             if total>15*1024*1024:raise HTTPException(413,'Пакет должен быть не больше 15 МБ.')
             name=Path((file.filename or 'Документ').replace('\\','/')).name
-            doc=await asyncio.to_thread(read_material,name,data)
-            documents.append(doc)
-        text='\n\n'.join(f'Источник: {d["name"]}\n{d["text"]}' for d in documents)
+            doc=await asyncio.to_thread(process_material,name,data)
+            mid=str(uuid4())
+            path=folder/(mid+Path(name).suffix.lower())
+            await asyncio.to_thread(path.write_bytes,data)
+            metadata={**doc.get('metadata',{}),'name':doc['name']}
+            saved_id=await asyncio.to_thread(db.material_save,mid,user['id'],doc['name'],doc['kind'],str(path),metadata,doc['sha256'])
+            resource={'id':saved_id,'user_id':user['id'],'name':doc['name'],'kind':doc['kind'],'path':str(path),
+                      'metadata':metadata,'sha256':doc['sha256'],'created_at':db.now()}
+            resources.append(compact_resource(resource))
+            documents.append({**doc,'id':saved_id,'metadata':metadata})
+        # Keep document text in memory only; binary assets are referenced by stable IDs.
+        text_parts=[]
+        for item in documents:
+            if item.get('kind')=='document':
+                # The original parsed text is attached before the response is compacted below.
+                text_parts.append(f'Источник: {item["name"]}\n{item.get("text","")}')
+        text='\n\n'.join(text_parts)
         if len(text)>MAX_PACKET_CHARS:raise HTTPException(413,'В пакете больше 50 000 символов. Уберите часть документов.')
-        return {'text':text,'documents':[{k:v for k,v in d.items() if k!='text'} for d in documents]}
+        return {'text':text,'resource_ids':[r['id'] for r in resources],
+                'resources':resources,'documents':[{k:v for k,v in d.items() if k not in {'text','metadata'}} for d in documents]}
     finally:
         for file in files:await file.close()
+
+@app.get('/api/materials')
+def list_materials(user=Depends(current_user)):
+    return {'resources':[compact_resource(item) for item in db.materials_list(user['id'])]}
+
+@app.get('/api/materials/{mid}/preview')
+def material_preview(mid:str,user=Depends(current_user)):
+    item=next((r for r in db.materials_get([mid],user['id']) if r['id']==mid),None)
+    if not item or item['kind'] not in {'image','icon'}: raise HTTPException(404,'Предпросмотр ресурса недоступен')
+    data=image_data(item['path'])
+    if not data: raise HTTPException(404,'Предпросмотр ресурса недоступен')
+    import base64
+    return Response(base64.b64decode(data.split(',',1)[1]),media_type='image/png',headers={'Cache-Control':'private, no-store'})
+
+@app.delete('/api/materials/{mid}', status_code=204)
+def delete_material(mid:str,user=Depends(current_user)):
+    item=db.material_delete(mid,user['id'])
+    if not item: raise HTTPException(404,'Материал не найден')
+    try: Path(item['path']).unlink(missing_ok=True)
+    except OSError: logger.warning('Не удалось удалить файл материала %s',mid)
 
 class ImagePrompt(BaseModel):
     prompt: str=Field(min_length=3,max_length=1000)
@@ -319,15 +368,27 @@ def template_thumbnail(tid:str,request:Request):
 @standalone_ai
 async def outline(request: OutlineRequest,http_request:Request,user=Depends(current_user)):
     template=get_template(request.template_id,user['id'])
+    resources=db.materials_get(request.resource_ids,user['id'])
+    if len(resources)!=len(set(request.resource_ids)):
+        raise HTTPException(404,'Один из материалов больше недоступен.')
     try:
         async with generation_slots:
-            result=await make_outline(request,template)
+            result=await make_outline(request,template,resources)
         return {'content':result.model_dump(),'mode':settings.mode}
     except LLMError as exc: raise HTTPException(502,str(exc)) from exc
 
-async def assemble_variants(jid, content, template, source, user_id, timings):
+async def assemble_variants(jid, content, template, source, user_id, timings, resources=None):
     checkpoint()
     tick=monotonic();db.job_set(jid,'running','images',user_id=user_id)
+    resources=resources or []
+    resource_map={item['id']:item for item in resources}
+    for slide in content.slides:
+        if slide.resource_id:
+            resource=resource_map.get(slide.resource_id)
+            if resource and resource['kind']=='image':
+                slide.image_data=image_data(resource['path'])
+            if resource and resource['kind']=='icon_pack' and slide.resource_icon_ids:
+                slide.resource_icon_data=[icon_pack_data(resource['path'], icon_id) for icon_id in slide.resource_icon_ids]
     await fill_missing_images(content)
     timings['images']=monotonic()-tick
     checkpoint()
@@ -353,9 +414,13 @@ async def generate_job(jid: str, request: GenerateRequest,user_id: str, result_p
             checkpoint()
             db.job_set(jid,'running','design',user_id=user_id)
             source=request.content.model_copy(update={'audience':request.audience})
-            content=await create_design_variants(source,template)
+            resources=db.materials_get(source.resource_ids,user_id)
+            if len(resources)!=len(set(source.resource_ids)):
+                raise HTTPException(404,'Один из материалов больше недоступен.')
+            template=template_with_material_palette(template,resources)
+            content=await create_design_variants(source,template,resources=resources)
             timings['design']=monotonic()-tick
-            counts=await assemble_variants(jid,content,template,request.source_text,user_id,timings)
+            counts=await assemble_variants(jid,content,template,request.source_text,user_id,timings,resources)
             db.job_complete_with_project(jid,result_project_id,request.template_id,
                                          content.model_dump(),request.source_text,user_id,
                                          manifest(template,content,request.source_text,counts,monotonic()-started,jid,timings))
@@ -438,9 +503,14 @@ async def regenerate_job(jid: str, original: dict, instruction: str, user_id: st
             timings={'template':monotonic()-tick};tick=monotonic()
             checkpoint()
             db.job_set(jid,'running','design',user_id=user_id)
-            content=await create_design_variants(DeckContent.model_validate(original['content']),template,instruction)
+            base=DeckContent.model_validate(original['content'])
+            resources=db.materials_get(base.resource_ids,user_id)
+            if len(resources)!=len(set(base.resource_ids)):
+                raise HTTPException(404,'Один из материалов больше недоступен.')
+            template=template_with_material_palette(template,resources)
+            content=await create_design_variants(base,template,instruction,resources)
             timings['design']=monotonic()-tick
-            counts=await assemble_variants(jid,content,template,original['source_text'],user_id,timings)
+            counts=await assemble_variants(jid,content,template,original['source_text'],user_id,timings,resources)
             # Persist only a complete result, as a copy; never overwrite the user's working project.
             db.job_complete_with_project(jid,result_project_id,original['template_id'],
                                          content.model_dump(),original['source_text'],user_id,

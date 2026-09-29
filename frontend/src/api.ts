@@ -14,6 +14,7 @@ import type {
   DiskReceipt,
   CloudReceipt,
   Scene,
+  MaterialResource,
 } from "./types";
 let csrf = "";
 export type AiOptions = { operationId: string; signal: AbortSignal };
@@ -71,8 +72,9 @@ export const api = {
   workflow: () => request<import("./types").WorkflowRecipe>("/workflow"),
   importMaterials: (files: File[]) => {
     const body=new FormData(); files.forEach(file=>body.append("files",file));
-    return request<{text: string; documents: {name: string; characters: number; warnings: string[]; sha256: string}[]}>("/materials/import",{method:"POST",body});
+    return request<{text: string; resource_ids: string[]; resources: MaterialResource[]; documents: {name: string; kind: MaterialResource["kind"]; characters: number; warnings: string[]; sha256: string}[]}>("/materials/import",{method:"POST",body});
   },
+  deleteMaterial: (id: string) => request<void>(`/materials/${id}`, { method: "DELETE" }),
   generateImage: (prompt: string,ai?:AiOptions) => aiRequest<{image_data: string; model: string}>("/images/generate",json("POST",{prompt}),ai),
   cloudStatus: () => request<CloudStatus>("/cloud/status"),
   diskStatus: () => request<DiskStatus>("/disk/status"),
@@ -197,6 +199,7 @@ export const api = {
     count: number;
     audience: string;
     mode: "description" | "text";
+    resource_ids?: string[];
   }, ai?:AiOptions) =>
     aiRequest<{ content: DeckContent; mode: string }>(
       "/outline",

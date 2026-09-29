@@ -70,12 +70,31 @@ export interface Slide {
   image_prompt?: string;
   image_data?: string;
   template_asset_id?: string;
+  resource_id?: string;
+  resource_icon_ids?: string[];
   designs?: Partial<Record<Variant, NonNullable<Slide["design"]>>>;
 }
 export interface DeckContent {
   title: string;
   slides: Slide[];
   audience?: string;
+  resource_ids?: string[];
+}
+export interface MaterialResource {
+  id: string;
+  name: string;
+  kind: "document" | "image" | "icon" | "icon_pack" | "font" | "palette";
+  format: string;
+  status?: "ready" | "failed";
+  characters?: number;
+  width?: number;
+  height?: number;
+  family?: string;
+  weight?: string;
+  style?: string;
+  roles?: string[];
+  colors?: string[];
+  icons?: {id: string; name: string; format: string}[];
 }
 export interface SceneObject {
   id: string;
