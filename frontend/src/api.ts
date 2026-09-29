@@ -213,6 +213,8 @@ export const api = {
     request<void>(`/projects/${id}`, { method: "DELETE" }),
   undo: (id: string) =>
     request<Project>(`/projects/${id}/undo`, { method: "POST" }),
+  redo: (id: string) =>
+    request<Project>(`/projects/${id}/redo`, { method: "POST" }),
   audit: (id: string, variant: Variant) =>
     request<{ issues: Issue[]; context_status: string }>(
       `/projects/${id}/audit?variant=${variant}`,

@@ -36,8 +36,8 @@ async def edit_presentation(request, template, source):
                    'geometry':boxes,'schema':AssistantPlan.model_json_schema(),
                    'pass':iteration + 1}
         for attempt in range(2):
-            raw = await llm.complete_with_template(system, payload, template)
             try:
+                raw = await llm.complete_with_template(system, payload, template)
                 plan = AssistantPlan.model_validate(raw)
                 indices = [p.slide for p in plan.changes]
                 if len(indices) != len(set(indices)) or any(i not in allowed for i in indices):
@@ -58,7 +58,7 @@ async def edit_presentation(request, template, source):
                         raise ValueError('В схеме или пиктограммах может быть максимум 6 элементов.')
                     candidate.slides[patch.slide] = updated
                 break
-            except (ValidationError, ValueError) as exc:
+            except (ValidationError, ValueError, llm.LLMFormatError) as exc:
                 if attempt:
                     raise llm.LLMError('AI вернул некорректные правки. Ваш текст сохранён без изменений.') from exc
                 payload['format_correction'] = str(exc)[:1200]

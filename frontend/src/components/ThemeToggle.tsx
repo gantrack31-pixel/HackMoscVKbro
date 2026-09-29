@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useLayoutEffect, useState, type ReactNode } from "react";
 import { Moon, Sun } from "lucide-react";
 
 type Theme = "light" | "dark";
@@ -15,9 +15,20 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
       /* Хранилище может быть отключено. */
     }
     const initial = saved === "dark" || saved === "light" ? saved : "light";
-    document.documentElement.dataset.theme = initial;
     return initial;
   });
+  useLayoutEffect(() => {
+    document.documentElement.dataset.theme = theme;
+    document.documentElement.style.colorScheme = theme;
+  }, [theme]);
+  useEffect(() => {
+    const sync = (event: StorageEvent) => {
+      if (event.key === "deckly-theme" || event.key === null)
+        setTheme(event.newValue === "dark" ? "dark" : "light");
+    };
+    window.addEventListener("storage", sync);
+    return () => window.removeEventListener("storage", sync);
+  }, []);
   function toggle() {
     const next = theme === "light" ? "dark" : "light";
     document.documentElement.dataset.theme = next;

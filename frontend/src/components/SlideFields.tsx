@@ -170,7 +170,7 @@ export function SlideFields({
           {!!templateAssets.length && <label>Изображение из шаблона
             <select value={slide.template_asset_id || ""} onChange={e=>onChange({template_asset_id:e.target.value,image_data:""})}>
               <option value="">Без изображения из шаблона</option>
-              {templateAssets.map(a=><option key={a.id} value={a.id}>Слайд {a.slide+1} · {a.description || a.name}</option>)}
+              {templateAssets.map(a=><option key={a.id} value={a.id} disabled={!a.data}>{a.slide >= 0 ? `Слайд ${a.slide+1} · ` : ""}{a.description || a.name}{!a.data ? " (сохранено в оригинале)" : ""}</option>)}
             </select></label>}
           <label>Описание иллюстрации<textarea disabled={imageBusy} maxLength={1000} value={slide.image_prompt||""}
             onChange={e=>onChange({image_prompt:e.target.value})} placeholder="Например: светлая изометрическая мастерская, без надписей"/></label>

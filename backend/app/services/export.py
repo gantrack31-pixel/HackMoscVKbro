@@ -2,6 +2,7 @@
 from io import BytesIO
 from html import escape
 import base64
+from zipfile import ZipFile
 from pptx import Presentation
 from pptx.util import Inches, Pt
 from pptx.dml.color import RGBColor
@@ -25,7 +26,7 @@ def scene_svg(scene):
             elif n['type']=='line': parts.append(f'<line x1="{n["x1"]}" y1="{n["y1"]}" x2="{n["x2"]}" y2="{n["y2"]}" stroke="{n["stroke"]}" stroke-width="{n["stroke_width"]}"/>')
             elif n['type']=='image': parts.append(f'<image x="{n["x"]}" y="{n["y"]}" width="{n["w"]}" height="{n["h"]}" href="{escape(n["src"],quote=True)}"/>')
             else:
-                spans=''.join(f'<tspan x="{n["x"]}" y="{n["y"]+n["font_size"]+i*n["font_size"]*1.28}">{escape(line)}</tspan>' for i,line in enumerate(n['lines']))
+                spans=''.join(f'<tspan x="{n["x"]}" y="{n["y"]+n["font_size"]+i*n["font_size"]*n.get("line_spacing",1.28)}">{escape(line)}</tspan>' for i,line in enumerate(n['lines']))
                 parts.append(f'<text font-family="Manrope, Arial" font-size="{n["font_size"]}" font-weight="{750 if n["bold"] else 400}" fill="{n["color"]}">{spans}</text>')
     return f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {scene["width"]} {scene["height"]}" role="img">'+''.join(parts)+'</svg>'
 
@@ -54,7 +55,7 @@ def export_pdf(content,template,variant):
                                   n['x'],height-n['y']-n['h'],n['w'],n['h'],mask='auto')
                 else:
                     pdf.setFont('DecklyBold' if n['bold'] else 'Deckly',n['font_size']);pdf.setFillColor(HexColor(n['color']))
-                    for j,line in enumerate(n['lines']):pdf.drawString(n['x'],height-n['y']-n['font_size']-j*n['font_size']*1.28,line)
+                    for j,line in enumerate(n['lines']):pdf.drawString(n['x'],height-n['y']-n['font_size']-j*n['font_size']*n.get('line_spacing',1.28),line)
         pdf.showPage()
     pdf.save();return stream.getvalue()
 
@@ -78,6 +79,7 @@ def export_pptx(content: DeckContent, template: dict, variant: str):
         for obj in scene['objects']:
             x,y,w,h=[int(obj[key]*scale) for key in ['x','y','w','h']]
             if obj['id']=='background':
+                if template.get('path') and metadata.get('preserve_template_background',True): continue
                 slide.background.fill.solid();slide.background.fill.fore_color.rgb=rgb(obj['fill']);continue
             if obj['type'] in {'rect','ellipse'}:
                 shape=slide.shapes.add_shape(MSO_SHAPE.OVAL if obj['type']=='ellipse' else MSO_SHAPE.RECTANGLE,x,y,w,h)
@@ -86,16 +88,24 @@ def export_pptx(content: DeckContent, template: dict, variant: str):
                 line=slide.shapes.add_connector(MSO_CONNECTOR.STRAIGHT,*[int(obj[k]*scale) for k in ('x1','y1','x2','y2')])
                 line.line.color.rgb=rgb(obj['stroke']);line.line.width=Pt(obj['stroke_width']*point_scale)
             elif obj['type']=='image':
-                slide.shapes.add_picture(BytesIO(base64.b64decode(obj['src'].split(',',1)[1])),x,y,w,h)
+                image_bytes=base64.b64decode(obj['src'].split(',',1)[1])
+                asset=next((a for a in metadata.get('assets',[]) if a['id']==slide_content.template_asset_id),None)
+                if not slide_content.image_data and asset and asset.get('original_part') and template.get('path'):
+                    with ZipFile(template['path']) as original:
+                        full_image=original.read(asset['original_part'])
+                    # Native formats preserve full resolution; other formats keep the safe preview.
+                    if asset['original_part'].lower().endswith(('.png','.jpg','.jpeg','.gif','.bmp','.tif','.tiff')):
+                        image_bytes=full_image
+                slide.shapes.add_picture(BytesIO(image_bytes),x,y,w,h)
             elif obj['type']=='text':
                 shape=slide.shapes.add_textbox(x,y,w,h);frame=shape.text_frame;frame.clear()
                 frame.margin_left=frame.margin_right=frame.margin_top=frame.margin_bottom=0
                 frame.word_wrap=True
                 for j,line in enumerate(obj['lines']):
                     paragraph=frame.paragraphs[0] if j==0 else frame.add_paragraph()
-                    paragraph.text=line;paragraph.font.name=metadata.get('font','Manrope')
+                    paragraph.text=line;paragraph.font.name=obj.get('font_family',metadata.get('font','Manrope'))
                     paragraph.font.size=Pt(obj['font_size']*point_scale);paragraph.font.bold=obj['bold']
-                    paragraph.font.color.rgb=rgb(obj['color']);paragraph.space_after=Pt(0);paragraph.line_spacing=1.28
+                    paragraph.font.color.rgb=rgb(obj['color']);paragraph.space_after=Pt(0);paragraph.line_spacing=obj.get('line_spacing',1.28)
             elif obj['type']=='chart':
                 data=CategoryChartData();data.categories=obj['labels'];data.add_series(obj['unit'] or 'Значение',obj['values'])
                 chart_type={'bar':XL_CHART_TYPE.BAR_CLUSTERED,'column':XL_CHART_TYPE.COLUMN_CLUSTERED,'line':XL_CHART_TYPE.LINE_MARKERS}[obj.get('chart_type','bar')]

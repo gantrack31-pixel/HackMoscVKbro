@@ -30,7 +30,7 @@ export function PresentationAssistant({ project, content, index, health, disable
     } catch (e) { setError((e as Error).message); }
     finally { lock.current = false; setWorking(false); onBusy(false); }
   }
-  return <section className="presentation-assistant panel" aria-label="AI-редактор презентации" aria-busy={working}>
+  return <section className="presentation-assistant panel" aria-label="AI-помощник" aria-busy={working}>
     <div className="between"><div><span className="eyebrow">ВМЕСТЕ С AI</span>
       <h2><Icon name="spark" />{audit ? "Исправить презентацию с AI" : "Продолжим работу над слайдами"}</h2></div>
       <span className="badge">{scope === "all" ? "Вся презентация" : `Слайд ${index + 1}`}</span></div>

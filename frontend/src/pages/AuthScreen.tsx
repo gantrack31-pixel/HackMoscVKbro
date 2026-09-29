@@ -32,7 +32,7 @@ export function AuthScreen({
   onUser: (u: User) => void;
   error: string;
 }) {
-  const [screen, setScreen] = useState<Screen>(location.hash === "#login" ? "login" : location.hash.startsWith("#auth-error=") ? "choice" : "welcome"),
+  const [screen, setScreen] = useState<Screen>(location.hash === "#login" || location.pathname === "/login" ? "login" : location.hash === "#register" || location.pathname === "/register" ? "register" : location.hash.startsWith("#auth-error=") ? "choice" : "welcome"),
     [templates, setTemplates] = useState<Template[]>([]),
     [error, setError] = useState(
       initialError ||

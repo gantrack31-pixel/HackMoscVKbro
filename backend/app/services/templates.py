@@ -8,6 +8,7 @@ from pptx import Presentation
 from .. import database as db
 from .theme_catalog import THEMES, theme_metadata
 from .template_context import extract_examples
+from .template_package import inspect_package
 
 NS = {'a':'http://schemas.openxmlformats.org/drawingml/2006/main'}
 PARSER = etree.XMLParser(resolve_entities=False, no_network=True)
@@ -74,7 +75,14 @@ def analyze_template(path: Path) -> dict:
                 except (TypeError,ValueError): continue
             layouts.append({'master':master_index,'index':layout_index,'name':layout.name,'boxes':boxes,
                             'static_shapes':sum(not s.is_placeholder for s in layout.shapes)})
-    examples, assets = extract_examples(prs)
+    examples, sampled_assets = extract_examples(prs)
+    package = inspect_package(path)
+    assets = package.pop('assets')
+    descriptions = {a['id']:a for a in sampled_assets}
+    for asset in assets:
+        if asset['id'] in descriptions:
+            asset.update({k:descriptions[asset['id']][k] for k in ('name','description','slide')})
+    theme_pair = package['themes'][0]['fonts'] if package['themes'] else {}
     # Ordinary slides often use free textboxes rather than master placeholders.
     # Derive zones from their actual geometry, retaining valid export layout indices.
     for example in examples:
@@ -93,13 +101,16 @@ def analyze_template(path: Path) -> dict:
     return {'count':len(prs.slides),'ratio':round(width/height,5),'width_emu':width,'height_emu':height,
             'colors':colors,'accent':colors.get('accent1','#0077FF'),'background':colors.get('lt1','#FFFFFF'),
             'font':fonts.most_common(1)[0][0] if fonts else theme_font,
-            'theme_font':theme_font,'fonts':[name for name,_ in fonts.most_common(6)],
+            'theme_font':theme_font,'fonts':package['fonts'] or [theme_font],
+            'heading_font':theme_pair.get('majorFont') or theme_font,
+            'body_font':theme_pair.get('minorFont') or (fonts.most_common(1)[0][0] if fonts else theme_font),
             'heading_pt':max(headings,key=lambda x:x[1])[0] if headings else 32,
             'body_pt':max(bodies,key=lambda x:x[1])[0] if bodies else 18,
             'layouts':layouts,'master_count':len(prs.slide_masters),'source':'pptx',
-            'visual_elements':dict(visual_counts),'normalization_version':'3',
+            'visual_elements':dict(visual_counts),'normalization_version':'4', 'package':package,
             'slide_examples':examples,'assets':assets,
-            'analysis_limits':{'sampled_slides':len(examples),'total_slides':len(prs.slides),'reusable_images':len(assets)},
+            'analysis_limits':{'sampled_slides':len(examples),'total_slides':len(prs.slides),
+                               'reusable_images':sum(bool(a['data']) for a in assets),'retained_media':len(assets)},
             'warnings':['Предпросмотр показывает содержимое и размещение. Графика мастера сохраняется в PPTX; проверьте итоговый файл в PowerPoint.']}
 
 BUILTINS=[

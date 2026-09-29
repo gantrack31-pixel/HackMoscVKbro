@@ -166,3 +166,5 @@ class Issue(BaseModel):
     fixable: bool = False
     deterministic: bool = True
     object_id: str = 'body'
+    source_bindings: list[dict] = Field(default_factory=list)
+    grounding: Literal['not_applicable', 'located', 'unverified', 'unavailable'] = 'not_applicable'

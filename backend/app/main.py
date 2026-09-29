@@ -24,7 +24,8 @@ from .services.templates import seed_templates, analyze_template, BUILTIN_IDS
 from .services.pptx_security import validate_pptx_archive
 from .services.llm import make_outline, review_content, create_design_variants, configured, LLMError
 from .services.layout import build_scene
-from .services.audit import audit_deck, source_status
+from .services.audit import audit_deck
+from .services.sources import slide_binding
 from .services.export import export_pptx, export_pdf, export_html
 from .services import cloud
 from .services.materials import read_material, MAX_FILE_BYTES, MAX_PACKET_CHARS
@@ -86,7 +87,7 @@ def visible_template(template,user_id):
 def get_template(tid,user_id=None):
     result=db.template_get(tid)
     if not result or (user_id and not visible_template(result,user_id)): raise HTTPException(404,'Шаблон не найден')
-    if result.get('path') and result['metadata'].get('normalization_version') != '3':
+    if result.get('path') and result['metadata'].get('normalization_version') != '4':
         try:
             fresh=analyze_template(Path(result['path']))
             result['metadata']={**result['metadata'],**fresh}
@@ -105,10 +106,11 @@ def public_template(template):
 
 def project_response(project):
     content=DeckContent.model_validate(project['content']);template=get_template(project['template_id'])
-    return {**{k:v for k,v in project.items() if k not in {'revisions','user_id'}},'can_undo':bool(project.get('revisions')),
+    return {**{k:v for k,v in project.items() if k not in {'revisions','future','user_id'}},'can_undo':bool(project.get('revisions')),
+            'can_redo':bool(project.get('future')),
             'template':public_template(template),
             'variants':{variant:[build_scene(slide,template['metadata'],variant,i) for i,slide in enumerate(content.slides)] for variant in ['a','b','c']},
-            'sources':[{'slide':i,'status':source_status(slide.source_quote,project['source_text'])} for i,slide in enumerate(content.slides)]}
+            'sources':[{'slide':i,**slide_binding(slide,project['source_text'])} for i,slide in enumerate(content.slides)]}
 
 @app.get('/api/health')
 def health():
@@ -271,6 +273,14 @@ async def upload_template(file: UploadFile,user=Depends(current_user)):
         path.unlink(missing_ok=True)
         raise HTTPException(422,str(exc) if isinstance(exc,ValueError) else 'Не удалось прочитать структуру PPTX.') from None
     finally: await file.close()
+
+@app.get('/api/templates/{tid}/original')
+def original_template(tid: str,user=Depends(current_user)):
+    template=get_template(tid,user['id'])
+    path=template.get('path')
+    if not path or not Path(path).is_file(): raise HTTPException(404,'Исходный PPTX отсутствует')
+    return FileResponse(path,media_type='application/vnd.openxmlformats-officedocument.presentationml.presentation',
+                        filename='template.pptx',headers={'Cache-Control':'private, no-store'})
 
 @app.post('/api/outline')
 async def outline(request: OutlineRequest,user=Depends(current_user)):
@@ -526,11 +536,19 @@ def undo(pid: str,user=Depends(current_user)):
     if not db.project_undo(pid): raise HTTPException(409,'Нет предыдущей версии')
     return project_response(get_project(pid))
 
+@app.post('/api/projects/{pid}/redo')
+def redo(pid: str,user=Depends(current_user)):
+    get_project(pid,user['id'])
+    if not db.project_history(pid,'redo'): raise HTTPException(409,'Нет следующей версии')
+    return project_response(get_project(pid))
+
 @app.get('/api/projects/{pid}/audit')
 def audit(pid: str,variant: str=Query('a',pattern='^[abc]$'),user=Depends(current_user)):
     project=get_project(pid,user['id']);template=get_template(project['template_id'])
     issues=audit_deck(DeckContent.model_validate(project['content']),template,variant,project['source_text'])
-    return {'issues':[i.model_dump() for i in issues],'context_status':'available' if settings.mode=='live' and settings.context_audit else 'not_connected'}
+    return {'issues':[i.model_dump() for i in issues],
+            'sources':[{'slide':i,**slide_binding(s,project['source_text'])} for i,s in enumerate(DeckContent.model_validate(project['content']).slides)],
+            'context_status':'available' if settings.mode=='live' and settings.context_audit else 'not_connected'}
 
 @app.post('/api/projects/{pid}/audit/content')
 async def content_audit(pid: str,user=Depends(current_user)):
@@ -540,8 +558,11 @@ async def content_audit(pid: str,user=Depends(current_user)):
         async with generation_slots:
             raw=await review_content(project['content'],project['source_text'])
         issues=[Issue(id=f"llm:{i}",slide=item['slide'],code='context',title=item['title'][:180],detail=item['detail'][:1200],
-                      category='content',severity='warning',deterministic=False).model_dump() for i,item in enumerate(raw)]
-        return {'issues':issues,'model':settings.model,'context_status':'completed'}
+                      category='content',severity='info' if item.get('grounding')=='unavailable' else 'warning',
+                      deterministic=False,source_bindings=item.get('source_bindings',[]),
+                      grounding=item.get('grounding','unverified')).model_dump() for i,item in enumerate(raw)]
+        return {'issues':issues,'model':settings.model,
+                'context_status':'unavailable' if any(i['grounding']=='unavailable' for i in issues) else 'completed'}
     except LLMError as exc: raise HTTPException(502,str(exc)) from exc
 
 @app.post('/api/projects/{pid}/fix')
@@ -566,6 +587,8 @@ def export(pid: str,format: str,variant: str=Query('a',pattern='^[abc]$'),user=D
     return Response(payload,media_type=mime,headers={'Content-Disposition':f"attachment; filename=deckly-{variant}.{format}; filename*=UTF-8''{filename}"})
 
 frontend=BASE.parent/'frontend/dist'
+@app.get('/login', include_in_schema=False)
+@app.get('/register', include_in_schema=False)
 @app.get('/auth/yandex', include_in_schema=False)
 @app.get('/auth/yandex/', include_in_schema=False)
 def yandex_host_page():

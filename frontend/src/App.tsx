@@ -512,7 +512,8 @@ function Workspace({
                 <dt>Визуальные элементы</dt><dd>{Object.entries(preview.metadata.visual_elements||{}).map(([name,value])=>`${name}: ${value}`).join(" · ")||"Сведения появятся при новом импорте PPTX"}</dd>
                 {preview.metadata.analysis_limits && <><dt>Распознано для AI</dt><dd>{preview.metadata.analysis_limits.sampled_slides} исходных слайдов · {preview.metadata.analysis_limits.reusable_images} доступных изображений</dd></>}
               </dl>
-              {!!preview.metadata.assets?.length && <div className="template-assets">{preview.metadata.assets.map(a=><img key={a.id} src={a.data} alt={a.description || a.name} />)}</div>}
+              {!!preview.metadata.assets?.length && <div className="template-assets">{preview.metadata.assets.filter(a=>a.data).map(a=><img key={a.id} src={a.data} alt={a.description || a.name} />)}</div>}
+              {preview.metadata.source === "pptx" && <a className="btn" href={`/api/templates/${preview.id}/original`} download>Скачать исходный PPTX без изменений</a>}
               <details><summary>Нормализованные зоны макетов</summary><pre style={{whiteSpace:"pre-wrap",maxHeight:240,overflow:"auto",fontSize:11}}>{JSON.stringify(preview.metadata.layouts,null,2)}</pre></details>
               {preview.metadata.warnings.map(w=><p key={w} className="small muted">{w}</p>)}
             </details>
