@@ -2,6 +2,7 @@ from io import BytesIO
 from zipfile import ZipFile
 from PIL import Image
 from pptx import Presentation
+from pptx.util import Inches
 from app.config import settings
 from app.services import template_preview as preview
 
@@ -13,7 +14,9 @@ def fixture_pptx(path,color):
 def test_embedded_real_preview_is_cached_and_content_hash_invalidates(tmp_path,monkeypatch):
     monkeypatch.setattr(settings,'storage',tmp_path/'storage')
     monkeypatch.setattr(preview.shutil,'which',lambda _:None)
-    path=tmp_path/'template.pptx';fixture_pptx(path,'red')
+    path=tmp_path/'template.pptx';Presentation().save(path)
+    image=BytesIO();Image.new('RGB',(1024,1024),'red').save(image,format='PNG')
+    with ZipFile(path,'a') as archive: archive.writestr('docProps/thumbnail.png',image.getvalue())
     first=preview.thumbnail(path)
     assert Image.open(first).getpixel((20,20))==(255,0,0)
     original=preview.render_first_slide
@@ -21,9 +24,22 @@ def test_embedded_real_preview_is_cached_and_content_hash_invalidates(tmp_path,m
     monkeypatch.setattr(preview,'render_first_slide',unexpected)
     assert preview.thumbnail(path)==first
     monkeypatch.setattr(preview,'render_first_slide',original)
-    fixture_pptx(path,'blue')
+    Presentation().save(path)
+    image=BytesIO();Image.new('RGB',(1024,1024),'blue').save(image,format='PNG')
+    with ZipFile(path,'a') as archive: archive.writestr('docProps/thumbnail.png',image.getvalue())
     second=preview.thumbnail(path)
     assert second!=first and Image.open(second).getpixel((20,20))==(0,0,255)
+
+def test_preview_cache_version_tracks_higher_resolution_assets():
+    assert preview.PREVIEW_VERSION=='first-slide-3'
+
+def test_clean_preview_keeps_large_slides_sharp_and_bounds_oversized_images():
+    large=BytesIO();Image.new('RGB',(2560,1440),'navy').save(large,format='PNG')
+    result=Image.open(BytesIO(preview.clean_png(large.getvalue())))
+    assert result.size==(2560,1440)
+    tiny=BytesIO();Image.new('RGB',(320,180),'navy').save(tiny,format='PNG')
+    result=Image.open(BytesIO(preview.clean_png(tiny.getvalue())))
+    assert result.size==(320,180)
 
 def test_unavailable_preview_is_explicit_and_briefly_negative_cached(tmp_path,monkeypatch):
     monkeypatch.setattr(settings,'storage',tmp_path/'storage')
@@ -32,6 +48,32 @@ def test_unavailable_preview_is_explicit_and_briefly_negative_cached(tmp_path,mo
     monkeypatch.setattr(preview,'render_first_slide',lambda p:calls.append(p))
     assert preview.thumbnail(path) is None and preview.thumbnail(path) is None
     assert len(calls)==1 and preview.thumbnail(tmp_path/'missing.pptx') is None
+
+def test_low_resolution_embedded_thumbnail_is_not_upscaled(tmp_path,monkeypatch):
+    monkeypatch.setattr(preview.shutil,'which',lambda _:None)
+    path=tmp_path/'low-resolution.pptx';fixture_pptx(path,'purple')
+    assert preview.render_first_slide(path) is None
+
+def test_high_resolution_full_slide_image_is_used_when_renderer_is_missing(tmp_path,monkeypatch):
+    monkeypatch.setattr(preview.shutil,'which',lambda _:None)
+    path=tmp_path/'full-slide-image.pptx'
+    prs=Presentation();slide=prs.slides.add_slide(prs.slide_layouts[6])
+    image_path=tmp_path/'full-slide.png';Image.new('RGB',(1920,1080),'navy').save(image_path,format='PNG')
+    slide.shapes.add_picture(str(image_path),0,0,width=prs.slide_width,height=prs.slide_height)
+    prs.save(path)
+    result=preview.render_first_slide(path)
+    assert result is not None
+    assert Image.open(BytesIO(result)).size==(1920,1080)
+
+def test_large_slide_background_art_is_found_in_opc_media_without_picture_shape(tmp_path,monkeypatch):
+    monkeypatch.setattr(preview.shutil,'which',lambda _:None)
+    path=tmp_path/'slide-background.pptx'
+    prs=Presentation();prs.slides.add_slide(prs.slide_layouts[6]);prs.save(path)
+    image=BytesIO();Image.new('RGB',(2048,1152),'darkblue').save(image,format='PNG')
+    with ZipFile(path,'a') as archive: archive.writestr('ppt/media/full-slide-background.png',image.getvalue())
+    result=preview.render_first_slide(path)
+    assert result is not None
+    assert Image.open(BytesIO(result)).size==(2048,1152)
 
 def test_libreoffice_conversion_uses_first_page_isolated_profile_and_no_external_links(tmp_path,monkeypatch):
     monkeypatch.setattr(preview.shutil,'which',lambda cmd:cmd)

@@ -236,3 +236,22 @@ test("WebGL sleeps at rest and renders cursor and scroll changes with capped res
     );
   expect(ratio).toBeLessThanOrEqual(1.66);
 });
+
+test("hero orbit returns after scrolling away and keeps its visibility in every quality tier", async ({
+  page,
+}) => {
+  const app = new SpatialPage(page);
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/");
+  await app.register();
+  const scene = app.scene();
+  const canvas = scene.locator("canvas");
+  await expect(canvas).toBeVisible();
+  await expect(canvas).toHaveAttribute("data-orbit-visible", "true");
+  await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+  await app.settleScene(12);
+  await page.evaluate(() => window.scrollTo(0, 0));
+  await app.settleScene(20);
+  await expect(canvas).toHaveAttribute("data-orbit-visible", "true");
+  await expect(canvas).toHaveAttribute("data-quality", /^(high|medium|low)$/);
+});

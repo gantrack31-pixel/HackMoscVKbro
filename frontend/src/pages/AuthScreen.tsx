@@ -13,7 +13,7 @@ import { ThemeToggle } from "../components/ThemeToggle";
 import { api } from "../api";
 import { WordmarkTitle } from "../components/Brand";
 
-import { TemplateCover } from "../components/TemplateCard";
+import { AuthOrbit } from "../components/auth/AuthOrbit";
 import type { Template, User } from "../types";
 type Screen = "welcome" | "choice" | "login" | "register" | "check-email" | "request-reset";
 function isValidEmail(value: string) {
@@ -54,7 +54,11 @@ export function AuthScreen({
       .then(setTemplates)
       .catch((e) => setError(e.message));
   }, []);
-  const formMotion = useSurfaceMotion([screen], ".auth-form > h1, .auth-form > label, .auth-form > .auth-submit", true);
+  const formMotion = useSurfaceMotion(
+    [screen],
+    ".auth-panel-content > .auth-welcome, .auth-panel-content > .auth-choice, .auth-panel-content > .auth-divider, .auth-panel-content > .yandex-button, .auth-form > h1, .auth-form > .auth-form-hint, .auth-form > label, .auth-form > .auth-submit",
+    true,
+  );
   const startRef = useRef<HTMLButtonElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const [leaving, setLeaving] = useState(false);
@@ -472,48 +476,8 @@ export function AuthScreen({
           <span>Ваши идеи. Ваш стиль. © 2026</span>
         </footer>
       </section>
-      <section className="auth-right" aria-label="Примеры шаблонов">
-        <div className="auth-preview-note" aria-hidden={opened}>
-          <span className="auth-note-dot" />
-          Один шаблон — бесконечно много идей
-        </div>
-        <div className="auth-template-stack">
-          {[0, 1].map(copy => <div className="auth-feed-group" key={copy} aria-hidden={copy === 1}>
-          {templates.slice(0, 3).map((t, i) => (
-            <article className={`auth-template auth-template-${i}`} key={t.id}>
-              <TemplateCover
-                template={t}
-                title={
-                  [
-                    "Технологии на новом уровне.",
-                    "Пространство для вашей команды",
-                    "Знания, которые меняют будущее",
-                  ][i]
-                }
-              />
-              <div className="auth-template-info">
-                <div>
-                  <h2>{t.name}</h2>
-                  <p>
-                    {t.metadata.category} · {t.metadata.count} слайдов · 16:9
-                  </p>
-                </div>
-                <button
-                  onClick={() => go("choice")}
-                  tabIndex={copy === 0 && screen === "welcome" ? 0 : -1}
-                >
-                  Выбрать этот шаблон
-                  <ArrowRight size={14} />
-                </button>
-              </div>
-            </article>
-          ))}</div>)}
-        </div>
-        <div className="auth-preview-caption">
-          Ваша история выглядит лучше
-          <br />
-          <strong>в правильном оформлении.</strong>
-        </div>
+      <section className="auth-right auth-orbit-panel" aria-label="Создание презентации Deckly.Ai">
+        <AuthOrbit templates={templates} />
       </section>
     </div>
   );

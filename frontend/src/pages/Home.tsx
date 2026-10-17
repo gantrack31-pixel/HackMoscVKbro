@@ -390,18 +390,6 @@ export function Catalog(
         собственные пропорции, палитра, шрифты и макеты.
       </div>
       {list.length > 0 && <SpatialGallery {...props} templates={list} />}
-      <div className="cards">
-        {list.map((t) => (
-          <TemplateCard
-            key={t.id}
-            template={t}
-            favorite={props.favorites.includes(t.id)}
-            onFavorite={() => props.toggleFavorite(t.id)}
-            onSelect={() => props.select(t)}
-            onPreview={() => props.preview(t)}
-          />
-        ))}
-      </div>
       {!list.length && (
         <div className="empty">
           <Icon name="star" />

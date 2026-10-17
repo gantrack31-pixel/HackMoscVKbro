@@ -74,19 +74,55 @@ export function TemplateCard({
   const card = useRef<HTMLElement>(null);
   useGSAP(() => {
     const media = gsap.matchMedia();
+    media.add("(prefers-reduced-motion: no-preference)", () => {
+      const element = card.current!;
+      const scrollTilt = gsap.timeline({
+        scrollTrigger: {
+          trigger: element,
+          start: "top bottom",
+          end: "bottom top",
+          scrub: 0.6,
+        },
+      });
+      scrollTilt.fromTo(
+        element,
+        { "--template-scroll-tilt": "1.5deg" },
+        { "--template-scroll-tilt": "-1.5deg", ease: "none" },
+      );
+    });
     media.add("(hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference)", () => {
       const element = card.current!;
+      const preview = element.querySelector<HTMLElement>(".template-cover .template-real-preview");
+      const movePreviewX = preview ? gsap.quickTo(preview, "x", { duration: 0.45, ease: motion.settle }) : null;
+      const movePreviewY = preview ? gsap.quickTo(preview, "y", { duration: 0.45, ease: motion.settle }) : null;
       const tilt = (event: PointerEvent) => {
         const bounds = element.getBoundingClientRect();
-        gsap.to(element, { rotationX: -(event.clientY - bounds.top - bounds.height / 2) / bounds.height * 5,
-          rotationY: (event.clientX - bounds.left - bounds.width / 2) / bounds.width * 7,
-          transformPerspective: 1000, y: -5, duration: motion.reveal, ease: motion.ease, overwrite: true });
+        const x = (event.clientX - bounds.left) / bounds.width - 0.5;
+        const y = (event.clientY - bounds.top) / bounds.height - 0.5;
+        gsap.to(element, { rotationX: -y * 8, rotationY: x * 8,
+          transformPerspective: 1000, y: -3, duration: motion.fast, ease: motion.settle, overwrite: true });
+        movePreviewX?.(x * -5);
+        movePreviewY?.(y * -4);
       };
-      const reset = () => gsap.to(element, { rotationX: 0, rotationY: 0, y: 0, duration: motion.reveal, ease: motion.ease, overwrite: true });
+      const reset = () => {
+        gsap.to(element, { rotationX: 0, rotationY: 0, y: 0, duration: motion.reveal, ease: motion.settle, overwrite: true });
+        movePreviewX?.(0);
+        movePreviewY?.(0);
+      };
       const enter = () => element.addEventListener("pointermove", tilt);
       const leave = () => { element.removeEventListener("pointermove", tilt); reset(); };
       element.addEventListener("pointerenter", enter); element.addEventListener("pointerleave", leave);
-      return () => { element.removeEventListener("pointerenter", enter); element.removeEventListener("pointerleave", leave); element.removeEventListener("pointermove", tilt); gsap.killTweensOf(element); gsap.set(element, { clearProps: "transform" }); };
+      return () => {
+        element.removeEventListener("pointerenter", enter);
+        element.removeEventListener("pointerleave", leave);
+        element.removeEventListener("pointermove", tilt);
+        gsap.killTweensOf(element);
+        if (preview) {
+          gsap.killTweensOf(preview);
+          gsap.set(preview, { clearProps: "transform" });
+        }
+        gsap.set(element, { clearProps: "transform" });
+      };
     });
     return () => media.revert();
   }, { scope: card });
