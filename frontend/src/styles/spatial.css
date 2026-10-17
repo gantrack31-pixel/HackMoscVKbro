@@ -286,17 +286,47 @@ dialog.modern-dialog.motion-dialog.is-closing {
   min-width: 38px;
   min-height: 38px;
 }
+@media (min-width: 1051px) {
+  .gallery-bottom {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  }
+  .gallery-meta {
+    min-width: 0;
+  }
+  .gallery-actions {
+    grid-column: 2;
+    grid-row: 1;
+  }
+  .gallery-navigation {
+    grid-column: 3;
+    grid-row: 1;
+    justify-self: end;
+  }
+}
+.gallery-favorite[aria-pressed="true"] {
+  color: #e5a900;
+  border-color: #f2c94c99;
+}
+.gallery-favorite[aria-pressed="true"] svg {
+  fill: #f5bd2f;
+}
 /* Card tilt is owned by GSAP; existing cover zoom and color transitions stay in CSS. */
 .page .template.spatial-card {
   transform: none;
   transition-property: box-shadow, border-color, background-color;
   transform-style: preserve-3d;
+  perspective: 1100px;
+  rotate: x var(--template-scroll-tilt, 0deg);
 }
 .page .template.spatial-card:hover {
   transform: none;
 }
 .page .template.spatial-card .template-cover {
   backface-visibility: hidden;
+}
+.page .template.spatial-card .template-real-preview {
+  transform-origin: center;
 }
 .assembly-showcase {
   display: grid;

@@ -144,10 +144,11 @@ export function SpatialGallery({
         </div>
         <div className="gallery-actions">
           <button
-            className="btn ghost icon-only"
+            className="btn ghost icon-only gallery-favorite"
             onClick={() => toggleFavorite(active.id)}
-            aria-label={`${favorites.includes(active.id) ? "Убрать из подборки избранного" : "Сохранить из подборки"}: ${active.name}`}
+            aria-label={`${favorites.includes(active.id) ? "Убрать из избранного" : "Добавить в избранное"}: ${active.name}`}
             aria-pressed={favorites.includes(active.id)}
+            title={favorites.includes(active.id) ? "Убрать из избранного" : "Добавить в избранное"}
           >
             <Icon name="star" />
           </button>

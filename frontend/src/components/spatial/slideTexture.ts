@@ -3,13 +3,15 @@ import type { Template } from "../../types";
 
 type Invalidate = () => void;
 /** Textures use actual template metadata and the original first-slide image where available. */
-export function slideTexture(template: Template, invalidate: Invalidate) {
+export function slideTexture(
+  template: Template,
+  invalidate: Invalidate,
+  textureSize = 1920,
+) {
   const canvas = document.createElement("canvas");
-  canvas.width = 1024;
-  canvas.height = Math.max(
-    256,
-    Math.min(1024, Math.round(1024 / template.metadata.ratio)),
-  );
+  const resolution = Math.max(1024, Math.min(4096, textureSize));
+  canvas.width = resolution;
+  canvas.height = Math.max(512, Math.min(4096, Math.round(resolution / template.metadata.ratio)));
   const context = canvas.getContext("2d")!;
   const texture = new THREE.CanvasTexture(canvas);
   texture.colorSpace = THREE.SRGBColorSpace;
@@ -65,10 +67,13 @@ export function slideTexture(template: Template, invalidate: Invalidate) {
   if (template.preview_url) {
     const image = new Image();
     image.crossOrigin = "anonymous";
+    image.decoding = "async";
     image.onload = () => {
       if (disposed) return;
       context.fillStyle = template.metadata.background || "#fff";
       context.fillRect(0, 0, canvas.width, canvas.height);
+      context.imageSmoothingEnabled = true;
+      context.imageSmoothingQuality = "high";
       const scale = Math.min(
         canvas.width / image.width,
         canvas.height / image.height,

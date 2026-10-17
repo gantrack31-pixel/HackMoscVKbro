@@ -1,8 +1,13 @@
 import { useRef } from "react";
 import * as THREE from "three";
-import { gsap, useGSAP, motion } from "../../motion/animation";
+import { gsap, useGSAP, motion, ScrollTrigger } from "../../motion/animation";
 import { slideTexture, fragmentTexture } from "./slideTexture";
 import type { SpaceProps } from "./PresentationSpace";
+import {
+  initialSpatialQuality,
+  lowerSpatialQuality,
+  spatialQualitySettings,
+} from "./quality";
 
 interface Props extends SpaceProps {
   onReady: () => void;
@@ -16,8 +21,6 @@ interface Pose {
   rz: number;
   scale: number;
 }
-const QUALITY = { desktopDpr: 1.65, mobileDpr: 1.25, settle: 0.065 };
-
 export default function SlideScene({
   templates,
   mode = "hero",
@@ -30,29 +33,56 @@ export default function SlideScene({
     () => {
       const element = host.current!;
       const mobile = matchMedia("(max-width: 700px)").matches;
+      const connection = (navigator as Navigator & {
+        connection?: { saveData?: boolean };
+      }).connection;
+      const cores = navigator.hardwareConcurrency;
+      const memory = (navigator as Navigator & { deviceMemory?: number })
+        .deviceMemory;
+      const qualityHints = {
+        deviceMemory: memory,
+        hardwareConcurrency: cores,
+        maxTextureSize: 4096,
+        saveData: Boolean(connection?.saveData),
+        mobile,
+        reducedMotion: matchMedia("(prefers-reduced-motion: reduce)").matches,
+      };
+      let quality = initialSpatialQuality(qualityHints);
+      const performanceTier = quality;
       let renderer: THREE.WebGLRenderer;
       try {
         renderer = new THREE.WebGLRenderer({
           alpha: true,
-          antialias: !mobile,
-          powerPreference: "low-power",
+          antialias: !mobile && performanceTier === "high",
+          powerPreference: performanceTier === "high" ? "high-performance" : "low-power",
         });
       } catch {
         onFailure();
         return;
       }
-      renderer.setPixelRatio(
-        Math.min(
-          devicePixelRatio,
-          mobile ? QUALITY.mobileDpr : QUALITY.desktopDpr,
-        ),
-      );
+      quality = initialSpatialQuality({
+        ...qualityHints,
+        maxTextureSize: renderer.capabilities.maxTextureSize,
+      });
+      const applyQuality = () => {
+        const budget = spatialQualitySettings[quality];
+        renderer.setPixelRatio(
+          Math.min(
+            devicePixelRatio,
+            mobile ? budget.mobileDpr : budget.desktopDpr,
+          ),
+        );
+        renderer.domElement.dataset.quality = quality;
+      };
+      applyQuality();
       renderer.outputColorSpace = THREE.SRGBColorSpace;
+      renderer.toneMapping = THREE.NoToneMapping;
       renderer.setClearColor(0x000000, 0);
       element.appendChild(renderer.domElement);
       const scene = new THREE.Scene();
       const camera = new THREE.PerspectiveCamera(39, 1, 0.1, 60);
       const rig = { x: 0, y: 0.1, z: 8.8, lookX: 0, lookY: 0 };
+      const story = element.closest(".spatial-story");
       const entrance = { value: 0 };
       const pointer = { x: 0, y: 0 },
         damped = { x: 0, y: 0 };
@@ -60,12 +90,62 @@ export default function SlideScene({
       const fragments: { group: THREE.Group; pose: Pose }[] = [];
       const box = new THREE.BoxGeometry(1, 1, 1);
       const plane = new THREE.PlaneGeometry(1, 1);
+      const orbitGroup = new THREE.Group();
+      const ornaments: THREE.BufferGeometry[] = [];
+      const ornamentMaterials: THREE.Material[] = [];
+      const syncOrnaments = () => {
+        orbitGroup.visible = spatialQualitySettings[quality].ornaments;
+        renderer.domElement.dataset.orbitVisible = String(orbitGroup.visible);
+      };
+      if (spatialQualitySettings[quality].ornaments) {
+        const orbitMaterial = new THREE.MeshBasicMaterial({
+          color: "#0077ff",
+          transparent: true,
+          opacity: 0.12,
+          side: THREE.DoubleSide,
+          depthWrite: false,
+        });
+        const orbitGeometry = new THREE.TorusGeometry(2.75, 0.009, 4, 72);
+        const orbit = new THREE.Mesh(orbitGeometry, orbitMaterial);
+        orbit.rotation.set(0.66, -0.18, 0.12);
+        orbit.position.set(0.2, 0.05, -1.75);
+        orbitGroup.add(orbit);
+        const orbitAccentGeometry = new THREE.TorusGeometry(3.15, 0.006, 4, 72);
+        const orbitAccent = new THREE.Mesh(orbitAccentGeometry, orbitMaterial);
+        orbitAccent.rotation.set(-0.48, 0.31, -0.16);
+        orbitAccent.position.set(0.2, 0.05, -2.15);
+        orbitGroup.add(orbitAccent);
+        const nodeGeometry = new THREE.SphereGeometry(0.035, 8, 6);
+        const nodeMaterial = new THREE.MeshBasicMaterial({
+          color: "#54a6ff",
+          transparent: true,
+          opacity: 0.7,
+        });
+        const nodes = new THREE.InstancedMesh(nodeGeometry, nodeMaterial, 8);
+        const nodeMatrix = new THREE.Object3D();
+        for (let index = 0; index < nodes.count; index++) {
+          const angle = (index / nodes.count) * Math.PI * 2;
+          nodeMatrix.position.set(
+            Math.cos(angle) * 2.75,
+            Math.sin(angle) * 1.85,
+            Math.sin(angle * 2) * 0.25,
+          );
+          nodeMatrix.updateMatrix();
+          nodes.setMatrixAt(index, nodeMatrix.matrix);
+        }
+        nodes.instanceMatrix.needsUpdate = true;
+        orbitGroup.add(nodes);
+        scene.add(orbitGroup);
+        ornaments.push(orbitGeometry, orbitAccentGeometry, nodeGeometry);
+        ornamentMaterials.push(orbitMaterial, nodeMaterial);
+      }
+      syncOrnaments();
       const edge = new THREE.MeshStandardMaterial({
-        color: "#c5d9f4",
-        roughness: 0.42,
-        metalness: 0.22,
+        color: "#526782",
+        roughness: 0.66,
+        metalness: quality === "high" ? 0.28 : 0.14,
       });
-      const materials: THREE.Material[] = [edge];
+      const materials: THREE.Material[] = [edge, ...ornamentMaterials];
       const textureCleanup: (() => void)[] = [];
       const shadowCanvas = document.createElement("canvas");
       shadowCanvas.width = 512;
@@ -91,31 +171,61 @@ export default function SlideScene({
       const key = new THREE.DirectionalLight(0xffffff, 3.2);
       key.position.set(-3, 6, 9);
       scene.add(key);
-      const blue = new THREE.PointLight(0x0077ff, 35, 20);
-      blue.position.set(4, -1, 5);
-      scene.add(blue);
+      if (quality !== "low") {
+        const blue = new THREE.PointLight(0x0077ff, 35, 20);
+        blue.position.set(4, -1, 5);
+        scene.add(blue);
+      }
       let disposed = false,
         frame = 0,
         inView = true,
         activeTween = true,
+        scrollActive = false,
+        slowFrames = 0,
         last = 0;
       function invalidate() {
         if (!disposed && !frame && inView && !document.hidden)
           frame = requestAnimationFrame(render);
       }
       function makeBoard(texture: THREE.Texture, ratio: number, width: number) {
+        const slideTextureQuality = spatialQualitySettings[quality];
+        if (texture.image instanceof HTMLCanvasElement) {
+          const maxDimension = renderer.capabilities.maxTextureSize;
+          const sourceScale = Math.min(1, maxDimension / texture.image.width, maxDimension / texture.image.height);
+          if (sourceScale < 1) {
+            const canvas = document.createElement("canvas");
+            canvas.width = Math.max(1, Math.floor(texture.image.width * sourceScale));
+            canvas.height = Math.max(1, Math.floor(texture.image.height * sourceScale));
+            const context = canvas.getContext("2d", { alpha: false });
+            if (context) {
+              context.imageSmoothingEnabled = true;
+              context.imageSmoothingQuality = "high";
+              context.drawImage(texture.image, 0, 0, canvas.width, canvas.height);
+              texture.image = canvas;
+            }
+          }
+        }
+        texture.generateMipmaps = true;
+        texture.minFilter = THREE.LinearMipmapLinearFilter;
+        texture.magFilter = THREE.LinearFilter;
+        texture.colorSpace = THREE.SRGBColorSpace;
+        texture.needsUpdate = true;
         const group = new THREE.Group();
         const body = new THREE.Mesh(box, edge);
-        body.scale.set(width, width / ratio, 0.065);
+        body.scale.set(width, width / ratio, 0.105);
         group.add(body);
         const material = new THREE.MeshBasicMaterial({
           map: texture,
           toneMapped: false,
         });
+        texture.anisotropy = Math.min(
+          slideTextureQuality.anisotropy,
+          renderer.capabilities.getMaxAnisotropy(),
+        );
         materials.push(material);
         const face = new THREE.Mesh(plane, material);
-        face.scale.set(width, width / ratio, 1);
-        face.position.z = 0.034;
+        face.scale.set(width - 0.035, (width - 0.035) / ratio, 1);
+        face.position.z = 0.054;
         group.add(face);
         const shadow = new THREE.Mesh(plane, shadowMaterial);
         shadow.scale.set(width * 1.19, (width / ratio) * 1.3, 1);
@@ -125,22 +235,28 @@ export default function SlideScene({
         return group;
       }
       templates.slice(0, 3).forEach((template, index) => {
-        const resource = slideTexture(template, invalidate);
+        const resource = slideTexture(
+          template,
+          invalidate,
+          spatialQualitySettings[quality].textureSize,
+        );
         textureCleanup.push(resource.dispose);
         const group = makeBoard(
           resource.texture,
           template.metadata.ratio,
-          index === 0 ? 4.15 : 3.35,
+          index === 0 ? 4.15 : 2.55,
         );
         const pose: Pose = [
-          { x: 0.1, y: -0.1, z: 0.55, ry: -0.16, rz: -0.045, scale: 1 },
-          { x: -1.75, y: 1.15, z: -2.1, ry: 0.28, rz: 0.09, scale: 1 },
-          { x: 2.15, y: -0.85, z: -1.45, ry: -0.34, rz: -0.1, scale: 1 },
+          { x: 0.05, y: 0, z: 0.45, ry: -0.09, rz: -0.025, scale: 1 },
+          { x: -2.75, y: 0.78, z: -2.45, ry: 0.18, rz: 0.045, scale: 1 },
+          { x: 2.75, y: -0.72, z: -2.2, ry: -0.2, rz: -0.045, scale: 1 },
         ][index];
         boards.push({ group, pose, reveal: mode === "hero" ? 0 : 1 });
       });
       if (mode === "assembly") {
-        for (let i = 0; i < (mobile ? 4 : 5); i++) {
+        const fragmentsPerScene =
+          quality === "low" ? 3 : quality === "medium" || mobile ? 4 : 5;
+        for (let i = 0; i < fragmentsPerScene; i++) {
           const texture = fragmentTexture(i);
           textureCleanup.push(() => texture.dispose());
           const group = makeBoard(texture, 512 / 300, 1.75);
@@ -160,18 +276,46 @@ export default function SlideScene({
       function render(time: number) {
         frame = 0;
         if (disposed || !inView || document.hidden) return;
-        const delta = Math.min((time - (last || time - 16)) / 16.67, 3);
+        const elapsed = time - (last || time - 16.67);
+        const delta = Math.min(elapsed / 16.67, 3);
         last = time;
-        const damping = 1 - Math.pow(1 - QUALITY.settle, delta);
+        const budget = spatialQualitySettings[quality];
+        const damping = 1 - Math.pow(1 - budget.settle, delta);
+        // Scroll scrubbing intentionally drives continuous renders; don't mistake it for device slowdown.
+        if (!scrollActive)
+          slowFrames = elapsed > 23 ? slowFrames + 1 : Math.max(0, slowFrames - 1);
+        if (slowFrames >= 45 && quality !== "low") {
+          quality = lowerSpatialQuality(quality);
+          slowFrames = 0;
+          applyQuality();
+          syncOrnaments();
+          const { width, height } = element.getBoundingClientRect();
+          renderer.setSize(width, height);
+        }
         damped.x += (pointer.x - damped.x) * damping;
         damped.y += (pointer.y - damped.y) * damping;
         camera.position.set(
-          rig.x + damped.x * 0.26,
-          rig.y + damped.y * 0.17,
+          rig.x + damped.x * 0.26 + Math.sin(damped.x * 0.38) * 0.12,
+          rig.y + damped.y * 0.17 + Math.sin(damped.y * 0.32) * 0.08,
           rig.z + (1 - entrance.value) * 2.4,
         );
-        camera.lookAt(rig.lookX, rig.lookY, -0.6);
-        [...boards, ...fragments].forEach(({ group, pose }, index) => {
+        const fieldOfView = (camera.aspect < 1 ? 49 : 39) + (8.8 - rig.z) * 0.72;
+        if (Math.abs(camera.fov - fieldOfView) > 0.01) {
+          camera.fov = fieldOfView;
+          camera.updateProjectionMatrix();
+        }
+        camera.lookAt(
+          rig.lookX + damped.x * 0.09,
+          rig.lookY + damped.y * 0.06,
+          -0.6,
+        );
+        orbitGroup.rotation.set(damped.y * 0.035, damped.x * 0.045, 0);
+        const updatePose = (
+          item: { group: THREE.Group; pose: Pose },
+          index: number,
+          reveal: number,
+        ) => {
+          const { group, pose } = item;
           const depth = index === 0 ? 1 : 0.5;
           group.position.set(
             pose.x + damped.x * 0.1 * depth,
@@ -185,15 +329,12 @@ export default function SlideScene({
             pose.ry + damped.x * 0.075 * depth,
             pose.rz,
           );
-          group.scale.setScalar(
-            Math.max(
-              0.001,
-              pose.scale *
-                entrance.value *
-                (index < boards.length ? boards[index].reveal : 1),
-            ),
-          );
-        });
+          group.scale.setScalar(Math.max(0.001, pose.scale * entrance.value * reveal));
+        };
+        for (let index = 0; index < boards.length; index++)
+          updatePose(boards[index], index, boards[index].reveal);
+        for (let index = 0; index < fragments.length; index++)
+          updatePose(fragments[index], boards.length + index, 1);
         renderer.render(scene, camera);
         if (
           activeTween ||
@@ -217,7 +358,7 @@ export default function SlideScene({
       if (mode === "hero")
         intro.to(
           boards,
-          { reveal: 1, duration: 1.1, stagger: 0.16, ease: motion.ease },
+          { reveal: 1, duration: 1.35, stagger: 0.22, ease: "power3.inOut" },
           0.1,
         );
       if (mode === "assembly") {
@@ -265,7 +406,6 @@ export default function SlideScene({
             4.4,
           );
       } else {
-        const story = element.closest(".spatial-story");
         if (story) {
           const media = gsap.matchMedia();
           media.add("(min-width: 701px)", () => {
@@ -276,18 +416,41 @@ export default function SlideScene({
                 end: "bottom center",
                 scrub: 0.85,
                 invalidateOnRefresh: true,
+                onToggle: (self) => {
+                  scrollActive = self.isActive;
+                  slowFrames = 0;
+                },
               },
-              onUpdate: invalidate,
+              onUpdate: () => {
+                syncOrnaments();
+                invalidate();
+              },
             });
             scroll
               .to(
                 rig,
-                { z: 5.5, x: 0.85, y: 0.3, duration: 1.2, ease: "none" },
+                {
+                  z: 6.4,
+                  x: 0.38,
+                  y: 0.16,
+                  lookX: 0.12,
+                  lookY: -0.04,
+                  duration: 1.2,
+                  ease: "none",
+                },
                 0,
               )
               .to(
                 rig,
-                { z: 7.5, x: -0.75, y: -0.15, duration: 1, ease: "none" },
+                {
+                  z: 7.7,
+                  x: -0.3,
+                  y: -0.08,
+                  lookX: -0.08,
+                  lookY: 0.02,
+                  duration: 1,
+                  ease: "none",
+                },
                 1.2,
               );
             boards.forEach(({ pose }, index) => {
@@ -295,9 +458,11 @@ export default function SlideScene({
                 .to(
                   pose,
                   {
-                    x: index === 0 ? 0.3 : index === 1 ? -3.5 : 3.6,
-                    z: index === 0 ? -0.7 : 1.5,
-                    ry: index === 0 ? 0.08 : index === 1 ? 0.65 : -0.65,
+                    x: index === 0 ? 0.12 : index === 1 ? -3.5 : 3.5,
+                    y: index === 0 ? -0.08 : index === 1 ? 0.58 : -0.5,
+                    z: index === 0 ? 0.15 : -0.1,
+                    ry: index === 0 ? 0.04 : index === 1 ? 0.4 : -0.4,
+                    rz: index === 0 ? -0.015 : index === 1 ? 0.03 : -0.03,
                     duration: 1.2,
                     ease: "none",
                   },
@@ -306,12 +471,12 @@ export default function SlideScene({
                 .to(
                   pose,
                   {
-                    x: (index - 1) * 2.25,
-                    y: (index - 1) * 0.45,
-                    z: -index * 0.9,
-                    scale: index === 1 ? 1.12 : 0.78,
-                    ry: -0.13,
-                    rz: -0.045,
+                    x: (index - 1) * 2.72,
+                    y: (index - 1) * 0.24,
+                    z: index === 0 ? 0.35 : -index * 0.45,
+                    scale: index === 0 ? 0.94 : 0.68,
+                    ry: index === 0 ? -0.08 : index === 1 ? -0.28 : 0.28,
+                    rz: index === 0 ? -0.025 : index === 1 ? 0.035 : -0.035,
                     duration: 1,
                     ease: "none",
                   },
@@ -354,17 +519,11 @@ export default function SlideScene({
       const resize = new ResizeObserver(() => {
         const { width, height } = element.getBoundingClientRect();
         if (!width || !height) return;
-        const narrow = matchMedia("(max-width: 700px)").matches;
-        renderer.setPixelRatio(
-          Math.min(
-            devicePixelRatio,
-            narrow ? QUALITY.mobileDpr : QUALITY.desktopDpr,
-          ),
-        );
+        applyQuality();
         camera.aspect = width / height;
-        camera.fov = narrow ? 48 : width / height < 1 ? 49 : 39;
         camera.updateProjectionMatrix();
         renderer.setSize(width, height);
+        if (story) ScrollTrigger.refresh();
         invalidate();
       });
       resize.observe(element);
@@ -375,6 +534,8 @@ export default function SlideScene({
           frame = 0;
         } else {
           last = 0;
+          syncOrnaments();
+          ScrollTrigger.update();
           invalidate();
         }
       });
@@ -394,6 +555,7 @@ export default function SlideScene({
         onFailure();
       };
       renderer.domElement.addEventListener("webglcontextlost", lost);
+      renderer.domElement.dataset.orbitVisible = String(orbitGroup.visible);
       // Signal readiness only after a sized first render; the fallback avoids an empty lazy-loading frame.
       renderer.setSize(element.clientWidth || 1, element.clientHeight || 1);
       camera.aspect = (element.clientWidth || 1) / (element.clientHeight || 1);
@@ -412,6 +574,7 @@ export default function SlideScene({
         renderer.domElement.removeEventListener("webglcontextlost", lost);
         textureCleanup.forEach((dispose) => dispose());
         materials.forEach((material) => material.dispose());
+        ornaments.forEach((geometry) => geometry.dispose());
         box.dispose();
         plane.dispose();
         scene.clear();

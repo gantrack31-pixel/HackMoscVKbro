@@ -38,23 +38,48 @@
 .auth-back { min-height: 32px; transition: color .2s, transform .2s; }
 .auth-back:hover { transform: translateX(-4px); color: var(--entry-ink); }
 
-/* Две одинаковые группы дают непрерывное движение вниз без скачка на стыке. */
-.auth-shell .auth-right { height: 100dvh; min-height: 0; position: sticky; top: 0; padding: 0 32px; }
-.auth-shell .auth-template-stack { display: flex; flex-direction: column; gap: 0; position: absolute; top: 0; width: clamp(240px, 27vw, 376px); margin: 0; transform: none; animation: template-feed-down 38s linear infinite; }
-.auth-feed-group { display: flex; flex-direction: column; gap: 24px; padding-bottom: 24px; min-height: 100dvh; justify-content: space-around; }
-@keyframes template-feed-down { from { transform: translateY(-50%); } to { transform: translateY(0); } }
-.auth-template-stack:hover,.auth-template-stack:focus-within { animation-play-state: paused; }
-.auth-shell .auth-template { flex: none; transform: none; padding: 10px; border-radius: 14px; }
-.auth-shell .auth-template:hover { transform: translateY(-3px); }
-.auth-shell .auth-template .slide { aspect-ratio: 16/9; padding: 24px; }
-.auth-shell .auth-template .slide h3 { font-size: clamp(19px, 1.65vw, 26px); }
-.auth-shell .auth-template-info { padding: 12px 8px 6px; }
-.auth-shell .auth-template-info h2 { font-size: 14px; }
-.auth-shell .auth-template-info p { font-size: 10px; margin: 6px 0 12px; }
-.auth-shell .auth-template-info button { min-height: 36px; }
-.auth-shell .auth-preview-note,.auth-shell .auth-preview-caption { display: none; }
-.auth-shell .auth-right::after { content: ""; display: block; position: absolute; inset: 0; z-index: 3; pointer-events: none; background: #0f172a00; backdrop-filter: blur(0); transition: background .6s, backdrop-filter .6s; }
+/* Creative Orbit stays inside the original branded right panel. */
+.auth-shell .auth-orbit-panel { height: 100dvh; min-height: 0; position: sticky; top: 0; padding: 0; overflow: hidden; justify-content: center; }
+.auth-orbit { position: absolute; inset: 0; isolation: isolate; overflow: hidden; }
+.auth-orbit-static,.auth-orbit-canvas { position: absolute; inset: 0; display: grid; place-items: center; }
+.auth-orbit-static { z-index: 0; transition: opacity .35s ease; }
+.auth-orbit.is-ready .auth-orbit-static { opacity: 0; pointer-events: none; }
+.auth-orbit-static-slide { width: min(72%, 520px); aspect-ratio: 16/9; padding: 9px; border-radius: 16px; background: #ffffff; box-shadow: 0 26px 80px #17234729; transform: perspective(850px) rotateY(-5deg) rotateX(2deg); }
+.auth-orbit-static-slide > .slide,.auth-orbit-static-slide > .template-real-preview,.auth-orbit-static-slide > .template-preview-placeholder { width: 100%; height: 100%; min-height: 0; border-radius: 10px; }
+.auth-orbit-static-content { height: 100%; padding: 7%; display: flex; flex-direction: column; justify-content: space-between; border-radius: 10px; background: #f7faff; color: #172347; }
+.auth-orbit-static-content small { font-size: clamp(8px, 1vw, 13px); font-weight: 800; letter-spacing: .15em; color: #0077ff; }
+.auth-orbit-static-content strong { max-width: 80%; font-size: clamp(20px, 2.6vw, 42px); line-height: 1.15; letter-spacing: -.05em; }
+.auth-orbit-static-content span { font-size: clamp(9px, 1vw, 13px); color: #526176; }
+.auth-orbit-canvas { z-index: 1; opacity: 0; transition: opacity .45s ease; pointer-events: none; }
+.auth-orbit.is-ready .auth-orbit-canvas { opacity: 1; }
+.auth-orbit-canvas canvas { display: block; width: 100%; height: 100%; }
+.auth-orbit-caption { position: absolute; z-index: 2; left: 7%; right: 7%; top: 7%; display: flex; justify-content: space-between; gap: 16px; color: #172347; font-size: 11px; font-weight: 800; letter-spacing: .16em; pointer-events: none; }
+[data-theme="dark"] .auth-orbit-caption { color: #ffffff; }
+.auth-shell .auth-right::after { content: ""; display: block; position: absolute; inset: 0; z-index: 4; pointer-events: none; background: #0f172a00; backdrop-filter: blur(0); transition: background .6s, backdrop-filter .6s; }
 .auth-shell.auth-dark .auth-right::after { background: #0f172a26; backdrop-filter: blur(2px); }
+@media (max-width: 1050px) { .auth-orbit-caption { font-size: 9px; } .auth-orbit-caption span:last-child { display: none; } }
+@media (max-width: 700px) {
+  .auth-shell { overflow: visible; }
+  .auth-shell .auth-orbit-panel { display: block; position: relative; height: clamp(240px, 62vw, 320px); min-height: 0; }
+  .auth-orbit-caption { display: none; }
+}
+
+/* Auth form micro-interactions: motion stays on controls, never on layout. */
+.auth-shell .auth-form > label { transition: color .22s ease, transform .28s var(--motion); }
+.auth-shell .auth-form > label:focus-within { color: var(--accent-text); }
+.auth-shell .auth-input { transition: box-shadow .24s ease, border-color .24s ease, background-color .24s ease, transform .24s var(--motion); }
+.auth-shell .auth-input:focus-within { transform: translateY(-1px); box-shadow: 0 0 0 4px #0077ff26, 0 8px 22px #0077ff12; }
+.auth-shell :is(.auth-submit,.auth-primary,.auth-choice button,.yandex-button) { transition: transform .24s var(--motion), box-shadow .24s ease, background-color .24s ease, border-color .24s ease; }
+.auth-shell :is(.auth-submit,.auth-primary,.auth-choice button,.yandex-button):hover { transform: translateY(-2px); box-shadow: 0 10px 24px #0077ff20; }
+.auth-shell :is(.auth-submit,.auth-primary,.auth-choice button,.yandex-button):active { transform: translateY(0) scale(.99); }
+.auth-shell .auth-submit svg,
+.auth-shell .auth-primary svg,
+.auth-shell .auth-template-info button svg { transition: transform .28s var(--motion); }
+.auth-shell .auth-submit:hover svg,
+.auth-shell .auth-primary:hover svg,
+.auth-shell .auth-template-info button:hover svg { transform: translateX(3px); }
+.auth-shell .auth-error,.auth-shell .auth-notice,.auth-shell .email-resend-message { animation: auth-message-in .3s var(--motion) both; }
+@keyframes auth-message-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
 
 /* Подпись действительно схлопывается, поэтому иконки плавно поднимаются. */
 .shell .sidebar-brand { width: 100%; flex-shrink: 0; }
@@ -123,7 +148,7 @@
 .auth-shell .auth-panel-content.is-leaving { transition: opacity .22s ease, transform .22s ease; }
 .auth-shell .auth-content > .auth-welcome-layer { transition: opacity .28s ease, transform .5s var(--motion), visibility .5s; }
 @media (max-width: 760px) { .shell .sidebar .nav-caption { display: block; } .shell .page { padding-top: 24px; } }
-@media (prefers-reduced-motion: reduce) { .auth-shell .auth-template-stack { transform: none; position: relative; animation: none; } .auth-shell .auth-right { overflow-y: auto; } .auth-feed-group[aria-hidden="true"] { display: none; } }
+@media (prefers-reduced-motion: reduce) { .auth-shell :is(.auth-input, .auth-form > label, .auth-submit, .auth-primary, .auth-choice button, .yandex-button) { transition-duration: .01ms !important; animation-duration: .01ms !important; } }
 
 /* Логотип плавно раскрывается вместе с панелью, не меняя геометрию остальной навигации. */
 .shell .sidebar-brand .deckly-wordmark { font-size: 40px; letter-spacing: -2px; align-items: baseline; transition: font-size .48s var(--motion), letter-spacing .48s var(--motion); }
