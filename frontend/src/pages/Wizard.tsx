@@ -1,3 +1,4 @@
+import { useSurfaceMotion } from "../motion/animation";
 import { useState, useRef, useEffect, useLayoutEffect } from "react";
 import { api } from "../api";
 import { AiOperationStatus, useAiOperation } from "../components/useAiOperation";
@@ -140,6 +141,8 @@ export function Wizard({
   const [slideKeys, setSlideKeys] = useState<string[]>([]);
   const [movedKey, setMovedKey] = useState<string | null>(null);
   const [reorderNotice, setReorderNotice] = useState("");
+  const motionScope = useSurfaceMotion([step, mode], ".wizard-grid, .outline-layout, .generation, .wizard-results");
+  const statusScope = useSurfaceMotion([stage, operation, failedJob?.id, result?.id], ".generation-stages .active, .wizard-ready, .error-banner", true);
   const busy = operation !== null;
   const active = useRef(true);
   const locked = useRef(false);
@@ -510,7 +513,7 @@ export function Wizard({
     }
   }
   return (
-    <div className="wizard-modern wizard-flow">
+    <div ref={node => { motionScope.current = node; statusScope.current = node; }} className="wizard-modern wizard-flow motion-surface">
       <div className="heading">
         <h1>От идеи — к презентации</h1>
         <p>Ваш текст, ваш шаблон, ваша история. Обычно 10–15 слайдов.</p>

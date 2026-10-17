@@ -9,7 +9,7 @@ test("import a packet, create ten slides, edit diagrams and inspect the generati
     { name: "brief.txt", mimeType: "text/plain", buffer: Buffer.from("Пилот проекта Навигатор. Цель — сократить время поиска документов.") },
     { name: "metrics.csv", mimeType: "text/csv", buffer: Buffer.from("Период;Минуты\nДо;12\nПосле;8") },
   ]);
-  await expect(page.getByRole("list", { name: "Импортированные документы" }).getByRole("listitem")).toHaveCount(2);
+  await expect(page.getByRole("list", { name: "Импортированные материалы" }).getByRole("listitem")).toHaveCount(2);
   await expect(page.getByLabel("Опишите идею и добавьте материалы")).toHaveValue(/Источник: brief.txt[\s\S]*Источник: metrics.csv/);
   await page.getByLabel("Назначение презентации").selectOption("initiative");
   await expect(page.getByRole("radio", { name: "10", exact: true })).toBeChecked();

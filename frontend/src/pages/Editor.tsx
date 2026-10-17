@@ -1,3 +1,4 @@
+import { useSurfaceMotion } from "../motion/animation";
 import { useEffect, useState } from "react";
 import { SlideFields, slideKinds } from "../components/SlideFields";
 import { useLivePreview } from "../components/useLivePreview";
@@ -45,6 +46,8 @@ export function Editor({
   const busy = actionBusy || imageBusy;
   const [hasDataErrors, setHasDataErrors] = useState(false);
   const [viewing, setViewing] = useState(false);
+  const motionScope = useSurfaceMotion([index], ".slide-canvas", true);
+  const saveMotion = useSurfaceMotion([dirty, actionBusy], ".editor-save-status", true);
   const preview = useLivePreview(project, content, dirty && !hasDataErrors);
   useEffect(() => {
     onDirty(dirty || busy);
@@ -105,9 +108,9 @@ export function Editor({
   }
   const source = project.sources[index]?.status;
   return (
-    <section className="editor-page" aria-label="Редактор презентации">
+    <section ref={motionScope} className="editor-page motion-surface" aria-label="Редактор презентации">
       <div className="heading between editor-heading">
-        <div className="editor-title-block">
+        <div ref={saveMotion} className="editor-title-block">
           <div className="editor-title-field">
             <input
               className="project-title"

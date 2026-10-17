@@ -1,0 +1,430 @@
+import { useRef } from "react";
+import * as THREE from "three";
+import { gsap, useGSAP, motion } from "../../motion/animation";
+import { slideTexture, fragmentTexture } from "./slideTexture";
+import type { SpaceProps } from "./PresentationSpace";
+
+interface Props extends SpaceProps {
+  onReady: () => void;
+  onFailure: () => void;
+}
+interface Pose {
+  x: number;
+  y: number;
+  z: number;
+  ry: number;
+  rz: number;
+  scale: number;
+}
+const QUALITY = { desktopDpr: 1.65, mobileDpr: 1.25, settle: 0.065 };
+
+export default function SlideScene({
+  templates,
+  mode = "hero",
+  revision = 0,
+  onReady,
+  onFailure,
+}: Props) {
+  const host = useRef<HTMLDivElement>(null);
+  useGSAP(
+    () => {
+      const element = host.current!;
+      const mobile = matchMedia("(max-width: 700px)").matches;
+      let renderer: THREE.WebGLRenderer;
+      try {
+        renderer = new THREE.WebGLRenderer({
+          alpha: true,
+          antialias: !mobile,
+          powerPreference: "low-power",
+        });
+      } catch {
+        onFailure();
+        return;
+      }
+      renderer.setPixelRatio(
+        Math.min(
+          devicePixelRatio,
+          mobile ? QUALITY.mobileDpr : QUALITY.desktopDpr,
+        ),
+      );
+      renderer.outputColorSpace = THREE.SRGBColorSpace;
+      renderer.setClearColor(0x000000, 0);
+      element.appendChild(renderer.domElement);
+      const scene = new THREE.Scene();
+      const camera = new THREE.PerspectiveCamera(39, 1, 0.1, 60);
+      const rig = { x: 0, y: 0.1, z: 8.8, lookX: 0, lookY: 0 };
+      const entrance = { value: 0 };
+      const pointer = { x: 0, y: 0 },
+        damped = { x: 0, y: 0 };
+      const boards: { group: THREE.Group; pose: Pose; reveal: number }[] = [];
+      const fragments: { group: THREE.Group; pose: Pose }[] = [];
+      const box = new THREE.BoxGeometry(1, 1, 1);
+      const plane = new THREE.PlaneGeometry(1, 1);
+      const edge = new THREE.MeshStandardMaterial({
+        color: "#c5d9f4",
+        roughness: 0.42,
+        metalness: 0.22,
+      });
+      const materials: THREE.Material[] = [edge];
+      const textureCleanup: (() => void)[] = [];
+      const shadowCanvas = document.createElement("canvas");
+      shadowCanvas.width = 512;
+      shadowCanvas.height = 320;
+      const shadowContext = shadowCanvas.getContext("2d")!;
+      shadowContext.shadowColor = "#0f172a";
+      shadowContext.shadowBlur = 28;
+      shadowContext.fillStyle = "#0f172a";
+      shadowContext.beginPath();
+      shadowContext.roundRect(46, 46, 420, 228, 18);
+      shadowContext.fill();
+      const shadowTexture = new THREE.CanvasTexture(shadowCanvas);
+      const shadowMaterial = new THREE.MeshBasicMaterial({
+        map: shadowTexture,
+        transparent: true,
+        opacity: 0.17,
+        depthWrite: false,
+      });
+      materials.push(shadowMaterial);
+      textureCleanup.push(() => shadowTexture.dispose());
+      const ambient = new THREE.AmbientLight(0xffffff, 2.1);
+      scene.add(ambient);
+      const key = new THREE.DirectionalLight(0xffffff, 3.2);
+      key.position.set(-3, 6, 9);
+      scene.add(key);
+      const blue = new THREE.PointLight(0x0077ff, 35, 20);
+      blue.position.set(4, -1, 5);
+      scene.add(blue);
+      let disposed = false,
+        frame = 0,
+        inView = true,
+        activeTween = true,
+        last = 0;
+      function invalidate() {
+        if (!disposed && !frame && inView && !document.hidden)
+          frame = requestAnimationFrame(render);
+      }
+      function makeBoard(texture: THREE.Texture, ratio: number, width: number) {
+        const group = new THREE.Group();
+        const body = new THREE.Mesh(box, edge);
+        body.scale.set(width, width / ratio, 0.065);
+        group.add(body);
+        const material = new THREE.MeshBasicMaterial({
+          map: texture,
+          toneMapped: false,
+        });
+        materials.push(material);
+        const face = new THREE.Mesh(plane, material);
+        face.scale.set(width, width / ratio, 1);
+        face.position.z = 0.034;
+        group.add(face);
+        const shadow = new THREE.Mesh(plane, shadowMaterial);
+        shadow.scale.set(width * 1.19, (width / ratio) * 1.3, 1);
+        shadow.position.set(0.08, -0.11, -0.075);
+        group.add(shadow);
+        scene.add(group);
+        return group;
+      }
+      templates.slice(0, 3).forEach((template, index) => {
+        const resource = slideTexture(template, invalidate);
+        textureCleanup.push(resource.dispose);
+        const group = makeBoard(
+          resource.texture,
+          template.metadata.ratio,
+          index === 0 ? 4.15 : 3.35,
+        );
+        const pose: Pose = [
+          { x: 0.1, y: -0.1, z: 0.55, ry: -0.16, rz: -0.045, scale: 1 },
+          { x: -1.75, y: 1.15, z: -2.1, ry: 0.28, rz: 0.09, scale: 1 },
+          { x: 2.15, y: -0.85, z: -1.45, ry: -0.34, rz: -0.1, scale: 1 },
+        ][index];
+        boards.push({ group, pose, reveal: mode === "hero" ? 0 : 1 });
+      });
+      if (mode === "assembly") {
+        for (let i = 0; i < (mobile ? 4 : 5); i++) {
+          const texture = fragmentTexture(i);
+          textureCleanup.push(() => texture.dispose());
+          const group = makeBoard(texture, 512 / 300, 1.75);
+          fragments.push({
+            group,
+            pose: {
+              x: (i - 2) * 1.6,
+              y: i % 2 ? 1.3 : -1.3,
+              z: 1 + i * 0.3,
+              ry: (i - 2) * -0.2,
+              rz: (i - 2) * 0.07,
+              scale: 0,
+            },
+          });
+        }
+      }
+      function render(time: number) {
+        frame = 0;
+        if (disposed || !inView || document.hidden) return;
+        const delta = Math.min((time - (last || time - 16)) / 16.67, 3);
+        last = time;
+        const damping = 1 - Math.pow(1 - QUALITY.settle, delta);
+        damped.x += (pointer.x - damped.x) * damping;
+        damped.y += (pointer.y - damped.y) * damping;
+        camera.position.set(
+          rig.x + damped.x * 0.26,
+          rig.y + damped.y * 0.17,
+          rig.z + (1 - entrance.value) * 2.4,
+        );
+        camera.lookAt(rig.lookX, rig.lookY, -0.6);
+        [...boards, ...fragments].forEach(({ group, pose }, index) => {
+          const depth = index === 0 ? 1 : 0.5;
+          group.position.set(
+            pose.x + damped.x * 0.1 * depth,
+            pose.y +
+              damped.y * 0.09 * depth -
+              (1 - entrance.value) * (0.9 + index * 0.12),
+            pose.z,
+          );
+          group.rotation.set(
+            damped.y * -0.035,
+            pose.ry + damped.x * 0.075 * depth,
+            pose.rz,
+          );
+          group.scale.setScalar(
+            Math.max(
+              0.001,
+              pose.scale *
+                entrance.value *
+                (index < boards.length ? boards[index].reveal : 1),
+            ),
+          );
+        });
+        renderer.render(scene, camera);
+        if (
+          activeTween ||
+          Math.abs(pointer.x - damped.x) + Math.abs(pointer.y - damped.y) >
+            0.001
+        )
+          invalidate();
+      }
+      const intro = gsap.timeline({
+        onUpdate: invalidate,
+        onComplete: () => {
+          activeTween = false;
+          invalidate();
+        },
+      });
+      intro.to(entrance, {
+        value: 1,
+        duration: motion.scene,
+        ease: motion.ease,
+      });
+      if (mode === "hero")
+        intro.to(
+          boards,
+          { reveal: 1, duration: 1.1, stagger: 0.16, ease: motion.ease },
+          0.1,
+        );
+      if (mode === "assembly") {
+        boards.forEach(({ pose }) => {
+          pose.scale = 0.001;
+        });
+        fragments.forEach(({ pose }, index) => {
+          intro
+            .to(
+              pose,
+              { scale: 1, duration: 0.65, ease: motion.ease },
+              0.35 + index * 0.3,
+            )
+            .to(
+              pose,
+              {
+                x: (index % 2 ? 1 : -1) * 0.7,
+                y: ((index % 3) - 1) * 0.42,
+                z: 0.8,
+                ry: 0,
+                rz: 0,
+                duration: 1.5,
+                ease: motion.settle,
+              },
+              2.5 + index * 0.12,
+            )
+            .to(
+              pose,
+              { scale: 0.001, duration: 0.65, ease: "power2.in" },
+              4.3 + index * 0.09,
+            );
+        });
+        boards.forEach(({ pose }, index) => {
+          intro.to(
+            pose,
+            { scale: 1, duration: 1.1, ease: motion.ease },
+            4.7 + index * 0.25,
+          );
+        });
+        intro
+          .to(rig, { z: 7, x: 0.6, duration: 2, ease: motion.settle }, 1.2)
+          .to(
+            rig,
+            { z: 10.6, x: -0.4, duration: 2.2, ease: motion.settle },
+            4.4,
+          );
+      } else {
+        const story = element.closest(".spatial-story");
+        if (story) {
+          const media = gsap.matchMedia();
+          media.add("(min-width: 701px)", () => {
+            const scroll = gsap.timeline({
+              scrollTrigger: {
+                trigger: story,
+                start: "top top+=80",
+                end: "bottom center",
+                scrub: 0.85,
+                invalidateOnRefresh: true,
+              },
+              onUpdate: invalidate,
+            });
+            scroll
+              .to(
+                rig,
+                { z: 5.5, x: 0.85, y: 0.3, duration: 1.2, ease: "none" },
+                0,
+              )
+              .to(
+                rig,
+                { z: 7.5, x: -0.75, y: -0.15, duration: 1, ease: "none" },
+                1.2,
+              );
+            boards.forEach(({ pose }, index) => {
+              scroll
+                .to(
+                  pose,
+                  {
+                    x: index === 0 ? 0.3 : index === 1 ? -3.5 : 3.6,
+                    z: index === 0 ? -0.7 : 1.5,
+                    ry: index === 0 ? 0.08 : index === 1 ? 0.65 : -0.65,
+                    duration: 1.2,
+                    ease: "none",
+                  },
+                  0,
+                )
+                .to(
+                  pose,
+                  {
+                    x: (index - 1) * 2.25,
+                    y: (index - 1) * 0.45,
+                    z: -index * 0.9,
+                    scale: index === 1 ? 1.12 : 0.78,
+                    ry: -0.13,
+                    rz: -0.045,
+                    duration: 1,
+                    ease: "none",
+                  },
+                  1.2,
+                );
+            });
+            const line = story.querySelector(".space-progress i");
+            if (line)
+              scroll.fromTo(
+                line,
+                { scaleX: 0 },
+                { scaleX: 1, duration: 2.2, ease: "none" },
+                0,
+              );
+          });
+        }
+      }
+      const area = element.parentElement!;
+      const move = (event: PointerEvent) => {
+        if (event.pointerType === "touch") return;
+        const bounds = area.getBoundingClientRect();
+        pointer.x = THREE.MathUtils.clamp(
+          ((event.clientX - bounds.left) / bounds.width) * 2 - 1,
+          -1,
+          1,
+        );
+        pointer.y = THREE.MathUtils.clamp(
+          1 - ((event.clientY - bounds.top) / bounds.height) * 2,
+          -1,
+          1,
+        );
+        invalidate();
+      };
+      const leave = () => {
+        pointer.x = pointer.y = 0;
+        invalidate();
+      };
+      area.addEventListener("pointermove", move);
+      area.addEventListener("pointerleave", leave);
+      const resize = new ResizeObserver(() => {
+        const { width, height } = element.getBoundingClientRect();
+        if (!width || !height) return;
+        const narrow = matchMedia("(max-width: 700px)").matches;
+        renderer.setPixelRatio(
+          Math.min(
+            devicePixelRatio,
+            narrow ? QUALITY.mobileDpr : QUALITY.desktopDpr,
+          ),
+        );
+        camera.aspect = width / height;
+        camera.fov = narrow ? 48 : width / height < 1 ? 49 : 39;
+        camera.updateProjectionMatrix();
+        renderer.setSize(width, height);
+        invalidate();
+      });
+      resize.observe(element);
+      const intersection = new IntersectionObserver((entries) => {
+        inView = entries[0].isIntersecting;
+        if (!inView) {
+          cancelAnimationFrame(frame);
+          frame = 0;
+        } else {
+          last = 0;
+          invalidate();
+        }
+      });
+      intersection.observe(element);
+      const visibility = () => {
+        if (document.hidden) {
+          cancelAnimationFrame(frame);
+          frame = 0;
+        } else {
+          last = 0;
+          invalidate();
+        }
+      };
+      document.addEventListener("visibilitychange", visibility);
+      const lost = (event: Event) => {
+        event.preventDefault();
+        onFailure();
+      };
+      renderer.domElement.addEventListener("webglcontextlost", lost);
+      // Signal readiness only after a sized first render; the fallback avoids an empty lazy-loading frame.
+      renderer.setSize(element.clientWidth || 1, element.clientHeight || 1);
+      camera.aspect = (element.clientWidth || 1) / (element.clientHeight || 1);
+      camera.updateProjectionMatrix();
+      invalidate();
+      onReady();
+      return () => {
+        disposed = true;
+        cancelAnimationFrame(frame);
+        intro.kill();
+        resize.disconnect();
+        intersection.disconnect();
+        area.removeEventListener("pointermove", move);
+        area.removeEventListener("pointerleave", leave);
+        document.removeEventListener("visibilitychange", visibility);
+        renderer.domElement.removeEventListener("webglcontextlost", lost);
+        textureCleanup.forEach((dispose) => dispose());
+        materials.forEach((material) => material.dispose());
+        box.dispose();
+        plane.dispose();
+        scene.clear();
+        renderer.dispose();
+        renderer.forceContextLoss();
+        renderer.domElement.remove();
+      };
+    },
+    {
+      scope: host,
+      dependencies: [templates, mode, revision],
+      revertOnUpdate: true,
+    },
+  );
+  return <div className="slide-scene" ref={host} />;
+}

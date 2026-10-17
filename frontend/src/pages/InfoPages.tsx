@@ -1,3 +1,4 @@
+import { PresentationSpace } from "../components/spatial/PresentationSpace";
 import { useEffect, useId, useState, type FormEvent } from "react";
 import { api } from "../api";
 import { CloudLibrary } from "../components/CloudLibrary";
@@ -171,12 +172,17 @@ export function Demo({
   start: () => void;
 }) {
   const [step, setStep] = useState(0);
+  const [replay, setReplay] = useState(0);
   return (
     <>
       <div className="heading">
         <h1>От идеи до последнего слайда</h1>
         <p>Шесть шагов — одна понятная история.</p>
       </div>
+      <section className="assembly-showcase" aria-label="Визуальная демонстрация сборки презентации">
+        <div className="assembly-copy"><span className="eyebrow">ИЗ МАТЕРИАЛОВ — В ЦЕЛОЕ</span><h2>Каждая деталь<br />на своём месте.</h2><p>Текст, изображения и данные собираются в единую историю.</p><span className="assembly-disclaimer">Визуальная демонстрация · не статус генерации</span><button className="btn sm" onClick={() => setReplay(value => value + 1)}><Icon name="play" />Повторить сборку</button></div>
+        <PresentationSpace templates={templates} mode="assembly" revision={replay} />
+      </section>
       <div className="demo-layout">
         <nav className="demo-nav" aria-label="Этапы создания презентации">
           {stages.map(([name], i) => (

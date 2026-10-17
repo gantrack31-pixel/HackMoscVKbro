@@ -1,3 +1,4 @@
+import { useSurfaceMotion } from "../motion/animation";
 import { useEffect, useState } from "react";
 import {
   Cloud,
@@ -54,6 +55,7 @@ export function Finish({
       active = false;
     };
   }, [attempt]);
+  const feedbackMotion = useSurfaceMotion([method, receipt, error], ".save-feedback, .cloud-save-content, .error-banner", true);
   async function save() {
     setBusy(true);
     setError("");
@@ -134,7 +136,7 @@ export function Finish({
             </a>
           </div>
         </section>
-        <section className="finish-save panel">
+        <section ref={feedbackMotion} className="finish-save panel">
           <h2>Как сохранить?</h2>
           <div
             className="save-methods"
