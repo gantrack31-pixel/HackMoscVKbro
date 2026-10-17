@@ -4,6 +4,9 @@ import { Icon } from "../components/Icon";
 import { TemplateCard, TemplateCover } from "../components/TemplateCard";
 import type { Template, Project, ProjectSummary } from "../types";
 import "../styles/navigation-modern.css";
+import { PresentationSpace } from "../components/spatial/PresentationSpace";
+import { SpatialGallery } from "../components/spatial/SpatialGallery";
+import { useSurfaceMotion } from "../motion/animation";
 export interface CatalogActions {
   templates: Template[];
   favorites: string[];
@@ -19,6 +22,7 @@ export function Home(
     onError: (m: string) => void;
   },
 ) {
+  const motionScope = useSurfaceMotion([], ".hero-copy > *");
   const [tab, setTab] = useState("Обзор");
   const [shownTab, setShownTab] = useState(tab);
   useEffect(() => {
@@ -88,7 +92,7 @@ export function Home(
     </div>
   );
   return (
-    <>
+    <div className="spatial-home" ref={motionScope}>
       <div className="heading between">
         <div>
           <h1>
@@ -163,7 +167,8 @@ export function Home(
         inert={tab !== shownTab}
       >
         {shownTab === "Обзор" && (
-          <section className="hero">
+          <section className="spatial-story">
+          <div className="hero spatial-hero">
             <div className="hero-copy">
               <span className="badge blue">
                 <Icon name="spark" />
@@ -192,25 +197,12 @@ export function Home(
                 </a>
               </div>
             </div>
-            <div className="hero-visual">
-              {props.templates[2] && (
-                <div className="floating back">
-                  <TemplateCover template={props.templates[2]} />
-                </div>
-              )}
-              {props.templates[0] && (
-                <div className="floating front">
-                  <TemplateCover
-                    template={props.templates[0]}
-                    title="Идеи обретают свою форму."
-                  />
-                </div>
-              )}
-              <div className="float-label">
-                <Icon name="check" />
-                Один стиль. На каждом слайде.
-              </div>
+            <div className="hero-visual spatial-visual">
+              <PresentationSpace templates={props.templates} />
             </div>
+            <div className="space-story-footer"><span><Icon name="check" />Один стиль. На каждом слайде.</span><span className="space-scroll-hint">Листайте — меняйте перспективу<Icon name="arrow" /></span></div>
+            <div className="space-progress" aria-hidden="true"><i /></div>
+          </div>
           </section>
         )}
         {shownTab !== "Вдохновение" && quick}
@@ -303,7 +295,7 @@ export function Home(
           </span>
         </div>
       </div>
-    </>
+    </div>
   );
 }
 export function Catalog(
@@ -397,6 +389,7 @@ export function Catalog(
         Карточки показывают пример подачи. У загруженных PPTX считываются
         собственные пропорции, палитра, шрифты и макеты.
       </div>
+      {list.length > 0 && <SpatialGallery {...props} templates={list} />}
       <div className="cards">
         {list.map((t) => (
           <TemplateCard

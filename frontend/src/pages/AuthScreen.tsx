@@ -1,3 +1,4 @@
+import { useSurfaceMotion } from "../motion/animation";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import {
   Mail,
@@ -53,6 +54,7 @@ export function AuthScreen({
       .then(setTemplates)
       .catch((e) => setError(e.message));
   }, []);
+  const formMotion = useSurfaceMotion([screen], ".auth-form > h1, .auth-form > label, .auth-form > .auth-submit", true);
   const startRef = useRef<HTMLButtonElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const [leaving, setLeaving] = useState(false);
@@ -193,6 +195,7 @@ export function AuthScreen({
   }
   return (
     <div
+      ref={formMotion}
       className={`auth-shell ${screen === "welcome" ? "welcome" : "auth-dark"}`}
       id="design-root"
     >

@@ -1,3 +1,4 @@
+import { gsap, useGSAP, motion } from "../motion/animation";
 import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { Icon } from "./Icon";
 import "../styles/modal-modern.css";
@@ -19,9 +20,14 @@ export function Modal({
   const ref = useRef<HTMLDialogElement>(null);
   const headingId = useId();
   const [closing, setClosing] = useState(false);
-  const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const closingLock = useRef(false);
+  const { contextSafe } = useGSAP(() => {
+    if (!matchMedia("(prefers-reduced-motion: reduce)").matches)
+      gsap.fromTo(ref.current, { opacity: 0, y: 14, scale: 0.985 }, { opacity: 1, y: 0, scale: 1, duration: motion.reveal, ease: motion.ease, clearProps: "transform,opacity" });
+  }, { scope: ref });
   const startedOnBackdrop = useRef(false);
   useEffect(() => {
+    closingLock.current = false;
     const dialog = ref.current;
     const previousFocus =
       document.activeElement instanceof HTMLElement
@@ -31,24 +37,19 @@ export function Modal({
     dialog?.showModal();
     document.body.style.overflow = "hidden";
     return () => {
-      if (closeTimer.current) clearTimeout(closeTimer.current);
+      closingLock.current = true;
       dialog?.close();
       document.body.style.overflow = previousOverflow;
       if (previousFocus?.isConnected) previousFocus.focus();
     };
   }, []);
-  function dismiss() {
-    if (closeDisabled || closeTimer.current) return;
+  const dismiss = contextSafe(() => {
+    if (closeDisabled || closingLock.current) return;
+    closingLock.current = true;
     setClosing(true);
-    closeTimer.current = setTimeout(
-      () => {
-        closeTimer.current = null;
-        onClose();
-        setClosing(false);
-      },
-      window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : 160,
-    );
-  }
+    gsap.to(ref.current, { opacity: 0, y: 6, duration: matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : motion.fast,
+      ease: "power2.in", overwrite: true, onComplete: onClose });
+  });
   function isOutside(clientX: number, clientY: number) {
     const bounds = ref.current?.getBoundingClientRect();
     return Boolean(
@@ -63,7 +64,7 @@ export function Modal({
     <dialog
       ref={ref}
       aria-labelledby={headingId}
-      className={`modern-dialog${wide ? " modern-dialog-wide" : ""}${closing ? " is-closing" : ""} ${className}`}
+      className={`modern-dialog motion-dialog${wide ? " modern-dialog-wide" : ""}${closing ? " is-closing" : ""} ${className}`}
       onCancel={(event) => {
         event.preventDefault();
         dismiss();

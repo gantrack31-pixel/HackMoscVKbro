@@ -18,10 +18,12 @@ async function confirmStop(page:Page,id:()=>string) {
   const gate=new Promise<void>(resolve=>{release=resolve;});
   const cancel=async(route:Route)=>{await gate;await route.continue();};
   await page.route("**/api/jobs/*/cancel",cancel);
+  // Wait for this operation's acknowledgement, not a previous assistant status.
+  const stoppedBefore = await page.getByText("Остановлено", {exact:true}).count();
   await page.getByRole("button",{name:"Стоп",exact:true}).click();
   await expect(page.getByText("Останавливаем…",{exact:true})).toBeVisible();
   release();
-  await expect(page.getByText("Остановлено",{exact:true}).last()).toBeVisible();
+  await expect(page.getByText("Остановлено",{exact:true})).toHaveCount(stoppedBefore + 1);
   expect((await (await page.request.get(`/api/jobs/${id()}`)).json()).state).toBe("cancelled");
   await page.unroute("**/api/jobs/*/cancel",cancel);
 }

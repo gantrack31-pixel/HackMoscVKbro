@@ -1,0 +1,488 @@
+/* Motion ownership: GSAP owns transforms/opacity only on these explicit surfaces. */
+.spatial-home .hero-copy > *,
+.page.motion-page > .heading,
+.wizard-flow.motion-surface
+  :is(.wizard-grid, .outline-layout, .generation, .wizard-results),
+.page .editor-page.motion-surface .slide-canvas,
+dialog.modern-dialog.motion-dialog[open],
+dialog.modern-dialog.motion-dialog.is-closing {
+  animation: none;
+}
+.spatial-home .hero-copy > *,
+.page.motion-page > .heading,
+.wizard-flow.motion-surface
+  :is(.wizard-grid, .outline-layout, .generation, .wizard-results),
+.page .editor-page.motion-surface .slide-canvas {
+  transition-property: background-color, color, border-color, box-shadow;
+}
+.spatial-home {
+  min-width: 0;
+}
+.spatial-story {
+  position: relative;
+  height: calc(min(72vh, 650px) + 180px);
+  margin: 0 0 28px;
+}
+.page .hero.spatial-hero {
+  position: sticky;
+  top: 24px;
+  min-height: 580px;
+  height: min(72vh, 650px);
+  max-height: none;
+  display: grid;
+  grid-template-columns: minmax(280px, 0.85fr) minmax(0, 1.25fr);
+  align-items: center;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 28px;
+  isolation: isolate;
+  overflow: hidden;
+  box-shadow: 0 28px 70px #0f172a09;
+}
+.page .hero.spatial-hero::before {
+  display: none;
+}
+.spatial-hero .hero-copy {
+  position: relative;
+  z-index: 2;
+  padding: 44px 0 70px 40px;
+  width: auto;
+}
+.spatial-hero .hero-copy h2 {
+  font-size: clamp(32px, 3.6vw, 58px);
+  line-height: 1.12;
+  letter-spacing: -0.055em;
+  margin: 28px 0 22px;
+}
+.spatial-hero .hero-copy p {
+  max-width: 365px;
+  font-size: 14px;
+  line-height: 1.85;
+}
+.spatial-hero .hero-actions {
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 28px;
+}
+.spatial-hero .hero-actions .btn {
+  font-size: 12px;
+  padding: 13px 16px;
+}
+.spatial-hero .hero-visual.spatial-visual {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 480px;
+  background: transparent;
+  overflow: visible;
+}
+.presentation-space {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 350px;
+  isolation: isolate;
+}
+.slide-scene {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+.slide-scene canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+.space-glow {
+  position: absolute;
+  inset: 12% -5% 8% -20%;
+  background: radial-gradient(
+    ellipse,
+    #0077ff16,
+    #0077ff05 45%,
+    transparent 70%
+  );
+  pointer-events: none;
+}
+.space-static {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  transition: opacity 0.35s;
+}
+.is-ready > .space-static {
+  opacity: 0;
+  visibility: hidden;
+}
+.spatial-fallback {
+  position: relative;
+  width: 85%;
+  height: 70%;
+  perspective: 1000px;
+}
+.spatial-fallback > div {
+  width: 72%;
+  position: absolute;
+  top: 30%;
+  left: 10%;
+  box-shadow: 0 25px 55px #0f172a25;
+  border-radius: 12px;
+  transform: rotateY(-12deg) rotate(-3deg);
+}
+.spatial-fallback > div:nth-child(2) {
+  left: 0;
+  top: 4%;
+  transform: translateZ(-90px) rotateY(15deg) rotate(7deg);
+}
+.spatial-fallback > div:nth-child(3) {
+  left: 29%;
+  top: 53%;
+  transform: translateZ(-100px) rotateY(-18deg) rotate(6deg);
+}
+.spatial-fallback > div:first-child {
+  z-index: 1;
+}
+.space-caption {
+  position: absolute;
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  inset: auto 30px 92px;
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: var(--muted);
+  pointer-events: none;
+}
+.space-story-footer {
+  position: absolute;
+  inset: auto 32px 25px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  font-size: 10px;
+  color: var(--muted);
+  z-index: 2;
+}
+.space-story-footer > span {
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+}
+.space-story-footer .icon {
+  width: 14px;
+  height: 14px;
+  color: var(--accent-text);
+}
+.space-scroll-hint .icon {
+  transform: rotate(90deg);
+}
+.space-progress {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  height: 3px;
+  background: #0077ff09;
+}
+.space-progress i {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: var(--blue);
+  transform: scaleX(0);
+  transform-origin: left;
+}
+/* The searchable grid remains the primary complete catalog. */
+.spatial-gallery {
+  margin: 24px 0 36px;
+  padding: 25px 28px;
+  border: 1px solid var(--line);
+  border-radius: 24px;
+  background: linear-gradient(130deg, var(--surface), var(--surface-soft));
+  overflow: hidden;
+}
+.gallery-topline {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.gallery-topline .eyebrow {
+  font-size: 9px;
+  letter-spacing: 0.15em;
+  color: var(--accent-text);
+}
+.gallery-stage {
+  height: clamp(230px, 29vw, 400px);
+  position: relative;
+  perspective: 1200px;
+  transform-style: preserve-3d;
+  touch-action: pan-y;
+  margin-top: 15px;
+}
+.gallery-slide {
+  position: absolute;
+  width: min(52%, 540px);
+  top: 50%;
+  left: 50%;
+  margin-left: calc(min(52%, 540px) / -2);
+  translate: 0 -50%;
+  transform-style: preserve-3d;
+}
+.gallery-cover {
+  width: 100%;
+  display: block;
+  padding: 0;
+  border: 1px solid #ffffff66;
+  border-radius: 14px;
+  background: var(--surface);
+  overflow: hidden;
+  box-shadow: 0 24px 48px #0f172a20;
+}
+.gallery-cover > .slide {
+  aspect-ratio: 16/9;
+  width: 100%;
+}
+.gallery-slide.is-active .gallery-cover {
+  outline: 2px solid #0077ff55;
+  outline-offset: 7px;
+}
+.gallery-bottom {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding-top: 15px;
+  border-top: 1px solid var(--line);
+  position: relative;
+  z-index: 20;
+}
+.gallery-meta {
+  flex: 1;
+  min-width: 0;
+}
+.gallery-meta h3 {
+  font-size: 16px;
+  overflow-wrap: anywhere;
+}
+.gallery-meta p {
+  margin-top: 6px;
+  color: var(--muted);
+  font-size: 11px;
+}
+.gallery-actions,
+.gallery-navigation {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.gallery-actions .btn {
+  font-size: 11px;
+}
+.gallery-navigation .btn {
+  min-width: 38px;
+  min-height: 38px;
+}
+/* Card tilt is owned by GSAP; existing cover zoom and color transitions stay in CSS. */
+.page .template.spatial-card {
+  transform: none;
+  transition-property: box-shadow, border-color, background-color;
+  transform-style: preserve-3d;
+}
+.page .template.spatial-card:hover {
+  transform: none;
+}
+.page .template.spatial-card .template-cover {
+  backface-visibility: hidden;
+}
+.assembly-showcase {
+  display: grid;
+  grid-template-columns: 0.8fr 1.2fr;
+  min-height: 490px;
+  padding: 32px;
+  margin-bottom: 36px;
+  border: 1px solid var(--line);
+  border-radius: 26px;
+  background: linear-gradient(125deg, var(--surface), var(--surface-soft));
+  overflow: hidden;
+}
+.assembly-copy {
+  align-self: center;
+  position: relative;
+  z-index: 2;
+}
+.assembly-copy .eyebrow {
+  font-size: 9px;
+  letter-spacing: 0.13em;
+  color: var(--accent-text);
+}
+.assembly-copy h2 {
+  font-size: clamp(30px, 3.5vw, 48px);
+  line-height: 1.13;
+  letter-spacing: -0.05em;
+  margin: 24px 0 20px;
+}
+.assembly-copy p {
+  max-width: 280px;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.8;
+}
+.assembly-disclaimer {
+  display: block;
+  color: var(--muted);
+  font-size: 9px;
+  margin: 24px 0 14px;
+}
+.assembly-showcase .space-caption {
+  bottom: 8px;
+}
+[data-theme="dark"] .space-glow {
+  opacity: 1.4;
+}
+[data-theme="dark"] .gallery-cover {
+  box-shadow: 0 30px 60px #0005;
+  border-color: var(--line);
+}
+@media (max-width: 1050px) {
+  .spatial-hero .hero-copy {
+    padding-left: 28px;
+  }
+  .spatial-hero .hero-copy h2 {
+    font-size: 37px;
+  }
+  .gallery-bottom {
+    flex-wrap: wrap;
+    gap: 14px;
+  }
+  .gallery-actions {
+    order: 3;
+    width: 100%;
+  }
+}
+@media (max-width: 700px) {
+  .spatial-story {
+    height: auto;
+  }
+  .page .hero.spatial-hero {
+    position: relative;
+    top: 0;
+    grid-template-columns: 1fr;
+    height: auto;
+    min-height: 0;
+    border-radius: 20px;
+  }
+  .spatial-hero .hero-copy {
+    padding: 28px 24px 0;
+  }
+  .spatial-hero .hero-copy h2 {
+    font-size: clamp(32px, 8vw, 43px);
+    margin: 22px 0 16px;
+  }
+  .spatial-hero .hero-copy p {
+    font-size: 13px;
+  }
+  .spatial-hero .hero-actions {
+    margin-top: 22px;
+  }
+  .spatial-hero .hero-visual.spatial-visual {
+    min-height: 300px;
+    height: 340px;
+  }
+  .presentation-space {
+    min-height: 280px;
+  }
+  .space-caption {
+    bottom: 55px;
+    inset-inline: 20px;
+    font-size: 7px;
+  }
+  .space-story-footer {
+    inset: auto 22px 18px;
+    font-size: 9px;
+  }
+  .space-story-footer .space-scroll-hint {
+    display: none;
+  }
+  .spatial-gallery {
+    padding: 20px 18px;
+    border-radius: 20px;
+  }
+  .gallery-stage {
+    height: 210px;
+  }
+  .gallery-slide {
+    width: 82%;
+    margin-left: -41%;
+  }
+  .gallery-bottom {
+    gap: 15px;
+  }
+  .gallery-meta h3 {
+    font-size: 14px;
+  }
+  .gallery-meta p {
+    font-size: 10px;
+  }
+  .gallery-actions .primary {
+    flex: 1;
+  }
+  .assembly-showcase {
+    padding: 24px;
+    grid-template-columns: 1fr;
+    min-height: 0;
+    gap: 0;
+  }
+  .assembly-showcase .presentation-space {
+    height: 340px;
+  }
+  .assembly-copy h2 {
+    font-size: 36px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .spatial-story {
+    height: auto;
+  }
+  .page .hero.spatial-hero {
+    position: relative;
+    top: 0;
+  }
+  .space-scroll-hint,
+  .space-progress {
+    display: none;
+  }
+  .space-static {
+    transition: none;
+  }
+}
+
+@media (max-width: 700px) {
+  .page .spatial-card .slide h3,
+  .gallery-cover .slide h3,
+  .spatial-fallback .slide h3 {
+    font-size: clamp(13px, 7cqw, 23px);
+    letter-spacing: -0.035em;
+  }
+  .page .spatial-card .slide-brand,
+  .gallery-cover .slide-brand,
+  .spatial-fallback .slide-brand {
+    font-size: clamp(8px, 4cqw, 12px);
+  }
+  .page .spatial-card .slide-meta,
+  .gallery-cover .slide-meta,
+  .spatial-fallback .slide-meta {
+    font-size: 6px;
+  }
+  .page .spatial-card .template-footer > span {
+    white-space: nowrap;
+    font-size: 9px;
+  }
+  .page .spatial-card .template-footer .btn {
+    padding-inline: 10px;
+    font-size: 10px;
+  }
+}

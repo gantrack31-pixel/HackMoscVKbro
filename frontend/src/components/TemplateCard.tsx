@@ -1,17 +1,20 @@
-import { useState, type CSSProperties } from "react";
+import { gsap, useGSAP, motion } from "../motion/animation";
+import { useRef, useState, type CSSProperties } from "react";
 import type { Template } from "../types";
 import { Icon } from "./Icon";
 export function TemplateCover({
   template,
   title,
+  decorative = false,
 }: {
   template: Template;
   title?: string;
+  decorative?: boolean;
 }) {
   const meta = template.metadata;
   const [failed,setFailed]=useState("");
   if(template.preview_url && failed!==template.preview_url)
-    return <img className="template-real-preview" src={template.preview_url} alt={`Первый слайд: ${template.name}`} style={{width:"100%",display:"block",aspectRatio:meta.ratio,objectFit:"contain",borderRadius:12}} onError={()=>setFailed(template.preview_url!)} />;
+    return <img className="template-real-preview" src={template.preview_url} alt={decorative ? "" : `Первый слайд: ${template.name}`} style={{width:"100%",display:"block",aspectRatio:meta.ratio,objectFit:"contain",borderRadius:12}} onError={()=>setFailed(template.preview_url!)} />;
   if(meta.source==="pptx")
     return <div className="template-preview-placeholder" style={{aspectRatio:meta.ratio,display:"grid",placeContent:"center",gap:8,padding:24,textAlign:"center",background:"var(--surface-soft)",color:"var(--ink)",borderRadius:12}}><Icon name="file"/><strong>Новый шаблон</strong><span className="muted" style={{overflowWrap:"anywhere"}}>{template.name}</span></div>;
   const coverTitle = title || meta.cover_title || template.name;
@@ -68,8 +71,27 @@ export function TemplateCard({
   onSelect: () => void;
   onPreview: () => void;
 }) {
+  const card = useRef<HTMLElement>(null);
+  useGSAP(() => {
+    const media = gsap.matchMedia();
+    media.add("(hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference)", () => {
+      const element = card.current!;
+      const tilt = (event: PointerEvent) => {
+        const bounds = element.getBoundingClientRect();
+        gsap.to(element, { rotationX: -(event.clientY - bounds.top - bounds.height / 2) / bounds.height * 5,
+          rotationY: (event.clientX - bounds.left - bounds.width / 2) / bounds.width * 7,
+          transformPerspective: 1000, y: -5, duration: motion.reveal, ease: motion.ease, overwrite: true });
+      };
+      const reset = () => gsap.to(element, { rotationX: 0, rotationY: 0, y: 0, duration: motion.reveal, ease: motion.ease, overwrite: true });
+      const enter = () => element.addEventListener("pointermove", tilt);
+      const leave = () => { element.removeEventListener("pointermove", tilt); reset(); };
+      element.addEventListener("pointerenter", enter); element.addEventListener("pointerleave", leave);
+      return () => { element.removeEventListener("pointerenter", enter); element.removeEventListener("pointerleave", leave); element.removeEventListener("pointermove", tilt); gsap.killTweensOf(element); gsap.set(element, { clearProps: "transform" }); };
+    });
+    return () => media.revert();
+  }, { scope: card });
   return (
-    <article className="template">
+    <article ref={card} className="template spatial-card">
       <button
         className={`favorite ${favorite ? "on" : ""}`}
         onClick={onFavorite}

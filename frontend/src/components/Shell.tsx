@@ -1,3 +1,4 @@
+import { useSurfaceMotion } from "../motion/animation";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Icon, type IconName } from "./Icon";
 import { ThemeToggle } from "./ThemeToggle";
@@ -29,6 +30,7 @@ export function Shell({
   templateCount: number;
   favoriteCount: number;
 }) {
+  const pageMotion = useSurfaceMotion([route], ":scope > .heading, :scope > section > .heading, .assembly-copy > *, .demo-content > h2, :scope > .cards > .template, .support-guide, .support-personal, .profile-stats > *", true);
   const [collapsed, setCollapsed] = useState(true);
   const [iconMotion, setIconMotion] = useState({ id: "", revision: 0 });
   function animateIcon(id: Route) {
@@ -199,7 +201,7 @@ export function Shell({
         tabIndex={-1}
       />
       <div className="workspace-layer" inert={!collapsed}>
-        <main className="page" id="main" tabIndex={-1}>
+        <main ref={pageMotion} className="page motion-page" id="main" tabIndex={-1}>
           {children}
         </main>
       </div>
