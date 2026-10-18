@@ -1,4 +1,4 @@
-import { useSurfaceMotion } from "../motion/animation";
+import { useSlideMotion } from "../motion/animation";
 import { useEffect, useState } from "react";
 import { SlideFields, slideKinds } from "../components/SlideFields";
 import { useLivePreview } from "../components/useLivePreview";
@@ -46,12 +46,7 @@ export function Editor({
   const busy = actionBusy || imageBusy;
   const [hasDataErrors, setHasDataErrors] = useState(false);
   const [viewing, setViewing] = useState(false);
-  const motionScope = useSurfaceMotion([index], ".slide-canvas", true);
-  const saveMotion = useSurfaceMotion(
-    [dirty, actionBusy],
-    ".editor-save-status",
-    true,
-  );
+  const motionScope = useSlideMotion(index, ".slide-canvas > .deck-slide");
   const preview = useLivePreview(project, content, dirty && !hasDataErrors);
   useEffect(() => {
     onDirty(dirty || busy);
@@ -117,7 +112,7 @@ export function Editor({
       aria-label="Редактор презентации"
     >
       <div className="heading between editor-heading">
-        <div ref={saveMotion} className="editor-title-block">
+        <div className="editor-title-block">
           <div className="editor-title-field">
             <input
               className="project-title"
@@ -139,8 +134,19 @@ export function Editor({
             <span
               className={`editor-save-status ${dirty ? "is-dirty" : ""}`}
               role="status"
+              data-save-state={busy ? "saving" : dirty ? "dirty" : "saved"}
             >
-              <Icon name={dirty ? "edit" : "check"} />
+              <span
+                className="save-state-icon"
+                key={busy ? "saving" : dirty ? "dirty" : "saved"}
+                aria-hidden="true"
+              >
+                {busy ? (
+                  <i className="spinner" />
+                ) : (
+                  <Icon name={dirty ? "edit" : "check"} />
+                )}
+              </span>
               {busy ? "Сохраняем…" : dirty ? "Есть изменения" : "Сохранено"}
             </span>
           </p>

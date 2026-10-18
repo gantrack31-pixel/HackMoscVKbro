@@ -1,4 +1,4 @@
-import { useSurfaceMotion } from "../motion/animation";
+import { usePageMotion } from "../motion/animation";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Icon, type IconName } from "./Icon";
 import { ThemeToggle } from "./ThemeToggle";
@@ -217,11 +217,7 @@ export function WorkspacePage({
   route: Route;
   children: ReactNode;
 }) {
-  const pageMotion = useSurfaceMotion(
-    [route],
-    ":scope > .heading, :scope > section > .heading, .assembly-copy > *, .demo-content > h2, :scope > .cards > .template, .support-guide, .support-personal, .profile-stats > *",
-    true,
-  );
+  const pageMotion = usePageMotion(route);
   return (
     <main ref={pageMotion} className="page motion-page" id="main" tabIndex={-1}>
       {children}

@@ -1,0 +1,148 @@
+/* Each transform belongs to one surface: route parent, card, preview clone or slide. */
+.template-cover,
+.gallery-cover {
+  position: relative;
+}
+.template-glare {
+  position: absolute;
+  inset: -20%;
+  pointer-events: none;
+  border-radius: inherit;
+  background: linear-gradient(
+    120deg,
+    transparent 24%,
+    #fff9 47%,
+    transparent 68%
+  );
+  opacity: 0;
+  z-index: 2;
+}
+[data-shared-cover] {
+  box-sizing: border-box;
+}
+[data-preview-cover] {
+  width: 100%;
+}
+dialog.modern-dialog [data-preview-cover] > .slide {
+  border-radius: 15px;
+  overflow: hidden;
+}
+dialog.template-preview-dialog.is-closing::backdrop {
+  animation-duration: 0.38s;
+}
+.page .editor-save-status {
+  transition: color 180ms ease;
+}
+.save-state-icon {
+  display: inline-grid;
+  place-items: center;
+  width: 14px;
+  height: 14px;
+  flex: 0 0 14px;
+}
+.save-state-icon .spinner {
+  width: 12px;
+  height: 12px;
+  border-width: 1.5px;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .save-state-icon {
+    animation: save-confirm 180ms ease-out both;
+  }
+  .favorite.on svg,
+  .gallery-favorite[aria-pressed="true"] svg {
+    animation: favorite-confirm 220ms ease-out both;
+  }
+  .nav-selection {
+    transition:
+      transform 300ms cubic-bezier(0.22, 1, 0.36, 1),
+      height 220ms ease,
+      opacity 180ms ease;
+  }
+  .nav-selection-fill {
+    animation: none;
+  }
+  .page .home-tab-indicator,
+  .profile-page .profile-tab-indicator {
+    transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .faq summary .icon {
+    transition: transform 220ms ease;
+  }
+}
+@media (hover: none) and (prefers-reduced-motion: no-preference) {
+  .template-cover:active,
+  .gallery-cover:active {
+    transform: scale(0.99);
+    transition: transform 150ms ease;
+  }
+}
+@media (min-width: 851px) and (prefers-reduced-motion: no-preference) {
+  .wizard-modern.wizard-flow .variant-grid {
+    perspective: 1400px;
+  }
+  .wizard-modern.wizard-flow .variant-grid .variant-card {
+    transform: translateY(3px) translateZ(-16px);
+    transition:
+      transform 380ms cubic-bezier(0.22, 1, 0.36, 1),
+      border-color 220ms,
+      box-shadow 220ms;
+  }
+  .wizard-modern.wizard-flow .variant-grid .variant-card:first-child {
+    transform: translateY(6px) translateZ(-20px) rotateY(3deg) rotateZ(-0.6deg);
+  }
+  .wizard-modern.wizard-flow .variant-grid .variant-card:last-child {
+    transform: translateY(6px) translateZ(-20px) rotateY(-3deg) rotateZ(0.6deg);
+  }
+  .wizard-modern.wizard-flow .variant-grid .variant-card.selected,
+  .wizard-modern.wizard-flow .variant-grid .variant-card:focus-within,
+  .wizard-modern.wizard-flow .variant-grid .variant-card:not(.selected):hover {
+    transform: translateY(-6px) translateZ(16px);
+    z-index: 2;
+  }
+}
+@media (max-width: 850px) and (prefers-reduced-motion: no-preference) {
+  .wizard-modern.wizard-flow .variant-grid .variant-card.selected {
+    transform: translateY(-2px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .template-glare {
+    display: none;
+  }
+  .page .editor-save-status,
+  .save-state-icon,
+  .gallery-favorite svg,
+  .faq summary .icon {
+    transition: none;
+    animation: none;
+  }
+  .wizard-modern.wizard-flow .variant-grid .variant-card,
+  .wizard-modern.wizard-flow .variant-grid .variant-card.selected,
+  .wizard-modern.wizard-flow .variant-grid .variant-card:not(.selected):hover {
+    transform: none;
+    transition: none;
+  }
+  dialog.modern-dialog::backdrop,
+  dialog.modern-dialog.is-closing::backdrop {
+    animation: none;
+  }
+}
+@keyframes save-confirm {
+  from {
+    opacity: 0.3;
+    transform: scale(0.85);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes favorite-confirm {
+  from {
+    transform: scale(0.85);
+  }
+  to {
+    transform: scale(1);
+  }
+}

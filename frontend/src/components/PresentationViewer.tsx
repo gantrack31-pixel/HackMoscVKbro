@@ -1,4 +1,5 @@
 import { useEffect, useId, useRef, useState, type CSSProperties } from "react";
+import { useSlideMotion } from "../motion/animation";
 import { Maximize2, Minimize2 } from "lucide-react";
 import type { Scene } from "../types";
 import { Icon } from "./Icon";
@@ -24,6 +25,7 @@ export function PresentationViewer({
   const [notice, setNotice] = useState("");
   const current = Math.min(index, Math.max(0, scenes.length - 1));
   const scene = scenes[current];
+  const slideMotion = useSlideMotion(current, ".presentation-viewer-slide");
   useEffect(() => {
     const element = dialog.current;
     const previousFocus =
@@ -126,7 +128,7 @@ export function PresentationViewer({
           </button>
         </div>
       </header>
-      <div className="presentation-viewer-stage">
+      <div className="presentation-viewer-stage" ref={slideMotion}>
         {scene ? (
           <div
             className="presentation-viewer-slide"

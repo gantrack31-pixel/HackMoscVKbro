@@ -283,7 +283,7 @@ export function Home(
                   favorite={props.favorites.includes(t.id)}
                   onFavorite={() => props.toggleFavorite(t.id)}
                   onSelect={() => props.select(t)}
-                  onPreview={() => props.preview(t)}
+                  onPreview={(origin) => props.preview(t, origin)}
                 />
               ))}
             </div>

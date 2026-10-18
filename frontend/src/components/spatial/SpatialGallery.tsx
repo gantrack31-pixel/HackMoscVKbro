@@ -1,4 +1,5 @@
 import { useRef, useState } from "react";
+import { useCardTilt } from "../../motion/useCardTilt";
 import { TemplateCover } from "../TemplateCover";
 import { Icon } from "../Icon";
 import { gsap, useGSAP, motion } from "../../motion/animation";
@@ -19,6 +20,10 @@ export function SpatialGallery({
   const activeIndex = Math.min(index, Math.max(0, templates.length - 1));
   const active = templates[activeIndex];
   const previousIndex = useRef(activeIndex);
+  useCardTilt(scope, ".gallery-slide.is-active .gallery-cover", [
+    activeIndex,
+    templates,
+  ]);
   useGSAP(
     () => {
       const media = gsap.matchMedia();
@@ -138,7 +143,12 @@ export function SpatialGallery({
           >
             <button
               className="gallery-cover"
-              onClick={() => preview(template)}
+              onClick={(event) =>
+                preview(
+                  template,
+                  event.currentTarget.firstElementChild as HTMLElement,
+                )
+              }
               aria-label={`Открыть пространственный предпросмотр ${template.name}`}
             >
               <TemplateCover
@@ -146,6 +156,7 @@ export function SpatialGallery({
                 decorative
                 loading={Math.abs(i - activeIndex) <= 2 ? "eager" : "lazy"}
               />
+              <span className="template-glare" aria-hidden="true" />
             </button>
           </div>
         ))}
