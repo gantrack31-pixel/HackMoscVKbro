@@ -7,18 +7,23 @@ export function TemplatePreviewDialog({
   preview,
   onClose,
   onSelect,
+  origin,
 }: {
   preview: Template;
+  origin?: HTMLElement | null;
   onClose: () => void;
   onSelect: (template: Template) => void;
 }) {
   return (
     <Modal
       title={preview.name}
+      origin={origin}
       className="template-preview-dialog"
       onClose={onClose}
     >
-      <TemplateCover template={preview} />
+      <div data-preview-cover>
+        <TemplateCover template={preview} />
+      </div>
       <div className="template-details">
         <span className="badge blue">
           {preview.metadata.source === "pptx"
@@ -88,7 +93,13 @@ export function TemplatePreviewDialog({
               {preview.metadata.assets
                 .filter((a) => a.data)
                 .map((a) => (
-                  <img key={a.id} src={a.data} alt={a.description || a.name} />
+                  <img
+                    key={a.id}
+                    src={a.data}
+                    alt={a.description || a.name}
+                    loading="lazy"
+                    decoding="async"
+                  />
                 ))}
             </div>
           )}

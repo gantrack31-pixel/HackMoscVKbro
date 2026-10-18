@@ -1,0 +1,912 @@
+{
+  "measuredAt": "2026-10-18T11:18:51.300594+00:00",
+  "target": "http://127.0.0.1:8000",
+  "scope": "Read-only performance measurement of current local Docker production build. Authentication forms were not submitted on the main site. Workspace checked on same production image in a disposable container with its own DB.",
+  "conditions": {
+    "browser": "Playwright bundled Chromium, headless",
+    "cache": "Fresh browser context each run; HTTP cache disabled",
+    "desktop": "1440x900, no CPU/network throttling",
+    "mobile": "Pixel 7 emulation, 4x CPU slowdown, 1.6 Mbps download, 750 kbps upload, 150ms network latency",
+    "sampleCountPerProfile": 3,
+    "window": "From navigation through 8 seconds after start button is available, followed by form toggles without submitting. Mobile background template fetch is still in progress in these short samples.",
+    "animations": "Enabled, no reduced motion"
+  },
+  "medians": {
+    "desktop": {
+      "fcpMs": 56,
+      "lcpMs": 928,
+      "cls": 0,
+      "ttfbMs": 6.199999928474426,
+      "readyMs": 47.5,
+      "blockingTimeProxyMs": 189,
+      "transferBytes": 8500120,
+      "javascriptTransferBytes": 192630
+    },
+    "mobile": {
+      "fcpMs": 1292,
+      "lcpMs": 1476,
+      "cls": 0,
+      "ttfbMs": 7.799999952316284,
+      "readyMs": 1489.6000000238419,
+      "blockingTimeProxyMs": 0,
+      "transferBytes": 178951,
+      "javascriptTransferBytes": 88557
+    }
+  },
+  "samples": [
+    {
+      "mode": "desktop",
+      "run": 1,
+      "readyMs": 116.60000002384186,
+      "fcpMs": 92,
+      "lcpMs": 1124,
+      "lcpElement": "IMG template-real-preview",
+      "cls": 0,
+      "ttfbMs": 13,
+      "domContentLoadedMs": 63.5,
+      "loadMs": 65.60000002384186,
+      "observationEndMs": 8117.700000047684,
+      "blockingTimeProxyMs": 266,
+      "longTaskCount": 2,
+      "longestTaskMs": 290,
+      "requests": 9,
+      "transferBytes": 8500120,
+      "javascriptTransferBytes": 192630,
+      "assets": [
+        {
+          "url": "http://127.0.0.1:8000/",
+          "type": "Document",
+          "status": 200,
+          "mime": "text/html",
+          "bytes": 1363
+        },
+        {
+          "url": "http://127.0.0.1:8000/assets/index-nTxUe1Xp.css",
+          "type": "Stylesheet",
+          "status": 200,
+          "encoding": "br",
+          "mime": "text/css",
+          "bytes": 33689
+        },
+        {
+          "url": "http://127.0.0.1:8000/assets/Manrope-CRLrrZU2.woff2",
+          "type": "Font",
+          "status": 200,
+          "mime": "font/woff2",
+          "bytes": 54727
+        },
+        {
+          "url": "http://127.0.0.1:8000/assets/index-BshcFSA_.js",
+          "type": "Script",
+          "status": 200,
+          "encoding": "br",
+          "mime": "text/javascript",
+          "bytes": 88557
+        },
+        {
+          "url": "http://127.0.0.1:8000/api/auth/me",
+          "type": "Fetch",
+          "status": 200,
+          "mime": "application/json",
+          "bytes": 615
+        },
+        {
+          "url": "http://127.0.0.1:8000/assets/CreativeOrbitScene-C20G0MGC.js",
+          "type": "Script",
+          "status": 200,
+          "encoding": "br",
+          "mime": "text/javascript",
+          "bytes": 4283
+        },
+        {
+          "url": "http://127.0.0.1:8000/assets/three.module-BxLkdJy4.js",
+          "type": "Script",
+          "status": 200,
+          "encoding": "br",
+          "mime": "text/javascript",
+          "bytes": 99790
+        },
+        {
+          "url": "http://127.0.0.1:8000/api/public/templates",
+          "type": "Fetch",
+          "status": 200,
+          "encoding": "gzip",
+          "mime": "application/json",
+          "bytes": 6147800
+        },
+        {
+          "url": "http://127.0.0.1:8000/api/templates/tech/thumbnail?v=first-slide-3-cbbe3aa6a21d23cebc4d1383b93dd07a9cea460d683de1903567b616c839485d",
+          "type": "Image",
+          "status": 200,
+          "mime": "image/png",
+          "bytes": 2069296
+        }
+      ],
+      "interactions": [
+        {
+          "action": "Начать работу",
+          "clickToTwoFramesMs": 18.399999976158142
+        },
+        {
+          "action": "Регистрация",
+          "clickToTwoFramesMs": 30.199999928474426
+        }
+      ],
+      "eventTimings": [],
+      "errors": [],
+      "failed": []
+    },
+    {
+      "mode": "desktop",
+      "run": 2,
+      "readyMs": 47.5,
+      "fcpMs": 56,
+      "lcpMs": 928,
+      "lcpElement": "IMG template-real-preview",
+      "cls": 0,
+      "ttfbMs": 6.199999928474426,
+      "domContentLoadedMs": 28.299999952316284,
+      "loadMs": 28.299999952316284,
+      "observationEndMs": 8058.5,
+      "blockingTimeProxyMs": 189,
+      "longTaskCount": 1,
+      "longestTaskMs": 239,
+      "requests": 9,
+      "transferBytes": 8500120,
+      "javascriptTransferBytes": 192630,
+      "assets": [
+        {
+          "url": "http://127.0.0.1:8000/",
+          "type": "Document",
+          "status": 200,
+          "mime": "text/html",
+          "bytes": 1363
+        },
+        {
+          "url": "http://127.0.0.1:8000/assets/index-nTxUe1Xp.css",
+          "type": "Stylesheet",
+          "status": 200,
+          "encoding": "br",
+          "mime": "text/css",
+          "bytes": 33689
+        },
+        {
+          "url": "http://127.0.0.1:8000/assets/Manrope-CRLrrZU2.woff2",
+          "type": "Font",
+          "status": 200,
+          "mime": "font/woff2",
+          "bytes": 54727
+        },
+        {
+          "url": "http://127.0.0.1:8000/assets/index-BshcFSA_.js",
+          "type": "Script",
+          "status": 200,
+          "encoding": "br",
+          "mime": "text/javascript",
+          "bytes": 88557
+        },
+        {
+          "url": "http://127.0.0.1:8000/api/auth/me",
+          "type": "Fetch",
+          "status": 200,
+          "mime": "application/json",
+          "bytes": 615
+        },
+        {
+          "url": "http://127.0.0.1:8000/assets/CreativeOrbitScene-C20G0MGC.js",
+          "type": "Script",
+          "status": 200,
+          "encoding": "br",
+          "mime": "text/javascript",
+          "bytes": 4283
+        },
+        {
+          "url": "http://127.0.0.1:8000/assets/three.module-BxLkdJy4.js",
+          "type": "Script",
+          "status": 200,
+          "encoding": "br",
+          "mime": "text/javascript",
+          "bytes": 99790
+        },
+        {
+          "url": "http://127.0.0.1:8000/api/public/templates",
+          "type": "Fetch",
+          "status": 200,
+          "encoding": "gzip",
+          "mime": "application/json",
+          "bytes": 6147800
+        },
+        {
+          "url": "http://127.0.0.1:8000/api/templates/tech/thumbnail?v=first-slide-3-cbbe3aa6a21d23cebc4d1383b93dd07a9cea460d683de1903567b616c839485d",
+          "type": "Image",
+          "status": 200,
+          "mime": "image/png",
+          "bytes": 2069296
+        }
+      ],
+      "interactions": [
+        {
+          "action": "Начать работу",
+          "clickToTwoFramesMs": 27.800000071525574
+        },
+        {
+          "action": "Регистрация",
+          "clickToTwoFramesMs": 16.5
+        }
+      ],
+      "eventTimings": [],
+      "errors": [],
+      "failed": []
+    },
+    {
+      "mode": "desktop",
+      "run": 3,
+      "readyMs": 45.200000047683716,
+      "fcpMs": 56,
+      "lcpMs": 896,
+      "lcpElement": "IMG template-real-preview",
+      "cls": 0,
+      "ttfbMs": 2,
+      "domContentLoadedMs": 24.799999952316284,
+      "loadMs": 24.899999976158142,
+      "observationEndMs": 8052.299999952316,
+      "blockingTimeProxyMs": 184,
+      "longTaskCount": 1,
+      "longestTaskMs": 234,
+      "requests": 9,
+      "transferBytes": 8500120,
+      "javascriptTransferBytes": 192630,
+      "assets": [
+        {
+          "url": "http://127.0.0.1:8000/",
+          "type": "Document",
+          "status": 200,
+          "mime": "text/html",
+          "bytes": 1363
+        },
+        {
+          "url": "http://127.0.0.1:8000/assets/index-nTxUe1Xp.css",
+          "type": "Stylesheet",
+          "status": 200,
+          "encoding": "br",
+          "mime": "text/css",
+          "bytes": 33689
+        },
+        {
+          "url": "http://127.0.0.1:8000/assets/Manrope-CRLrrZU2.woff2",
+          "type": "Font",
+          "status": 200,
+          "mime": "font/woff2",
+          "bytes": 54727
+        },
+        {
+          "url": "http://127.0.0.1:8000/assets/index-BshcFSA_.js",
+          "type": "Script",
+          "status": 200,
+          "encoding": "br",
+          "mime": "text/javascript",
+          "bytes": 88557
+        },
+        {
+          "url": "http://127.0.0.1:8000/api/auth/me",
+          "type": "Fetch",
+          "status": 200,
+          "mime": "application/json",
+          "bytes": 615
+        },
+        {
+          "url": "http://127.0.0.1:8000/assets/CreativeOrbitScene-C20G0MGC.js",
+          "type": "Script",
+          "status": 200,
+          "encoding": "br",
+          "mime": "text/javascript",
+          "bytes": 4283
+        },
+        {
+          "url": "http://127.0.0.1:8000/assets/three.module-BxLkdJy4.js",
+          "type": "Script",
+          "status": 200,
+          "encoding": "br",
+          "mime": "text/javascript",
+          "bytes": 99790
+        },
+        {
+          "url": "http://127.0.0.1:8000/api/public/templates",
+          "type": "Fetch",
+          "status": 200,
+          "encoding": "gzip",
+          "mime": "application/json",
+          "bytes": 6147800
+        },
+        {
+          "url": "http://127.0.0.1:8000/api/templates/tech/thumbnail?v=first-slide-3-cbbe3aa6a21d23cebc4d1383b93dd07a9cea460d683de1903567b616c839485d",
+          "type": "Image",
+          "status": 200,
+          "mime": "image/png",
+          "bytes": 2069296
+        }
+      ],
+      "interactions": [
+        {
+          "action": "Начать работу",
+          "clickToTwoFramesMs": 31.59999990463257
+        },
+        {
+          "action": "Регистрация",
+          "clickToTwoFramesMs": 17
+        }
+      ],
+      "eventTimings": [],
+      "errors": [],
+      "failed": []
+    },
+    {
+      "mode": "mobile",
+      "run": 1,
+      "readyMs": 1489.6000000238419,
+      "fcpMs": 1292,
+      "lcpMs": 1476,
+      "lcpElement": "H1 ",
+      "cls": 0,
+      "ttfbMs": 1.899999976158142,
+      "domContentLoadedMs": 1256.5,
+      "loadMs": 1256.5,
+      "observationEndMs": 9491.299999952316,
+      "blockingTimeProxyMs": 0,
+      "longTaskCount": 0,
+      "longestTaskMs": 0,
+      "requests": 6,
+      "transferBytes": 178951,
+      "javascriptTransferBytes": 88557,
+      "assets": [
+        {
+          "url": "http://127.0.0.1:8000/",
+          "type": "Document",
+          "status": 200,
+          "mime": "text/html",
+          "bytes": 1363
+        },
+        {
+          "url": "http://127.0.0.1:8000/assets/index-nTxUe1Xp.css",
+          "type": "Stylesheet",
+          "status": 200,
+          "encoding": "br",
+          "mime": "text/css",
+          "bytes": 33689
+        },
+        {
+          "url": "http://127.0.0.1:8000/assets/Manrope-CRLrrZU2.woff2",
+          "type": "Font",
+          "status": 200,
+          "mime": "font/woff2",
+          "bytes": 54727
+        },
+        {
+          "url": "http://127.0.0.1:8000/assets/index-BshcFSA_.js",
+          "type": "Script",
+          "status": 200,
+          "encoding": "br",
+          "mime": "text/javascript",
+          "bytes": 88557
+        },
+        {
+          "url": "http://127.0.0.1:8000/api/auth/me",
+          "type": "Fetch",
+          "status": 200,
+          "mime": "application/json",
+          "bytes": 615
+        },
+        {
+          "url": "http://127.0.0.1:8000/api/public/templates",
+          "type": "Fetch",
+          "status": 200,
+          "encoding": "gzip",
+          "mime": "application/json",
+          "bytes": 0
+        }
+      ],
+      "interactions": [
+        {
+          "action": "Начать работу",
+          "clickToTwoFramesMs": 11.300000071525574
+        },
+        {
+          "action": "Регистрация",
+          "clickToTwoFramesMs": 18.800000071525574
+        }
+      ],
+      "eventTimings": [],
+      "errors": [],
+      "failed": []
+    },
+    {
+      "mode": "mobile",
+      "run": 2,
+      "readyMs": 1482.3999999761581,
+      "fcpMs": 1288,
+      "lcpMs": 1476,
+      "lcpElement": "H1 ",
+      "cls": 0,
+      "ttfbMs": 7.799999952316284,
+      "domContentLoadedMs": 1254,
+      "loadMs": 1254,
+      "observationEndMs": 9484,
+      "blockingTimeProxyMs": 0,
+      "longTaskCount": 0,
+      "longestTaskMs": 0,
+      "requests": 6,
+      "transferBytes": 178951,
+      "javascriptTransferBytes": 88557,
+      "assets": [
+        {
+          "url": "http://127.0.0.1:8000/",
+          "type": "Document",
+          "status": 200,
+          "mime": "text/html",
+          "bytes": 1363
+        },
+        {
+          "url": "http://127.0.0.1:8000/assets/index-nTxUe1Xp.css",
+          "type": "Stylesheet",
+          "status": 200,
+          "encoding": "br",
+          "mime": "text/css",
+          "bytes": 33689
+        },
+        {
+          "url": "http://127.0.0.1:8000/assets/Manrope-CRLrrZU2.woff2",
+          "type": "Font",
+          "status": 200,
+          "mime": "font/woff2",
+          "bytes": 54727
+        },
+        {
+          "url": "http://127.0.0.1:8000/assets/index-BshcFSA_.js",
+          "type": "Script",
+          "status": 200,
+          "encoding": "br",
+          "mime": "text/javascript",
+          "bytes": 88557
+        },
+        {
+          "url": "http://127.0.0.1:8000/api/auth/me",
+          "type": "Fetch",
+          "status": 200,
+          "mime": "application/json",
+          "bytes": 615
+        },
+        {
+          "url": "http://127.0.0.1:8000/api/public/templates",
+          "type": "Fetch",
+          "status": 200,
+          "encoding": "gzip",
+          "mime": "application/json",
+          "bytes": 0
+        }
+      ],
+      "interactions": [
+        {
+          "action": "Начать работу",
+          "clickToTwoFramesMs": 9.799999952316284
+        },
+        {
+          "action": "Регистрация",
+          "clickToTwoFramesMs": 25.600000023841858
+        }
+      ],
+      "eventTimings": [],
+      "errors": [],
+      "failed": []
+    },
+    {
+      "mode": "mobile",
+      "run": 3,
+      "readyMs": 1507.3999999761581,
+      "fcpMs": 1300,
+      "lcpMs": 1500,
+      "lcpElement": "H1 ",
+      "cls": 0,
+      "ttfbMs": 8.300000071525574,
+      "domContentLoadedMs": 1265.8999999761581,
+      "loadMs": 1265.8999999761581,
+      "observationEndMs": 9509.600000023842,
+      "blockingTimeProxyMs": 0,
+      "longTaskCount": 0,
+      "longestTaskMs": 0,
+      "requests": 6,
+      "transferBytes": 178951,
+      "javascriptTransferBytes": 88557,
+      "assets": [
+        {
+          "url": "http://127.0.0.1:8000/",
+          "type": "Document",
+          "status": 200,
+          "mime": "text/html",
+          "bytes": 1363
+        },
+        {
+          "url": "http://127.0.0.1:8000/assets/index-nTxUe1Xp.css",
+          "type": "Stylesheet",
+          "status": 200,
+          "encoding": "br",
+          "mime": "text/css",
+          "bytes": 33689
+        },
+        {
+          "url": "http://127.0.0.1:8000/assets/Manrope-CRLrrZU2.woff2",
+          "type": "Font",
+          "status": 200,
+          "mime": "font/woff2",
+          "bytes": 54727
+        },
+        {
+          "url": "http://127.0.0.1:8000/assets/index-BshcFSA_.js",
+          "type": "Script",
+          "status": 200,
+          "encoding": "br",
+          "mime": "text/javascript",
+          "bytes": 88557
+        },
+        {
+          "url": "http://127.0.0.1:8000/api/auth/me",
+          "type": "Fetch",
+          "status": 200,
+          "mime": "application/json",
+          "bytes": 615
+        },
+        {
+          "url": "http://127.0.0.1:8000/api/public/templates",
+          "type": "Fetch",
+          "status": 200,
+          "encoding": "gzip",
+          "mime": "application/json",
+          "bytes": 0
+        }
+      ],
+      "interactions": [
+        {
+          "action": "Начать работу",
+          "clickToTwoFramesMs": 10.5
+        },
+        {
+          "action": "Регистрация",
+          "clickToTwoFramesMs": 19.40000009536743
+        }
+      ],
+      "eventTimings": [],
+      "errors": [],
+      "failed": []
+    }
+  ],
+  "supplementaryFullMobileRun": {
+    "conditions": "Single supplementary cold mobile run, Pixel 7 viewport, CPU4x, 1.6Mbps download, 750kbps upload, 150ms latency; wait for all background network, then trusted clicks and typing; no form submission",
+    "endMs": 46172.09999990463,
+    "fcpMs": 1376,
+    "lcpMs": 1596,
+    "blockingTimeProxyMs": 9,
+    "longestTaskMs": 59,
+    "resources": [
+      {
+        "url": "http://127.0.0.1:8000/assets/Manrope-CRLrrZU2.woff2",
+        "endMs": 1093.3999999761581,
+        "duration": 867.5,
+        "transferBytes": 54192
+      },
+      {
+        "url": "http://127.0.0.1:8000/assets/index-BshcFSA_.js",
+        "endMs": 1272.1999999284744,
+        "duration": 1046.1999999284744,
+        "transferBytes": 87980
+      },
+      {
+        "url": "http://127.0.0.1:8000/assets/index-nTxUe1Xp.css",
+        "endMs": 882.1999999284744,
+        "duration": 655.1000000238419,
+        "transferBytes": 33119
+      },
+      {
+        "url": "http://127.0.0.1:8000/api/auth/me",
+        "endMs": 1534.3999999761581,
+        "duration": 158.70000004768372,
+        "transferBytes": 323
+      },
+      {
+        "url": "http://127.0.0.1:8000/api/public/templates",
+        "endMs": 32884.299999952316,
+        "duration": 31293.899999976158,
+        "transferBytes": 6147462
+      },
+      {
+        "url": "http://127.0.0.1:8000/api/templates/tech/thumbnail?v=first-slide-3-cbbe3aa6a21d23cebc4d1383b93dd07a9cea460d683de1903567b616c839485d",
+        "endMs": 43663.09999990463,
+        "duration": 10505,
+        "transferBytes": 2068795
+      }
+    ],
+    "transferBytes": 8396047,
+    "interactionFrames": [
+      {
+        "name": "Начать работу",
+        "clickToTwoFramesMs": 47.10000002384186
+      },
+      {
+        "name": "Регистрация",
+        "clickToTwoFramesMs": 27.200000047683716
+      }
+    ],
+    "eventTimings": [
+      {
+        "start": 46244.799999952316,
+        "duration": 64,
+        "id": 6002,
+        "name": "pointerdown"
+      },
+      {
+        "start": 46244.799999952316,
+        "duration": 64,
+        "id": 6002,
+        "name": "pointerup"
+      },
+      {
+        "start": 46244.799999952316,
+        "duration": 64,
+        "id": 6002,
+        "name": "click"
+      },
+      {
+        "start": 46739.299999952316,
+        "duration": 32,
+        "id": 6009,
+        "name": "pointerdown"
+      },
+      {
+        "start": 46739.299999952316,
+        "duration": 32,
+        "id": 6009,
+        "name": "pointerup"
+      },
+      {
+        "start": 46739.299999952316,
+        "duration": 32,
+        "id": 6009,
+        "name": "click"
+      },
+      {
+        "start": 47182.09999990463,
+        "duration": 24,
+        "id": 6016,
+        "name": "keydown"
+      },
+      {
+        "start": 47182.09999990463,
+        "duration": 24,
+        "id": 6016,
+        "name": "keypress"
+      },
+      {
+        "start": 47274.699999928474,
+        "duration": 32,
+        "id": 6016,
+        "name": "keyup"
+      },
+      {
+        "start": 47275.09999990463,
+        "duration": 32,
+        "id": 6023,
+        "name": "keydown"
+      },
+      {
+        "start": 47275.09999990463,
+        "duration": 32,
+        "id": 6023,
+        "name": "keypress"
+      },
+      {
+        "start": 47358.39999997616,
+        "duration": 32,
+        "id": 6023,
+        "name": "keyup"
+      },
+      {
+        "start": 47359.199999928474,
+        "duration": 32,
+        "id": 6030,
+        "name": "keydown"
+      },
+      {
+        "start": 47359.199999928474,
+        "duration": 32,
+        "id": 6030,
+        "name": "keypress"
+      },
+      {
+        "start": 47440.59999990463,
+        "duration": 32,
+        "id": 6030,
+        "name": "keyup"
+      },
+      {
+        "start": 47441,
+        "duration": 32,
+        "id": 6037,
+        "name": "keydown"
+      },
+      {
+        "start": 47441,
+        "duration": 32,
+        "id": 6037,
+        "name": "keypress"
+      },
+      {
+        "start": 47522,
+        "duration": 32,
+        "id": 6037,
+        "name": "keyup"
+      },
+      {
+        "start": 47522.39999997616,
+        "duration": 32,
+        "id": 6044,
+        "name": "keydown"
+      },
+      {
+        "start": 47522.39999997616,
+        "duration": 32,
+        "id": 6044,
+        "name": "keypress"
+      },
+      {
+        "start": 47603.5,
+        "duration": 16,
+        "id": 6044,
+        "name": "keyup"
+      },
+      {
+        "start": 47603.89999997616,
+        "duration": 32,
+        "id": 6051,
+        "name": "keydown"
+      },
+      {
+        "start": 47603.89999997616,
+        "duration": 32,
+        "id": 6051,
+        "name": "keypress"
+      },
+      {
+        "start": 47686.89999997616,
+        "duration": 16,
+        "id": 6051,
+        "name": "keyup"
+      },
+      {
+        "start": 47687.59999990463,
+        "duration": 32,
+        "id": 6058,
+        "name": "keydown"
+      },
+      {
+        "start": 47687.59999990463,
+        "duration": 32,
+        "id": 6058,
+        "name": "keypress"
+      },
+      {
+        "start": 48174.5,
+        "duration": 16,
+        "id": 6093,
+        "name": "keyup"
+      },
+      {
+        "start": 48174.699999928474,
+        "duration": 16,
+        "id": 6100,
+        "name": "keydown"
+      },
+      {
+        "start": 48174.699999928474,
+        "duration": 16,
+        "id": 6100,
+        "name": "keypress"
+      },
+      {
+        "start": 48254.799999952316,
+        "duration": 16,
+        "id": 6107,
+        "name": "keydown"
+      },
+      {
+        "start": 48254.799999952316,
+        "duration": 16,
+        "id": 6107,
+        "name": "keypress"
+      }
+    ],
+    "errors": []
+  },
+  "workspace": {
+    "conditions": "Current production Docker image, fresh isolated DB, demo-mode backend, desktop Chromium headless with no CPU/network throttle. Route times include Playwright polling, not pure browser event-to-paint latency. RAF timings are diagnostic only; software GPU does not represent physical device FPS.",
+    "routes": [
+      {
+        "route": "demo",
+        "visibleMs": 826.3000000715256,
+        "readyMs": 829.3999999761581
+      },
+      {
+        "route": "templates",
+        "visibleMs": 958.8999999761581,
+        "readyMs": 959.7999999523163
+      },
+      {
+        "route": "demo",
+        "visibleMs": 449.3000000715256,
+        "readyMs": 450.8000000715256
+      },
+      {
+        "route": "templates",
+        "visibleMs": 42.200000047683716,
+        "readyMs": 42.5
+      },
+      {
+        "route": "demo",
+        "visibleMs": 444.5,
+        "readyMs": 451.2999999523163
+      },
+      {
+        "route": "templates",
+        "visibleMs": 45.10000002384186,
+        "readyMs": 45.299999952316284
+      }
+    ],
+    "animation": {
+      "durationMs": 6508.4,
+      "frameIntervalMedianMs": 16.69999999999891,
+      "frameIntervalP95Ms": 16.799999999999272,
+      "frameGapsOver50Ms": 0,
+      "longTaskCount": 1,
+      "blockingTimeProxyMs": 4
+    },
+    "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (LLVM 10.0.0) (0x0000C0DE)), SwiftShader driver)",
+    "errors": []
+  },
+  "directApiMeasurements": {
+    "conditions": "Five sequential localhost requests with Accept-Encoding gzip; total time through full body download; no artificial network/CPU slowdown.",
+    "healthTotalMs": [
+      15.4,
+      1.9,
+      1.4,
+      3.0,
+      1.0
+    ],
+    "publicTemplatesTotalMs": [
+      835.9,
+      538.7,
+      562.7,
+      556.5,
+      530.8
+    ],
+    "publicTemplatesGzipBodyBytes": 6147162,
+    "publicTemplatesDecodedBytes": 18782583,
+    "publicTemplateCount": 18
+  },
+  "findings": [
+    "Initial UI paints quickly on desktop and throttled mobile; observed CLS is zero.",
+    "Startup transfer is approximately 8.5 MB desktop and 8.4 MB mobile. Public catalog (~6.15MB compressed, ~18.78MB decoded) and tech thumbnail (~2.07MB) dominate.",
+    "In the full mobile sample catalog completed at 32.88s and thumbnail at 43.66s, despite LCP at 1.60s. Initial paint is not full readiness.",
+    "Supplementary mobile trusted click/typing event timing maximum is 64ms; this is a lab sample, not field INP.",
+    "During one 6.5s demo loop RAF median was 16.7ms, p95 16.8ms, no >50ms frame gaps. Renderer is SwiftShader, so this is not evidence of physical-device FPS."
+  ],
+  "priorities": [
+    "Serve light summary data for the initial catalog; load full slide metadata only where required, preserving existing workflows and API consumers.",
+    "Provide a thumbnail sized for actual card display instead of transferring the existing ~2MB image.",
+    "Re-measure cold loading and interactions on physical mobile hardware and the deployed network after reducing resource weight."
+  ],
+  "limitations": [
+    "Local Docker on the developer machine; no public deployment, WAN, CDN or multi-user load tested.",
+    "Long-task blocking sums are proxies over the specified observation windows, not Lighthouse TBT.",
+    "Short mobile samples intentionally finish before all background requests complete; do not interpret their 178951-byte transfer as total page size.",
+    "No field Core Web Vitals or standardized Lighthouse performance score collected.",
+    "Backend AI generation latency was not tested; workspace temporary backend uses demo mode.",
+    "No before/after performance claim: this is a snapshot of current state."
+  ]
+}

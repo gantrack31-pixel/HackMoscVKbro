@@ -138,7 +138,12 @@ export function SpatialGallery({
           >
             <button
               className="gallery-cover"
-              onClick={() => preview(template)}
+              onClick={(event) =>
+                preview(
+                  template,
+                  event.currentTarget.firstElementChild as HTMLElement,
+                )
+              }
               aria-label={`Открыть пространственный предпросмотр ${template.name}`}
             >
               <TemplateCover

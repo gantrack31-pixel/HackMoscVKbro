@@ -141,3 +141,22 @@ def thumbnail(path):
             return None
         temporary=folder/(key+'.tmp');temporary.write_bytes(data);temporary.replace(target)
     return target
+
+
+def optimized_thumbnail(path):
+    """Cache a lossless WebP for cards; retain the original PNG for full-size clients."""
+    original=thumbnail(path)
+    if original is None: return None
+    target=original.with_name(original.stem+'.card-v1.webp')
+    if target.is_file(): return target
+    with _render_lock:
+        if target.is_file(): return target
+        try:
+            with Image.open(original) as image:
+                image.thumbnail((1600,1600),Image.Resampling.LANCZOS)
+                temporary=target.with_suffix('.tmp')
+                image.convert('RGB').save(temporary,format='WEBP',lossless=True,method=4)
+                temporary.replace(target)
+        except (OSError,ValueError):
+            return original
+    return target

@@ -1,5 +1,7 @@
 """HTTP-маршруты. Запуск: python -m uvicorn app.main:app --host 127.0.0.1 --port 8000."""
 import asyncio
+import base64
+import binascii
 import hashlib
 import logging
 import re
@@ -32,7 +34,7 @@ from .services.export import export_pptx, export_pdf, export_html
 from .services import cloud
 from .services import yandex_disk
 from .services import provider_http
-from .services.template_preview import thumbnail, PREVIEW_VERSION
+from .services.template_preview import thumbnail, optimized_thumbnail, PREVIEW_VERSION
 from .services.operations import standalone_ai, current_operation, checkpoint, OperationCancelled
 from .services.materials import process_material, compact_resource, image_data, icon_pack_data, MAX_FILE_BYTES, MAX_PACKET_CHARS
 from .services.workflow import recipe, manifest, generation_budget
@@ -99,7 +101,7 @@ async def browser_security(request:Request,call_next):
         response.headers['Strict-Transport-Security']='max-age=31536000'
     if request.url.path.startswith('/api/'):
         private_preview = (request.method == 'GET' and response.status_code in {200, 304}
-                           and re.fullmatch(r'/api/templates/[^/]+/thumbnail', request.url.path)
+                           and re.fullmatch(r'/api/templates/[^/]+/(?:thumbnail|assets/[^/]+)', request.url.path)
                            and response.headers.get('Cache-Control') == 'private, no-cache')
         if not private_preview: response.headers['Cache-Control']='no-store'
     return response
@@ -129,10 +131,18 @@ def get_project(pid,user_id=None):
     if not result or (user_id and result.get('user_id')!=user_id): raise HTTPException(404,'Презентация не найдена')
     return result
 
-def public_template(template):
+def public_template(template, *, summary=False):
     result={key:value for key,value in template.items() if key not in {'path','user_id'}}
     if template.get('path'):
         result['preview_url']=f"/api/templates/{template['id']}/thumbnail?v={PREVIEW_VERSION}-{template['metadata'].get('file_fingerprint','')}"
+    if summary:
+        metadata={key:value for key,value in template['metadata'].items()
+                  if key not in {'manifest','package','slide_examples','assets'}}
+        metadata['assets']=[{**asset,'data':
+            f"/api/templates/{quote(template['id'],safe='')}/assets/{quote(asset['id'],safe='')}?v={template['metadata'].get('file_fingerprint','')}"
+            if asset.get('data') else ''} for asset in template['metadata'].get('assets',[])]
+        result['metadata']=metadata
+        if result.get('preview_url'): result['preview_url']+='&optimized=true'
     return result
 
 def project_response(project):
@@ -303,10 +313,10 @@ async def send_support_message(data: SupportMessage, request: Request, user=Depe
     return {'sent':True}
 
 @app.get('/api/public/templates')
-def public_templates(): return [public_template(t) for t in db.templates_list() if t['id'] in BUILTIN_IDS]
+def public_templates(summary:bool=False): return [public_template(t,summary=summary) for t in db.templates_list() if t['id'] in BUILTIN_IDS]
 
 @app.get('/api/templates')
-def templates(user=Depends(current_user)): return [public_template(t) for t in db.templates_list() if visible_template(t,user['id'])]
+def templates(summary:bool=False,user=Depends(current_user)): return [public_template(t,summary=summary) for t in db.templates_list() if visible_template(t,user['id'])]
 
 @app.get('/api/favorites')
 def favorites(user=Depends(current_user)):
@@ -358,16 +368,33 @@ def original_template(tid: str,user=Depends(current_user)):
                         filename='template.pptx',headers={'Cache-Control':'private, no-store'})
 
 @app.get('/api/templates/{tid}/thumbnail')
-def template_thumbnail(tid:str,request:Request):
+def template_thumbnail(tid:str,request:Request,optimized:bool=False):
     from .auth import session_user
     user=session_user(request)
     template=get_template(tid)
     if tid not in BUILTIN_IDS and (not user or not visible_template(template,user['id'])):
         raise HTTPException(404,'Шаблон не найден')
     if not template.get('path'): raise HTTPException(404,'Исходный слайд недоступен')
-    result=thumbnail(Path(template['path']))
+    result=(optimized_thumbnail if optimized else thumbnail)(Path(template['path']))
     if not result: raise HTTPException(404,'Предпросмотр недоступен. Установите LibreOffice и Poppler на сервере.')
     return private_image_response(result, request)
+
+@app.get('/api/templates/{tid}/assets/{asset_id}')
+def template_asset(tid:str,asset_id:str,request:Request):
+    from .auth import session_user
+    user=session_user(request)
+    template=get_template(tid)
+    if tid not in BUILTIN_IDS and (not user or not visible_template(template,user['id'])):
+        raise HTTPException(404,'Шаблон не найден')
+    asset=next((item for item in template['metadata'].get('assets',[]) if item['id']==asset_id),None)
+    match=re.fullmatch(r'data:(image/(?:png|jpeg|webp|gif));base64,(.+)',asset.get('data','')) if asset else None
+    if not match: raise HTTPException(404,'Изображение недоступно')
+    try: data=base64.b64decode(match[2],validate=True)
+    except (ValueError,binascii.Error): raise HTTPException(404,'Изображение недоступно') from None
+    headers={'Cache-Control':'private, no-cache','ETag':'"'+hashlib.sha256(data).hexdigest()+'"'}
+    if request.headers.get('if-none-match')==headers['ETag']:
+        return Response(status_code=304,headers=headers)
+    return Response(data,media_type=match[1],headers=headers)
 
 @app.post('/api/outline')
 @standalone_ai

@@ -1,0 +1,183 @@
+{
+  "date": "2026-10-18",
+  "branch": "feat/interface-motion",
+  "baseCommit": "985fadc69d3b332783f6faabd8796c8228082f33",
+  "scope": [
+    "Sequenced route reveals",
+    "Pointer-driven card tilt and glare, touch press feedback",
+    "Shared cover preview opening and return with focus restoration",
+    "Editor and viewer slide depth transitions, independent of typing",
+    "Responsive CSS variant fan with keyboard focus",
+    "Favorite/save/navigation feedback and native details height transitions"
+  ],
+  "checks": {
+    "typescriptProductionBuild": "passed, local and Docker",
+    "prettier": "passed for changed implementation and new E2E",
+    "gitDiffCheck": "passed",
+    "frontendUnitPassed": 14,
+    "productionE2E": {
+      "passed": 50,
+      "failed": 0,
+      "skipped": 0,
+      "specs": {
+        "assistant.spec.json": {
+          "startTime": "2026-10-18T10:37:26.241Z",
+          "duration": 21710.487999999998,
+          "expected": 2,
+          "skipped": 0,
+          "unexpected": 0,
+          "flaky": 0
+        },
+        "cancellation.spec.json": {
+          "startTime": "2026-10-18T10:38:07.101Z",
+          "duration": 26052.145,
+          "expected": 3,
+          "skipped": 0,
+          "unexpected": 0,
+          "flaky": 0
+        },
+        "critical-flows.spec.json": {
+          "startTime": "2026-10-18T10:38:51.230Z",
+          "duration": 35619.614,
+          "expected": 11,
+          "skipped": 0,
+          "unexpected": 0,
+          "flaky": 0
+        },
+        "demo-assembly.spec.json": {
+          "startTime": "2026-10-18T10:39:44.793Z",
+          "duration": 18348.041,
+          "expected": 3,
+          "skipped": 0,
+          "unexpected": 0,
+          "flaky": 0
+        },
+        "disk.spec.json": {
+          "startTime": "2026-10-18T10:40:23.751Z",
+          "duration": 11813.5,
+          "expected": 1,
+          "skipped": 0,
+          "unexpected": 0,
+          "flaky": 0
+        },
+        "hardening.spec.json": {
+          "startTime": "2026-10-18T10:40:56.002Z",
+          "duration": 17369.286,
+          "expected": 3,
+          "skipped": 0,
+          "unexpected": 0,
+          "flaky": 0
+        },
+        "interface-motion.spec.json": {
+          "startTime": "2026-10-18T10:41:33.950Z",
+          "duration": 34792.077,
+          "expected": 5,
+          "skipped": 0,
+          "unexpected": 0,
+          "flaky": 0
+        },
+        "loading.spec.json": {
+          "startTime": "2026-10-18T10:42:26.648Z",
+          "duration": 27708.825,
+          "expected": 4,
+          "skipped": 0,
+          "unexpected": 0,
+          "flaky": 0
+        },
+        "optimization.spec.json": {
+          "startTime": "2026-10-18T10:43:12.227Z",
+          "duration": 9834.662,
+          "expected": 2,
+          "skipped": 0,
+          "unexpected": 0,
+          "flaky": 0
+        },
+        "presentation-colors.spec.json": {
+          "startTime": "2026-10-18T10:43:43.025Z",
+          "duration": 46546.438,
+          "expected": 2,
+          "skipped": 0,
+          "unexpected": 0,
+          "flaky": 0
+        },
+        "presentation-polish.spec.json": {
+          "startTime": "2026-10-18T10:44:47.529Z",
+          "duration": 13833.686000000002,
+          "expected": 1,
+          "skipped": 0,
+          "unexpected": 0,
+          "flaky": 0
+        },
+        "requirements.spec.json": {
+          "startTime": "2026-10-18T10:45:21.860Z",
+          "duration": 31630.549000000003,
+          "expected": 5,
+          "skipped": 0,
+          "unexpected": 0,
+          "flaky": 0
+        },
+        "smartart.spec.json": {
+          "startTime": "2026-10-18T10:46:11.440Z",
+          "duration": 12587.929,
+          "expected": 1,
+          "skipped": 0,
+          "unexpected": 0,
+          "flaky": 0
+        },
+        "spatial-experience.spec.json": {
+          "startTime": "2026-10-18T10:46:44.427Z",
+          "duration": 50261.278000000006,
+          "expected": 7,
+          "skipped": 0,
+          "unexpected": 0,
+          "flaky": 0
+        }
+      },
+      "strategy": "Fresh isolated Docker database per spec, production assets and real LibreOffice thumbnails."
+    },
+    "finalFeatureRecheck": {
+      "startTime": "2026-10-18T10:50:20.579Z",
+      "duration": 34014.878000000004,
+      "expected": 5,
+      "skipped": 0,
+      "unexpected": 0,
+      "flaky": 0
+    },
+    "recheckReason": "After the full run, improved immediate cancellation to reverse from the current bounds. The five feature cases were rechecked on the rebuilt production image. The cancellation regression previously measured a 267px position jump; synchronous same-task bounds check now requires <2px."
+  },
+  "entryJavaScriptBytes": {
+    "beforeIdentity": 298221,
+    "beforeBrotli": 87473,
+    "afterIdentity": 299090,
+    "afterBrotli": 87637
+  },
+  "limitations": [
+    "Entry size is not total page or app transfer size; feature chunks and CSS also changed.",
+    "No field INP, FPS benchmark or statistical performance improvement claimed.",
+    "Visual review uses captures of intentional changes at 1440 and 390 px in both themes, not a pixel identity comparison.",
+    "Mobile layout was simulated by viewport resizing; pointer and reduced-motion behavior is controlled by media queries."
+  ],
+  "changedFiles": [
+    "docs/project-audit/interface-motion-validation.json",
+    "frontend/ARCHITECTURE.md",
+    "frontend/e2e/interface-motion.spec.ts",
+    "frontend/e2e/pages.ts",
+    "frontend/src/components/Modal.tsx",
+    "frontend/src/components/PresentationViewer.tsx",
+    "frontend/src/components/Shell.tsx",
+    "frontend/src/components/TemplateCard.tsx",
+    "frontend/src/components/TemplatePreviewDialog.tsx",
+    "frontend/src/components/spatial/SpatialGallery.tsx",
+    "frontend/src/main.tsx",
+    "frontend/src/motion/animation.ts",
+    "frontend/src/motion/sharedCover.ts",
+    "frontend/src/motion/useCardTilt.ts",
+    "frontend/src/motion/useDisclosureMotion.ts",
+    "frontend/src/pages/Editor.tsx",
+    "frontend/src/pages/Home.tsx",
+    "frontend/src/pages/Workspace.tsx",
+    "frontend/src/pages/catalogTypes.ts",
+    "frontend/src/styles/interface-motion.css"
+  ],
+  "temporaryArtifacts": "/private/tmp/deckly-motion"
+}

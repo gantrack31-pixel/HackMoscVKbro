@@ -28,6 +28,7 @@ import "./styles/entry.css";
 import "./styles/finishing.css";
 import "./styles/nav-motion.css";
 import "./styles/spatial.css";
+import "./styles/interface-motion.css";
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <ThemeProvider>
     <App />

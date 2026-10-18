@@ -5,6 +5,6 @@ export interface CatalogActions {
   favorites: string[];
   toggleFavorite: (id: string) => void;
   select: (t: Template) => void;
-  preview: (t: Template) => void;
+  preview: (t: Template, origin?: HTMLElement) => void;
   upload: () => void;
 }

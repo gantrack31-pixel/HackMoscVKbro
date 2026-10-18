@@ -1,5 +1,6 @@
 import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import { api } from "../api";
+import { useDisclosureMotion } from "../motion/useDisclosureMotion";
 import { Shell, WorkspacePage } from "../components/Shell";
 import { LeaveWorkspaceDialog } from "../components/LeaveWorkspaceDialog";
 import { Icon } from "../components/Icon";
@@ -49,6 +50,21 @@ export function Workspace({
   const [favorites, setFavorites] = useState<string[]>([]);
   const favoriteBusy = useRef(new Set<string>());
   const uploadInput = useRef<HTMLInputElement>(null);
+  useDisclosureMotion();
+  const previewOrigin = useRef<HTMLElement | null>(null);
+  const openPreview = (template: Template, source?: HTMLElement) => {
+    const cover =
+      document.activeElement instanceof HTMLElement
+        ? document.activeElement.closest(".template-cover, .gallery-cover")
+        : null;
+    previewOrigin.current =
+      source ||
+      cover?.querySelector<HTMLElement>(
+        ":scope > .slide, :scope > .template-real-preview, :scope > .template-preview-placeholder",
+      ) ||
+      null;
+    setPreview(template);
+  };
   useEffect(() => {
     const change = () => {
       const next = readRoute();
@@ -154,6 +170,7 @@ export function Workspace({
       const t = await api.upload(file);
       setTemplates((prev) => [...prev, t]);
       setSelected(t);
+      previewOrigin.current = null;
       setPreview(t);
       setToast("Шаблон добавлен. Палитра и макеты прочитаны.");
     } catch (e) {
@@ -168,7 +185,7 @@ export function Workspace({
     favorites,
     toggleFavorite,
     select: (t: Template) => start("description", t),
-    preview: setPreview,
+    preview: openPreview,
     upload: () => uploadInput.current?.click(),
   };
   return (
@@ -341,6 +358,7 @@ export function Workspace({
       {preview && (
         <TemplatePreviewDialog
           preview={preview}
+          origin={previewOrigin.current}
           onClose={() => setPreview(null)}
           onSelect={(template) => {
             start("description", template);
