@@ -1,21 +1,16 @@
 import { useSurfaceMotion } from "../motion/animation";
 import { useEffect, useRef, useState, type FormEvent } from "react";
-import {
-  Mail,
-  UserRound,
-  LockKeyhole,
-  Eye,
-  EyeOff,
-  ArrowRight,
-  ArrowLeft,
-} from "lucide-react";
+import { ArrowRight, ArrowLeft } from "lucide-react";
 import { ThemeToggle } from "../components/ThemeToggle";
 import { api } from "../api";
 import { WordmarkTitle } from "../components/Brand";
 
 import { AuthOrbit } from "../components/auth/AuthOrbit";
 import type { Template, User } from "../types";
-type Screen = "welcome" | "choice" | "login" | "register" | "check-email" | "request-reset";
+import {
+  AuthFlowContent,
+  type AuthScreenMode as Screen,
+} from "../components/auth/AuthFlowContent";
 function isValidEmail(value: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
 }
@@ -33,7 +28,15 @@ export function AuthScreen({
   onUser: (u: User) => void;
   error: string;
 }) {
-  const [screen, setScreen] = useState<Screen>(location.hash === "#login" || location.pathname === "/login" ? "login" : location.hash === "#register" || location.pathname === "/register" ? "register" : location.hash.startsWith("#auth-error=") ? "choice" : "welcome"),
+  const [screen, setScreen] = useState<Screen>(
+      location.hash === "#login" || location.pathname === "/login"
+        ? "login"
+        : location.hash === "#register" || location.pathname === "/register"
+          ? "register"
+          : location.hash.startsWith("#auth-error=")
+            ? "choice"
+            : "welcome",
+    ),
     [templates, setTemplates] = useState<Template[]>([]),
     [error, setError] = useState(
       initialError ||
@@ -63,7 +66,12 @@ export function AuthScreen({
   const contentRef = useRef<HTMLDivElement>(null);
   const [leaving, setLeaving] = useState(false);
   const transitionTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  useEffect(() => () => { if (transitionTimer.current) clearTimeout(transitionTimer.current); }, []);
+  useEffect(
+    () => () => {
+      if (transitionTimer.current) clearTimeout(transitionTimer.current);
+    },
+    [],
+  );
   const opened = screen !== "welcome";
   useEffect(() => {
     if (!opened) return;
@@ -92,11 +100,17 @@ export function AuthScreen({
       setShowPassword(false);
       setLeaving(false);
       transitionTimer.current = null;
-      if (next === "welcome") requestAnimationFrame(() => startRef.current?.focus({ preventScroll: true }));
+      if (next === "welcome")
+        requestAnimationFrame(() =>
+          startRef.current?.focus({ preventScroll: true }),
+        );
     };
     if (opened) {
       setLeaving(true);
-      transitionTimer.current = setTimeout(commit, matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : 220);
+      transitionTimer.current = setTimeout(
+        commit,
+        matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : 220,
+      );
     } else commit();
   }
   async function submit(event: FormEvent<HTMLFormElement>) {
@@ -111,17 +125,19 @@ export function AuthScreen({
       };
       if (screen === "register") {
         const result = await api.register({
-              ...credentials,
-              first_name: String(data.get("first_name")),
-              last_name: String(data.get("last_name")),
-            });
+          ...credentials,
+          first_name: String(data.get("first_name")),
+          last_name: String(data.get("last_name")),
+        });
         if ("verification_required" in result) {
           setVerificationEmail(result.email);
-          setResendMessage(result.delivery_pending
-            ? "Не удалось отправить письмо. Проверьте SMTP-настройки или попробуйте отправить письмо ещё раз."
-            : result.delivery_mode === "unavailable"
-              ? "Почта не настроена на сервере. Обратитесь в поддержку, чтобы завершить подтверждение."
-            : "");
+          setResendMessage(
+            result.delivery_pending
+              ? "Не удалось отправить письмо. Проверьте SMTP-настройки или попробуйте отправить письмо ещё раз."
+              : result.delivery_mode === "unavailable"
+                ? "Почта не настроена на сервере. Обратитесь в поддержку, чтобы завершить подтверждение."
+                : "",
+          );
           setScreen("check-email");
         } else if (result.user) onUser(result.user);
       } else {
@@ -144,11 +160,13 @@ export function AuthScreen({
     setResendMessage("");
     try {
       const result = await api.resendVerification(verificationEmail);
-      setResendMessage(result.delivery_mode === "unavailable"
-        ? "Почта не настроена на сервере. Обратитесь в поддержку, чтобы завершить подтверждение."
-        : result.delivery_mode === "cooldown"
-          ? "Подождите минуту перед повторной отправкой письма."
-          : "Если адрес ожидает подтверждения, письмо скоро придёт.");
+      setResendMessage(
+        result.delivery_mode === "unavailable"
+          ? "Почта не настроена на сервере. Обратитесь в поддержку, чтобы завершить подтверждение."
+          : result.delivery_mode === "cooldown"
+            ? "Подождите минуту перед повторной отправкой письма."
+            : "Если адрес ожидает подтверждения, письмо скоро придёт.",
+      );
     } catch (e) {
       setError((e as Error).message);
     } finally {
@@ -156,12 +174,15 @@ export function AuthScreen({
     }
   }
   function openResendVerification() {
-    const email = contentRef.current
-      ?.querySelector<HTMLInputElement>('input[name="email"]')
-      ?.value.trim() ?? "";
+    const email =
+      contentRef.current
+        ?.querySelector<HTMLInputElement>('input[name="email"]')
+        ?.value.trim() ?? "";
     if (!isValidEmail(email)) {
       setError("Укажите корректную электронную почту, чтобы запросить письмо.");
-      contentRef.current?.querySelector<HTMLInputElement>('input[name="email"]')?.focus();
+      contentRef.current
+        ?.querySelector<HTMLInputElement>('input[name="email"]')
+        ?.focus();
       return;
     }
     setVerificationEmail(email);
@@ -170,9 +191,10 @@ export function AuthScreen({
     setError("");
   }
   function openPasswordReset() {
-    const email = contentRef.current
-      ?.querySelector<HTMLInputElement>('input[name="email"]')
-      ?.value.trim() ?? "";
+    const email =
+      contentRef.current
+        ?.querySelector<HTMLInputElement>('input[name="email"]')
+        ?.value.trim() ?? "";
     setResetEmail(email);
     setResetMessage("");
     setError("");
@@ -180,7 +202,9 @@ export function AuthScreen({
   }
   async function requestPasswordReset(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const email = String(new FormData(event.currentTarget).get("email") ?? "").trim();
+    const email = String(
+      new FormData(event.currentTarget).get("email") ?? "",
+    ).trim();
     if (!isValidEmail(email)) {
       setError("Укажите корректную электронную почту.");
       return;
@@ -190,7 +214,9 @@ export function AuthScreen({
     try {
       await api.requestPasswordReset(email);
       setResetEmail(email);
-      setResetMessage("Если аккаунт с таким адресом существует, письмо со ссылкой скоро придёт.");
+      setResetMessage(
+        "Если аккаунт с таким адресом существует, письмо со ссылкой скоро придёт.",
+      );
     } catch (cause) {
       setError((cause as Error).message);
     } finally {
@@ -271,200 +297,24 @@ export function AuthScreen({
             inert={!opened}
             aria-hidden={!opened}
           >
-            {screen === "check-email" ? (
-              <section className="auth-form email-pending" aria-live="polite">
-                <button className="auth-back" type="button" onClick={() => go("login")}>
-                  <ArrowLeft size={16} /> Войти
-                </button>
-                <div className="email-pending-icon" aria-hidden="true"><Mail size={24} /></div>
-                <h1>Проверьте почту</h1>
-                <p className="auth-form-hint">Мы отправили ссылку для подтверждения на</p>
-                <strong className="email-pending-address">{verificationEmail}</strong>
-                <p className="password-hint">Перейдите по ссылке в письме, чтобы подтвердить адрес и войти в аккаунт.</p>
-                <button className="auth-submit" type="button" disabled={resendBusy} onClick={resendVerification}>
-                  {resendBusy ? "Отправляем…" : "Отправить письмо ещё раз"}
-                  <ArrowRight size={18} />
-                </button>
-                {resendMessage && <p className="email-resend-message" role="status">{resendMessage}</p>}
-              </section>
-            ) : screen === "request-reset" ? (
-              <section className="auth-form email-pending" aria-live="polite">
-                <button className="auth-back" type="button" onClick={() => go("login")}>
-                  <ArrowLeft size={16} /> Войти
-                </button>
-                <h1>Восстановление пароля</h1>
-                <p className="auth-form-hint">Укажите почту аккаунта. Если он существует, мы отправим ссылку для сброса.</p>
-                <form onSubmit={requestPasswordReset}>
-                  <label>
-                    Электронная почта
-                    <div className="auth-input">
-                      <Mail size={17} />
-                      <input name="email" type="email" autoComplete="email" required maxLength={254} defaultValue={resetEmail} placeholder="name@example.ru" />
-                    </div>
-                  </label>
-                  <button className="auth-submit" type="submit" disabled={resetBusy}>
-                    {resetBusy ? "Отправляем…" : "Отправить ссылку"}
-                  </button>
-                </form>
-                {resetMessage && <p className="email-resend-message" role="status">{resetMessage}</p>}
-              </section>
-            ) : screen === "choice" || screen === "welcome" ? (
-              <>
-                <p className="auth-welcome">
-                  Хорошая история
-                  <br />
-                  начинается здесь.
-                </p>
-                <div className="auth-choice">
-                  <button onClick={() => go("login")}>Вход</button>
-                  <button onClick={() => go("register")}>Регистрация</button>
-                </div>
-                <div className="auth-divider">
-                  <span>или</span>
-                </div>
-                <button
-                  className="yandex-button"
-                  onClick={() => location.assign("/auth/yandex")}
-                >
-                  <b>Я</b>Войти с Яндекс ID
-                </button>
-              </>
-            ) : (
-              <form key={screen} onSubmit={submit} className="auth-form">
-                <button
-                  className="auth-back"
-                  type="button"
-                  onClick={() => go("choice")}
-                >
-                  <ArrowLeft size={16} />
-                  Назад
-                </button>
-                <h1>
-                  {screen === "register" ? "Создать аккаунт" : "С возвращением"}
-                </h1>
-                <p className="auth-form-hint">
-                  {screen === "register"
-                    ? "Сохраните пространство для своих идей."
-                    : "Ваши презентации уже ждут вас."}
-                </p>
-                <label>
-                  Электронная почта
-                  <div className="auth-input">
-                    <Mail size={17} />
-                    <input
-                      name="email"
-                      type="email"
-                      autoComplete="email"
-                      required
-                      maxLength={254}
-                      placeholder="name@example.ru"
-                    />
-                  </div>
-                </label>
-                {screen === "register" && (
-                  <div className="auth-name-row">
-                    <label>
-                      Имя
-                      <div className="auth-input">
-                        <UserRound size={17} />
-                        <input
-                          name="first_name"
-                          autoComplete="given-name"
-                          required
-                          maxLength={60}
-                          placeholder="Имя"
-                        />
-                      </div>
-                    </label>
-                    <label>
-                      Фамилия
-                      <div className="auth-input">
-                        <UserRound size={17} />
-                        <input
-                          name="last_name"
-                          autoComplete="family-name"
-                          required
-                          maxLength={60}
-                          placeholder="Фамилия"
-                        />
-                      </div>
-                    </label>
-                  </div>
-                )}
-                <label>
-                  Пароль
-                  <div className="auth-input">
-                    <LockKeyhole size={17} />
-                    <input
-                      name="password"
-                      type={showPassword ? "text" : "password"}
-                      autoComplete={
-                        screen === "register"
-                          ? "new-password"
-                          : "current-password"
-                      }
-                      minLength={screen === "register" ? 10 : 1}
-                      maxLength={128}
-                      required
-                      placeholder={
-                        screen === "register"
-                          ? "Не менее 10 символов"
-                          : "Введите пароль"
-                      }
-                    />
-                    <button
-                      type="button"
-                      aria-label={
-                        showPassword ? "Скрыть пароль" : "Показать пароль"
-                      }
-                      onClick={() => setShowPassword(!showPassword)}
-                    >
-                      {showPassword ? <EyeOff size={17} /> : <Eye size={17} />}
-                    </button>
-                  </div>
-                </label>
-                {screen === "login" && (
-                  <>
-                    <button
-                      className="auth-help auth-resend-trigger"
-                      type="button"
-                      onClick={openResendVerification}
-                    >
-                      Не получили письмо подтверждения? Запросить повторно
-                    </button>
-                    <button className="auth-help" type="button" onClick={openPasswordReset}>
-                      Забыли пароль?
-                    </button>
-                  </>
-                )}
-                {screen === "register" && (
-                  <p className="password-hint">
-                    Используйте уникальный пароль длиной от 10 символов.
-                  </p>
-                )}
-                <button className="auth-submit" disabled={busy}>
-                  {busy
-                    ? "Подождите…"
-                    : screen === "register"
-                      ? "Зарегистрироваться"
-                      : "Войти"}
-                  <ArrowRight size={18} />
-                </button>
-                <p className="auth-switch">
-                  {screen === "register"
-                    ? "Уже есть аккаунт?"
-                    : "Ещё нет аккаунта?"}{" "}
-                  <button
-                    type="button"
-                    onClick={() =>
-                      go(screen === "register" ? "login" : "register")
-                    }
-                  >
-                    {screen === "register" ? "Войти" : "Зарегистрироваться"}
-                  </button>
-                </p>
-              </form>
-            )}
+            <AuthFlowContent
+              screen={screen}
+              verificationEmail={verificationEmail}
+              resendBusy={resendBusy}
+              resendMessage={resendMessage}
+              resetEmail={resetEmail}
+              resetBusy={resetBusy}
+              resetMessage={resetMessage}
+              showPassword={showPassword}
+              busy={busy}
+              onGo={go}
+              onResendVerification={resendVerification}
+              onRequestPasswordReset={requestPasswordReset}
+              onSubmit={submit}
+              onOpenResendVerification={openResendVerification}
+              onOpenPasswordReset={openPasswordReset}
+              onShowPassword={setShowPassword}
+            />
             {error && (
               <div className="auth-error" role="alert">
                 {error}
@@ -476,7 +326,10 @@ export function AuthScreen({
           <span>Ваши идеи. Ваш стиль. © 2026</span>
         </footer>
       </section>
-      <section className="auth-right auth-orbit-panel" aria-label="Создание презентации Deckly.Ai">
+      <section
+        className="auth-right auth-orbit-panel"
+        aria-label="Создание презентации Deckly.Ai"
+      >
         <AuthOrbit templates={templates} />
       </section>
     </div>

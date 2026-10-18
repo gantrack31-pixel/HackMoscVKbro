@@ -1,20 +1,11 @@
 import { useEffect, useState } from "react";
 import { api } from "../api";
 import { Icon } from "../components/Icon";
-import { TemplateCard, TemplateCover } from "../components/TemplateCard";
-import type { Template, Project, ProjectSummary } from "../types";
-import "../styles/navigation-modern.css";
+import { TemplateCard } from "../components/TemplateCard";
+import type { Project, ProjectSummary } from "../types";
+import type { CatalogActions } from "./catalogTypes";
 import { PresentationSpace } from "../components/spatial/PresentationSpace";
-import { SpatialGallery } from "../components/spatial/SpatialGallery";
 import { useSurfaceMotion } from "../motion/animation";
-export interface CatalogActions {
-  templates: Template[];
-  favorites: string[];
-  toggleFavorite: (id: string) => void;
-  select: (t: Template) => void;
-  preview: (t: Template) => void;
-  upload: () => void;
-}
 export function Home(
   props: CatalogActions & {
     start: (mode: "description" | "text") => void;
@@ -168,41 +159,52 @@ export function Home(
       >
         {shownTab === "Обзор" && (
           <section className="spatial-story">
-          <div className="hero spatial-hero">
-            <div className="hero-copy">
-              <span className="badge blue">
-                <Icon name="spark" />
-                От идеи — к готовой истории
-              </span>
-              <h2>
-                Содержание — ваше.
-                <br />
-                <span>Дизайн — Deckly.</span>
-              </h2>
-              <p>
-                Выберите фирменный шаблон, добавьте материал и найдите
-                оформление, которое ему подходит.
-              </p>
-              <div className="hero-actions">
-                <button
-                  className="btn primary"
-                  onClick={() => props.start("description")}
-                >
-                  Начать работу
+            <div className="hero spatial-hero">
+              <div className="hero-copy">
+                <span className="badge blue">
+                  <Icon name="spark" />
+                  От идеи — к готовой истории
+                </span>
+                <h2>
+                  Содержание — ваше.
+                  <br />
+                  <span>Дизайн — Deckly.</span>
+                </h2>
+                <p>
+                  Выберите фирменный шаблон, добавьте материал и найдите
+                  оформление, которое ему подходит.
+                </p>
+                <div className="hero-actions">
+                  <button
+                    className="btn primary"
+                    onClick={() => props.start("description")}
+                  >
+                    Начать работу
+                    <Icon name="arrow" />
+                  </button>
+                  <a className="btn" href="#demo">
+                    <Icon name="play" />
+                    Как это работает
+                  </a>
+                </div>
+              </div>
+              <div className="hero-visual spatial-visual">
+                <PresentationSpace templates={props.templates} />
+              </div>
+              <div className="space-story-footer">
+                <span>
+                  <Icon name="check" />
+                  Один стиль. На каждом слайде.
+                </span>
+                <span className="space-scroll-hint">
+                  Листайте — меняйте перспективу
                   <Icon name="arrow" />
-                </button>
-                <a className="btn" href="#demo">
-                  <Icon name="play" />
-                  Как это работает
-                </a>
+                </span>
+              </div>
+              <div className="space-progress" aria-hidden="true">
+                <i />
               </div>
             </div>
-            <div className="hero-visual spatial-visual">
-              <PresentationSpace templates={props.templates} />
-            </div>
-            <div className="space-story-footer"><span><Icon name="check" />Один стиль. На каждом слайде.</span><span className="space-scroll-hint">Листайте — меняйте перспективу<Icon name="arrow" /></span></div>
-            <div className="space-progress" aria-hidden="true"><i /></div>
-          </div>
           </section>
         )}
         {shownTab !== "Вдохновение" && quick}
@@ -298,120 +300,6 @@ export function Home(
     </div>
   );
 }
-export function Catalog(
-  props: CatalogActions & { onlyFavorites?: boolean; initialSearch?: string },
-) {
-  const [search, setSearch] = useState(props.initialSearch || ""),
-    [category, setCategory] = useState("Все шаблоны");
-  useEffect(() => {
-    setSearch(props.initialSearch || "");
-    setCategory("Все шаблоны");
-  }, [props.initialSearch]);
-  const categories = [
-    "Все шаблоны",
-    ...new Set(props.templates.map((t) => t.metadata.category)),
-  ];
-  const list = props.templates.filter(
-    (t) =>
-      (!props.onlyFavorites || props.favorites.includes(t.id)) &&
-      (category === "Все шаблоны" || t.metadata.category === category) &&
-      `${t.name} ${t.metadata.category} ${t.metadata.cover_title}`
-        .toLowerCase()
-        .includes(search.trim().toLowerCase()),
-  );
-  return (
-    <>
-      <div className="heading between">
-        <div>
-          <h1>
-            {props.onlyFavorites
-              ? "Ваши любимые шаблоны"
-              : "Найдите свой стиль"}
-          </h1>
-          <p>Фирменные шаблоны и авторские подборки под вашу задачу.</p>
-        </div>
-        <button className="btn" onClick={props.upload}>
-          <Icon name="upload" />
-          Загрузить шаблон
-        </button>
-      </div>
-      {!props.onlyFavorites && (
-        <div className="collection-banner">
-          <div>
-            <span className="eyebrow">КОЛЛЕКЦИЯ DECKLY</span>
-            <h2>
-              Оформление с характером.
-              <br />
-              Для каждой вашей истории.
-            </h2>
-            <p>
-              {props.templates.length} шаблонов · Три варианта оформления ·
-              Редактируемые слайды
-            </p>
-          </div>
-          <div className="collection-samples" aria-hidden="true">
-            {props.templates
-              .filter((t) =>
-                ["strategy", "editorial", "product"].includes(t.id),
-              )
-              .map((t) => (
-                <TemplateCover template={t} key={t.id} />
-              ))}
-          </div>
-        </div>
-      )}
-      <div className="catalog-toolbar">
-        <label className="search-box">
-          <Icon name="search" />
-          <input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Название, тема или стиль"
-            aria-label="Поиск шаблонов"
-          />
-        </label>
-        <span className="small muted">Найдено: {list.length}</span>
-      </div>
-      <div className="filters">
-        {categories.map((c) => (
-          <button
-            key={c}
-            className={`filter ${c === category ? "active" : ""}`}
-            onClick={() => setCategory(c)}
-            aria-pressed={c === category}
-          >
-            {c}
-          </button>
-        ))}
-      </div>
-      <div className="catalog-note">
-        <Icon name="file" />
-        Карточки показывают пример подачи. У загруженных PPTX считываются
-        собственные пропорции, палитра, шрифты и макеты.
-      </div>
-      {list.length > 0 && <SpatialGallery {...props} templates={list} />}
-      {!list.length && (
-        <div className="empty">
-          <Icon name="star" />
-          <h2>Пока пусто</h2>
-          <p>Попробуйте другую категорию или сохраните шаблон звёздочкой.</p>
-          {props.onlyFavorites && props.favorites.length === 0 ? (
-            <a className="btn primary" href="#templates">
-              Выбрать шаблоны
-            </a>
-          ) : (
-            <button
-              className="btn"
-              onClick={() => {
-                setSearch("");
-                setCategory("Все шаблоны");
-              }}
-            >
-              Сбросить фильтры
-            </button>
-          )}
-        </div>
-      )}
-    </>
-  );
-}
+
+export { Catalog } from "./Catalog";
+export type { CatalogActions } from "./catalogTypes";

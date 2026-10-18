@@ -71,12 +71,12 @@ test("keyboard navigation, visible focus, theme persistence and reduced motion",
   await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
 });
 
-test("authentication logo stays legible on the dark panel in light theme", async ({ page }) => {
+test("authentication logo stays legible in both themes", async ({ page }) => {
   await page.addInitScript(() => localStorage.setItem("deckly-theme", "light"));
   await page.goto("/");
 
   await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
-  await expect(page.getByRole("region", { name: "Примеры шаблонов" }).locator(".auth-feed-group").first().locator(".auth-template")).toHaveCount(3);
+  await expect(page.getByRole("region", { name: "Создание презентации Deckly.Ai" })).toBeVisible();
   await page.getByRole("button", { name: "Открыть панель входа" }).click();
   await expect(page.locator(".auth-shell")).toHaveClass(/auth-dark/);
   await expect(page.getByRole("button", { name: "Регистрация" })).toBeVisible();
@@ -95,6 +95,9 @@ test("authentication logo stays legible on the dark panel in light theme", async
     return (values[0] + 0.05) / (values[1] + 0.05);
   });
 
+  await expect.poll(logoContrast).toBeGreaterThanOrEqual(4.5);
+  await page.getByRole("button", { name: "Включить тёмную тему" }).click();
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
   await expect.poll(logoContrast).toBeGreaterThanOrEqual(4.5);
 });
 

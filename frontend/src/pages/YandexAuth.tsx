@@ -3,7 +3,6 @@ import { api } from "../api";
 import { Brand } from "../components/Brand";
 import { ThemeToggle } from "../components/ThemeToggle";
 import { Icon } from "../components/Icon";
-import "../styles/yandex-polish.css";
 
 export function YandexAuth() {
   const [enabled, setEnabled] = useState<boolean | null>(null);

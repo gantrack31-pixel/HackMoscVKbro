@@ -7,10 +7,9 @@ import {
   ArrowLeft,
   Check,
   Layers,
-  Maximize2,
 } from "lucide-react";
 import { api } from "../api";
-import { SlidePreview } from "../components/SlidePreview";
+import { FinishPreview } from "../components/FinishPreview";
 import { PresentationViewer } from "../components/PresentationViewer";
 import { ExportPanel } from "../components/ExportPanel";
 import { CloudLibrary } from "../components/CloudLibrary";
@@ -55,7 +54,11 @@ export function Finish({
       active = false;
     };
   }, [attempt]);
-  const feedbackMotion = useSurfaceMotion([method, receipt, error], ".save-feedback, .cloud-save-content, .error-banner", true);
+  const feedbackMotion = useSurfaceMotion(
+    [method, receipt, error],
+    ".save-feedback, .cloud-save-content, .error-banner",
+    true,
+  );
   async function save() {
     setBusy(true);
     setError("");
@@ -66,7 +69,11 @@ export function Finish({
       setRefresh((v) => v + 1);
     } catch (e) {
       setError((e as Error).message);
-      try { setStatus(await api.diskStatus()); } catch { /* Keep the original upload error. */ }
+      try {
+        setStatus(await api.diskStatus());
+      } catch {
+        /* Keep the original upload error. */
+      }
     } finally {
       setBusy(false);
     }
@@ -94,48 +101,12 @@ export function Finish({
         )}
       </ol>
       <div className="finish-grid">
-        <section className="finish-preview panel">
-          <div className="between">
-            <h2>{project.title}</h2>
-            <button
-              type="button"
-              className="btn sm"
-              onClick={() => setPresenting(true)}
-            >
-              <Maximize2 size={16} /> Смотреть
-            </button>
-          </div>
-          <SlidePreview
-            scene={project.variants[project.variant][index]}
-            label={`Слайд ${index + 1}: ${project.content.slides[index].title}`}
-          />
-          <div className="finish-filmstrip">
-            {project.content.slides.map((slide, i) => (
-              <button
-                key={i}
-                className={i === index ? "active" : ""}
-                aria-label={`Предпросмотр слайда ${i + 1}`}
-                aria-pressed={index === i}
-                onClick={() => setIndex(i)}
-              >
-                <SlidePreview
-                  scene={project.variants[project.variant][i]}
-                  label={slide.title}
-                />
-                <span>{i + 1}</span>
-              </button>
-            ))}
-          </div>
-          <div className="between small muted">
-            <span>
-              {project.template.name} · Слайд {index + 1} из{" "}
-              {project.content.slides.length}
-            </span>
-            <a className="btn sm" href="#audit">
-              Проверить слайды
-            </a>
-          </div>
-        </section>
+        <FinishPreview
+          project={project}
+          index={index}
+          onIndexChange={setIndex}
+          onPresent={() => setPresenting(true)}
+        />
         <section ref={feedbackMotion} className="finish-save panel">
           <h2>Как сохранить?</h2>
           <div
@@ -172,8 +143,8 @@ export function Finish({
               </div>
               <h3>Готовый PPTX — на вашем Яндекс.Диске</h3>
               <p className="small muted">
-                Сохраним выбранный вариант в папку приложения Deckly.
-                Проект и история правок останутся на этом сервере.
+                Сохраним выбранный вариант в папку приложения Deckly. Проект и
+                история правок останутся на этом сервере.
               </p>
               <ul className="save-benefits">
                 <li>
@@ -197,7 +168,9 @@ export function Finish({
                 <div className="cloud-unavailable">
                   <strong>Яндекс.Диск ещё не подключён</strong>
                   <p>
-                    {status?.configured ? "Разрешите доступ к папке приложения в вашем Яндекс.Диске." : "Администратору нужно настроить OAuth Яндекса и ключ шифрования. Презентацию можно скачать на устройство."}
+                    {status?.configured
+                      ? "Разрешите доступ к папке приложения в вашем Яндекс.Диске."
+                      : "Администратору нужно настроить OAuth Яндекса и ключ шифрования. Презентацию можно скачать на устройство."}
                   </p>
                 </div>
               ) : null}
@@ -219,11 +192,23 @@ export function Finish({
                     : "Сохранить на Яндекс.Диск"}
               </button>
               {status?.configured && !status.ready && !checking && (
-                <button className="btn primary" disabled={busy} onClick={async () => {
-                  setBusy(true); setError("");
-                  try { const { url } = await api.connectDisk(); location.assign(url); }
-                  catch (e) { setError((e as Error).message); setBusy(false); }
-                }}>Подключить Яндекс.Диск</button>
+                <button
+                  className="btn primary"
+                  disabled={busy}
+                  onClick={async () => {
+                    setBusy(true);
+                    setError("");
+                    try {
+                      const { url } = await api.connectDisk();
+                      location.assign(url);
+                    } catch (e) {
+                      setError((e as Error).message);
+                      setBusy(false);
+                    }
+                  }}
+                >
+                  Подключить Яндекс.Диск
+                </button>
               )}
               {!status?.ready && !checking && (
                 <button
@@ -242,7 +227,13 @@ export function Finish({
                       {receipt.name} ·{" "}
                       {new Date(receipt.saved_at).toLocaleString("ru-RU")}
                       <br />
-                      <a href="https://disk.yandex.ru/client/disk" target="_blank" rel="noreferrer">Открыть Яндекс.Диск</a>
+                      <a
+                        href="https://disk.yandex.ru/client/disk"
+                        target="_blank"
+                        rel="noreferrer"
+                      >
+                        Открыть Яндекс.Диск
+                      </a>
                     </p>
                   </div>
                 </div>

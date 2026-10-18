@@ -1,0 +1,256 @@
+.wrap {
+  flex-wrap: wrap;
+}
+.panel {
+  padding: 28px;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  box-shadow:
+    0 2px 4px #10254e02,
+    0 12px 32px #10254e03;
+}
+.panel h2 + .muted {
+  margin-top: 8px;
+}
+.panel > h2 {
+  margin: 12px 0;
+}
+.panel > .btn {
+  margin-top: 16px;
+}
+.panel hr {
+  border: 0;
+  border-top: 1px solid #e2e8f0;
+  margin: 8px 0;
+}
+.quick-start > h2,
+.inspiration-head h2 {
+  margin: 16px 0 8px;
+}
+.inspiration-head {
+  margin-bottom: 28px;
+}
+.quick-start .panel {
+  display: grid;
+  gap: 16px;
+  justify-items: start;
+}
+.catalog-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  margin: 28px 0 20px;
+}
+.search-box {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  padding: 12px 16px;
+  border-radius: 10px;
+  width: min(440px, 100%);
+  color: #94a3b8;
+}
+.search-box:focus-within {
+  border-color: #0077ff;
+  box-shadow: 0 0 0 3px #0077ff14;
+}
+.search-box input {
+  width: 100%;
+  background: none;
+  border: 0;
+  font-size: 14px;
+  color: #0f172a;
+  outline: none;
+}
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 24px;
+}
+.filter {
+  border: 1px solid #e2e8f0;
+  background: #fff;
+  color: #64748b;
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: 8px;
+  padding: 8px 14px;
+}
+.filter.active {
+  background: #0f172a;
+  color: #fff;
+  border-color: #0f172a;
+}
+.filter:hover {
+  border-color: #94a3b8;
+}
+.catalog-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 12px;
+  line-height: 1.6;
+  color: #64748b;
+  margin-bottom: 24px;
+  max-width: 870px;
+}
+.catalog-note .icon {
+  width: 16px;
+  height: 16px;
+  margin-top: 2px;
+}
+.empty {
+  padding: 48px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 16px;
+  grid-column: 1/-1;
+  border: 1px dashed #d5dde8;
+  border-radius: 16px;
+  background: #ffffff80;
+}
+.empty.large {
+  min-height: 430px;
+  justify-content: center;
+}
+.empty-icon {
+  width: 64px;
+  height: 64px;
+  background: #eaf3ff;
+  border-radius: 20px;
+  display: grid;
+  place-items: center;
+  color: #0077ff;
+}
+.empty-icon .icon {
+  width: 28px;
+  height: 28px;
+}
+.empty p {
+  font-size: 14px;
+  color: #64748b;
+  max-width: 520px;
+}
+.modal-heading {
+  margin-bottom: 24px;
+}
+.template-modal-grid {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: 32px;
+}
+.spec-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  font-size: 13px;
+  padding: 12px 0;
+  border-bottom: 1px solid #eef1f5;
+}
+.spec-row span {
+  color: #64748b;
+}
+.spec-row strong {
+  text-align: right;
+  font-weight: 650;
+}
+.color-dot {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  display: inline-block;
+  border: 1px solid #0f172a15;
+}
+.compact-cards {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+.compact-cards .template-body {
+  padding: 12px;
+}
+.compact-cards .template-body .badge,
+.compact-cards .template-footer > .tiny {
+  display: none;
+}
+.compact-cards .slide h3 {
+  font-size: 15px;
+}
+.compact-cards .slide-brand {
+  font-size: 10px;
+}
+.compact-cards .template-body h3 {
+  font-size: 14px;
+}
+.compact-cards .template-footer .btn {
+  width: 100%;
+}
+.stepper {
+  list-style: none;
+  padding: 0;
+  display: flex;
+  margin: 28px 0;
+  counter-reset: step;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+}
+.stepper li {
+  flex: 1;
+  padding: 18px 20px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #64748b;
+  font-size: 14px;
+  font-weight: 650;
+  border-right: 1px solid #edf1f6;
+}
+.stepper li:last-child {
+  border-right: 0;
+}
+.stepper li > span {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  background: #f1f5f9;
+  border-radius: 50%;
+  font-size: 12px;
+}
+.stepper li.active {
+  color: #0077ff;
+  background: #f4f8ff;
+}
+.stepper li.active > span {
+  background: #0077ff;
+  color: #fff;
+}
+.stepper li.done > span {
+  background: #e9f7f0;
+  color: #16754d;
+}
+.stepper li > span .icon {
+  width: 16px;
+  height: 16px;
+}
+.demo-notice {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #64748b;
+  font-size: 12px;
+  margin-bottom: 20px;
+}
+.demo-notice .icon {
+  color: #0077ff;
+  width: 16px;
+  height: 16px;
+}

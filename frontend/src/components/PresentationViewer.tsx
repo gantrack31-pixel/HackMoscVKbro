@@ -3,7 +3,6 @@ import { Maximize2, Minimize2 } from "lucide-react";
 import type { Scene } from "../types";
 import { Icon } from "./Icon";
 import { SlidePreview } from "./SlidePreview";
-import "../styles/presentation-viewer.css";
 
 export function PresentationViewer({
   scenes,

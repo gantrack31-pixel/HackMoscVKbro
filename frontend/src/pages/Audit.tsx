@@ -1,14 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
 import { api } from "../api";
 import { Icon } from "../components/Icon";
-import { AuditSlide } from "../components/AuditSlide";
+import { AuditCanvas } from "../components/AuditCanvas";
 import { PresentationViewer } from "../components/PresentationViewer";
 import { SlideFields } from "../components/SlideFields";
 import { PresentationAssistant } from "../components/PresentationAssistant";
 import { HistoryControls } from "../components/HistoryControls";
 import { useLivePreview } from "../components/useLivePreview";
 import type { Health, Issue, Project, Slide } from "../types";
-import "../styles/editor-polish.css";
 
 export function Audit({
   project,
@@ -151,9 +150,13 @@ export function Audit({
     setBusy(true);
     try {
       const result = await api[direction](project.id);
-      setDraft(null); setFocus(""); setIndex(i => Math.min(i,result.content.slides.length-1));
+      setDraft(null);
+      setFocus("");
+      setIndex((i) => Math.min(i, result.content.slides.length - 1));
       onUpdate(result);
-      setNotice(direction === "undo" ? "Изменение отменено." : "Изменение повторено.");
+      setNotice(
+        direction === "undo" ? "Изменение отменено." : "Изменение повторено.",
+      );
     } catch (e) {
       onError((e as Error).message);
     } finally {
@@ -182,10 +185,30 @@ export function Audit({
           {notice}
         </p>
       )}
-      <PresentationAssistant audit project={project} content={content} index={index} health={health}
-        disabled={!valid} busy={busy} onBusy={setBusy}
-        onResult={result => { if (result.project) { setDraft(null); setFocus(""); setDirty(false); setValid(true); onUpdate(result.project); } }} />
-      <HistoryControls project={project} disabled={busy || dirty} onMove={moveHistory} />
+      <PresentationAssistant
+        audit
+        project={project}
+        content={content}
+        index={index}
+        health={health}
+        disabled={!valid}
+        busy={busy}
+        onBusy={setBusy}
+        onResult={(result) => {
+          if (result.project) {
+            setDraft(null);
+            setFocus("");
+            setDirty(false);
+            setValid(true);
+            onUpdate(result.project);
+          }
+        }}
+      />
+      <HistoryControls
+        project={project}
+        disabled={busy || dirty}
+        onMove={moveHistory}
+      />
       {loadError && (
         <div className="error-banner" role="alert">
           {loadError}
@@ -195,83 +218,33 @@ export function Audit({
         </div>
       )}
       <div className="audit-layout">
-        <section className="audit-canvas panel">
-          <div className="between">
-            <span className="label">
-              Слайд {index + 1} / {project.content.slides.length}
-            </span>
-            <div className="row">
-              <button
-                className="btn sm"
-                onClick={() => setViewing(true)}
-                disabled={!scene}
-              >
-                <Icon name="play" />
-                Смотреть
-              </button>
-              <button
-                className="btn sm"
-                aria-label="Предыдущий слайд"
-                disabled={locked || index === 0}
-                onClick={() => slideTo(index - 1)}
-              >
-                ←
-              </button>
-              <button
-                className="btn sm"
-                aria-label="Следующий слайд"
-                disabled={locked || index === project.content.slides.length - 1}
-                onClick={() => slideTo(index + 1)}
-              >
-                →
-              </button>
-            </div>
-          </div>
-          {scene && (
-            <AuditSlide
-              scene={scene}
-              issues={loading || loadError ? [] : displayed}
-              focus={focus}
-              locked={locked}
-              busy={busy}
-              onInspect={inspect}
-            />
-          )}
-          <p className="tiny muted" role="status">
-            {dirty
-              ? preview.error ||
-                (preview.pending
-                  ? "Обновляем предпросмотр…"
-                  : "Предпросмотр изменений. Нажмите «Сохранить и проверить».")
-              : displayed.length
-                ? "Выберите метку или замечание. Рамка покажет связанный блок слайда."
-                : "Здесь появятся отметки, если проверка найдёт замечания."}
-          </p>
-          <div className="slide-select-strip">
-            {project.content.slides.map((_, i) => (
-              <button
-                key={i}
-                disabled={locked}
-                className={`btn sm ${i === index ? "primary" : ""}`}
-                aria-label={`Перейти к слайду ${i + 1}`}
-                aria-current={i === index ? "true" : undefined}
-                onClick={() => slideTo(i)}
-              >
-                {i + 1}
-              </button>
-            ))}
-          </div>
-          <details className="audit-source">
-            <summary>Исходный материал</summary>
-            <pre>{project.source_text || "Материал не добавлен."}</pre>
-          </details>
-        </section>
+        <AuditCanvas
+          project={project}
+          index={index}
+          scene={scene}
+          displayed={displayed}
+          loading={loading}
+          loadError={loadError}
+          focus={focus}
+          locked={locked}
+          busy={busy}
+          dirty={dirty}
+          previewError={preview.error}
+          previewPending={preview.pending}
+          onView={() => setViewing(true)}
+          onSlideTo={slideTo}
+          onInspect={inspect}
+        />
         <aside className="audit-checklist panel">
           <div className="between">
             <h2>Что улучшить</h2>
             <span className="badge">{displayed.length}</span>
           </div>
-          {loading && <p className="tiny muted" role="status">Проверяем слайды…</p>}
+          {loading && (
+            <p className="tiny muted" role="status">
+              Проверяем слайды…
+            </p>
+          )}
           <div className="audit-items">
             {!loadError &&
               displayed.map((issue, n) => (
@@ -291,9 +264,14 @@ export function Audit({
                     <Icon name="down" />
                   </button>
                   <p>{issue.detail}</p>
-                  {issue.source_bindings?.map(ref => <blockquote key={`${ref.chunk_id}:${ref.start}`}>
-                    {ref.quote}<small>Источник: {ref.chunk_id}, символы {ref.start}–{ref.end}</small>
-                  </blockquote>)}
+                  {issue.source_bindings?.map((ref) => (
+                    <blockquote key={`${ref.chunk_id}:${ref.start}`}>
+                      {ref.quote}
+                      <small>
+                        Источник: {ref.chunk_id}, символы {ref.start}–{ref.end}
+                      </small>
+                    </blockquote>
+                  ))}
                   {issue.fixable && (
                     <label className="row small">
                       <input

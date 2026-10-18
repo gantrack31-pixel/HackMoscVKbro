@@ -1,0 +1,196 @@
+{
+  "conditions": "Chromium, localhost, cold context, 1440x900, reduced motion, 4x CPU throttle, mocked anonymous API, five alternating runs; TBT proxy=sum(longtask duration-50) through 60 frames after fonts.ready, not Lighthouse TBT. INP not measured.",
+  "samples": {
+    "before": [
+      {
+        "lcp": 148,
+        "cls": 9.567901234567902e-05,
+        "tbt": 0,
+        "fcp": 92,
+        "jsBytes": 494892
+      },
+      {
+        "lcp": 144,
+        "cls": 9.567901234567902e-05,
+        "tbt": 0,
+        "fcp": 96,
+        "jsBytes": 494892
+      },
+      {
+        "lcp": 144,
+        "cls": 9.567901234567902e-05,
+        "tbt": 0,
+        "fcp": 96,
+        "jsBytes": 494892
+      },
+      {
+        "lcp": 148,
+        "cls": 9.567901234567902e-05,
+        "tbt": 0,
+        "fcp": 88,
+        "jsBytes": 494892
+      },
+      {
+        "lcp": 144,
+        "cls": 9.567901234567902e-05,
+        "tbt": 0,
+        "fcp": 100,
+        "jsBytes": 494892
+      }
+    ],
+    "after": [
+      {
+        "lcp": 128,
+        "cls": 0,
+        "tbt": 0,
+        "fcp": 68,
+        "jsBytes": 298059
+      },
+      {
+        "lcp": 128,
+        "cls": 0,
+        "tbt": 0,
+        "fcp": 68,
+        "jsBytes": 298059
+      },
+      {
+        "lcp": 128,
+        "cls": 0,
+        "tbt": 0,
+        "fcp": 68,
+        "jsBytes": 298059
+      },
+      {
+        "lcp": 128,
+        "cls": 0,
+        "tbt": 0,
+        "fcp": 68,
+        "jsBytes": 298059
+      },
+      {
+        "lcp": 128,
+        "cls": 0,
+        "tbt": 0,
+        "fcp": 68,
+        "jsBytes": 298059
+      }
+    ]
+  },
+  "medians": {
+    "before": {
+      "lcp": 144,
+      "cls": 9.567901234567902e-05,
+      "tbt": 0,
+      "fcp": 96,
+      "jsBytes": 494892
+    },
+    "after": {
+      "lcp": 128,
+      "cls": 0,
+      "tbt": 0,
+      "fcp": 68,
+      "jsBytes": 298059
+    }
+  },
+  "date": "2026-10-18",
+  "bundle": {
+    "before": {
+      "entryJavaScriptBytes": 494892,
+      "gzipBytesLevel6": 160322
+    },
+    "after": {
+      "entryJavaScriptBytes": 298059,
+      "gzipBytesLevel6": 100118
+    }
+  },
+  "visualComparison": [
+    {
+      "image": "audit-1440.png",
+      "identical": false,
+      "differenceBounds": [
+        158,
+        290,
+        271,
+        305
+      ]
+    },
+    {
+      "image": "audit-390.png",
+      "identical": true,
+      "differenceBounds": null
+    },
+    {
+      "image": "auth-1440.png",
+      "identical": true,
+      "differenceBounds": null
+    },
+    {
+      "image": "auth-390.png",
+      "identical": true,
+      "differenceBounds": null
+    },
+    {
+      "image": "catalog-1440.png",
+      "identical": true,
+      "differenceBounds": null
+    },
+    {
+      "image": "catalog-390.png",
+      "identical": true,
+      "differenceBounds": null
+    },
+    {
+      "image": "editor-1440.png",
+      "identical": false,
+      "differenceBounds": [
+        158,
+        457,
+        257,
+        472
+      ]
+    },
+    {
+      "image": "editor-390.png",
+      "identical": true,
+      "differenceBounds": null
+    },
+    {
+      "image": "finish-1440.png",
+      "identical": true,
+      "differenceBounds": null
+    },
+    {
+      "image": "finish-390.png",
+      "identical": true,
+      "differenceBounds": null
+    },
+    {
+      "image": "home-1440.png",
+      "identical": true,
+      "differenceBounds": null
+    },
+    {
+      "image": "home-390.png",
+      "identical": true,
+      "differenceBounds": null
+    }
+  ],
+  "checks": {
+    "productionBuild": "passed: tsc --noEmit && vite build",
+    "unusedSymbols": "passed: noUnusedLocals and noUnusedParameters",
+    "formatting": "passed: Prettier on refactored implementation files",
+    "eslint": "not configured",
+    "unitTests": {
+      "passed": 12,
+      "failed": 0
+    },
+    "e2e": {
+      "passed": 36,
+      "failed": 2,
+      "execution": "Each spec file used a fresh disposable backend database. The corrected contrast test passed its targeted recheck. Two temporary snapshot capture tests also passed and are excluded from these counts.",
+      "remainingFailures": "Both presentation-colors cases fail when fetching the backend thumbnail of a generated PPTX; reproduced on the original production build. LibreOffice/soffice is absent in this environment."
+    },
+    "fullSuiteLimitation": "A single shared backend run exceeds its existing 15 authentication attempts per 15 minutes limit.",
+    "artifacts": "/private/tmp/deckly-optimization"
+  }
+}

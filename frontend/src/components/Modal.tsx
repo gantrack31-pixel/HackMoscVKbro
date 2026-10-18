@@ -1,7 +1,6 @@
 import { gsap, useGSAP, motion } from "../motion/animation";
 import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { Icon } from "./Icon";
-import "../styles/modal-modern.css";
 export function Modal({
   title,
   onClose,

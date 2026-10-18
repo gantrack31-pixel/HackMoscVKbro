@@ -1,7 +1,9 @@
 import { useRef } from "react";
 import * as THREE from "three";
-import { gsap, useGSAP, motion, ScrollTrigger } from "../../motion/animation";
+import { gsap, useGSAP, motion } from "../../motion/animation";
+import { ScrollTrigger } from "../../motion/scroll";
 import { slideTexture, fragmentTexture } from "./slideTexture";
+import { createSceneOrnaments } from "./sceneOrnaments";
 import type { SpaceProps } from "./PresentationSpace";
 import {
   initialSpatialQuality,
@@ -33,9 +35,11 @@ export default function SlideScene({
     () => {
       const element = host.current!;
       const mobile = matchMedia("(max-width: 700px)").matches;
-      const connection = (navigator as Navigator & {
-        connection?: { saveData?: boolean };
-      }).connection;
+      const connection = (
+        navigator as Navigator & {
+          connection?: { saveData?: boolean };
+        }
+      ).connection;
       const cores = navigator.hardwareConcurrency;
       const memory = (navigator as Navigator & { deviceMemory?: number })
         .deviceMemory;
@@ -54,7 +58,8 @@ export default function SlideScene({
         renderer = new THREE.WebGLRenderer({
           alpha: true,
           antialias: !mobile && performanceTier === "high",
-          powerPreference: performanceTier === "high" ? "high-performance" : "low-power",
+          powerPreference:
+            performanceTier === "high" ? "high-performance" : "low-power",
         });
       } catch {
         onFailure();
@@ -66,12 +71,11 @@ export default function SlideScene({
       });
       const applyQuality = () => {
         const budget = spatialQualitySettings[quality];
-        renderer.setPixelRatio(
-          Math.min(
-            devicePixelRatio,
-            mobile ? budget.mobileDpr : budget.desktopDpr,
-          ),
+        const ratio = Math.min(
+          devicePixelRatio,
+          mobile ? budget.mobileDpr : budget.desktopDpr,
         );
+        if (renderer.getPixelRatio() !== ratio) renderer.setPixelRatio(ratio);
         renderer.domElement.dataset.quality = quality;
       };
       applyQuality();
@@ -86,59 +90,19 @@ export default function SlideScene({
       const entrance = { value: 0 };
       const pointer = { x: 0, y: 0 },
         damped = { x: 0, y: 0 };
+      let pointerPosition: { x: number; y: number } | null = null;
       const boards: { group: THREE.Group; pose: Pose; reveal: number }[] = [];
       const fragments: { group: THREE.Group; pose: Pose }[] = [];
       const box = new THREE.BoxGeometry(1, 1, 1);
       const plane = new THREE.PlaneGeometry(1, 1);
-      const orbitGroup = new THREE.Group();
-      const ornaments: THREE.BufferGeometry[] = [];
-      const ornamentMaterials: THREE.Material[] = [];
+      const { orbitGroup, ornaments, ornamentMaterials } = createSceneOrnaments(
+        scene,
+        spatialQualitySettings[quality].ornaments,
+      );
       const syncOrnaments = () => {
         orbitGroup.visible = spatialQualitySettings[quality].ornaments;
         renderer.domElement.dataset.orbitVisible = String(orbitGroup.visible);
       };
-      if (spatialQualitySettings[quality].ornaments) {
-        const orbitMaterial = new THREE.MeshBasicMaterial({
-          color: "#0077ff",
-          transparent: true,
-          opacity: 0.12,
-          side: THREE.DoubleSide,
-          depthWrite: false,
-        });
-        const orbitGeometry = new THREE.TorusGeometry(2.75, 0.009, 4, 72);
-        const orbit = new THREE.Mesh(orbitGeometry, orbitMaterial);
-        orbit.rotation.set(0.66, -0.18, 0.12);
-        orbit.position.set(0.2, 0.05, -1.75);
-        orbitGroup.add(orbit);
-        const orbitAccentGeometry = new THREE.TorusGeometry(3.15, 0.006, 4, 72);
-        const orbitAccent = new THREE.Mesh(orbitAccentGeometry, orbitMaterial);
-        orbitAccent.rotation.set(-0.48, 0.31, -0.16);
-        orbitAccent.position.set(0.2, 0.05, -2.15);
-        orbitGroup.add(orbitAccent);
-        const nodeGeometry = new THREE.SphereGeometry(0.035, 8, 6);
-        const nodeMaterial = new THREE.MeshBasicMaterial({
-          color: "#54a6ff",
-          transparent: true,
-          opacity: 0.7,
-        });
-        const nodes = new THREE.InstancedMesh(nodeGeometry, nodeMaterial, 8);
-        const nodeMatrix = new THREE.Object3D();
-        for (let index = 0; index < nodes.count; index++) {
-          const angle = (index / nodes.count) * Math.PI * 2;
-          nodeMatrix.position.set(
-            Math.cos(angle) * 2.75,
-            Math.sin(angle) * 1.85,
-            Math.sin(angle * 2) * 0.25,
-          );
-          nodeMatrix.updateMatrix();
-          nodes.setMatrixAt(index, nodeMatrix.matrix);
-        }
-        nodes.instanceMatrix.needsUpdate = true;
-        orbitGroup.add(nodes);
-        scene.add(orbitGroup);
-        ornaments.push(orbitGeometry, orbitAccentGeometry, nodeGeometry);
-        ornamentMaterials.push(orbitMaterial, nodeMaterial);
-      }
       syncOrnaments();
       const edge = new THREE.MeshStandardMaterial({
         color: "#526782",
@@ -191,16 +155,32 @@ export default function SlideScene({
         const slideTextureQuality = spatialQualitySettings[quality];
         if (texture.image instanceof HTMLCanvasElement) {
           const maxDimension = renderer.capabilities.maxTextureSize;
-          const sourceScale = Math.min(1, maxDimension / texture.image.width, maxDimension / texture.image.height);
+          const sourceScale = Math.min(
+            1,
+            maxDimension / texture.image.width,
+            maxDimension / texture.image.height,
+          );
           if (sourceScale < 1) {
             const canvas = document.createElement("canvas");
-            canvas.width = Math.max(1, Math.floor(texture.image.width * sourceScale));
-            canvas.height = Math.max(1, Math.floor(texture.image.height * sourceScale));
+            canvas.width = Math.max(
+              1,
+              Math.floor(texture.image.width * sourceScale),
+            );
+            canvas.height = Math.max(
+              1,
+              Math.floor(texture.image.height * sourceScale),
+            );
             const context = canvas.getContext("2d", { alpha: false });
             if (context) {
               context.imageSmoothingEnabled = true;
               context.imageSmoothingQuality = "high";
-              context.drawImage(texture.image, 0, 0, canvas.width, canvas.height);
+              context.drawImage(
+                texture.image,
+                0,
+                0,
+                canvas.width,
+                canvas.height,
+              );
               texture.image = canvas;
             }
           }
@@ -276,6 +256,20 @@ export default function SlideScene({
       function render(time: number) {
         frame = 0;
         if (disposed || !inView || document.hidden) return;
+        if (pointerPosition) {
+          const bounds = area.getBoundingClientRect();
+          pointer.x = THREE.MathUtils.clamp(
+            ((pointerPosition.x - bounds.left) / bounds.width) * 2 - 1,
+            -1,
+            1,
+          );
+          pointer.y = THREE.MathUtils.clamp(
+            1 - ((pointerPosition.y - bounds.top) / bounds.height) * 2,
+            -1,
+            1,
+          );
+          pointerPosition = null;
+        }
         const elapsed = time - (last || time - 16.67);
         const delta = Math.min(elapsed / 16.67, 3);
         last = time;
@@ -283,7 +277,8 @@ export default function SlideScene({
         const damping = 1 - Math.pow(1 - budget.settle, delta);
         // Scroll scrubbing intentionally drives continuous renders; don't mistake it for device slowdown.
         if (!scrollActive)
-          slowFrames = elapsed > 23 ? slowFrames + 1 : Math.max(0, slowFrames - 1);
+          slowFrames =
+            elapsed > 23 ? slowFrames + 1 : Math.max(0, slowFrames - 1);
         if (slowFrames >= 45 && quality !== "low") {
           quality = lowerSpatialQuality(quality);
           slowFrames = 0;
@@ -299,7 +294,8 @@ export default function SlideScene({
           rig.y + damped.y * 0.17 + Math.sin(damped.y * 0.32) * 0.08,
           rig.z + (1 - entrance.value) * 2.4,
         );
-        const fieldOfView = (camera.aspect < 1 ? 49 : 39) + (8.8 - rig.z) * 0.72;
+        const fieldOfView =
+          (camera.aspect < 1 ? 49 : 39) + (8.8 - rig.z) * 0.72;
         if (Math.abs(camera.fov - fieldOfView) > 0.01) {
           camera.fov = fieldOfView;
           camera.updateProjectionMatrix();
@@ -329,7 +325,9 @@ export default function SlideScene({
             pose.ry + damped.x * 0.075 * depth,
             pose.rz,
           );
-          group.scale.setScalar(Math.max(0.001, pose.scale * entrance.value * reveal));
+          group.scale.setScalar(
+            Math.max(0.001, pose.scale * entrance.value * reveal),
+          );
         };
         for (let index = 0; index < boards.length; index++)
           updatePose(boards[index], index, boards[index].reveal);
@@ -342,6 +340,7 @@ export default function SlideScene({
             0.001
         )
           invalidate();
+        else last = 0;
       }
       const intro = gsap.timeline({
         onUpdate: invalidate,
@@ -497,29 +496,27 @@ export default function SlideScene({
       const area = element.parentElement!;
       const move = (event: PointerEvent) => {
         if (event.pointerType === "touch") return;
-        const bounds = area.getBoundingClientRect();
-        pointer.x = THREE.MathUtils.clamp(
-          ((event.clientX - bounds.left) / bounds.width) * 2 - 1,
-          -1,
-          1,
-        );
-        pointer.y = THREE.MathUtils.clamp(
-          1 - ((event.clientY - bounds.top) / bounds.height) * 2,
-          -1,
-          1,
-        );
+        pointerPosition = { x: event.clientX, y: event.clientY };
         invalidate();
       };
       const leave = () => {
+        pointerPosition = null;
         pointer.x = pointer.y = 0;
         invalidate();
       };
-      area.addEventListener("pointermove", move);
+      area.addEventListener("pointermove", move, { passive: true });
       area.addEventListener("pointerleave", leave);
+      const size = new THREE.Vector2();
       const resize = new ResizeObserver(() => {
         const { width, height } = element.getBoundingClientRect();
         if (!width || !height) return;
+        renderer.getSize(size);
+        const previousRatio = renderer.getPixelRatio();
         applyQuality();
+        if (size.x === width && size.y === height) {
+          if (renderer.getPixelRatio() !== previousRatio) invalidate();
+          return;
+        }
         camera.aspect = width / height;
         camera.updateProjectionMatrix();
         renderer.setSize(width, height);

@@ -1,6 +1,6 @@
 import { Component, lazy, Suspense, useEffect, useRef, useState, type ReactNode } from "react";
 import type { Template } from "../../types";
-import { TemplateCover } from "../TemplateCard";
+import { TemplateCover } from "../TemplateCover";
 
 const OrbitScene = lazy(() => import("./CreativeOrbitScene"));
 

@@ -8,7 +8,7 @@ import {
   type ReactNode,
 } from "react";
 import type { Template } from "../../types";
-import { TemplateCover } from "../TemplateCard";
+import { TemplateCover } from "../TemplateCover";
 
 const Scene = lazy(() => import("./SlideScene"));
 export interface SpaceProps {

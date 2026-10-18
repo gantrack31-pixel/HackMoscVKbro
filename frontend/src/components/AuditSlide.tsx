@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { Issue, Scene } from "../types";
 import { SlidePreview } from "./SlidePreview";
 import { auditMarkers, issueRegion } from "./auditRegions";
@@ -35,7 +35,10 @@ export function AuditSlide({
   }, []);
   const highlighted = issues.find((issue) => issue.id === (hovered || focus));
   const region = highlighted && issueRegion(highlighted, scene);
-  const markers = auditMarkers(issues, scene, size.width, size.height);
+  const markers = useMemo(
+    () => auditMarkers(issues, scene, size.width, size.height),
+    [issues, scene, size.width, size.height],
+  );
   return (
     <div className="audit-slide-wrap" ref={wrap}>
       <SlidePreview scene={scene} />

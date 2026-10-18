@@ -3,7 +3,6 @@ import { api } from "../api";
 import { Icon } from "./Icon";
 import { useAiOperation, AiOperationStatus } from "./useAiOperation";
 import type { AssistantResult, DeckContent, Health, Project } from "../types";
-import "../styles/presentation-assistant.css";
 
 export function PresentationAssistant({ project, content, index, health, disabled, busy, onBusy, onResult, audit = false }: {
   project: Project; content: DeckContent; index: number; health: Health | null;

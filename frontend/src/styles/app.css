@@ -7,12 +7,6 @@
   --line: #e2e8f0;
   --space: 8px;
 }
-@font-face {
-  font-family: Manrope;
-  src: url("/assets/Manrope.ttf") format("truetype");
-  font-weight: 200 800;
-  font-display: swap;
-}
 .wrap {
   flex-wrap: wrap;
 }

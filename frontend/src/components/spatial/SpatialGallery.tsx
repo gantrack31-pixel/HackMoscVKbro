@@ -1,8 +1,8 @@
 import { useRef, useState } from "react";
-import { TemplateCover } from "../TemplateCard";
+import { TemplateCover } from "../TemplateCover";
 import { Icon } from "../Icon";
 import { gsap, useGSAP, motion } from "../../motion/animation";
-import type { CatalogActions } from "../../pages/Home";
+import type { CatalogActions } from "../../pages/catalogTypes";
 
 /** A spatial browse view alongside the complete, searchable catalog. */
 export function SpatialGallery({
@@ -35,6 +35,17 @@ export function SpatialGallery({
             const distance = i - activeIndex;
             const previousDistance = i - previousIndex.current;
             const offset = context.conditions?.mobile ? 83 : 70;
+            // Distant cards stay transparent throughout the transition.
+            if (Math.abs(distance) > 2 && Math.abs(previousDistance) > 2) {
+              gsap.set(card, {
+                xPercent: distance * offset,
+                z: -Math.abs(distance) * 145,
+                rotationY: Math.sign(distance) * -18,
+                scale: 0.85,
+                opacity: 0,
+              });
+              return;
+            }
             gsap.fromTo(
               card,
               {
@@ -130,13 +141,22 @@ export function SpatialGallery({
               onClick={() => preview(template)}
               aria-label={`Открыть пространственный предпросмотр ${template.name}`}
             >
-              <TemplateCover template={template} decorative />
+              <TemplateCover
+                template={template}
+                decorative
+                loading={Math.abs(i - activeIndex) <= 2 ? "eager" : "lazy"}
+              />
             </button>
           </div>
         ))}
       </div>
       <div className="gallery-bottom">
-        <div data-testid="gallery-active-template" className="gallery-meta" aria-live="polite" aria-atomic="true">
+        <div
+          data-testid="gallery-active-template"
+          className="gallery-meta"
+          aria-live="polite"
+          aria-atomic="true"
+        >
           <h3>{active.name}</h3>
           <p>
             {active.metadata.category} · {active.metadata.count} слайдов
@@ -148,7 +168,11 @@ export function SpatialGallery({
             onClick={() => toggleFavorite(active.id)}
             aria-label={`${favorites.includes(active.id) ? "Убрать из избранного" : "Добавить в избранное"}: ${active.name}`}
             aria-pressed={favorites.includes(active.id)}
-            title={favorites.includes(active.id) ? "Убрать из избранного" : "Добавить в избранное"}
+            title={
+              favorites.includes(active.id)
+                ? "Убрать из избранного"
+                : "Добавить в избранное"
+            }
           >
             <Icon name="star" />
           </button>

@@ -70,7 +70,7 @@ test("mobile gallery preserves preview, favorites, search and template selection
   await app.openCatalog();
   await page.getByLabel("Поиск шаблонов").fill("Education");
   await page
-    .getByRole("button", { name: "Посмотреть шаблон VK Education" })
+    .getByRole("button", { name: "Открыть пространственный предпросмотр VK Education" })
     .click();
   await expect(page.getByRole("dialog")).toBeVisible();
   await page.getByRole("button", { name: "Закрыть", exact: true }).click();
@@ -85,6 +85,9 @@ test("mobile gallery preserves preview, favorites, search and template selection
       () => document.documentElement.scrollWidth <= innerWidth,
     ),
   ).toBe(true);
+  await page.getByRole("button", { name: "Создать с этим шаблоном" }).click();
+  await expect(page.getByLabel("Опишите идею и добавьте материалы")).toBeEditable();
+  await expect(page.locator(".wizard-template-picker")).toContainText("VK Education");
 });
 
 test("WebGL failure leaves the HTML fallback usable", async ({ page }) => {

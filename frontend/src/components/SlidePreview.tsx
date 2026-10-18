@@ -1,15 +1,47 @@
+import { memo } from "react";
 import type { Scene, SceneObject } from "../types";
 function ObjectView({ object: o }: { object: SceneObject }) {
   if (o.type === "rect")
     return <rect x={o.x} y={o.y} width={o.w} height={o.h} fill={o.fill} />;
   if (o.type === "ellipse")
-    return <ellipse cx={o.x+o.w/2} cy={o.y+o.h/2} rx={o.w/2} ry={o.h/2} fill={o.fill}/>;
+    return (
+      <ellipse
+        cx={o.x + o.w / 2}
+        cy={o.y + o.h / 2}
+        rx={o.w / 2}
+        ry={o.h / 2}
+        fill={o.fill}
+      />
+    );
   if (o.type === "hexagon")
-    return <polygon points={[[.18,0],[.82,0],[1,.5],[.82,1],[.18,1],[0,.5]].map(([x,y])=>`${o.x+x*o.w},${o.y+y*o.h}`).join(" ")} fill={o.fill}/>;
+    return (
+      <polygon
+        points={[
+          [0.18, 0],
+          [0.82, 0],
+          [1, 0.5],
+          [0.82, 1],
+          [0.18, 1],
+          [0, 0.5],
+        ]
+          .map(([x, y]) => `${o.x + x * o.w},${o.y + y * o.h}`)
+          .join(" ")}
+        fill={o.fill}
+      />
+    );
   if (o.type === "line")
-    return <line x1={o.x1} y1={o.y1} x2={o.x2} y2={o.y2} stroke={o.stroke} strokeWidth={o.stroke_width}/>;
+    return (
+      <line
+        x1={o.x1}
+        y1={o.y1}
+        x2={o.x2}
+        y2={o.y2}
+        stroke={o.stroke}
+        strokeWidth={o.stroke_width}
+      />
+    );
   if (o.type === "image")
-    return <image x={o.x} y={o.y} width={o.w} height={o.h} href={o.src}/>;
+    return <image x={o.x} y={o.y} width={o.w} height={o.h} href={o.src} />;
   if (o.type === "text")
     return (
       <text
@@ -22,7 +54,11 @@ function ObjectView({ object: o }: { object: SceneObject }) {
           <tspan
             key={i}
             x={o.x}
-            y={o.y + (o.font_size || 24) + i * (o.font_size || 24) * (o.line_spacing || 1.28)}
+            y={
+              o.y +
+              (o.font_size || 24) +
+              i * (o.font_size || 24) * (o.line_spacing || 1.28)
+            }
           >
             {line}
           </tspan>
@@ -101,17 +137,25 @@ function ObjectView({ object: o }: { object: SceneObject }) {
   }
   return null;
 }
-export function SlidePreview({
+export const SlidePreview = memo(function SlidePreview({
   scene,
   label = "Слайд",
 }: {
   scene: Scene;
   label?: string;
 }) {
+  const background = scene.objects.find(
+    (object) => object.id === "background",
+  )?.fill;
   return (
     <svg
       className="deck-slide"
-      style={{colorScheme:"light",color:scene.objects.find(o=>o.id==="background")?.fill||"initial",background:scene.objects.find(o=>o.id==="background")?.fill||"transparent",isolation:"isolate"}}
+      style={{
+        colorScheme: "light",
+        color: background || "initial",
+        background: background || "transparent",
+        isolation: "isolate",
+      }}
       viewBox={`0 0 ${scene.width} ${scene.height}`}
       role="img"
       aria-label={label}
@@ -121,4 +165,4 @@ export function SlidePreview({
       ))}
     </svg>
   );
-}
+});

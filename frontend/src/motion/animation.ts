@@ -1,10 +1,9 @@
 import { useRef, type DependencyList } from "react";
 import { gsap } from "gsap";
 import { useGSAP } from "@gsap/react";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
 
-gsap.registerPlugin(useGSAP, ScrollTrigger);
-export { gsap, useGSAP, ScrollTrigger };
+gsap.registerPlugin(useGSAP);
+export { gsap, useGSAP };
 export const motion = {
   fast: 0.22,
   reveal: 0.65,

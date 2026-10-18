@@ -4,7 +4,7 @@ import { Icon, type IconName } from "./Icon";
 import { ThemeToggle } from "./ThemeToggle";
 import { Brand } from "./Brand";
 import { SelectionIndicator } from "./SelectionIndicator";
-import type { Health, Route, User } from "../types";
+import type { Route } from "../types";
 
 const nav: [Route, IconName, string][] = [
   ["home", "home", "Главная"],
@@ -21,16 +21,11 @@ export function Shell({
   onNewPresentation,
 }: {
   route: Route;
-  health: Health | null;
-  user: User;
   children: ReactNode;
   onLogout: () => void;
   onNewPresentation: () => void;
-  onSearch: (s: string) => void;
-  templateCount: number;
   favoriteCount: number;
 }) {
-  const pageMotion = useSurfaceMotion([route], ":scope > .heading, :scope > section > .heading, .assembly-copy > *, .demo-content > h2, :scope > .cards > .template, .support-guide, .support-personal, .profile-stats > *", true);
   const [collapsed, setCollapsed] = useState(true);
   const [iconMotion, setIconMotion] = useState({ id: "", revision: 0 });
   function animateIcon(id: Route) {
@@ -201,10 +196,28 @@ export function Shell({
         tabIndex={-1}
       />
       <div className="workspace-layer" inert={!collapsed}>
-        <main ref={pageMotion} className="page motion-page" id="main" tabIndex={-1}>
-          {children}
-        </main>
+        {children}
       </div>
     </div>
+  );
+}
+
+/** Mount the page motion after its lazy route has resolved. */
+export function WorkspacePage({
+  route,
+  children,
+}: {
+  route: Route;
+  children: ReactNode;
+}) {
+  const pageMotion = useSurfaceMotion(
+    [route],
+    ":scope > .heading, :scope > section > .heading, .assembly-copy > *, .demo-content > h2, :scope > .cards > .template, .support-guide, .support-personal, .profile-stats > *",
+    true,
+  );
+  return (
+    <main ref={pageMotion} className="page motion-page" id="main" tabIndex={-1}>
+      {children}
+    </main>
   );
 }

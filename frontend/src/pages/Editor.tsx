@@ -6,11 +6,11 @@ import { api } from "../api";
 import { GenerationPassport } from "../components/GenerationPassport";
 import { PresentationAssistant } from "../components/PresentationAssistant";
 import { HistoryControls } from "../components/HistoryControls";
-import "../styles/requirements.css";
 import { Icon } from "../components/Icon";
 import { SlidePreview } from "../components/SlidePreview";
 import { PresentationViewer } from "../components/PresentationViewer";
-import "../styles/editor-polish.css";
+import { EditorSlideRail } from "../components/EditorSlideRail";
+import { SlideSourceCard } from "../components/SlideSourceCard";
 import {
   blankSlide,
   variantNames,
@@ -47,7 +47,11 @@ export function Editor({
   const [hasDataErrors, setHasDataErrors] = useState(false);
   const [viewing, setViewing] = useState(false);
   const motionScope = useSurfaceMotion([index], ".slide-canvas", true);
-  const saveMotion = useSurfaceMotion([dirty, actionBusy], ".editor-save-status", true);
+  const saveMotion = useSurfaceMotion(
+    [dirty, actionBusy],
+    ".editor-save-status",
+    true,
+  );
   const preview = useLivePreview(project, content, dirty && !hasDataErrors);
   useEffect(() => {
     onDirty(dirty || busy);
@@ -106,9 +110,12 @@ export function Editor({
       setBusy(false);
     }
   }
-  const source = project.sources[index]?.status;
   return (
-    <section ref={motionScope} className="editor-page motion-surface" aria-label="Редактор презентации">
+    <section
+      ref={motionScope}
+      className="editor-page motion-surface"
+      aria-label="Редактор презентации"
+    >
       <div className="heading between editor-heading">
         <div ref={saveMotion} className="editor-title-block">
           <div className="editor-title-field">
@@ -159,7 +166,11 @@ export function Editor({
       </div>
       <div className="editor-toolbar between">
         <div className="row editor-toolbar-controls">
-          <HistoryControls project={project} disabled={busy || dirty} onMove={moveHistory} />
+          <HistoryControls
+            project={project}
+            disabled={busy || dirty}
+            onMove={moveHistory}
+          />
           <fieldset
             className="editor-style-picker"
             disabled={busy || hasDataErrors}
@@ -200,45 +211,41 @@ export function Editor({
               : "Всё сохранено"}
         </button>
       </div>
-      <GenerationPassport project={project}/>
-      <PresentationAssistant project={project} content={content} index={index} health={health}
-        disabled={hasDataErrors} busy={busy} onBusy={setBusy}
-        onResult={result => { if (result.project) { onUpdate(result.project); setContent(result.project.content); setDirty(false); setHasDataErrors(false); } }} />
+      <GenerationPassport project={project} />
+      <PresentationAssistant
+        project={project}
+        content={content}
+        index={index}
+        health={health}
+        disabled={hasDataErrors}
+        busy={busy}
+        onBusy={setBusy}
+        onResult={(result) => {
+          if (result.project) {
+            onUpdate(result.project);
+            setContent(result.project.content);
+            setDirty(false);
+            setHasDataErrors(false);
+          }
+        }}
+      />
       <div className="editor-layout">
-        <aside className="slide-rail" aria-label="Слайды">
-          {content.slides.map((s, i) => (
-            <button
-              className={`thumbnail ${i === index ? "active" : ""}`}
-              disabled={busy || hasDataErrors}
-              key={i}
-              onClick={() => setIndex(i)}
-              aria-label={`Слайд ${i + 1}: ${s.title}`}
-              aria-current={i === index ? "true" : undefined}
-            >
-              <span>{String(i + 1).padStart(2, "0")}</span>
-              {preview.scenes[i] ? (
-                <SlidePreview scene={preview.scenes[i]} />
-              ) : (
-                <div className="new-thumb">Новый слайд</div>
-              )}
-            </button>
-          ))}
-          <button
-            className="btn sm"
-            disabled={busy || hasDataErrors || content.slides.length >= 30}
-            onClick={() => {
-              setContent({
-                ...content,
-                slides: [...content.slides, blankSlide()],
-              });
-              setIndex(content.slides.length);
-              setDirty(true);
-            }}
-          >
-            <Icon name="plus" />
-            Слайд
-          </button>
-        </aside>
+        <EditorSlideRail
+          slides={content.slides}
+          scenes={preview.scenes}
+          index={index}
+          busy={busy}
+          hasDataErrors={hasDataErrors}
+          onSelect={setIndex}
+          onAddSlide={() => {
+            setContent({
+              ...content,
+              slides: [...content.slides, blankSlide()],
+            });
+            setIndex(content.slides.length);
+            setDirty(true);
+          }}
+        />
         <section className="canvas-workspace">
           <div className="canvas-top">
             <span className="label">Слайд {index + 1}</span>
@@ -269,35 +276,7 @@ export function Editor({
                     : "Предпросмотр обновлён. Сохраните изменения, чтобы продолжить.")}
             </p>
           )}
-          <section className="source-card">
-            <div className="between">
-              <h3>
-                <Icon name="link" />
-                Опора на источник
-              </h3>
-              <span
-                className={`badge ${source === "matched" ? "green" : source === "not_found" ? "coral" : ""}`}
-              >
-                {source === "matched"
-                  ? "Цитата найдена"
-                  : source === "not_found"
-                    ? "Цитата не найдена"
-                    : source === "related" ? "Похожий источник" : "Без цитаты"}
-              </span>
-            </div>
-            <blockquote>
-              {slide.source_quote || project.sources[index]?.bindings?.map(ref => ref.quote).join("") ||
-                "Добавьте точную цитату из исходного материала в поле справа."}
-            </blockquote>
-            <p className="tiny muted">
-              Проверяется совпадение текста. Смысловую связь тезиса с цитатой
-              необходимо проверить отдельно.
-            </p>
-            <details>
-              <summary>Исходный материал</summary>
-              <pre>{project.source_text || "Материал не добавлен."}</pre>
-            </details>
-          </section>
+          <SlideSourceCard project={project} slide={slide} index={index} />
         </section>
         <fieldset className="inspector panel" disabled={actionBusy}>
           <span className="label">Содержание слайда</span>

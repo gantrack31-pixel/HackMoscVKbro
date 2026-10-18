@@ -1,9 +1,8 @@
 import { useEffect, useState } from "react";
 import { api } from "../api";
 import type { Health, Template, WorkflowRecipe } from "../types";
-import { TemplateCover } from "../components/TemplateCard";
+import { TemplateCover } from "../components/TemplateCover";
 import { Icon } from "../components/Icon";
-import "../styles/requirements.css";
 
 const requirements = [
   ["01","Шаблон превращается в правила","Загрузите любой PPTX. Из него извлекаются палитра, шрифты, размеры текста, пропорции, макеты, плейсхолдеры и визуальные элементы. Имена или ID трёх демонстрационных шаблонов для анализа не используются.","#templates"],
