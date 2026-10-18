@@ -1,8 +1,9 @@
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 import * as THREE from "three";
 import { gsap, useGSAP, motion } from "../../motion/animation";
 import { ScrollTrigger } from "../../motion/scroll";
-import { slideTexture, fragmentTexture } from "./slideTexture";
+import { slideTexture } from "./slideTexture";
+import { assemblyRegions, createAssemblyArtwork } from "./assemblyArtwork";
 import { createSceneOrnaments } from "./sceneOrnaments";
 import type { SpaceProps } from "./PresentationSpace";
 import {
@@ -22,6 +23,7 @@ interface Pose {
   ry: number;
   rz: number;
   scale: number;
+  opacity?: number;
 }
 export default function SlideScene({
   templates,
@@ -31,6 +33,8 @@ export default function SlideScene({
   onFailure,
 }: Props) {
   const host = useRef<HTMLDivElement>(null);
+  const replay = useRef<(() => void) | null>(null);
+  const previousRevision = useRef(revision);
   useGSAP(
     () => {
       const element = host.current!;
@@ -93,19 +97,58 @@ export default function SlideScene({
       let pointerPosition: { x: number; y: number } | null = null;
       const boards: { group: THREE.Group; pose: Pose; reveal: number }[] = [];
       const fragments: { group: THREE.Group; pose: Pose }[] = [];
+      const assembly = mode === "assembly";
+      let compactAssembly = element.clientWidth < 480;
       const box = new THREE.BoxGeometry(1, 1, 1);
+      const roundedFace = assembly ? new THREE.BufferGeometry() : null;
+      if (roundedFace) {
+        const positions = [0, 0, 0],
+          uvs = [0.5, 0.5],
+          indices: number[] = [];
+        for (let corner = 0; corner < 4; corner++) {
+          const cx = corner === 0 || corner === 3 ? 0.48 : -0.48;
+          const cy = corner < 2 ? 0.468 : -0.468;
+          for (let step = 0; step <= 8; step++) {
+            const angle = ((corner + step / 8) * Math.PI) / 2;
+            const x = cx + Math.cos(angle) * 0.02;
+            const y = cy + Math.sin(angle) * 0.032;
+            positions.push(x, y, 0);
+            uvs.push(x + 0.5, y + 0.5);
+          }
+        }
+        const vertices = positions.length / 3 - 1;
+        for (let i = 1; i <= vertices; i++)
+          indices.push(0, i, i === vertices ? 1 : i + 1);
+        roundedFace.setAttribute(
+          "position",
+          new THREE.Float32BufferAttribute(positions, 3),
+        );
+        roundedFace.setAttribute(
+          "uv",
+          new THREE.Float32BufferAttribute(uvs, 2),
+        );
+        roundedFace.setIndex(indices);
+        roundedFace.computeVertexNormals();
+      }
       const plane = new THREE.PlaneGeometry(1, 1);
       const { orbitGroup, ornaments, ornamentMaterials } = createSceneOrnaments(
         scene,
         spatialQualitySettings[quality].ornaments,
       );
+      if (assembly) {
+        orbitGroup.scale.setScalar(0.9);
+        orbitGroup.position.z = -1.6;
+        ornamentMaterials.forEach((material) => {
+          material.opacity *= 0.45;
+        });
+      }
       const syncOrnaments = () => {
         orbitGroup.visible = spatialQualitySettings[quality].ornaments;
         renderer.domElement.dataset.orbitVisible = String(orbitGroup.visible);
       };
       syncOrnaments();
       const edge = new THREE.MeshStandardMaterial({
-        color: "#526782",
+        color: assembly ? "#e7edf6" : "#526782",
         roughness: 0.66,
         metalness: quality === "high" ? 0.28 : 0.14,
       });
@@ -191,67 +234,103 @@ export default function SlideScene({
         texture.colorSpace = THREE.SRGBColorSpace;
         texture.needsUpdate = true;
         const group = new THREE.Group();
-        const body = new THREE.Mesh(box, edge);
-        body.scale.set(width, width / ratio, 0.105);
+        const body = new THREE.Mesh(
+          roundedFace || box,
+          assembly ? edge.clone() : edge,
+        );
+        if (assembly) materials.push(body.material);
+        body.scale.set(width, width / ratio, assembly ? 1 : 0.105);
         group.add(body);
         const material = new THREE.MeshBasicMaterial({
           map: texture,
           toneMapped: false,
+          transparent: assembly,
         });
         texture.anisotropy = Math.min(
           slideTextureQuality.anisotropy,
           renderer.capabilities.getMaxAnisotropy(),
         );
         materials.push(material);
-        const face = new THREE.Mesh(plane, material);
-        face.scale.set(width - 0.035, (width - 0.035) / ratio, 1);
-        face.position.z = 0.054;
+        const face = new THREE.Mesh(roundedFace || plane, material);
+        face.scale.set(
+          width - (assembly ? 0.012 : 0.035),
+          (width - (assembly ? 0.012 : 0.035)) / ratio,
+          1,
+        );
+        face.position.z = assembly ? 0.012 : 0.054;
         group.add(face);
-        const shadow = new THREE.Mesh(plane, shadowMaterial);
+        const shadow = new THREE.Mesh(
+          plane,
+          assembly ? shadowMaterial.clone() : shadowMaterial,
+        );
+        if (assembly) materials.push(shadow.material);
         shadow.scale.set(width * 1.19, (width / ratio) * 1.3, 1);
-        shadow.position.set(0.08, -0.11, -0.075);
+        shadow.position.set(
+          assembly ? 0.02 : 0.08,
+          assembly ? -0.06 : -0.11,
+          -0.075,
+        );
+        group.userData.face = material;
         group.add(shadow);
         scene.add(group);
         return group;
       }
-      templates.slice(0, 3).forEach((template, index) => {
-        const resource = slideTexture(
-          template,
+      if (!assembly)
+        templates.slice(0, 3).forEach((template, index) => {
+          const resource = slideTexture(
+            template,
+            invalidate,
+            spatialQualitySettings[quality].textureSize,
+          );
+          textureCleanup.push(resource.dispose);
+          const group = makeBoard(
+            resource.texture,
+            template.metadata.ratio,
+            index === 0 ? 4.15 : 2.55,
+          );
+          const pose: Pose = [
+            { x: 0.05, y: 0, z: 0.45, ry: -0.09, rz: -0.025, scale: 1 },
+            { x: -2.75, y: 0.78, z: -2.45, ry: 0.18, rz: 0.045, scale: 1 },
+            { x: 2.75, y: -0.72, z: -2.2, ry: -0.2, rz: -0.045, scale: 1 },
+          ][index];
+          boards.push({ group, pose, reveal: mode === "hero" ? 0 : 1 });
+        });
+      if (assembly) {
+        const artwork = createAssemblyArtwork(
           invalidate,
-          spatialQualitySettings[quality].textureSize,
+          quality === "low" ? 1024 : 1536,
         );
-        textureCleanup.push(resource.dispose);
-        const group = makeBoard(
-          resource.texture,
-          template.metadata.ratio,
-          index === 0 ? 4.15 : 2.55,
-        );
-        const pose: Pose = [
-          { x: 0.05, y: 0, z: 0.45, ry: -0.09, rz: -0.025, scale: 1 },
-          { x: -2.75, y: 0.78, z: -2.45, ry: 0.18, rz: 0.045, scale: 1 },
-          { x: 2.75, y: -0.72, z: -2.2, ry: -0.2, rz: -0.045, scale: 1 },
-        ][index];
-        boards.push({ group, pose, reveal: mode === "hero" ? 0 : 1 });
-      });
-      if (mode === "assembly") {
-        const fragmentsPerScene =
-          quality === "low" ? 3 : quality === "medium" || mobile ? 4 : 5;
-        for (let i = 0; i < fragmentsPerScene; i++) {
-          const texture = fragmentTexture(i);
-          textureCleanup.push(() => texture.dispose());
-          const group = makeBoard(texture, 512 / 300, 1.75);
+        textureCleanup.push(artwork.dispose);
+        artwork.slides.forEach((texture, index) => {
+          const group = makeBoard(texture, 1.6, index === 0 ? 4.7 : 3.85);
+          const pose = {
+            x: 0,
+            y: 0,
+            z: -0.1 - index * 0.3,
+            ry: -0.12,
+            rz: 0.02,
+            scale: 0.001,
+            opacity: 0,
+          };
+          boards.push({ group, pose, reveal: 1 });
+        });
+        const starts = [
+          { x: -1.75, y: 1.05, z: 0.65, ry: 0.16, rz: 0.045 },
+          { x: 1.75, y: 0.22, z: -0.2, ry: -0.2, rz: -0.045 },
+          { x: -1.5, y: -1.35, z: 0.9, ry: 0.12, rz: -0.05 },
+        ];
+        artwork.pieces.forEach((texture, index) => {
+          const region = assemblyRegions[index];
+          const group = makeBoard(
+            texture,
+            region.width / region.height,
+            (region.width / 1536) * 4.7,
+          );
           fragments.push({
             group,
-            pose: {
-              x: (i - 2) * 1.6,
-              y: i % 2 ? 1.3 : -1.3,
-              z: 1 + i * 0.3,
-              ry: (i - 2) * -0.2,
-              rz: (i - 2) * 0.07,
-              scale: 0,
-            },
+            pose: { ...starts[index], scale: 0.94, opacity: 0 },
           });
-        }
+        });
       }
       function render(time: number) {
         frame = 0;
@@ -292,10 +371,22 @@ export default function SlideScene({
         camera.position.set(
           rig.x + damped.x * 0.26 + Math.sin(damped.x * 0.38) * 0.12,
           rig.y + damped.y * 0.17 + Math.sin(damped.y * 0.32) * 0.08,
-          rig.z + (1 - entrance.value) * 2.4,
+          rig.z +
+            (1 - entrance.value) * (assembly ? 0.6 : 2.4) +
+            (assembly
+              ? Math.max(
+                  0,
+                  (compactAssembly ? 6.2 : 7.3) /
+                    (2 *
+                      Math.tan(THREE.MathUtils.degToRad(39 / 2)) *
+                      camera.aspect) -
+                    8.8,
+                )
+              : 0),
         );
-        const fieldOfView =
-          (camera.aspect < 1 ? 49 : 39) + (8.8 - rig.z) * 0.72;
+        const fieldOfView = assembly
+          ? 39
+          : (camera.aspect < 1 ? 49 : 39) + (8.8 - rig.z) * 0.72;
         if (Math.abs(camera.fov - fieldOfView) > 0.01) {
           camera.fov = fieldOfView;
           camera.updateProjectionMatrix();
@@ -313,8 +404,10 @@ export default function SlideScene({
         ) => {
           const { group, pose } = item;
           const depth = index === 0 ? 1 : 0.5;
+          const compactSide =
+            assembly && compactAssembly && index > 0 && index < boards.length;
           group.position.set(
-            pose.x + damped.x * 0.1 * depth,
+            pose.x * (compactSide ? 0.75 : 1) + damped.x * 0.1 * depth,
             pose.y +
               damped.y * 0.09 * depth -
               (1 - entrance.value) * (0.9 + index * 0.12),
@@ -325,8 +418,22 @@ export default function SlideScene({
             pose.ry + damped.x * 0.075 * depth,
             pose.rz,
           );
+          if (assembly) {
+            const opacity = pose.opacity ?? 1;
+            group.visible = opacity > 0.001;
+            group.children.forEach((child, i) => {
+              const material = (child as THREE.Mesh).material as THREE.Material;
+              material.transparent = true;
+              material.opacity = opacity * (i === 2 ? 0.12 : 1);
+              // Keep depth testing stable while fading in isolated pieces.
+              material.depthWrite = i !== 2;
+            });
+          }
           group.scale.setScalar(
-            Math.max(0.001, pose.scale * entrance.value * reveal),
+            Math.max(
+              0.001,
+              pose.scale * entrance.value * reveal * (compactSide ? 0.86 : 1),
+            ),
           );
         };
         for (let index = 0; index < boards.length; index++)
@@ -360,50 +467,75 @@ export default function SlideScene({
           { reveal: 1, duration: 1.35, stagger: 0.22, ease: "power3.inOut" },
           0.1,
         );
-      if (mode === "assembly") {
-        boards.forEach(({ pose }) => {
-          pose.scale = 0.001;
-        });
+      if (assembly) {
         fragments.forEach(({ pose }, index) => {
+          const region = assemblyRegions[index];
           intro
             .to(
               pose,
-              { scale: 1, duration: 0.65, ease: motion.ease },
-              0.35 + index * 0.3,
+              { opacity: 1, scale: 1, duration: 0.9, ease: "power3.out" },
+              0.18 + index * 0.23,
             )
             .to(
               pose,
               {
-                x: (index % 2 ? 1 : -1) * 0.7,
-                y: ((index % 3) - 1) * 0.42,
-                z: 0.8,
+                x: ((region.x + region.width / 2) / 1536 - 0.5) * 4.7,
+                y: (0.5 - (region.y + region.height / 2) / 960) * (4.7 / 1.6),
+                z: 0.35,
                 ry: 0,
                 rz: 0,
-                duration: 1.5,
-                ease: motion.settle,
+                duration: 1.8,
+                ease: "power3.inOut",
               },
-              2.5 + index * 0.12,
-            )
-            .to(
-              pose,
-              { scale: 0.001, duration: 0.65, ease: "power2.in" },
-              4.3 + index * 0.09,
+              2.15 + index * 0.16,
             );
         });
-        boards.forEach(({ pose }, index) => {
-          intro.to(
+        // Swap matching artwork in one frame: crossfading overlapping card backs
+        // changes their compositing/depth order and briefly washes out the image.
+        intro
+          .set(
+            fragments.map(({ pose }) => pose),
+            { opacity: 0 },
+            4.5,
+          )
+          .set(
+            boards[0].pose,
+            { scale: 1, ry: 0, rz: 0, z: 0.35, opacity: 1 },
+            4.5,
+          )
+          .to(
+            boards[0].pose,
+            {
+              x: -0.12,
+              y: 0.08,
+              z: 0.65,
+              ry: -0.14,
+              rz: 0.025,
+              duration: 1.8,
+              ease: "power3.inOut",
+            },
+            4.95,
+          );
+        boards.slice(1).forEach(({ pose }, index) => {
+          intro.set(pose, { scale: 1, opacity: 1 }, 4.95).to(
             pose,
-            { scale: 1, duration: 1.1, ease: motion.ease },
-            4.7 + index * 0.25,
+            {
+              x: index === 0 ? -1.62 : 1.55,
+              y: index === 0 ? 0.7 : -0.52,
+              z: index === 0 ? -1.3 : -1.1,
+              ry: index === 0 ? 0.18 : -0.25,
+              rz: index === 0 ? 0.065 : -0.055,
+              duration: 1.8,
+              ease: "power3.inOut",
+            },
+            4.95 + index * 0.15,
           );
         });
-        intro
-          .to(rig, { z: 7, x: 0.6, duration: 2, ease: motion.settle }, 1.2)
-          .to(
-            rig,
-            { z: 10.6, x: -0.4, duration: 2.2, ease: motion.settle },
-            4.4,
-          );
+        intro.to(
+          rig,
+          { z: 9.15, x: 0.08, y: 0.12, duration: 6.6, ease: "sine.inOut" },
+          0.25,
+        );
       } else {
         if (story) {
           const media = gsap.matchMedia();
@@ -493,6 +625,14 @@ export default function SlideScene({
           });
         }
       }
+      replay.current = () => {
+        pointerPosition = null;
+        pointer.x = pointer.y = damped.x = damped.y = 0;
+        last = slowFrames = 0;
+        activeTween = true;
+        intro.restart();
+        invalidate();
+      };
       const area = element.parentElement!;
       const move = (event: PointerEvent) => {
         if (event.pointerType === "touch") return;
@@ -517,6 +657,7 @@ export default function SlideScene({
           if (renderer.getPixelRatio() !== previousRatio) invalidate();
           return;
         }
+        compactAssembly = width < 480;
         camera.aspect = width / height;
         camera.updateProjectionMatrix();
         renderer.setSize(width, height);
@@ -560,6 +701,7 @@ export default function SlideScene({
       invalidate();
       onReady();
       return () => {
+        replay.current = null;
         disposed = true;
         cancelAnimationFrame(frame);
         intro.kill();
@@ -574,6 +716,7 @@ export default function SlideScene({
         ornaments.forEach((geometry) => geometry.dispose());
         box.dispose();
         plane.dispose();
+        roundedFace?.dispose();
         scene.clear();
         renderer.dispose();
         renderer.forceContextLoss();
@@ -582,9 +725,15 @@ export default function SlideScene({
     },
     {
       scope: host,
-      dependencies: [templates, mode, revision],
+      dependencies: [templates, mode],
       revertOnUpdate: true,
     },
   );
+  useEffect(() => {
+    if (previousRevision.current !== revision) {
+      previousRevision.current = revision;
+      replay.current?.();
+    }
+  }, [revision]);
   return <div className="slide-scene" ref={host} />;
 }

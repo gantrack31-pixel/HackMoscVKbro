@@ -20,7 +20,8 @@ export const projectsApi = {
       signal,
     }),
   projects: () => request<ProjectSummary[]>("/projects"),
-  project: (id: string) => request<Project>(`/projects/${id}`),
+  project: (id: string, signal?: AbortSignal) =>
+    request<Project>(`/projects/${id}`, { signal }),
   update: (id: string, content: DeckContent, variant: Variant) =>
     request<Project>(`/projects/${id}`, json("PUT", { content, variant })),
   remove: (id: string) =>

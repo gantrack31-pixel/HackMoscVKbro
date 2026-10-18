@@ -9,6 +9,7 @@ import {
 } from "react";
 import type { Template } from "../../types";
 import { TemplateCover } from "../TemplateCover";
+import { AssemblyPoster } from "./AssemblyPoster";
 
 const Scene = lazy(() => import("./SlideScene"));
 export interface SpaceProps {
@@ -68,7 +69,12 @@ export function PresentationSpace({
       observer.disconnect();
     };
   }, []);
-  const fallback = <StaticSlides templates={templates} />;
+  const fallback =
+    mode === "assembly" ? (
+      <AssemblyPoster />
+    ) : (
+      <StaticSlides templates={templates} />
+    );
   return (
     <div
       ref={host}

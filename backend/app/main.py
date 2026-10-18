@@ -15,7 +15,7 @@ from time import monotonic
 from fastapi import FastAPI, UploadFile, HTTPException, BackgroundTasks, Query, Depends, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response, JSONResponse, FileResponse
-from fastapi.staticfiles import StaticFiles
+from .http_assets import FrontendStaticFiles as StaticFiles, JsonCompressionMiddleware, private_image_response
 from fastapi.exceptions import RequestValidationError
 from .config import settings, BASE, validate_settings
 from . import database as db
@@ -71,6 +71,7 @@ app=FastAPI(title='Deckly.Ai API',version='0.3.0',lifespan=lifespan,
             openapi_url=None if settings.app_env=='production' else '/openapi.json')
 app.add_middleware(CORSMiddleware,allow_origins=settings.origins,allow_credentials=True,
                    allow_methods=['GET','POST','PUT','DELETE'],allow_headers=['Content-Type','X-CSRF-Token','X-AI-Operation-ID'])
+app.add_middleware(JsonCompressionMiddleware)
 app.include_router(auth_router)
 
 @app.exception_handler(RequestValidationError)
@@ -96,7 +97,11 @@ async def browser_security(request:Request,call_next):
             "object-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'")
     if settings.app_env=='production':
         response.headers['Strict-Transport-Security']='max-age=31536000'
-    if request.url.path.startswith('/api/'):response.headers['Cache-Control']='no-store'
+    if request.url.path.startswith('/api/'):
+        private_preview = (request.method == 'GET' and response.status_code in {200, 304}
+                           and re.fullmatch(r'/api/templates/[^/]+/thumbnail', request.url.path)
+                           and response.headers.get('Cache-Control') == 'private, no-cache')
+        if not private_preview: response.headers['Cache-Control']='no-store'
     return response
 
 
@@ -362,7 +367,7 @@ def template_thumbnail(tid:str,request:Request):
     if not template.get('path'): raise HTTPException(404,'Исходный слайд недоступен')
     result=thumbnail(Path(template['path']))
     if not result: raise HTTPException(404,'Предпросмотр недоступен. Установите LibreOffice и Poppler на сервере.')
-    return FileResponse(result,media_type='image/png',headers={'Cache-Control':'private, no-cache','X-Content-Type-Options':'nosniff'})
+    return private_image_response(result, request)
 
 @app.post('/api/outline')
 @standalone_ai

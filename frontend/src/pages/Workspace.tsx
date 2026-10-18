@@ -5,43 +5,22 @@ import { LeaveWorkspaceDialog } from "../components/LeaveWorkspaceDialog";
 import { Icon } from "../components/Icon";
 import { TemplatePreviewDialog } from "../components/TemplatePreviewDialog";
 import { readRoute, routes } from "../navigation/routes";
+import { pageLoaders } from "../navigation/pageLoaders";
 import type { Health, Project, Route, Template, User } from "../types";
 
 import { clearPendingGenerationJob } from "./wizard/pendingJob";
 
-const Finish = lazy(() =>
-  import("./Finish").then((module) => ({ default: module.Finish })),
-);
-const Home = lazy(() =>
-  import("./Home").then((module) => ({ default: module.Home })),
-);
-const Catalog = lazy(() =>
-  import("./Catalog").then((module) => ({ default: module.Catalog })),
-);
-const Wizard = lazy(() =>
-  import("./Wizard").then((module) => ({ default: module.Wizard })),
-);
-const Editor = lazy(() =>
-  import("./Editor").then((module) => ({ default: module.Editor })),
-);
-const Audit = lazy(() =>
-  import("./Audit").then((module) => ({ default: module.Audit })),
-);
-const Projects = lazy(() =>
-  import("./Projects").then((module) => ({ default: module.Projects })),
-);
-const Demo = lazy(() =>
-  import("./Demo").then((module) => ({ default: module.Demo })),
-);
-const Support = lazy(() =>
-  import("./Support").then((module) => ({ default: module.Support })),
-);
-const Profile = lazy(() =>
-  import("./Profile").then((module) => ({ default: module.Profile })),
-);
-const Requirements = lazy(() =>
-  import("./Requirements").then((module) => ({ default: module.Requirements })),
-);
+const Finish = lazy(pageLoaders.finish);
+const Home = lazy(pageLoaders.home);
+const Catalog = lazy(pageLoaders.templates);
+const Wizard = lazy(pageLoaders.create);
+const Editor = lazy(pageLoaders.editor);
+const Audit = lazy(pageLoaders.audit);
+const Projects = lazy(pageLoaders.projects);
+const Demo = lazy(pageLoaders.demo);
+const Support = lazy(pageLoaders.support);
+const Profile = lazy(pageLoaders.profile);
+const Requirements = lazy(pageLoaders.requirements);
 
 export function Workspace({
   user,
@@ -98,20 +77,34 @@ export function Workspace({
     return () => document.removeEventListener("click", protect, true);
   }, [dirty, route]);
   useEffect(() => {
-    Promise.all([api.templates(), api.health(), api.favorites()])
+    const controller = new AbortController();
+    Promise.all([
+      api.templates(controller.signal),
+      api.health(),
+      api.favorites(),
+    ])
       .then(([t, h, f]) => {
+        if (controller.signal.aborted) return;
         setTemplates(t);
         setSelected(t[0]);
         setHealth(h);
         setFavorites(f);
       })
-      .catch((e) => setError(e.message));
+      .catch((e) => {
+        if (!controller.signal.aborted) setError(e.message);
+      });
     const id = localStorage.getItem("deckly-active-project");
     if (id)
       api
-        .project(id)
-        .then(setProject)
-        .catch(() => localStorage.removeItem("deckly-active-project"));
+        .project(id, controller.signal)
+        .then((project) => {
+          if (!controller.signal.aborted) setProject(project);
+        })
+        .catch(() => {
+          if (!controller.signal.aborted)
+            localStorage.removeItem("deckly-active-project");
+        });
+    return () => controller.abort();
   }, []);
   useEffect(() => {
     if (!toast) return;

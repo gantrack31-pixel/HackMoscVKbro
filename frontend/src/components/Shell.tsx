@@ -5,6 +5,7 @@ import { ThemeToggle } from "./ThemeToggle";
 import { Brand } from "./Brand";
 import { SelectionIndicator } from "./SelectionIndicator";
 import type { Route } from "../types";
+import { prefetchPage } from "../navigation/pageLoaders";
 
 const nav: [Route, IconName, string][] = [
   ["home", "home", "Главная"],
@@ -102,6 +103,8 @@ export function Shell({
                 key={id}
                 href={"#" + id}
                 data-nav={id}
+                onPointerEnter={() => prefetchPage(id)}
+                onFocus={() => prefetchPage(id)}
                 onClick={() => animateIcon(id)}
                 className={id === route ? "active" : ""}
                 aria-current={id === route ? "page" : undefined}
@@ -122,6 +125,8 @@ export function Shell({
           </nav>
           <a
             href="#create"
+            onPointerEnter={() => prefetchPage("create")}
+            onFocus={() => prefetchPage("create")}
             className="sidebar-create"
             aria-label="Новая презентация"
             title="Новая презентация"
@@ -160,6 +165,8 @@ export function Shell({
                 title={name}
                 aria-label={name}
                 data-nav={id}
+                onPointerEnter={() => prefetchPage(id)}
+                onFocus={() => prefetchPage(id)}
                 onClick={() => animateIcon(id)}
                 className={route === id ? "active" : ""}
                 aria-current={route === id ? "page" : undefined}

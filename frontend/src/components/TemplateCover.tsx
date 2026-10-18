@@ -19,6 +19,7 @@ export const TemplateCover = memo(function TemplateCover({
     return (
       <img
         className="template-real-preview"
+        crossOrigin="anonymous"
         src={template.preview_url}
         loading={loading}
         decoding="async"

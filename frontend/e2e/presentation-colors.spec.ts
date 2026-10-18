@@ -41,7 +41,11 @@ b=BytesIO();p.save(b);sys.stdout.buffer.write(b.getvalue())`]);
     const response=await page.request.get(template.preview_url);
     expect(response.ok()).toBe(true);
     await page.goto("/#templates");
-    await expect(page.getByAltText(`Первый слайд: ${name}`)).toBeVisible();
-    await expect.poll(()=>page.getByAltText(`Первый слайд: ${name}`).evaluate((img:HTMLImageElement)=>img.naturalWidth)).toBeGreaterThan(0);
+    await page.getByLabel("Поиск шаблонов").fill(name);
+    await page.getByRole("button", { name: `Открыть пространственный предпросмотр ${name}` }).click();
+    const preview = page.getByRole("dialog", { name, exact: true });
+    const image = preview.getByAltText(`Первый слайд: ${name}`);
+    await expect(image).toBeVisible();
+    await expect.poll(() => image.evaluate((img: HTMLImageElement) => img.naturalWidth)).toBeGreaterThan(0);
   });
 }

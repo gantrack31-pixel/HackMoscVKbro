@@ -1,0 +1,1491 @@
+{
+  "date": "2026-10-18",
+  "scope": "Second stage: loading and delivery; baseline already includes first-stage refactor",
+  "measurementConditions": "Docker production builds, isolated databases, Chromium, 1440x900, CPU x4, 80ms latency, 200000 bytes/sec download, 3 runs per cache mode, animations enabled. Capture ends 30 frames after scene/font readiness; does not wait for public catalog. Before and after have identical observation window.",
+  "limitations": [
+    "Laboratory values, not field Web Vitals; only three samples per cache mode.",
+    "longTaskOver50 is an observation-window diagnostic, not Lighthouse TBT.",
+    "ResourceTiming contains completed resources only; catalog remains pending during cold capture. No full-page transfer reduction inferred from that list.",
+    "Single editor input diagnostic does not establish improvement; observed maximum event duration 24ms before, 40ms after. No field INP collected.",
+    "Static screenshots use reduced motion and mask dynamic generation elapsed time. Animation motion not compared frame by frame."
+  ],
+  "mediansMsExceptCls": {
+    "before": {
+      "cold": {
+        "fcp": 3632,
+        "lcp": 3792,
+        "cls": 0,
+        "longTaskOver50": 234
+      },
+      "warm": {
+        "fcp": 132,
+        "lcp": 248,
+        "cls": 0,
+        "longTaskOver50": 223
+      }
+    },
+    "after": {
+      "cold": {
+        "fcp": 1120,
+        "lcp": 1248,
+        "cls": 0,
+        "longTaskOver50": 234
+      },
+      "warm": {
+        "fcp": 132,
+        "lcp": 252,
+        "cls": 0,
+        "longTaskOver50": 239
+      }
+    }
+  },
+  "responseBodiesBytes": {
+    "mainJsBeforeIdentity": 298059,
+    "mainJsAfterIdentity": 298221,
+    "mainJsAfterBrotli": 87460,
+    "fontBeforeTtf": 164700,
+    "fontAfterWoff2": 53892,
+    "catalogBeforeIdentity": 18782583,
+    "catalogAfterGzip": 6147159,
+    "catalogDecodedJsonEqual": false,
+    "catalogComparisonNote": "Only created_at differs because each Docker container initializes its own template database; all other fields equal."
+  },
+  "headersVerified": {
+    "hashedAssets": "public, max-age=31536000, immutable",
+    "html": "no-store",
+    "privateThumbnails": "private, no-cache; authorization precedes ETag",
+    "brotli": "Vary: Accept-Encoding; original MIME",
+    "woff2": "font/woff2"
+  },
+  "sceneReplay": {
+    "newWebGLContextsBefore": 1,
+    "newWebGLContextsAfter": 0,
+    "retainedCanvasAndTextures": true,
+    "visuallyRestarts": true
+  },
+  "visualComparisons": [
+    {
+      "file": "audit-1440.png",
+      "pixelIdentical": true,
+      "differenceBox": null
+    },
+    {
+      "file": "audit-390.png",
+      "pixelIdentical": true,
+      "differenceBox": null
+    },
+    {
+      "file": "auth-1440.png",
+      "pixelIdentical": true,
+      "differenceBox": null
+    },
+    {
+      "file": "auth-390.png",
+      "pixelIdentical": true,
+      "differenceBox": null
+    },
+    {
+      "file": "catalog-1440.png",
+      "pixelIdentical": true,
+      "differenceBox": null
+    },
+    {
+      "file": "catalog-390.png",
+      "pixelIdentical": true,
+      "differenceBox": null
+    },
+    {
+      "file": "editor-1440.png",
+      "pixelIdentical": true,
+      "differenceBox": null
+    },
+    {
+      "file": "editor-390.png",
+      "pixelIdentical": true,
+      "differenceBox": null
+    },
+    {
+      "file": "finish-1440.png",
+      "pixelIdentical": true,
+      "differenceBox": null
+    },
+    {
+      "file": "finish-390.png",
+      "pixelIdentical": true,
+      "differenceBox": null
+    },
+    {
+      "file": "home-1440.png",
+      "pixelIdentical": true,
+      "differenceBox": null
+    },
+    {
+      "file": "home-390.png",
+      "pixelIdentical": true,
+      "differenceBox": null
+    }
+  ],
+  "checks": {
+    "typescriptAndProductionBuild": "passed, local and Docker",
+    "prettier": "passed for changed implementation and new tests; no ESLint script/config in project",
+    "frontendUnit": {
+      "passed": 14
+    },
+    "productionE2E": {
+      "passed": 42,
+      "failed": 0,
+      "files": [
+        {
+          "file": "assistant.spec.json",
+          "stats": {
+            "startTime": "2026-10-18T09:34:16.867Z",
+            "duration": 21811.533,
+            "expected": 2,
+            "skipped": 0,
+            "unexpected": 0,
+            "flaky": 0
+          }
+        },
+        {
+          "file": "cancellation.spec.json",
+          "stats": {
+            "startTime": "2026-10-18T09:34:58.714Z",
+            "duration": 26518.222,
+            "expected": 3,
+            "skipped": 0,
+            "unexpected": 0,
+            "flaky": 0
+          }
+        },
+        {
+          "file": "critical-flows.spec.json",
+          "stats": {
+            "startTime": "2026-10-18T09:35:43.214Z",
+            "duration": 37116.977999999996,
+            "expected": 11,
+            "skipped": 0,
+            "unexpected": 0,
+            "flaky": 0
+          }
+        },
+        {
+          "file": "disk.spec.json",
+          "stats": {
+            "startTime": "2026-10-18T09:36:38.400Z",
+            "duration": 11310.671,
+            "expected": 1,
+            "skipped": 0,
+            "unexpected": 0,
+            "flaky": 0
+          }
+        },
+        {
+          "file": "hardening.spec.json",
+          "stats": {
+            "startTime": "2026-10-18T09:37:10.444Z",
+            "duration": 19243.217,
+            "expected": 3,
+            "skipped": 0,
+            "unexpected": 0,
+            "flaky": 0
+          }
+        },
+        {
+          "file": "optimization.spec.json",
+          "stats": {
+            "startTime": "2026-10-18T09:38:36.614Z",
+            "duration": 9737.114,
+            "expected": 2,
+            "skipped": 0,
+            "unexpected": 0,
+            "flaky": 0
+          }
+        },
+        {
+          "file": "presentation-polish.spec.json",
+          "stats": {
+            "startTime": "2026-10-18T09:39:36.774Z",
+            "duration": 14104.441,
+            "expected": 1,
+            "skipped": 0,
+            "unexpected": 0,
+            "flaky": 0
+          }
+        },
+        {
+          "file": "requirements.spec.json",
+          "stats": {
+            "startTime": "2026-10-18T09:40:11.465Z",
+            "duration": 32202.136000000002,
+            "expected": 5,
+            "skipped": 0,
+            "unexpected": 0,
+            "flaky": 0
+          }
+        },
+        {
+          "file": "smartart.spec.json",
+          "stats": {
+            "startTime": "2026-10-18T09:41:01.890Z",
+            "duration": 11793.119,
+            "expected": 1,
+            "skipped": 0,
+            "unexpected": 0,
+            "flaky": 0
+          }
+        },
+        {
+          "file": "spatial-experience.spec.json",
+          "stats": {
+            "startTime": "2026-10-18T09:41:34.658Z",
+            "duration": 48218.343,
+            "expected": 7,
+            "skipped": 0,
+            "unexpected": 0,
+            "flaky": 0
+          }
+        },
+        {
+          "files": [
+            "loading.spec.ts",
+            "presentation-colors.spec.ts"
+          ],
+          "stats": {
+            "startTime": "2026-10-18T09:48:24.126Z",
+            "duration": 55037.885,
+            "expected": 6,
+            "skipped": 0,
+            "unexpected": 0,
+            "flaky": 0
+          }
+        }
+      ],
+      "strategy": "Each spec on isolated Docker database to respect existing auth rate limit; corrected thumbnail concurrency and stale preview selectors rechecked together (6/6)."
+    },
+    "backend": {
+      "passed": 308,
+      "failed": 3,
+      "skipped": 1,
+      "newHttpTestsPassed": 11,
+      "failuresReproducedOnBaseline": [
+        "tests/test_ai_operations.py::test_cancel_full_work_stops_pipeline_without_publication[False]",
+        "tests/test_requirements.py::test_deadline_rejects_partial_result_and_keeps_retry",
+        "tests/test_template_preview.py::test_large_slide_background_art_is_found_in_opc_media_without_picture_shape"
+      ]
+    }
+  },
+  "rawLoads": {
+    "before": {
+      "conditions": {
+        "baseURL": "http://127.0.0.1:8185",
+        "viewport": "1440x900",
+        "cpuSlowdown": 4,
+        "latencyMs": 80,
+        "downloadBytesPerSecond": 200000,
+        "runs": 3,
+        "animations": "enabled",
+        "note": "LCP/FCP/CLS use browser entries. longTaskOver50 is an observation-window diagnostic, not Lighthouse TBT. No field INP collected."
+      },
+      "samples": [
+        {
+          "run": 0,
+          "cache": "cold",
+          "lcp": 3904,
+          "cls": 0,
+          "longTaskOver50": 462,
+          "fcp": 3704,
+          "resources": [
+            {
+              "path": "/assets/Manrope.ttf",
+              "transferBytes": 165000,
+              "decodedBytes": 164700
+            },
+            {
+              "path": "/assets/index-DcSrbws4.js",
+              "transferBytes": 298359,
+              "decodedBytes": 298059
+            },
+            {
+              "path": "/assets/index-EGJKFMuc.css",
+              "transferBytes": 204052,
+              "decodedBytes": 203752
+            },
+            {
+              "path": "/api/auth/me",
+              "transferBytes": 323,
+              "decodedBytes": 23
+            },
+            {
+              "path": "/assets/CreativeOrbitScene-vfUz2Jkw.js",
+              "transferBytes": 8730,
+              "decodedBytes": 8430
+            },
+            {
+              "path": "/assets/three.module-B3O2wt0_.js",
+              "transferBytes": 480184,
+              "decodedBytes": 479884
+            }
+          ],
+          "browserMetrics": {
+            "LayoutDuration": 0.047127,
+            "RecalcStyleDuration": 0.043362,
+            "ScriptDuration": 0.352833,
+            "TaskDuration": 1.272463,
+            "JSHeapUsedSize": 5264372
+          }
+        },
+        {
+          "run": 0,
+          "cache": "warm",
+          "lcp": 248,
+          "cls": 0,
+          "longTaskOver50": 228,
+          "fcp": 136,
+          "resources": [
+            {
+              "path": "/assets/Manrope.ttf",
+              "transferBytes": 0,
+              "decodedBytes": 164700
+            },
+            {
+              "path": "/assets/index-DcSrbws4.js",
+              "transferBytes": 0,
+              "decodedBytes": 298059
+            },
+            {
+              "path": "/assets/index-EGJKFMuc.css",
+              "transferBytes": 0,
+              "decodedBytes": 203752
+            },
+            {
+              "path": "/api/auth/me",
+              "transferBytes": 323,
+              "decodedBytes": 23
+            },
+            {
+              "path": "/assets/CreativeOrbitScene-vfUz2Jkw.js",
+              "transferBytes": 0,
+              "decodedBytes": 8430
+            },
+            {
+              "path": "/assets/three.module-B3O2wt0_.js",
+              "transferBytes": 0,
+              "decodedBytes": 479884
+            }
+          ],
+          "browserMetrics": {
+            "LayoutDuration": 0.059974,
+            "RecalcStyleDuration": 0.058028,
+            "ScriptDuration": 0.473989,
+            "TaskDuration": 2.023139,
+            "JSHeapUsedSize": 5771288
+          }
+        },
+        {
+          "run": 1,
+          "cache": "cold",
+          "lcp": 3792,
+          "cls": 0,
+          "longTaskOver50": 234,
+          "fcp": 3632,
+          "resources": [
+            {
+              "path": "/assets/Manrope.ttf",
+              "transferBytes": 165000,
+              "decodedBytes": 164700
+            },
+            {
+              "path": "/assets/index-DcSrbws4.js",
+              "transferBytes": 298359,
+              "decodedBytes": 298059
+            },
+            {
+              "path": "/assets/index-EGJKFMuc.css",
+              "transferBytes": 204052,
+              "decodedBytes": 203752
+            },
+            {
+              "path": "/api/auth/me",
+              "transferBytes": 323,
+              "decodedBytes": 23
+            },
+            {
+              "path": "/assets/CreativeOrbitScene-vfUz2Jkw.js",
+              "transferBytes": 8730,
+              "decodedBytes": 8430
+            },
+            {
+              "path": "/assets/three.module-B3O2wt0_.js",
+              "transferBytes": 480184,
+              "decodedBytes": 479884
+            }
+          ],
+          "browserMetrics": {
+            "LayoutDuration": 0.031292,
+            "RecalcStyleDuration": 0.032329,
+            "ScriptDuration": 0.224256,
+            "TaskDuration": 0.885907,
+            "JSHeapUsedSize": 5230640
+          }
+        },
+        {
+          "run": 1,
+          "cache": "warm",
+          "lcp": 248,
+          "cls": 0,
+          "longTaskOver50": 223,
+          "fcp": 132,
+          "resources": [
+            {
+              "path": "/assets/Manrope.ttf",
+              "transferBytes": 0,
+              "decodedBytes": 164700
+            },
+            {
+              "path": "/assets/index-DcSrbws4.js",
+              "transferBytes": 0,
+              "decodedBytes": 298059
+            },
+            {
+              "path": "/assets/index-EGJKFMuc.css",
+              "transferBytes": 0,
+              "decodedBytes": 203752
+            },
+            {
+              "path": "/api/auth/me",
+              "transferBytes": 323,
+              "decodedBytes": 23
+            },
+            {
+              "path": "/assets/CreativeOrbitScene-vfUz2Jkw.js",
+              "transferBytes": 0,
+              "decodedBytes": 8430
+            },
+            {
+              "path": "/assets/three.module-B3O2wt0_.js",
+              "transferBytes": 0,
+              "decodedBytes": 479884
+            }
+          ],
+          "browserMetrics": {
+            "LayoutDuration": 0.042381,
+            "RecalcStyleDuration": 0.045122,
+            "ScriptDuration": 0.339396,
+            "TaskDuration": 1.631484,
+            "JSHeapUsedSize": 7212604
+          }
+        },
+        {
+          "run": 2,
+          "cache": "cold",
+          "lcp": 3728,
+          "cls": 0,
+          "longTaskOver50": 230,
+          "fcp": 3604,
+          "resources": [
+            {
+              "path": "/assets/Manrope.ttf",
+              "transferBytes": 165000,
+              "decodedBytes": 164700
+            },
+            {
+              "path": "/assets/index-EGJKFMuc.css",
+              "transferBytes": 204052,
+              "decodedBytes": 203752
+            },
+            {
+              "path": "/assets/index-DcSrbws4.js",
+              "transferBytes": 298359,
+              "decodedBytes": 298059
+            },
+            {
+              "path": "/api/auth/me",
+              "transferBytes": 323,
+              "decodedBytes": 23
+            },
+            {
+              "path": "/assets/CreativeOrbitScene-vfUz2Jkw.js",
+              "transferBytes": 8730,
+              "decodedBytes": 8430
+            },
+            {
+              "path": "/assets/three.module-B3O2wt0_.js",
+              "transferBytes": 480184,
+              "decodedBytes": 479884
+            }
+          ],
+          "browserMetrics": {
+            "LayoutDuration": 0.020023,
+            "RecalcStyleDuration": 0.017139,
+            "ScriptDuration": 0.197013,
+            "TaskDuration": 0.783456,
+            "JSHeapUsedSize": 5216068
+          }
+        },
+        {
+          "run": 2,
+          "cache": "warm",
+          "lcp": 248,
+          "cls": 0,
+          "longTaskOver50": 212,
+          "fcp": 128,
+          "resources": [
+            {
+              "path": "/assets/Manrope.ttf",
+              "transferBytes": 0,
+              "decodedBytes": 164700
+            },
+            {
+              "path": "/assets/index-DcSrbws4.js",
+              "transferBytes": 0,
+              "decodedBytes": 298059
+            },
+            {
+              "path": "/assets/index-EGJKFMuc.css",
+              "transferBytes": 0,
+              "decodedBytes": 203752
+            },
+            {
+              "path": "/api/auth/me",
+              "transferBytes": 323,
+              "decodedBytes": 23
+            },
+            {
+              "path": "/assets/CreativeOrbitScene-vfUz2Jkw.js",
+              "transferBytes": 0,
+              "decodedBytes": 8430
+            },
+            {
+              "path": "/assets/three.module-B3O2wt0_.js",
+              "transferBytes": 0,
+              "decodedBytes": 479884
+            }
+          ],
+          "browserMetrics": {
+            "LayoutDuration": 0.031503,
+            "RecalcStyleDuration": 0.030858,
+            "ScriptDuration": 0.317855,
+            "TaskDuration": 1.506292,
+            "JSHeapUsedSize": 5784824
+          }
+        }
+      ]
+    },
+    "after": {
+      "conditions": {
+        "baseURL": "http://127.0.0.1:8186",
+        "viewport": "1440x900",
+        "cpuSlowdown": 4,
+        "latencyMs": 80,
+        "downloadBytesPerSecond": 200000,
+        "runs": 3,
+        "animations": "enabled",
+        "note": "LCP/FCP/CLS use browser entries. longTaskOver50 is an observation-window diagnostic, not Lighthouse TBT. No field INP collected. Capture ends 30 frames after the WebGL scene and fonts are ready, not after all network requests finish; resources list completed requests only."
+      },
+      "samples": [
+        {
+          "run": 0,
+          "cache": "cold",
+          "lcp": 1408,
+          "cls": 0,
+          "longTaskOver50": 372,
+          "fcp": 1204,
+          "resources": [
+            {
+              "path": "/assets/Manrope-CRLrrZU2.woff2",
+              "transferBytes": 54192,
+              "decodedBytes": 53892
+            },
+            {
+              "path": "/assets/index-CoXSm_IF.js",
+              "transferBytes": 87760,
+              "decodedBytes": 298221
+            },
+            {
+              "path": "/assets/index-CXOCRGi6.css",
+              "transferBytes": 32355,
+              "decodedBytes": 203760
+            },
+            {
+              "path": "/api/auth/me",
+              "transferBytes": 323,
+              "decodedBytes": 23
+            },
+            {
+              "path": "/assets/CreativeOrbitScene-CE7UP8ck.js",
+              "transferBytes": 3690,
+              "decodedBytes": 8430
+            },
+            {
+              "path": "/assets/three.module-B3O2wt0_.js",
+              "transferBytes": 99121,
+              "decodedBytes": 479884
+            }
+          ],
+          "pendingRequests": [
+            "/api/public/templates"
+          ],
+          "errors": [],
+          "browserMetrics": {
+            "LayoutDuration": 0.036253,
+            "RecalcStyleDuration": 0.046867,
+            "ScriptDuration": 0.33358,
+            "TaskDuration": 1.134402,
+            "JSHeapUsedSize": 5978424
+          }
+        },
+        {
+          "run": 0,
+          "cache": "warm",
+          "lcp": 248,
+          "cls": 0,
+          "longTaskOver50": 243,
+          "fcp": 136,
+          "resources": [
+            {
+              "path": "/assets/Manrope-CRLrrZU2.woff2",
+              "transferBytes": 0,
+              "decodedBytes": 53892
+            },
+            {
+              "path": "/assets/index-CoXSm_IF.js",
+              "transferBytes": 0,
+              "decodedBytes": 298221
+            },
+            {
+              "path": "/assets/index-CXOCRGi6.css",
+              "transferBytes": 0,
+              "decodedBytes": 203760
+            },
+            {
+              "path": "/api/auth/me",
+              "transferBytes": 323,
+              "decodedBytes": 23
+            },
+            {
+              "path": "/assets/CreativeOrbitScene-CE7UP8ck.js",
+              "transferBytes": 0,
+              "decodedBytes": 8430
+            },
+            {
+              "path": "/assets/three.module-B3O2wt0_.js",
+              "transferBytes": 0,
+              "decodedBytes": 479884
+            }
+          ],
+          "pendingRequests": [
+            "/api/public/templates"
+          ],
+          "errors": [],
+          "browserMetrics": {
+            "LayoutDuration": 0.047314,
+            "RecalcStyleDuration": 0.058825,
+            "ScriptDuration": 0.475192,
+            "TaskDuration": 1.884659,
+            "JSHeapUsedSize": 8646876
+          }
+        },
+        {
+          "run": 1,
+          "cache": "cold",
+          "lcp": 1244,
+          "cls": 0,
+          "longTaskOver50": 231,
+          "fcp": 1120,
+          "resources": [
+            {
+              "path": "/assets/Manrope-CRLrrZU2.woff2",
+              "transferBytes": 54192,
+              "decodedBytes": 53892
+            },
+            {
+              "path": "/assets/index-CoXSm_IF.js",
+              "transferBytes": 87760,
+              "decodedBytes": 298221
+            },
+            {
+              "path": "/assets/index-CXOCRGi6.css",
+              "transferBytes": 32355,
+              "decodedBytes": 203760
+            },
+            {
+              "path": "/api/auth/me",
+              "transferBytes": 323,
+              "decodedBytes": 23
+            },
+            {
+              "path": "/assets/CreativeOrbitScene-CE7UP8ck.js",
+              "transferBytes": 3690,
+              "decodedBytes": 8430
+            },
+            {
+              "path": "/assets/three.module-B3O2wt0_.js",
+              "transferBytes": 99121,
+              "decodedBytes": 479884
+            }
+          ],
+          "pendingRequests": [
+            "/api/public/templates"
+          ],
+          "errors": [],
+          "browserMetrics": {
+            "LayoutDuration": 0.019847,
+            "RecalcStyleDuration": 0.020103,
+            "ScriptDuration": 0.190963,
+            "TaskDuration": 0.802547,
+            "JSHeapUsedSize": 5996184
+          }
+        },
+        {
+          "run": 1,
+          "cache": "warm",
+          "lcp": 252,
+          "cls": 0,
+          "longTaskOver50": 239,
+          "fcp": 128,
+          "resources": [
+            {
+              "path": "/assets/Manrope-CRLrrZU2.woff2",
+              "transferBytes": 0,
+              "decodedBytes": 53892
+            },
+            {
+              "path": "/assets/index-CoXSm_IF.js",
+              "transferBytes": 0,
+              "decodedBytes": 298221
+            },
+            {
+              "path": "/assets/index-CXOCRGi6.css",
+              "transferBytes": 0,
+              "decodedBytes": 203760
+            },
+            {
+              "path": "/api/auth/me",
+              "transferBytes": 323,
+              "decodedBytes": 23
+            },
+            {
+              "path": "/assets/CreativeOrbitScene-CE7UP8ck.js",
+              "transferBytes": 0,
+              "decodedBytes": 8430
+            },
+            {
+              "path": "/assets/three.module-B3O2wt0_.js",
+              "transferBytes": 0,
+              "decodedBytes": 479884
+            }
+          ],
+          "pendingRequests": [
+            "/api/public/templates"
+          ],
+          "errors": [],
+          "browserMetrics": {
+            "LayoutDuration": 0.033232,
+            "RecalcStyleDuration": 0.035231,
+            "ScriptDuration": 0.324082,
+            "TaskDuration": 1.557582,
+            "JSHeapUsedSize": 8586424
+          }
+        },
+        {
+          "run": 2,
+          "cache": "cold",
+          "lcp": 1248,
+          "cls": 0,
+          "longTaskOver50": 234,
+          "fcp": 1120,
+          "resources": [
+            {
+              "path": "/assets/Manrope-CRLrrZU2.woff2",
+              "transferBytes": 54192,
+              "decodedBytes": 53892
+            },
+            {
+              "path": "/assets/index-CXOCRGi6.css",
+              "transferBytes": 32355,
+              "decodedBytes": 203760
+            },
+            {
+              "path": "/assets/index-CoXSm_IF.js",
+              "transferBytes": 87760,
+              "decodedBytes": 298221
+            },
+            {
+              "path": "/api/auth/me",
+              "transferBytes": 323,
+              "decodedBytes": 23
+            },
+            {
+              "path": "/assets/CreativeOrbitScene-CE7UP8ck.js",
+              "transferBytes": 3690,
+              "decodedBytes": 8430
+            },
+            {
+              "path": "/assets/three.module-B3O2wt0_.js",
+              "transferBytes": 99121,
+              "decodedBytes": 479884
+            }
+          ],
+          "pendingRequests": [
+            "/api/public/templates"
+          ],
+          "errors": [],
+          "browserMetrics": {
+            "LayoutDuration": 0.019951,
+            "RecalcStyleDuration": 0.020662,
+            "ScriptDuration": 0.192662,
+            "TaskDuration": 0.819863,
+            "JSHeapUsedSize": 5987812
+          }
+        },
+        {
+          "run": 2,
+          "cache": "warm",
+          "lcp": 252,
+          "cls": 0,
+          "longTaskOver50": 229,
+          "fcp": 132,
+          "resources": [
+            {
+              "path": "/assets/Manrope-CRLrrZU2.woff2",
+              "transferBytes": 0,
+              "decodedBytes": 53892
+            },
+            {
+              "path": "/assets/index-CoXSm_IF.js",
+              "transferBytes": 0,
+              "decodedBytes": 298221
+            },
+            {
+              "path": "/assets/index-CXOCRGi6.css",
+              "transferBytes": 0,
+              "decodedBytes": 203760
+            },
+            {
+              "path": "/api/auth/me",
+              "transferBytes": 323,
+              "decodedBytes": 23
+            },
+            {
+              "path": "/assets/CreativeOrbitScene-CE7UP8ck.js",
+              "transferBytes": 0,
+              "decodedBytes": 8430
+            },
+            {
+              "path": "/assets/three.module-B3O2wt0_.js",
+              "transferBytes": 0,
+              "decodedBytes": 479884
+            }
+          ],
+          "pendingRequests": [
+            "/api/public/templates"
+          ],
+          "errors": [],
+          "browserMetrics": {
+            "LayoutDuration": 0.031292,
+            "RecalcStyleDuration": 0.035325,
+            "ScriptDuration": 0.323115,
+            "TaskDuration": 1.552422,
+            "JSHeapUsedSize": 8425336
+          }
+        }
+      ]
+    }
+  },
+  "interactionDiagnostics": {
+    "before": {
+      "conditions": "Docker production frontend; Chromium; CPU x4; eight slides; 160 keystrokes at 5ms intervals; browser event durations >=16ms only, not field INP.",
+      "editor": {
+        "before": {
+          "Timestamp": 775382.407015,
+          "AudioHandlers": 0,
+          "AudioWorkletProcessors": 0,
+          "Documents": 1,
+          "Frames": 1,
+          "JSEventListeners": 402,
+          "LayoutObjects": 631,
+          "MediaKeySessions": 0,
+          "MediaKeys": 0,
+          "Nodes": 5431,
+          "Resources": 25,
+          "ContextLifecycleStateObservers": 21,
+          "V8PerContextDatas": 3,
+          "WorkerGlobalScopes": 0,
+          "UACSSResources": 0,
+          "RTCPeerConnections": 0,
+          "ResourceFetchers": 1,
+          "AdSubframes": 0,
+          "DetachedScriptStates": 0,
+          "ArrayBufferContents": 0,
+          "LayoutCount": 0,
+          "RecalcStyleCount": 0,
+          "LayoutDuration": 0,
+          "RecalcStyleDuration": 0,
+          "DevToolsCommandDuration": 3.4e-05,
+          "ScriptDuration": 0,
+          "V8CompileDuration": 0,
+          "TaskDuration": 3.9e-05,
+          "TaskOtherDuration": 5e-06,
+          "ThreadTime": 0.003078,
+          "ProcessTime": 2.00638,
+          "JSHeapUsedSize": 46332852,
+          "JSHeapTotalSize": 70008832,
+          "FirstMeaningfulPaint": 775372.992627,
+          "DomContentLoaded": 775372.951718,
+          "NavigationStart": 775372.910361
+        },
+        "after": {
+          "Timestamp": 775384.250132,
+          "AudioHandlers": 0,
+          "AudioWorkletProcessors": 0,
+          "Documents": 1,
+          "Frames": 1,
+          "JSEventListeners": 4263,
+          "LayoutObjects": 646,
+          "MediaKeySessions": 0,
+          "MediaKeys": 0,
+          "Nodes": 5664,
+          "Resources": 26,
+          "ContextLifecycleStateObservers": 21,
+          "V8PerContextDatas": 3,
+          "WorkerGlobalScopes": 0,
+          "UACSSResources": 0,
+          "RTCPeerConnections": 0,
+          "ResourceFetchers": 1,
+          "AdSubframes": 0,
+          "DetachedScriptStates": 0,
+          "ArrayBufferContents": 0,
+          "LayoutCount": 171,
+          "RecalcStyleCount": 46,
+          "LayoutDuration": 0.063097,
+          "RecalcStyleDuration": 0.012707,
+          "DevToolsCommandDuration": 0.055723,
+          "ScriptDuration": 0.254931,
+          "V8CompileDuration": 0,
+          "TaskDuration": 0.648439,
+          "TaskOtherDuration": 0.261981,
+          "ThreadTime": 1.566162,
+          "ProcessTime": 3.721036,
+          "JSHeapUsedSize": 66533896,
+          "JSHeapTotalSize": 77086720,
+          "FirstMeaningfulPaint": 775372.992627,
+          "DomContentLoaded": 775372.951718,
+          "NavigationStart": 775372.910361
+        },
+        "inputDurations": [
+          16,
+          16,
+          16,
+          16,
+          16,
+          16,
+          16,
+          16,
+          24,
+          16,
+          24,
+          16,
+          16,
+          24,
+          24,
+          16,
+          24,
+          24,
+          16,
+          16,
+          16,
+          16,
+          16,
+          16,
+          16,
+          24,
+          16,
+          16,
+          16,
+          16,
+          16,
+          16,
+          16,
+          16,
+          16,
+          24,
+          16,
+          16,
+          16,
+          16,
+          16,
+          16,
+          16,
+          16,
+          24,
+          16,
+          16,
+          16,
+          16,
+          16,
+          16,
+          16,
+          16,
+          24,
+          16,
+          16,
+          16,
+          24,
+          16,
+          16,
+          16,
+          24,
+          16,
+          16,
+          24,
+          16,
+          16,
+          16,
+          16,
+          16,
+          16,
+          24,
+          16,
+          24,
+          16,
+          24,
+          16,
+          16,
+          24,
+          16,
+          16,
+          16,
+          16,
+          24,
+          16,
+          16,
+          24,
+          16,
+          24,
+          16,
+          16,
+          16,
+          24,
+          24,
+          16,
+          16,
+          16,
+          16,
+          16,
+          16,
+          16,
+          24,
+          16
+        ]
+      },
+      "replay": {
+        "contextsBefore": 3,
+        "contextsAfter": 4,
+        "before": {
+          "Timestamp": 775401.569463,
+          "AudioHandlers": 0,
+          "AudioWorkletProcessors": 0,
+          "Documents": 1,
+          "Frames": 1,
+          "JSEventListeners": 428,
+          "LayoutObjects": 211,
+          "MediaKeySessions": 0,
+          "MediaKeys": 0,
+          "Nodes": 4986,
+          "Resources": 31,
+          "ContextLifecycleStateObservers": 5,
+          "V8PerContextDatas": 3,
+          "WorkerGlobalScopes": 0,
+          "UACSSResources": 0,
+          "RTCPeerConnections": 0,
+          "ResourceFetchers": 1,
+          "AdSubframes": 0,
+          "DetachedScriptStates": 0,
+          "ArrayBufferContents": 21,
+          "LayoutCount": 204,
+          "RecalcStyleCount": 1030,
+          "LayoutDuration": 0.081996,
+          "RecalcStyleDuration": 0.158941,
+          "DevToolsCommandDuration": 0.474658,
+          "ScriptDuration": 0.969842,
+          "V8CompileDuration": 0,
+          "TaskDuration": 5.347417,
+          "TaskOtherDuration": 3.66198,
+          "ThreadTime": 15.302319,
+          "ProcessTime": 18.021589,
+          "JSHeapUsedSize": 57308672,
+          "JSHeapTotalSize": 92045312,
+          "FirstMeaningfulPaint": 775372.992627,
+          "DomContentLoaded": 775372.951718,
+          "NavigationStart": 775372.910361
+        },
+        "after": {
+          "Timestamp": 775402.907455,
+          "AudioHandlers": 0,
+          "AudioWorkletProcessors": 0,
+          "Documents": 1,
+          "Frames": 1,
+          "JSEventListeners": 272,
+          "LayoutObjects": 211,
+          "MediaKeySessions": 0,
+          "MediaKeys": 0,
+          "Nodes": 1182,
+          "Resources": 26,
+          "ContextLifecycleStateObservers": 5,
+          "V8PerContextDatas": 3,
+          "WorkerGlobalScopes": 0,
+          "UACSSResources": 0,
+          "RTCPeerConnections": 0,
+          "ResourceFetchers": 1,
+          "AdSubframes": 0,
+          "DetachedScriptStates": 0,
+          "ArrayBufferContents": 21,
+          "LayoutCount": 208,
+          "RecalcStyleCount": 1053,
+          "LayoutDuration": 0.083406,
+          "RecalcStyleDuration": 0.161364,
+          "DevToolsCommandDuration": 0.515493,
+          "ScriptDuration": 1.25425,
+          "V8CompileDuration": 0,
+          "TaskDuration": 6.376833,
+          "TaskOtherDuration": 4.36232,
+          "ThreadTime": 16.439251,
+          "ProcessTime": 19.23917,
+          "JSHeapUsedSize": 40777396,
+          "JSHeapTotalSize": 94142464,
+          "FirstMeaningfulPaint": 775372.992627,
+          "DomContentLoaded": 775372.951718,
+          "NavigationStart": 775372.910361
+        }
+      }
+    },
+    "after": {
+      "conditions": "Docker production frontend; Chromium; CPU x4; eight slides; 160 keystrokes at 5ms intervals; browser event durations >=16ms only, not field INP.",
+      "editor": {
+        "before": {
+          "Timestamp": 776415.508666,
+          "AudioHandlers": 0,
+          "AudioWorkletProcessors": 0,
+          "Documents": 1,
+          "Frames": 1,
+          "JSEventListeners": 402,
+          "LayoutObjects": 631,
+          "MediaKeySessions": 0,
+          "MediaKeys": 0,
+          "Nodes": 5428,
+          "Resources": 25,
+          "ContextLifecycleStateObservers": 21,
+          "V8PerContextDatas": 3,
+          "WorkerGlobalScopes": 0,
+          "UACSSResources": 0,
+          "RTCPeerConnections": 0,
+          "ResourceFetchers": 1,
+          "AdSubframes": 0,
+          "DetachedScriptStates": 0,
+          "ArrayBufferContents": 0,
+          "LayoutCount": 0,
+          "RecalcStyleCount": 0,
+          "LayoutDuration": 0,
+          "RecalcStyleDuration": 0,
+          "DevToolsCommandDuration": 4e-05,
+          "ScriptDuration": 0,
+          "V8CompileDuration": 0,
+          "TaskDuration": 4.3e-05,
+          "TaskOtherDuration": 3e-06,
+          "ThreadTime": 0.003086,
+          "ProcessTime": 1.756211,
+          "JSHeapUsedSize": 46346140,
+          "JSHeapTotalSize": 63979520,
+          "FirstMeaningfulPaint": 776406.318141,
+          "DomContentLoaded": 776406.245224,
+          "NavigationStart": 776406.148588
+        },
+        "after": {
+          "Timestamp": 776417.297176,
+          "AudioHandlers": 0,
+          "AudioWorkletProcessors": 0,
+          "Documents": 1,
+          "Frames": 1,
+          "JSEventListeners": 4263,
+          "LayoutObjects": 646,
+          "MediaKeySessions": 0,
+          "MediaKeys": 0,
+          "Nodes": 5661,
+          "Resources": 26,
+          "ContextLifecycleStateObservers": 21,
+          "V8PerContextDatas": 3,
+          "WorkerGlobalScopes": 0,
+          "UACSSResources": 0,
+          "RTCPeerConnections": 0,
+          "ResourceFetchers": 1,
+          "AdSubframes": 0,
+          "DetachedScriptStates": 0,
+          "ArrayBufferContents": 0,
+          "LayoutCount": 170,
+          "RecalcStyleCount": 46,
+          "LayoutDuration": 0.051881,
+          "RecalcStyleDuration": 0.007781,
+          "DevToolsCommandDuration": 0.051689,
+          "ScriptDuration": 0.233213,
+          "V8CompileDuration": 0,
+          "TaskDuration": 0.541247,
+          "TaskOtherDuration": 0.196683,
+          "ThreadTime": 1.499418,
+          "ProcessTime": 3.389808,
+          "JSHeapUsedSize": 66617516,
+          "JSHeapTotalSize": 72105984,
+          "FirstMeaningfulPaint": 776406.318141,
+          "DomContentLoaded": 776406.245224,
+          "NavigationStart": 776406.148588
+        },
+        "inputDurations": [
+          24,
+          24,
+          32,
+          40,
+          24,
+          32,
+          24,
+          32,
+          24,
+          32,
+          40,
+          24,
+          32,
+          24,
+          32,
+          24,
+          32,
+          24,
+          32,
+          24,
+          32,
+          24,
+          32,
+          24,
+          32,
+          24,
+          32,
+          24,
+          32,
+          24,
+          32,
+          24,
+          32,
+          24,
+          32,
+          24,
+          32,
+          24,
+          32,
+          24,
+          32,
+          24,
+          32,
+          24,
+          24,
+          32,
+          24,
+          32,
+          32,
+          24,
+          32,
+          24,
+          32,
+          24,
+          32,
+          24,
+          32,
+          24,
+          32,
+          24,
+          32,
+          24,
+          32,
+          24,
+          32,
+          24,
+          32,
+          24,
+          32,
+          24,
+          32,
+          24,
+          32,
+          16,
+          32,
+          24,
+          32,
+          24,
+          32,
+          24,
+          32,
+          24,
+          32,
+          24,
+          32,
+          24,
+          32,
+          24,
+          32,
+          24,
+          16,
+          24,
+          32,
+          24,
+          40,
+          32,
+          24,
+          32,
+          24,
+          32,
+          24,
+          32,
+          24,
+          32,
+          24,
+          32,
+          24,
+          32,
+          24,
+          32,
+          24,
+          16,
+          32,
+          24,
+          32,
+          24,
+          32,
+          24,
+          32,
+          24,
+          40,
+          32,
+          24,
+          24,
+          16,
+          24,
+          32,
+          24,
+          32,
+          24,
+          32,
+          24,
+          32,
+          24,
+          32,
+          24,
+          32,
+          24,
+          32,
+          24,
+          40,
+          32,
+          32,
+          24,
+          32,
+          24,
+          32,
+          24,
+          40,
+          32,
+          40,
+          32,
+          24,
+          32,
+          24,
+          32,
+          24,
+          32,
+          24,
+          24,
+          32,
+          40,
+          32,
+          32,
+          24
+        ]
+      },
+      "replay": {
+        "contextsBefore": 3,
+        "contextsAfter": 3,
+        "before": {
+          "Timestamp": 776430.103053,
+          "AudioHandlers": 0,
+          "AudioWorkletProcessors": 0,
+          "Documents": 1,
+          "Frames": 1,
+          "JSEventListeners": 428,
+          "LayoutObjects": 211,
+          "MediaKeySessions": 0,
+          "MediaKeys": 0,
+          "Nodes": 4986,
+          "Resources": 31,
+          "ContextLifecycleStateObservers": 5,
+          "V8PerContextDatas": 3,
+          "WorkerGlobalScopes": 0,
+          "UACSSResources": 0,
+          "RTCPeerConnections": 0,
+          "ResourceFetchers": 1,
+          "AdSubframes": 0,
+          "DetachedScriptStates": 0,
+          "ArrayBufferContents": 21,
+          "LayoutCount": 203,
+          "RecalcStyleCount": 759,
+          "LayoutDuration": 0.072653,
+          "RecalcStyleDuration": 0.122906,
+          "DevToolsCommandDuration": 0.478323,
+          "ScriptDuration": 0.83628,
+          "V8CompileDuration": 0,
+          "TaskDuration": 4.858498,
+          "TaskOtherDuration": 3.348336,
+          "ThreadTime": 11.709079,
+          "ProcessTime": 14.017167,
+          "JSHeapUsedSize": 58127980,
+          "JSHeapTotalSize": 91521024,
+          "FirstMeaningfulPaint": 776406.318141,
+          "DomContentLoaded": 776406.245224,
+          "NavigationStart": 776406.148588
+        },
+        "after": {
+          "Timestamp": 776430.3005,
+          "AudioHandlers": 0,
+          "AudioWorkletProcessors": 0,
+          "Documents": 1,
+          "Frames": 1,
+          "JSEventListeners": 437,
+          "LayoutObjects": 211,
+          "MediaKeySessions": 0,
+          "MediaKeys": 0,
+          "Nodes": 4986,
+          "Resources": 31,
+          "ContextLifecycleStateObservers": 5,
+          "V8PerContextDatas": 3,
+          "WorkerGlobalScopes": 0,
+          "UACSSResources": 0,
+          "RTCPeerConnections": 0,
+          "ResourceFetchers": 1,
+          "AdSubframes": 0,
+          "DetachedScriptStates": 0,
+          "ArrayBufferContents": 21,
+          "LayoutCount": 204,
+          "RecalcStyleCount": 775,
+          "LayoutDuration": 0.072739,
+          "RecalcStyleDuration": 0.124771,
+          "DevToolsCommandDuration": 0.486839,
+          "ScriptDuration": 0.845414,
+          "V8CompileDuration": 0,
+          "TaskDuration": 4.927843,
+          "TaskOtherDuration": 3.39808,
+          "ThreadTime": 11.86869,
+          "ProcessTime": 14.182493,
+          "JSHeapUsedSize": 59233212,
+          "JSHeapTotalSize": 92569600,
+          "FirstMeaningfulPaint": 776406.318141,
+          "DomContentLoaded": 776406.245224,
+          "NavigationStart": 776406.148588
+        }
+      }
+    }
+  }
+}

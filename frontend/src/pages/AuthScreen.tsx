@@ -52,10 +52,16 @@ export function AuthScreen({
     [resetMessage, setResetMessage] = useState(""),
     [showPassword, setShowPassword] = useState(false);
   useEffect(() => {
+    const controller = new AbortController();
     api
-      .publicTemplates()
-      .then(setTemplates)
-      .catch((e) => setError(e.message));
+      .publicTemplates(controller.signal)
+      .then((templates) => {
+        if (!controller.signal.aborted) setTemplates(templates);
+      })
+      .catch((e) => {
+        if (!controller.signal.aborted) setError(e.message);
+      });
+    return () => controller.abort();
   }, []);
   const formMotion = useSurfaceMotion(
     [screen],
