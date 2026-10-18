@@ -1,6 +1,5 @@
 import { gsap, useGSAP } from "../motion/animation";
 import { useRef } from "react";
-import { useCardTilt } from "../motion/useCardTilt";
 import { TemplateCover } from "./TemplateCover";
 import "../motion/scroll";
 import type { Template } from "../types";
@@ -19,7 +18,6 @@ export function TemplateCard({
   onPreview: (origin: HTMLElement) => void;
 }) {
   const card = useRef<HTMLElement>(null);
-  useCardTilt(card);
   useGSAP(
     () => {
       const media = gsap.matchMedia();
@@ -61,7 +59,6 @@ export function TemplateCard({
         aria-label={`Посмотреть шаблон ${template.name}`}
       >
         <TemplateCover template={template} />
-        <span className="template-glare" aria-hidden="true" />
       </button>
       <div className="template-body">
         <div className="between">

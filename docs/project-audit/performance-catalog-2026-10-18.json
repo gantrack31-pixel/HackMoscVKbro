@@ -1,0 +1,1033 @@
+{
+  "measuredAt": "2026-10-18T11:35:30.409731+00:00",
+  "branch": "feat/interface-motion",
+  "target": "http://127.0.0.1:8000",
+  "beforeReport": "performance-current-2026-10-18.json",
+  "conditions": {
+    "browser": "Playwright bundled Chromium, headless",
+    "cache": "Fresh browser context each run; HTTP cache disabled",
+    "desktop": "1440x900, no CPU/network throttling",
+    "mobile": "Pixel 7 emulation, 4x CPU slowdown, 1.6 Mbps download, 750 kbps upload, 150ms network latency",
+    "sampleCountPerProfile": 3,
+    "window": "From navigation through 8 seconds after start button is available, followed by form toggles without submitting. Mobile background template fetch is still in progress in these short samples.",
+    "animations": "Enabled, no reduced motion"
+  },
+  "implementation": {
+    "catalog": "Opt-in summary=true leaves legacy default payloads intact; UI metadata and full normalized layouts retained. Backend package/manifest/slide_examples omitted only in summary. Asset data is replaced by same-origin authorized image URLs.",
+    "images": "Cached lossless WebP copy bounded to 1600px on longest side. Original PNG/PPTX retained. HTML/WebGL share the same URL. Passport images use lazy loading.",
+    "authorization": "Private assets require owner access before bytes or 304 are returned. Public built-in template assets stay public. Responses are private,no-cache with ETag.",
+    "compatibility": "No new dependency, layout, colors or animation changes. Generation/editor/export continue using full server metadata."
+  },
+  "comparison": {
+    "beforeMedians": {
+      "desktop": {
+        "fcpMs": 56,
+        "lcpMs": 928,
+        "cls": 0,
+        "ttfbMs": 6.199999928474426,
+        "readyMs": 47.5,
+        "blockingTimeProxyMs": 189,
+        "transferBytes": 8500120,
+        "javascriptTransferBytes": 192630
+      },
+      "mobile": {
+        "fcpMs": 1292,
+        "lcpMs": 1476,
+        "cls": 0,
+        "ttfbMs": 7.799999952316284,
+        "readyMs": 1489.6000000238419,
+        "blockingTimeProxyMs": 0,
+        "transferBytes": 178951,
+        "javascriptTransferBytes": 88557
+      }
+    },
+    "afterMedians": {
+      "desktop": {
+        "fcpMs": 56,
+        "lcpMs": 452,
+        "cls": 0,
+        "ttfbMs": 10.300000071525574,
+        "readyMs": 69.89999997615814,
+        "blockingTimeProxyMs": 178,
+        "transferBytes": 1105215,
+        "javascriptTransferBytes": 192711
+      },
+      "mobile": {
+        "fcpMs": 1288,
+        "lcpMs": 1480,
+        "cls": 0,
+        "ttfbMs": 4.399999976158142,
+        "readyMs": 1488.7000000476837,
+        "blockingTimeProxyMs": 0,
+        "transferBytes": 1001143,
+        "javascriptTransferBytes": 88639
+      }
+    },
+    "desktopTransferReductionPercent": 86.99765415076493,
+    "catalogGzipBeforeBytes": 6147162,
+    "catalogGzipAfterBytes": 42267,
+    "catalogDecodedBeforeBytes": 18782583,
+    "catalogDecodedAfterBytes": 220684,
+    "catalogGzipReductionPercent": 99.31241441172365,
+    "thumbnailBeforeBytes": 2068495,
+    "thumbnailAfterBytes": 778406,
+    "fullMobileLastResourceBeforeMs": 43663.09999990463,
+    "fullMobileLastResourceAfterMs": 5900.399999976158,
+    "fullMobileBackgroundSpeedRatio": 7.400023727218674,
+    "fullMobileMaximumInteractionBeforeMs": 64,
+    "fullMobileMaximumInteractionAfterMs": 40
+  },
+  "apiAfter": {
+    "summaryGzipBodyBytes": 42267,
+    "summaryDecodedBytes": 220684,
+    "summaryTotalMs": [
+      120.12275005690753,
+      68.34845896810293,
+      66.21025002095848,
+      68.64099996164441,
+      66.41070789191872
+    ],
+    "previewBytes": 778406,
+    "previewType": "image/webp",
+    "previewDimensions": [
+      1600,
+      901
+    ],
+    "count": 18
+  },
+  "samplesAfter": [
+    {
+      "mode": "desktop",
+      "run": 1,
+      "readyMs": 121.29999995231628,
+      "fcpMs": 88,
+      "lcpMs": 132,
+      "lcpElement": "H1 ",
+      "cls": 0,
+      "ttfbMs": 11.100000023841858,
+      "domContentLoadedMs": 68.60000002384186,
+      "loadMs": 68.60000002384186,
+      "observationEndMs": 8132.799999952316,
+      "blockingTimeProxyMs": 255,
+      "longTaskCount": 2,
+      "longestTaskMs": 286,
+      "requests": 9,
+      "transferBytes": 1105215,
+      "javascriptTransferBytes": 192711,
+      "assets": [
+        {
+          "url": "http://127.0.0.1:8000/",
+          "type": "Document",
+          "status": 200,
+          "mime": "text/html",
+          "bytes": 1363
+        },
+        {
+          "url": "http://127.0.0.1:8000/assets/index-nTxUe1Xp.css",
+          "type": "Stylesheet",
+          "status": 200,
+          "encoding": "br",
+          "mime": "text/css",
+          "bytes": 33689
+        },
+        {
+          "url": "http://127.0.0.1:8000/assets/Manrope-CRLrrZU2.woff2",
+          "type": "Font",
+          "status": 200,
+          "mime": "font/woff2",
+          "bytes": 54727
+        },
+        {
+          "url": "http://127.0.0.1:8000/assets/index-DlES0uNr.js",
+          "type": "Script",
+          "status": 200,
+          "encoding": "br",
+          "mime": "text/javascript",
+          "bytes": 88639
+        },
+        {
+          "url": "http://127.0.0.1:8000/api/auth/me",
+          "type": "Fetch",
+          "status": 200,
+          "mime": "application/json",
+          "bytes": 615
+        },
+        {
+          "url": "http://127.0.0.1:8000/assets/CreativeOrbitScene-DGRqZL6_.js",
+          "type": "Script",
+          "status": 200,
+          "encoding": "br",
+          "mime": "text/javascript",
+          "bytes": 4282
+        },
+        {
+          "url": "http://127.0.0.1:8000/assets/three.module-BxLkdJy4.js",
+          "type": "Script",
+          "status": 200,
+          "encoding": "br",
+          "mime": "text/javascript",
+          "bytes": 99790
+        },
+        {
+          "url": "http://127.0.0.1:8000/api/public/templates?summary=true",
+          "type": "Fetch",
+          "status": 200,
+          "encoding": "gzip",
+          "mime": "application/json",
+          "bytes": 42903
+        },
+        {
+          "url": "http://127.0.0.1:8000/api/templates/tech/thumbnail?v=first-slide-3-cbbe3aa6a21d23cebc4d1383b93dd07a9cea460d683de1903567b616c839485d&optimized=true",
+          "type": "Image",
+          "status": 200,
+          "mime": "image/webp",
+          "bytes": 779207
+        }
+      ],
+      "interactions": [
+        {
+          "action": "Начать работу",
+          "clickToTwoFramesMs": 29.199999928474426
+        },
+        {
+          "action": "Регистрация",
+          "clickToTwoFramesMs": 18.399999976158142
+        }
+      ],
+      "eventTimings": [],
+      "errors": [],
+      "failed": []
+    },
+    {
+      "mode": "desktop",
+      "run": 2,
+      "readyMs": 48.10000002384186,
+      "fcpMs": 56,
+      "lcpMs": 452,
+      "lcpElement": "IMG template-real-preview",
+      "cls": 0,
+      "ttfbMs": 6.299999952316284,
+      "domContentLoadedMs": 28.299999952316284,
+      "loadMs": 28.399999976158142,
+      "observationEndMs": 8051.299999952316,
+      "blockingTimeProxyMs": 175,
+      "longTaskCount": 1,
+      "longestTaskMs": 225,
+      "requests": 9,
+      "transferBytes": 1105215,
+      "javascriptTransferBytes": 192711,
+      "assets": [
+        {
+          "url": "http://127.0.0.1:8000/",
+          "type": "Document",
+          "status": 200,
+          "mime": "text/html",
+          "bytes": 1363
+        },
+        {
+          "url": "http://127.0.0.1:8000/assets/index-nTxUe1Xp.css",
+          "type": "Stylesheet",
+          "status": 200,
+          "encoding": "br",
+          "mime": "text/css",
+          "bytes": 33689
+        },
+        {
+          "url": "http://127.0.0.1:8000/assets/Manrope-CRLrrZU2.woff2",
+          "type": "Font",
+          "status": 200,
+          "mime": "font/woff2",
+          "bytes": 54727
+        },
+        {
+          "url": "http://127.0.0.1:8000/assets/index-DlES0uNr.js",
+          "type": "Script",
+          "status": 200,
+          "encoding": "br",
+          "mime": "text/javascript",
+          "bytes": 88639
+        },
+        {
+          "url": "http://127.0.0.1:8000/api/auth/me",
+          "type": "Fetch",
+          "status": 200,
+          "mime": "application/json",
+          "bytes": 615
+        },
+        {
+          "url": "http://127.0.0.1:8000/assets/CreativeOrbitScene-DGRqZL6_.js",
+          "type": "Script",
+          "status": 200,
+          "encoding": "br",
+          "mime": "text/javascript",
+          "bytes": 4282
+        },
+        {
+          "url": "http://127.0.0.1:8000/assets/three.module-BxLkdJy4.js",
+          "type": "Script",
+          "status": 200,
+          "encoding": "br",
+          "mime": "text/javascript",
+          "bytes": 99790
+        },
+        {
+          "url": "http://127.0.0.1:8000/api/public/templates?summary=true",
+          "type": "Fetch",
+          "status": 200,
+          "encoding": "gzip",
+          "mime": "application/json",
+          "bytes": 42903
+        },
+        {
+          "url": "http://127.0.0.1:8000/api/templates/tech/thumbnail?v=first-slide-3-cbbe3aa6a21d23cebc4d1383b93dd07a9cea460d683de1903567b616c839485d&optimized=true",
+          "type": "Image",
+          "status": 200,
+          "mime": "image/webp",
+          "bytes": 779207
+        }
+      ],
+      "interactions": [
+        {
+          "action": "Начать работу",
+          "clickToTwoFramesMs": 32.5
+        },
+        {
+          "action": "Регистрация",
+          "clickToTwoFramesMs": 19.09999990463257
+        }
+      ],
+      "eventTimings": [],
+      "errors": [],
+      "failed": []
+    },
+    {
+      "mode": "desktop",
+      "run": 3,
+      "readyMs": 69.89999997615814,
+      "fcpMs": 48,
+      "lcpMs": 460,
+      "lcpElement": "IMG template-real-preview",
+      "cls": 0,
+      "ttfbMs": 10.300000071525574,
+      "domContentLoadedMs": 33.60000002384186,
+      "loadMs": 34.39999997615814,
+      "observationEndMs": 8073.300000071526,
+      "blockingTimeProxyMs": 178,
+      "longTaskCount": 1,
+      "longestTaskMs": 228,
+      "requests": 9,
+      "transferBytes": 1105215,
+      "javascriptTransferBytes": 192711,
+      "assets": [
+        {
+          "url": "http://127.0.0.1:8000/",
+          "type": "Document",
+          "status": 200,
+          "mime": "text/html",
+          "bytes": 1363
+        },
+        {
+          "url": "http://127.0.0.1:8000/assets/index-nTxUe1Xp.css",
+          "type": "Stylesheet",
+          "status": 200,
+          "encoding": "br",
+          "mime": "text/css",
+          "bytes": 33689
+        },
+        {
+          "url": "http://127.0.0.1:8000/assets/Manrope-CRLrrZU2.woff2",
+          "type": "Font",
+          "status": 200,
+          "mime": "font/woff2",
+          "bytes": 54727
+        },
+        {
+          "url": "http://127.0.0.1:8000/assets/index-DlES0uNr.js",
+          "type": "Script",
+          "status": 200,
+          "encoding": "br",
+          "mime": "text/javascript",
+          "bytes": 88639
+        },
+        {
+          "url": "http://127.0.0.1:8000/api/auth/me",
+          "type": "Fetch",
+          "status": 200,
+          "mime": "application/json",
+          "bytes": 615
+        },
+        {
+          "url": "http://127.0.0.1:8000/assets/CreativeOrbitScene-DGRqZL6_.js",
+          "type": "Script",
+          "status": 200,
+          "encoding": "br",
+          "mime": "text/javascript",
+          "bytes": 4282
+        },
+        {
+          "url": "http://127.0.0.1:8000/assets/three.module-BxLkdJy4.js",
+          "type": "Script",
+          "status": 200,
+          "encoding": "br",
+          "mime": "text/javascript",
+          "bytes": 99790
+        },
+        {
+          "url": "http://127.0.0.1:8000/api/public/templates?summary=true",
+          "type": "Fetch",
+          "status": 200,
+          "encoding": "gzip",
+          "mime": "application/json",
+          "bytes": 42903
+        },
+        {
+          "url": "http://127.0.0.1:8000/api/templates/tech/thumbnail?v=first-slide-3-cbbe3aa6a21d23cebc4d1383b93dd07a9cea460d683de1903567b616c839485d&optimized=true",
+          "type": "Image",
+          "status": 200,
+          "mime": "image/webp",
+          "bytes": 779207
+        }
+      ],
+      "interactions": [
+        {
+          "action": "Начать работу",
+          "clickToTwoFramesMs": 31.399999976158142
+        },
+        {
+          "action": "Регистрация",
+          "clickToTwoFramesMs": 19
+        }
+      ],
+      "eventTimings": [],
+      "errors": [],
+      "failed": []
+    },
+    {
+      "mode": "mobile",
+      "run": 1,
+      "readyMs": 1492.9000000953674,
+      "fcpMs": 1288,
+      "lcpMs": 1484,
+      "lcpElement": "H1 ",
+      "cls": 0,
+      "ttfbMs": 1.899999976158142,
+      "domContentLoadedMs": 1254.6000000238419,
+      "loadMs": 1254.7000000476837,
+      "observationEndMs": 9495.400000095367,
+      "blockingTimeProxyMs": 0,
+      "longTaskCount": 0,
+      "longestTaskMs": 0,
+      "requests": 7,
+      "transferBytes": 1001143,
+      "javascriptTransferBytes": 88639,
+      "assets": [
+        {
+          "url": "http://127.0.0.1:8000/",
+          "type": "Document",
+          "status": 200,
+          "mime": "text/html",
+          "bytes": 1363
+        },
+        {
+          "url": "http://127.0.0.1:8000/assets/index-nTxUe1Xp.css",
+          "type": "Stylesheet",
+          "status": 200,
+          "encoding": "br",
+          "mime": "text/css",
+          "bytes": 33689
+        },
+        {
+          "url": "http://127.0.0.1:8000/assets/Manrope-CRLrrZU2.woff2",
+          "type": "Font",
+          "status": 200,
+          "mime": "font/woff2",
+          "bytes": 54727
+        },
+        {
+          "url": "http://127.0.0.1:8000/assets/index-DlES0uNr.js",
+          "type": "Script",
+          "status": 200,
+          "encoding": "br",
+          "mime": "text/javascript",
+          "bytes": 88639
+        },
+        {
+          "url": "http://127.0.0.1:8000/api/auth/me",
+          "type": "Fetch",
+          "status": 200,
+          "mime": "application/json",
+          "bytes": 615
+        },
+        {
+          "url": "http://127.0.0.1:8000/api/public/templates?summary=true",
+          "type": "Fetch",
+          "status": 200,
+          "encoding": "gzip",
+          "mime": "application/json",
+          "bytes": 42903
+        },
+        {
+          "url": "http://127.0.0.1:8000/api/templates/tech/thumbnail?v=first-slide-3-cbbe3aa6a21d23cebc4d1383b93dd07a9cea460d683de1903567b616c839485d&optimized=true",
+          "type": "Image",
+          "status": 200,
+          "mime": "image/webp",
+          "bytes": 779207
+        }
+      ],
+      "interactions": [
+        {
+          "action": "Начать работу",
+          "clickToTwoFramesMs": 8.5
+        },
+        {
+          "action": "Регистрация",
+          "clickToTwoFramesMs": 25.5
+        }
+      ],
+      "eventTimings": [],
+      "errors": [],
+      "failed": []
+    },
+    {
+      "mode": "mobile",
+      "run": 2,
+      "readyMs": 1478.2999999523163,
+      "fcpMs": 1288,
+      "lcpMs": 1472,
+      "lcpElement": "H1 ",
+      "cls": 0,
+      "ttfbMs": 4.399999976158142,
+      "domContentLoadedMs": 1254.5,
+      "loadMs": 1254.5,
+      "observationEndMs": 9481,
+      "blockingTimeProxyMs": 0,
+      "longTaskCount": 0,
+      "longestTaskMs": 0,
+      "requests": 7,
+      "transferBytes": 1001143,
+      "javascriptTransferBytes": 88639,
+      "assets": [
+        {
+          "url": "http://127.0.0.1:8000/",
+          "type": "Document",
+          "status": 200,
+          "mime": "text/html",
+          "bytes": 1363
+        },
+        {
+          "url": "http://127.0.0.1:8000/assets/index-nTxUe1Xp.css",
+          "type": "Stylesheet",
+          "status": 200,
+          "encoding": "br",
+          "mime": "text/css",
+          "bytes": 33689
+        },
+        {
+          "url": "http://127.0.0.1:8000/assets/Manrope-CRLrrZU2.woff2",
+          "type": "Font",
+          "status": 200,
+          "mime": "font/woff2",
+          "bytes": 54727
+        },
+        {
+          "url": "http://127.0.0.1:8000/assets/index-DlES0uNr.js",
+          "type": "Script",
+          "status": 200,
+          "encoding": "br",
+          "mime": "text/javascript",
+          "bytes": 88639
+        },
+        {
+          "url": "http://127.0.0.1:8000/api/auth/me",
+          "type": "Fetch",
+          "status": 200,
+          "mime": "application/json",
+          "bytes": 615
+        },
+        {
+          "url": "http://127.0.0.1:8000/api/public/templates?summary=true",
+          "type": "Fetch",
+          "status": 200,
+          "encoding": "gzip",
+          "mime": "application/json",
+          "bytes": 42903
+        },
+        {
+          "url": "http://127.0.0.1:8000/api/templates/tech/thumbnail?v=first-slide-3-cbbe3aa6a21d23cebc4d1383b93dd07a9cea460d683de1903567b616c839485d&optimized=true",
+          "type": "Image",
+          "status": 200,
+          "mime": "image/webp",
+          "bytes": 779207
+        }
+      ],
+      "interactions": [
+        {
+          "action": "Начать работу",
+          "clickToTwoFramesMs": 16.299999952316284
+        },
+        {
+          "action": "Регистрация",
+          "clickToTwoFramesMs": 26.700000047683716
+        }
+      ],
+      "eventTimings": [],
+      "errors": [],
+      "failed": []
+    },
+    {
+      "mode": "mobile",
+      "run": 3,
+      "readyMs": 1488.7000000476837,
+      "fcpMs": 1272,
+      "lcpMs": 1480,
+      "lcpElement": "H1 ",
+      "cls": 0,
+      "ttfbMs": 5.600000023841858,
+      "domContentLoadedMs": 1253.6000000238419,
+      "loadMs": 1253.6000000238419,
+      "observationEndMs": 9491.100000023842,
+      "blockingTimeProxyMs": 0,
+      "longTaskCount": 0,
+      "longestTaskMs": 0,
+      "requests": 7,
+      "transferBytes": 1001143,
+      "javascriptTransferBytes": 88639,
+      "assets": [
+        {
+          "url": "http://127.0.0.1:8000/",
+          "type": "Document",
+          "status": 200,
+          "mime": "text/html",
+          "bytes": 1363
+        },
+        {
+          "url": "http://127.0.0.1:8000/assets/index-nTxUe1Xp.css",
+          "type": "Stylesheet",
+          "status": 200,
+          "encoding": "br",
+          "mime": "text/css",
+          "bytes": 33689
+        },
+        {
+          "url": "http://127.0.0.1:8000/assets/Manrope-CRLrrZU2.woff2",
+          "type": "Font",
+          "status": 200,
+          "mime": "font/woff2",
+          "bytes": 54727
+        },
+        {
+          "url": "http://127.0.0.1:8000/assets/index-DlES0uNr.js",
+          "type": "Script",
+          "status": 200,
+          "encoding": "br",
+          "mime": "text/javascript",
+          "bytes": 88639
+        },
+        {
+          "url": "http://127.0.0.1:8000/api/auth/me",
+          "type": "Fetch",
+          "status": 200,
+          "mime": "application/json",
+          "bytes": 615
+        },
+        {
+          "url": "http://127.0.0.1:8000/api/public/templates?summary=true",
+          "type": "Fetch",
+          "status": 200,
+          "encoding": "gzip",
+          "mime": "application/json",
+          "bytes": 42903
+        },
+        {
+          "url": "http://127.0.0.1:8000/api/templates/tech/thumbnail?v=first-slide-3-cbbe3aa6a21d23cebc4d1383b93dd07a9cea460d683de1903567b616c839485d&optimized=true",
+          "type": "Image",
+          "status": 200,
+          "mime": "image/webp",
+          "bytes": 779207
+        }
+      ],
+      "interactions": [
+        {
+          "action": "Начать работу",
+          "clickToTwoFramesMs": 8.799999952316284
+        },
+        {
+          "action": "Регистрация",
+          "clickToTwoFramesMs": 24
+        }
+      ],
+      "eventTimings": [],
+      "errors": [],
+      "failed": []
+    }
+  ],
+  "supplementaryFullMobileAfter": {
+    "conditions": "Single supplementary cold mobile run, Pixel 7 viewport, CPU4x, 1.6Mbps download, 750kbps upload, 150ms latency; wait for all background network, then trusted clicks and typing; no form submission",
+    "endMs": 8406.299999952316,
+    "fcpMs": 1280,
+    "lcpMs": 1476,
+    "blockingTimeProxyMs": 0,
+    "longestTaskMs": 0,
+    "resources": [
+      {
+        "url": "http://127.0.0.1:8000/assets/Manrope-CRLrrZU2.woff2",
+        "endMs": 1040.3999999761581,
+        "duration": 866.8999999761581,
+        "transferBytes": 54192
+      },
+      {
+        "url": "http://127.0.0.1:8000/assets/index-DlES0uNr.js",
+        "endMs": 1219.7999999523163,
+        "duration": 1046.1999999284744,
+        "transferBytes": 88062
+      },
+      {
+        "url": "http://127.0.0.1:8000/assets/index-nTxUe1Xp.css",
+        "endMs": 837.5,
+        "duration": 663.2000000476837,
+        "transferBytes": 33119
+      },
+      {
+        "url": "http://127.0.0.1:8000/api/auth/me",
+        "endMs": 1437.8999999761581,
+        "duration": 159.69999992847443,
+        "transferBytes": 323
+      },
+      {
+        "url": "http://127.0.0.1:8000/api/public/templates?summary=true",
+        "endMs": 1841.7000000476837,
+        "duration": 370.7000000476837,
+        "transferBytes": 42567
+      },
+      {
+        "url": "http://127.0.0.1:8000/api/templates/tech/thumbnail?v=first-slide-3-cbbe3aa6a21d23cebc4d1383b93dd07a9cea460d683de1903567b616c839485d&optimized=true",
+        "endMs": 5900.399999976158,
+        "duration": 4052,
+        "transferBytes": 778706
+      }
+    ],
+    "transferBytes": 1001143,
+    "interactionFrames": [
+      {
+        "name": "Начать работу",
+        "clickToTwoFramesMs": 30.199999928474426
+      },
+      {
+        "name": "Регистрация",
+        "clickToTwoFramesMs": 28.5
+      }
+    ],
+    "eventTimings": [
+      {
+        "start": 8465.899999976158,
+        "duration": 40,
+        "id": 3799,
+        "name": "pointerdown"
+      },
+      {
+        "start": 8465.899999976158,
+        "duration": 40,
+        "id": 3799,
+        "name": "pointerup"
+      },
+      {
+        "start": 8465.899999976158,
+        "duration": 40,
+        "id": 3799,
+        "name": "click"
+      },
+      {
+        "start": 8945.5,
+        "duration": 32,
+        "id": 3806,
+        "name": "pointerdown"
+      },
+      {
+        "start": 8945.5,
+        "duration": 32,
+        "id": 3806,
+        "name": "pointerup"
+      },
+      {
+        "start": 8945.5,
+        "duration": 32,
+        "id": 3806,
+        "name": "click"
+      },
+      {
+        "start": 9389.200000047684,
+        "duration": 24,
+        "id": 3813,
+        "name": "keydown"
+      },
+      {
+        "start": 9389.200000047684,
+        "duration": 24,
+        "id": 3813,
+        "name": "keypress"
+      },
+      {
+        "start": 9477,
+        "duration": 32,
+        "id": 3813,
+        "name": "keyup"
+      },
+      {
+        "start": 9477.799999952316,
+        "duration": 32,
+        "id": 3820,
+        "name": "keydown"
+      },
+      {
+        "start": 9477.799999952316,
+        "duration": 32,
+        "id": 3820,
+        "name": "keypress"
+      },
+      {
+        "start": 9560.600000023842,
+        "duration": 32,
+        "id": 3820,
+        "name": "keyup"
+      },
+      {
+        "start": 9561.700000047684,
+        "duration": 32,
+        "id": 3827,
+        "name": "keydown"
+      },
+      {
+        "start": 9561.700000047684,
+        "duration": 32,
+        "id": 3827,
+        "name": "keypress"
+      },
+      {
+        "start": 9643.100000023842,
+        "duration": 16,
+        "id": 3827,
+        "name": "keyup"
+      },
+      {
+        "start": 9643.5,
+        "duration": 32,
+        "id": 3834,
+        "name": "keydown"
+      },
+      {
+        "start": 9643.5,
+        "duration": 32,
+        "id": 3834,
+        "name": "keypress"
+      },
+      {
+        "start": 9724.399999976158,
+        "duration": 16,
+        "id": 3834,
+        "name": "keyup"
+      },
+      {
+        "start": 9724.799999952316,
+        "duration": 16,
+        "id": 3841,
+        "name": "keydown"
+      },
+      {
+        "start": 9724.799999952316,
+        "duration": 16,
+        "id": 3841,
+        "name": "keypress"
+      },
+      {
+        "start": 9806.399999976158,
+        "duration": 24,
+        "id": 3841,
+        "name": "keyup"
+      },
+      {
+        "start": 9807.100000023842,
+        "duration": 16,
+        "id": 3848,
+        "name": "keydown"
+      },
+      {
+        "start": 9807.100000023842,
+        "duration": 16,
+        "id": 3848,
+        "name": "keypress"
+      },
+      {
+        "start": 9886.899999976158,
+        "duration": 24,
+        "id": 3848,
+        "name": "keyup"
+      },
+      {
+        "start": 9887.299999952316,
+        "duration": 24,
+        "id": 3855,
+        "name": "keydown"
+      },
+      {
+        "start": 9887.299999952316,
+        "duration": 24,
+        "id": 3855,
+        "name": "keypress"
+      },
+      {
+        "start": 10131.299999952316,
+        "duration": 16,
+        "id": 3869,
+        "name": "keyup"
+      },
+      {
+        "start": 10212.700000047684,
+        "duration": 16,
+        "id": 3876,
+        "name": "keyup"
+      },
+      {
+        "start": 10213.299999952316,
+        "duration": 16,
+        "id": 3883,
+        "name": "keydown"
+      },
+      {
+        "start": 10213.299999952316,
+        "duration": 16,
+        "id": 3883,
+        "name": "keypress"
+      },
+      {
+        "start": 10293.700000047684,
+        "duration": 16,
+        "id": 3890,
+        "name": "keydown"
+      },
+      {
+        "start": 10293.700000047684,
+        "duration": 16,
+        "id": 3890,
+        "name": "keypress"
+      }
+    ],
+    "errors": []
+  },
+  "visualComparison": [
+    {
+      "width": 1440,
+      "theme": "light",
+      "sameDimensions": true,
+      "sameHeadingBounds": true,
+      "horizontalOverflowBefore": false,
+      "horizontalOverflowAfter": false,
+      "errors": [],
+      "meanAbsoluteChannelDifference": 0.06990555555555555
+    },
+    {
+      "width": 1440,
+      "theme": "dark",
+      "sameDimensions": true,
+      "sameHeadingBounds": true,
+      "horizontalOverflowBefore": false,
+      "horizontalOverflowAfter": false,
+      "errors": [],
+      "meanAbsoluteChannelDifference": 0.06990555555555555
+    },
+    {
+      "width": 390,
+      "theme": "light",
+      "sameDimensions": true,
+      "sameHeadingBounds": true,
+      "horizontalOverflowBefore": false,
+      "horizontalOverflowAfter": false,
+      "errors": [],
+      "meanAbsoluteChannelDifference": 0.06745805634694524
+    },
+    {
+      "width": 390,
+      "theme": "dark",
+      "sameDimensions": true,
+      "sameHeadingBounds": true,
+      "horizontalOverflowBefore": false,
+      "horizontalOverflowAfter": false,
+      "errors": [],
+      "meanAbsoluteChannelDifference": 0.06745805634694524
+    }
+  ],
+  "checks": {
+    "typescriptProductionBuild": "passed, local and Docker",
+    "frontendUnit": {
+      "passed": 14
+    },
+    "developmentE2E": {
+      "passed": 17,
+      "failed": 0,
+      "specs": [
+        "critical-flows",
+        "interface-motion",
+        "presentation-polish"
+      ]
+    },
+    "finalProductionE2E": {
+      "passed": 10,
+      "failed": 0,
+      "specs": [
+        "catalog-loading",
+        "interface-motion",
+        "loading"
+      ],
+      "details": "Fresh Docker DB, real PPTX assets, MIME fix included. The initial attempt had a connection error before backend readiness; final run explicitly waited for health."
+    },
+    "productionColorsE2E": {
+      "passed": 2,
+      "details": "Original PNG and theme-color preservation scenarios passed before the final MIME-only change."
+    },
+    "targetedBackend": {
+      "passed": 16,
+      "failed": 0,
+      "specs": [
+        "test_catalog_loading.py",
+        "test_http_assets.py"
+      ]
+    },
+    "fullBackend": {
+      "passed": 313,
+      "failed": 3,
+      "skipped": 1,
+      "preExistingFailures": [
+        "test_cancel_full_work_stops_pipeline_without_publication[False]",
+        "test_deadline_rejects_partial_result_and_keeps_retry",
+        "test_large_slide_background_art_is_found_in_opc_media_without_picture_shape"
+      ],
+      "baselineVerification": "All three failures reproduced using HEAD main.py and template_preview.py in an isolated copy of backend/app. No changes to generation, deadlines or orphan-image selection were made."
+    },
+    "prettier": "passed for changed implementation and new E2E; existing presentation-polish formatting preserved around one URL matcher change",
+    "eslint": "No separate ESLint script/config available",
+    "gitDiffCheck": "passed",
+    "mainSiteHealth": "HTTP 200 after Docker update"
+  },
+  "localConfigRepair": "Commented invalid non-assignment text on .env.docker line 31 because Docker Compose could not parse it. Assignment values were not changed. No environment values included in artifacts.",
+  "changedFilesThisTask": [
+    "backend/app/main.py",
+    "backend/app/http_assets.py",
+    "backend/app/services/template_preview.py",
+    "backend/tests/test_catalog_loading.py",
+    "frontend/src/api/templates.ts",
+    "frontend/src/components/TemplatePreviewDialog.tsx",
+    "frontend/e2e/catalog-loading.spec.ts",
+    "frontend/e2e/presentation-polish.spec.ts",
+    "frontend/ARCHITECTURE.md",
+    "docs/project-audit/performance-catalog-2026-10-18.json"
+  ],
+  "limitations": [
+    "Local laboratory measurements, not public deployment or physical-device field metrics.",
+    "Three initial-load samples per profile; the full-background mobile comparison is one supplementary sample per version.",
+    "Desktop LCP improved in these samples; mobile FCP/LCP are effectively unchanged. Resource weight and background completion are the main confirmed gains.",
+    "Long-task sums are proxies, not Lighthouse TBT; observed interaction durations are not field INP. No FPS improvement claimed.",
+    "Visual captures cover the anonymous entry page at 1440/390px with both stored theme preferences and reduced motion. They are not an exhaustive pixel check of the whole app. Mean image difference is about 0.07/255, consistent with resampling; heading bounds and document sizes match.",
+    "Full project/legacy template responses intentionally retain heavy metadata for compatibility; AI generation latency was not benchmarked.",
+    "Three backend tests already fail on baseline; their behavior is outside this catalog optimization."
+  ],
+  "artifacts": "/private/tmp/deckly-catalog-after"
+}

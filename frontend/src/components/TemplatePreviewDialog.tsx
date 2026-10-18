@@ -93,7 +93,13 @@ export function TemplatePreviewDialog({
               {preview.metadata.assets
                 .filter((a) => a.data)
                 .map((a) => (
-                  <img key={a.id} src={a.data} alt={a.description || a.name} />
+                  <img
+                    key={a.id}
+                    src={a.data}
+                    alt={a.description || a.name}
+                    loading="lazy"
+                    decoding="async"
+                  />
                 ))}
             </div>
           )}

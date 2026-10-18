@@ -1,24 +1,16 @@
-/* Each transform belongs to one surface: route parent, card, preview clone or slide. */
-.template-cover,
-.gallery-cover {
-  position: relative;
-}
-.template-glare {
-  position: absolute;
-  inset: -20%;
-  pointer-events: none;
-  border-radius: inherit;
-  background: linear-gradient(
-    120deg,
-    transparent 24%,
-    #fff9 47%,
-    transparent 68%
-  );
-  opacity: 0;
-  z-index: 2;
-}
 [data-shared-cover] {
   box-sizing: border-box;
+}
+/* Keep only the flying cover visible; preserve the dialog's layout and top layer. */
+dialog.modern-dialog[data-shared-returning] {
+  background: transparent;
+  border-color: transparent;
+  box-shadow: none;
+  overflow: visible;
+}
+dialog.modern-dialog[data-shared-returning] > .modal-heading,
+dialog.modern-dialog[data-shared-returning] > .modal-body {
+  visibility: hidden;
 }
 [data-preview-cover] {
   width: 100%;
@@ -70,13 +62,6 @@ dialog.template-preview-dialog.is-closing::backdrop {
     transition: transform 220ms ease;
   }
 }
-@media (hover: none) and (prefers-reduced-motion: no-preference) {
-  .template-cover:active,
-  .gallery-cover:active {
-    transform: scale(0.99);
-    transition: transform 150ms ease;
-  }
-}
 @media (min-width: 851px) and (prefers-reduced-motion: no-preference) {
   .wizard-modern.wizard-flow .variant-grid {
     perspective: 1400px;
@@ -107,9 +92,6 @@ dialog.template-preview-dialog.is-closing::backdrop {
   }
 }
 @media (prefers-reduced-motion: reduce) {
-  .template-glare {
-    display: none;
-  }
   .page .editor-save-status,
   .save-state-icon,
   .gallery-favorite svg,

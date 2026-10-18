@@ -27,6 +27,11 @@ export function Modal({
   const activeTween = useRef<gsap.core.Tween | null>(null);
   const closeCallback = useRef(onClose);
   closeCallback.current = onClose;
+  const releaseDialog = useRef<(() => void) | null>(null);
+  const finishClose = () => {
+    releaseDialog.current?.();
+    closeCallback.current();
+  };
   const startedOnBackdrop = useRef(false);
   const { contextSafe } = useGSAP(
     () => {
@@ -42,6 +47,16 @@ export function Modal({
       const preference = matchMedia("(prefers-reduced-motion: reduce)");
       dialog.showModal();
       document.body.style.overflow = "hidden";
+      let released = false;
+      const release = () => {
+        if (released) return;
+        released = true;
+        dialog.close();
+        document.body.style.overflow = previousOverflow;
+        if (origin) origin.style.visibility = originalVisibility;
+        if (previousFocus?.isConnected) previousFocus.focus();
+      };
+      releaseDialog.current = release;
       if (!preference.matches) {
         sharedCleanup.current = animateSharedCover(dialog, origin);
         if (sharedCleanup.current && origin) {
@@ -78,7 +93,7 @@ export function Modal({
         sharedCleanup.current = null;
         if (closingLock.current) {
           activeTween.current?.kill();
-          closeCallback.current();
+          finishClose();
         } else activeTween.current?.progress(1);
       };
       preference.addEventListener("change", reduce);
@@ -87,10 +102,8 @@ export function Modal({
         preference.removeEventListener("change", reduce);
         sharedCleanup.current?.();
         sharedCleanup.current = null;
-        dialog.close();
-        document.body.style.overflow = previousOverflow;
-        if (origin) origin.style.visibility = originalVisibility;
-        if (previousFocus?.isConnected) previousFocus.focus();
+        release();
+        if (releaseDialog.current === release) releaseDialog.current = null;
       };
     },
     { scope: ref },
@@ -106,14 +119,14 @@ export function Modal({
     sharedCleanup.current = null;
     activeTween.current?.progress(1);
     if (matchMedia("(prefers-reduced-motion: reduce)").matches) {
-      onClose();
+      finishClose();
       return;
     }
     sharedCleanup.current = animateSharedCover(
       ref.current!,
       origin,
       true,
-      onClose,
+      finishClose,
       currentBounds,
     );
     if (!sharedCleanup.current)
@@ -123,7 +136,7 @@ export function Modal({
         duration: motion.fast,
         ease: "power2.in",
         overwrite: true,
-        onComplete: onClose,
+        onComplete: finishClose,
       });
   });
   function isOutside(clientX: number, clientY: number) {

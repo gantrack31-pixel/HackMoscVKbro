@@ -3,7 +3,7 @@ import { DecklyPage } from "./pages";
 
 test("themes, narrow outline, aligned actions and enlarged audit", async ({page}) => {
   const name="Мой_Портфель_презентация_фон_сохранён";
-  await page.route("**/api/templates",async route=>{
+  await page.route((url)=>url.pathname==="/api/templates",async route=>{
     const response=await route.fetch();
     const templates=await response.json();
     await route.fulfill({json:templates.map((t:any)=>t.id==="education"?{...t,name}:t)});

@@ -30,27 +30,148 @@ test("preview cover travels back to its card and restores focus", async ({
   await dialog.locator("summary").first().click();
   await expect(dialog.locator("details").first()).toHaveAttribute("open", "");
   await dialog.getByRole("button", { name: "Закрыть", exact: true }).click();
-  await expect(dialog).toHaveCount(0);
+  await expect(page.locator("dialog")).toHaveCount(0);
   await expect(page.locator("[data-shared-cover]")).toHaveCount(0);
   await expect(cover).toBeFocused();
   await expect(cover.locator(":scope > :first-child")).toBeVisible();
 });
 
-test("switching to reduced motion cancels tilt and shared cover motion", async ({
+test("return flight hides the stationary preview shell on a scrolled catalog", async ({
+  page,
+}, testInfo) => {
+  test.setTimeout(90_000);
+  await page.setViewportSize({ width: 1440, height: 850 });
+  const app = new MotionPage(page);
+  await app.openCatalog();
+  await app.gallery.scrollIntoViewIfNeeded();
+  expect(await page.evaluate(() => scrollY)).toBeGreaterThan(0);
+  await app.cover().click();
+  await expect(page.locator("[data-shared-cover]")).toHaveCount(0);
+  const image = page.locator("[data-preview-cover] img");
+  if (await image.count()) {
+    await expect
+      .poll(
+        () =>
+          image.evaluate(
+            (node: HTMLImageElement) => node.complete && node.naturalWidth > 0,
+          ),
+        { timeout: 60_000 },
+      )
+      .toBe(true);
+  }
+  const duringReturn = await page.locator("dialog[open]").evaluate((dialog) => {
+    const artwork = dialog
+      .querySelector<HTMLElement>("[data-preview-cover]")!
+      .getBoundingClientRect();
+    dialog.dispatchEvent(new Event("cancel", { cancelable: true }));
+    const clone = dialog.querySelector<HTMLElement>("[data-shared-cover]")!;
+    const bounds = clone.getBoundingClientRect();
+    return {
+      shellBackground: getComputedStyle(dialog).backgroundColor,
+      shellShadow: getComputedStyle(dialog).boxShadow,
+      backdropVisibility: getComputedStyle(dialog, "::backdrop").visibility,
+      headingVisibility: getComputedStyle(
+        dialog.querySelector(".modal-heading")!,
+      ).visibility,
+      cloneVisibility: getComputedStyle(clone).visibility,
+      overflow: getComputedStyle(dialog).overflow,
+      startDelta:
+        Math.abs(bounds.x - artwork.x) + Math.abs(bounds.y - artwork.y),
+    };
+  });
+  await page.screenshot({ path: testInfo.outputPath("return-flight.png") });
+  expect(duringReturn).toMatchObject({
+    shellBackground: "rgba(0, 0, 0, 0)",
+    shellShadow: "none",
+    backdropVisibility: "visible",
+    headingVisibility: "hidden",
+    cloneVisibility: "visible",
+    overflow: "visible",
+  });
+  expect(duringReturn.startDelta).toBeLessThan(2);
+  await expect(page.locator("dialog")).toHaveCount(0);
+  await expect(page.locator("[data-shared-cover]")).toHaveCount(0);
+  await expect(app.cover()).toBeFocused();
+});
+
+test("return handoff closes the native dialog before revealing the deck card", async ({
   page,
 }) => {
   const app = new MotionPage(page);
   await app.openCatalog();
+  await app.cover().click();
+  await expect(page.locator("[data-shared-cover]")).toHaveCount(0);
+  await page.getByRole("dialog").evaluate((dialog) => {
+    const state = window as typeof window & {
+      returnHandoff?: Promise<{
+        open: boolean;
+        originHidden: boolean;
+        scrollLocked: boolean;
+      }>;
+    };
+    state.returnHandoff = new Promise((resolve) => {
+      const observer = new MutationObserver((records) => {
+        if (
+          !records.some((record) =>
+            [...record.removedNodes].some(
+              (node) =>
+                node instanceof HTMLElement &&
+                node.hasAttribute("data-shared-cover"),
+            ),
+          )
+        )
+          return;
+        observer.disconnect();
+        const origin = document.querySelector<HTMLElement>(
+          ".spatial-gallery .is-active .gallery-cover > :first-child",
+        );
+        resolve({
+          open: (dialog as HTMLDialogElement).open,
+          originHidden: origin?.style.visibility === "hidden",
+          scrollLocked: document.body.style.overflow === "hidden",
+        });
+      });
+      observer.observe(dialog, { childList: true });
+    });
+  });
+  await page.getByRole("button", { name: "Закрыть", exact: true }).click();
+  const handoff = await page.evaluate(
+    () =>
+      (
+        window as typeof window & {
+          returnHandoff: Promise<{
+            open: boolean;
+            originHidden: boolean;
+            scrollLocked: boolean;
+          }>;
+        }
+      ).returnHandoff,
+  );
+  expect(handoff).toEqual({
+    open: false,
+    originHidden: false,
+    scrollLocked: false,
+  });
+  await expect(page.locator("dialog")).toHaveCount(0);
+  await expect(app.cover()).toBeFocused();
+});
+
+test("template covers stay still on hover and reduced motion skips shared cover motion", async ({
+  page,
+}) => {
+  const app = new MotionPage(page);
+  await app.openCatalog();
+  await expect(app.cover()).toHaveCSS("transform", "none");
   await app.cover().hover({ position: { x: 20, y: 20 } });
-  await expect(app.cover().locator(".template-glare")).toBeVisible();
+  await expect(app.cover()).toHaveCSS("transform", "none");
+  await expect(page.locator(".template-glare")).toHaveCount(0);
   await page.emulateMedia({ reducedMotion: "reduce" });
   await expect(app.cover()).toHaveCSS("transform", "none");
-  await expect(app.cover().locator(".template-glare")).toBeHidden();
   await app.cover().click();
   await expect(page.getByRole("dialog")).toBeVisible();
   await expect(page.locator("[data-shared-cover]")).toHaveCount(0);
   await page.keyboard.press("Escape");
-  await expect(page.getByRole("dialog")).toHaveCount(0);
+  await expect(page.locator("dialog")).toHaveCount(0);
   await expect(app.cover()).toBeFocused();
 });
 
@@ -106,7 +227,7 @@ test("variant depth and slide changes preserve editing and keyboard navigation",
   await page.keyboard.press("ArrowRight");
   await expect(page.locator(".presentation-viewer-slide")).toBeVisible();
   await page.keyboard.press("Escape");
-  await expect(page.getByRole("dialog")).toHaveCount(0);
+  await expect(page.locator("dialog")).toHaveCount(0);
   expect(errors).toEqual([]);
 });
 
@@ -132,7 +253,7 @@ test("rapid preview cancellation and keyboard disclosures leave no hidden conten
       return before && after ? Math.abs(before.y - after.y) : null;
     });
     if (jump !== null) jumps.push(jump);
-    await expect(page.getByRole("dialog")).toHaveCount(0);
+    await expect(page.locator("dialog")).toHaveCount(0);
     await expect(app.cover().locator(":scope > :first-child")).toBeVisible();
   }
   expect(jumps.length).toBeGreaterThan(0);
@@ -154,7 +275,7 @@ test("rapid preview cancellation and keyboard disclosures leave no hidden conten
     .toBe(0);
   expect(await details.evaluate((el) => el.style.height)).toBe("");
   await page.keyboard.press("Escape");
-  await expect(page.getByRole("dialog")).toHaveCount(0);
+  await expect(page.locator("dialog")).toHaveCount(0);
   expect(
     await page.locator("body").evaluate((el) => el.style.overflow),
   ).not.toBe("hidden");
@@ -177,6 +298,6 @@ test("mobile preview returns to its card without horizontal overflow", async ({
     ),
   ).toBe(true);
   await page.getByRole("button", { name: "Закрыть", exact: true }).click();
-  await expect(page.getByRole("dialog")).toHaveCount(0);
+  await expect(page.locator("dialog")).toHaveCount(0);
   await expect(app.cover()).toBeFocused();
 });

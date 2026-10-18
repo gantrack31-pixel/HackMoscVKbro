@@ -77,6 +77,7 @@ class FrontendStaticFiles(StaticFiles):
 
 def private_image_response(path: Path, request):
     response = _validators.file_response(path, path.stat(), request.scope)
+    if path.suffix.lower() == '.webp': response.headers['Content-Type'] = 'image/webp'
     response.headers['Cache-Control'] = 'private, no-cache'
     return response
 

@@ -48,6 +48,7 @@ export function animateSharedCover(
   const visibility = artwork.style.visibility;
   artwork.style.visibility = "hidden";
   dialog.appendChild(clone);
+  if (returning) dialog.dataset.sharedReturning = "";
   const offset = {
     x: card.left - preview.left,
     y: card.top - preview.top,
@@ -65,6 +66,7 @@ export function animateSharedCover(
     : full;
   const remove = () => {
     clone.remove();
+    if (returning) delete dialog.dataset.sharedReturning;
     artwork.style.visibility = visibility;
   };
   const tween = gsap.fromTo(clone, returning ? current : offset, {
