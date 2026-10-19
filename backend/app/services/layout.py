@@ -222,7 +222,7 @@ def build_scene(slide: Slide, metadata: dict, variant: str, index: int) -> dict:
         lines,size = fit_text(content,box,size,minimum,bold,spacing)
         family = metadata.get('heading_font' if role=='title' else 'body_font') or metadata.get('font','Manrope')
         objects.append({'id':id,'type':'text',**box,'text':content,'lines':lines,'font_size':size,'color':color,
-                        'role':role,'line_spacing':spacing,'bold':bold,'font_family':family,
+                        'role':role,'line_spacing':spacing,'bold':bold,'font_family':family,'effective_font_family':'Manrope',
                         'used_height':len(lines)*size*spacing})
     rect('background',0,0,width,height,theme['background'])
     objects[-1]['override_template']=theme['background']!=original_background
@@ -300,7 +300,9 @@ def build_scene(slide: Slide, metadata: dict, variant: str, index: int) -> dict:
     corrections=protect_foregrounds(objects,metadata)
     rendered=[n for obj in objects for n in geometry_nodes(obj)]
     corrections+=protect_foregrounds(rendered,metadata)
-    scene={'width':width,'height':height,'variant':variant,'objects':objects,
+    requested_fonts=sorted({o['font_family'] for o in objects if o['type']=='text' and o.get('font_family','Manrope').casefold()!='manrope'})
+    font_warnings=[f'Шрифт «{family}» заменён на Manrope: файл шрифта не включён в переносимую вёрстку.' for family in requested_fonts]
+    scene={'font_warnings':font_warnings,'width':width,'height':height,'variant':variant,'objects':objects,
             'render_objects':rendered,'color_corrections':sorted(set(corrections)),
             'background_info':background_info,'template_background':original_background,
             'layout_key':{'master':layout['master'],'index':layout['index']} if layout else None,

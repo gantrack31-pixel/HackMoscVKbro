@@ -2,7 +2,6 @@
 import math
 import re
 import statistics
-from collections import Counter
 from datetime import datetime
 from .analytics_ingest import AnalysisError, MISSING, digest
 

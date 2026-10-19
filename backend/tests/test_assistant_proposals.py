@@ -140,7 +140,8 @@ def test_assistant_cannot_replace_verified_analytics(client,monkeypatch):
     async def answer(*args): return {'summary':'Подменённые данные', 'changes':[{'slide':0,'analytics':changed}]}
     monkeypatch.setattr(llm,'complete_json',answer)
     response=client.post('/api/projects/ai-test/assistant',json=body)
-    assert response.status_code==502,response.text
+    assert response.status_code==409,response.text
+    assert response.json()['detail']['code']=='ANALYTICS_CHANGED'
     assert not db.project_get('ai-test')['revisions']
 
 

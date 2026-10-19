@@ -1,4 +1,4 @@
-import type { AssistantResult, DeckContent, Job, MaterialResource, Variant, WorkflowRecipe } from "../types";
+import type { AssistantResult, DeckContent, Job, MaterialResource, Variant, WorkflowRecipe, Issue } from "../types";
 import { request, json, aiRequest, type AiOptions } from "./client";
 
 export const generationApi = {
@@ -19,6 +19,8 @@ export const generationApi = {
       action: "edit" | "repair";
       slide: number | null;
       material: string;
+      allow_fact_corrections?: boolean;
+      review_issues?: Issue[];
       pinned_brief?: string;
       conversation?: {role: "user" | "assistant"; content: string}[];
       locked_facts?: string[];

@@ -148,7 +148,7 @@ def test_starttls_sender_reply_recipient_and_refusal(monkeypatch):
             assert message['From']=='sender@example.test' and message['To']=='help@example.test'
             assert message['Reply-To']=='reply@example.test'
             return {'help@example.test':(550,b'refused')}
-    monkeypatch.setattr('app.main.smtplib.SMTP',lambda *args,**kwargs:SMTP())
+    monkeypatch.setattr('app.services.mail.smtplib.SMTP',lambda *args,**kwargs:SMTP())
     with pytest.raises(smtplib.SMTPRecipientsRefused):
         deliver_support_message('reply@example.test','Question about export',{'email':'account@example.test','first_name':'Test','last_name':'User'})
     assert events==['ehlo','tls','ehlo','login']
@@ -179,7 +179,7 @@ def test_support_email_uses_configured_recipient_and_reply_to(monkeypatch):
     monkeypatch.setattr(settings, 'smtp_username', 'sender@example.test')
     monkeypatch.setattr(settings, 'smtp_password', 'server-secret')
     monkeypatch.setattr(settings, 'email_from', 'support@example.test')
-    monkeypatch.setattr('app.main.smtplib.SMTP_SSL', lambda *args, **kwargs: FakeSMTP())
+    monkeypatch.setattr('app.services.mail.smtplib.SMTP_SSL', lambda *args, **kwargs: FakeSMTP())
 
     deliver_support_message(
         'reply@example.test', 'Не удаётся сохранить презентацию.',

@@ -288,3 +288,11 @@
     margin-left: 0;
   }
 }
+
+.assistant-visual-review { margin-block: 1rem; min-width: 0; }
+.assistant-visual-pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
+.assistant-visual-pair > div { min-width: 0; }
+.assistant-visual-pair strong { display: block; margin-bottom: .5rem; }
+.assistant-visual-pair .deck-slide { width: 100%; height: auto; }
+.assistant-change-list del, .assistant-change-list ins { white-space: pre-wrap; overflow-wrap: anywhere; max-height: 20rem; overflow: auto; }
+@media (max-width: 720px) { .assistant-visual-pair { grid-template-columns: 1fr; } }

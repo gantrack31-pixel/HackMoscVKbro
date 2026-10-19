@@ -47,7 +47,7 @@ function ObjectView({ object: o }: { object: SceneObject }) {
   if (o.type === "text")
     return (
       <text
-        fontFamily={o.font_family || "Manrope, Arial"}
+        fontFamily={o.effective_font_family || o.font_family || "Manrope, Arial"}
         fontSize={o.font_size}
         fontWeight={o.bold ? 750 : 400}
         fill={o.color}

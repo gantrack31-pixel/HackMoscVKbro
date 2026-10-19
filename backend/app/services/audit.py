@@ -81,7 +81,7 @@ def audit_deck(content: DeckContent, template: dict, variant: str, source: str, 
                 add('bounds','Объект выходит за слайд','Измените композицию или сократите содержание.',severity='error',obj=obj['id'])
             if obj['type']=='text' and obj['id'] not in {'number','footer'}:
                 if obj['used_height']>obj['h']:
-                    add('overflow','Текст не помещается в блок','Можно уменьшить размер до безопасного минимума. Если этого недостаточно, разделите содержание.',severity='error',fixable='overflow' not in slide.fixed,obj=obj['id'])
+                    add('overflow','Текст не помещается в блок','Автоподбор уже достиг безопасного минимума. Сократите текст, измените композицию или разделите содержание.',severity='error',fixable=False,obj=obj['id'])
             if obj['type']=='table':
                 cell_width=obj['w']/len(obj['rows'][0])-24;cell_height=obj['h']/len(obj['rows'])-16
                 if any(len(wrap(cell,cell_width,obj['font_size']))*obj['font_size']*1.28>cell_height for row in obj['rows'] for cell in row):
@@ -145,6 +145,10 @@ def audit_deck(content: DeckContent, template: dict, variant: str, source: str, 
                 if iw>8 and ih>8 and b['id'] not in overlapping:
                     overlapping.add(b['id'])
                     add('overlap','Блоки содержания пересекаются','Измените композицию или сократите текст; перекрытие требует проверки.',severity='error',obj=b['id'])
+
+        if not slide.analytics:
+            for warning in scene.get('font_warnings',[]):
+                add('font_fallback','Использован переносимый шрифт',warning,category='template',severity='info',obj='title')
 
         if slide.analytics:
             # Text marks are separate editable/annotatable objects. Intentional

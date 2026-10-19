@@ -112,3 +112,31 @@ def validate_requested_analytics(user_id,slides):
         if slide.get('title')!=original['title']:
             raise AnalysisError('Вывод аналитического слайда изменён. Сохраните проверенный заголовок или пересчитайте анализ.')
     return True
+
+
+def validate_content_evidence(content, previous, user_id):
+    """One guard for updates, AI drafts, applications and exports.
+
+    Unchanged saved snapshots remain usable after dataset selection changes.
+    New/modified evidence must be reproduced from this owner's current dataset.
+    A client-provided fingerprint alone never authorizes new evidence.
+    """
+    from fastapi import HTTPException
+    from .analytics_plan import validate_analytical_visual
+    content = content.model_dump() if hasattr(content, 'model_dump') else content
+    previous = previous.model_dump() if hasattr(previous, 'model_dump') else previous
+    trusted = {(json.dumps(s['analytics'], sort_keys=True), s['title'])
+               for s in previous['slides'] if s.get('analytics')}
+    for slide in content['slides']:
+        visual = slide.get('analytics')
+        if not visual:
+            continue
+        if slide['kind'] != 'analysis' or validate_analytical_visual(visual):
+            raise HTTPException(409, {'code': 'ANALYTICS_CHANGED', 'message': 'Аналитические данные изменены после расчёта. Пересоберите анализ по исходному набору.'})
+        if (json.dumps(visual, sort_keys=True), slide['title']) in trusted:
+            continue
+        try:
+            validate_requested_analytics(user_id, [slide])
+        except (KeyError, AnalysisError) as exc:
+            raise HTTPException(409, {'code': 'ANALYTICS_CHANGED', 'message': 'Данные или вывод не подтверждены текущим анализом. Пересоберите план по своему источнику.'}) from exc
+    return True

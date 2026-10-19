@@ -15,5 +15,13 @@ class LockedField(BaseModel):
     field: Literal['title', 'body', 'bullets', 'source_quote', 'chart', 'table', 'notes']
 
 
+class FactCorrection(BaseModel):
+    """A reviewed replacement, grounded in a literal source passage."""
+    model_config = ConfigDict(extra='forbid')
+    before: str = Field(min_length=1, max_length=500)
+    after: str = Field(min_length=1, max_length=500)
+    evidence: str = Field(min_length=1, max_length=1500)
+
+
 class ProjectVersionRequest(BaseModel):
     base_updated_at: str | None = Field(default=None, min_length=1, max_length=80)

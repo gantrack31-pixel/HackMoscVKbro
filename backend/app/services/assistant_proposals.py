@@ -24,6 +24,8 @@ def changes_between(before, after):
             if old.get(field) != new[field]:
                 changes.append({'slide': index, 'field': field,
                                 'before': old.get(field), 'after': new[field]})
+    if before.get('evidence_sources', []) != after.get('evidence_sources', []):
+        changes.append({'slide': -1, 'field': 'evidence_sources', 'before': before.get('evidence_sources', []), 'after': after.get('evidence_sources', [])})
     return changes
 
 
@@ -100,6 +102,8 @@ def apply_proposal(pid, user_id, proposal_id, request):
         if payload['draft'] != existing['content'] or payload['variant'] != existing['variant']:
             past.append({'content': payload['draft'], 'variant': payload['variant']})
         content = payload['content']
+        from .analytics_store import validate_content_evidence
+        validate_content_evidence(content,payload['draft'],user_id)
         conn.execute("UPDATE projects SET title=?,content=?,variant=?,revisions=?,future='[]',updated_at=? WHERE id=? AND user_id=?",
                      (content['title'], json.dumps(content, ensure_ascii=False), payload['variant'],
                       json.dumps(past[-12:], ensure_ascii=False), db.now(), pid, user_id))

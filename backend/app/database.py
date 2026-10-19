@@ -1,7 +1,6 @@
 """Небольшой слой SQLite. SQL и хранение JSON изолированы от HTTP-маршрутов."""
 from contextlib import contextmanager
 from datetime import datetime, timezone
-from pathlib import Path
 import json
 import sqlite3
 from uuid import uuid4

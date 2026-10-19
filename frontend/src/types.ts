@@ -93,6 +93,7 @@ export interface Slide {
   designs?: Partial<Record<Variant, NonNullable<Slide["design"]>>>;
 }
 export interface DeckContent {
+  evidence_sources?: {id: string; text: string}[];
   brand_style_id?: string | null;
   brand_prefer_template?: boolean;
   title: string;
@@ -121,6 +122,7 @@ export interface SceneObject {
   type: "rect" | "text" | "chart" | "table" | "ellipse" | "hexagon" | "line" | "image" | "polygon";
   points?: [number, number][];
   font_family?: string;
+  effective_font_family?: string;
   parent_id?: string;
   x1?: number; y1?: number; x2?: number; y2?: number;
   stroke?: string; stroke_width?: number; src?: string;
@@ -216,6 +218,7 @@ export interface Health {
 export interface AssistantProposal {
   id: string; content: DeckContent; base_updated_at: string; draft_fingerprint: string;
   source_fingerprint: string; expires_at: string; state: "pending" | "applied" | "rejected";
+  fact_corrections?: {before: string; after: string; evidence: string}[];
   changes: { slide: number; field: string; before: unknown; after: unknown }[];
 }
 export interface AssistantResult {
@@ -224,6 +227,8 @@ export interface AssistantResult {
   summary: string;
   changed_slides: number[];
   before: number;
+  fact_corrections?: {before: string; after: string; evidence: string}[];
+  variant_issues?: Record<string, Issue[]>;
   issues: Issue[];
 }
 

@@ -5,7 +5,6 @@ import binascii
 import hashlib
 import logging
 import re
-import smtplib
 import time
 import copy
 from contextlib import asynccontextmanager
@@ -25,6 +24,8 @@ from .models import OutlineRequest, GenerateRequest, RegenerateRequest, ProjectU
 from .services.assistant import edit_presentation
 from .services.assistant_proposals import create_proposal, apply_proposal, reject_proposal
 from .assistant_contract import ProjectVersionRequest
+from .services.evidence import source_text
+from .services.analytics_store import validate_content_evidence
 from .services.templates import seed_templates, analyze_template, BUILTIN_IDS
 from .services.template_parser import NORMALIZATION_VERSION, fingerprint
 from .services.pptx_security import validate_pptx_archive
@@ -174,7 +175,7 @@ def project_response(project):
             'can_redo':bool(project.get('future')),
             'template':public_template(template),
             'variants':{variant:[build_scene(slide,template['metadata'],variant,i) for i,slide in enumerate(content.slides)] for variant in ['a','b','c']},
-            'sources':[{'slide':i,**slide_binding(slide,project['source_text'])} for i,slide in enumerate(content.slides)]}
+            'sources':[{'slide':i,**slide_binding(slide,source_text(project['source_text'],content))} for i,slide in enumerate(content.slides)]}
 
 @app.get('/api/health')
 def health():
@@ -630,6 +631,7 @@ def project(pid: str,user=Depends(current_user)): return project_response(get_pr
 def update_project(pid: str,request: ProjectUpdate,user=Depends(current_user)):
     existing=get_project(pid,user['id'])
     project_template({**existing,'content':request.content.model_dump()})
+    validate_content_evidence(request.content,existing['content'],user['id'])
     get_project(pid,user['id'])
     require_version(request.base_updated_at)
     db.project_update(pid,request.content.model_dump(),request.variant,
@@ -665,12 +667,11 @@ async def assistant_edit(pid: str, request: AssistantRequest,http_request:Reques
         raise HTTPException(422,'Напишите, что изменить в презентации.')
     if request.slide is not None and request.slide >= len(request.content.slides):
         raise HTTPException(422,'Указанный слайд отсутствует.')
-    template=project_template(project)
+    template=project_template({**project,'content':request.content.model_dump()})
+    validate_content_evidence(request.content,project['content'],user['id'])
     try:
         async with generation_slots:
             result,report=await edit_presentation(request,template,project['source_text'])
-            await asyncio.to_thread(lambda:[build_scene(s,template['metadata'],v,i)
-                for v in ('a','b','c') for i,s in enumerate(result.slides)])
         if result != request.content:
             proposal=create_proposal(pid,user['id'],request,result,project['source_text'],report,current_operation.get())
             return {'project':None, 'proposal':proposal, **report}
@@ -724,6 +725,7 @@ async def save_disk(pid:str,user=Depends(current_user)):
     project=get_project(pid,user['id'])
     yandex_disk.token_for(user['id'])
     content=DeckContent.model_validate(project['content']);template=project_template(project)
+    validate_content_evidence(content,project['content'],user['id'])
     data=await asyncio.to_thread(export_pptx,content,template,project['variant'])
     return await yandex_disk.upload(user['id'],project['title'],data)
 
@@ -782,9 +784,11 @@ def redo(pid: str,request: ProjectVersionRequest | None = None,user=Depends(curr
 @app.get('/api/projects/{pid}/audit')
 def audit(pid: str,variant: str=Query('a',pattern='^[abc]$'),user=Depends(current_user)):
     project=get_project(pid,user['id']);template=project_template(project)
-    issues=audit_deck(DeckContent.model_validate(project['content']),template,variant,project['source_text'])
+    content=DeckContent.model_validate(project['content'])
+    evidence=source_text(project['source_text'],content)
+    issues=audit_deck(content,template,variant,evidence)
     return {'issues':[i.model_dump() for i in issues],
-            'sources':[{'slide':i,**slide_binding(s,project['source_text'])} for i,s in enumerate(DeckContent.model_validate(project['content']).slides)],
+            'sources':[{'slide':i,**slide_binding(s,evidence)} for i,s in enumerate(DeckContent.model_validate(project['content']).slides)],
             'context_status':'available' if settings.mode=='live' and settings.context_audit else 'not_connected'}
 
 @app.post('/api/projects/{pid}/audit/content')
@@ -794,7 +798,7 @@ async def content_audit(pid: str,http_request:Request,user=Depends(current_user)
     if settings.mode!='live' or not settings.context_audit: raise HTTPException(409,'Смысловая проверка доступна при подключённой LLM.')
     try:
         async with generation_slots:
-            raw=await review_content(project['content'],project['source_text'])
+            raw=await review_content(project['content'],source_text(project['source_text'],project['content']))
         issues=[Issue(id=f"llm:{i}",slide=item['slide'],code='context',title=item['title'][:180],detail=item['detail'][:1200],
                       category='content',severity='info' if item.get('grounding')=='unavailable' else 'warning',
                       deterministic=False,source_bindings=item.get('source_bindings',[]),
@@ -808,11 +812,17 @@ def fix(pid: str,request: FixRequest,user=Depends(current_user)):
     project=get_project(pid,user['id']);content=DeckContent.model_validate(project['content']);template=project_template(project)
     require_version(request.base_updated_at)
     db.require_project_version(project,request.base_updated_at,user['id'])
-    available={i.id:i for i in audit_deck(content,template,request.variant,project['source_text']) if i.fixable}
+    available={i.id:i for i in audit_deck(content,template,request.variant,source_text(project['source_text'],content)) if i.fixable}
     if any(i not in available for i in request.issue_ids): raise HTTPException(422,'Выберите только доступные автоматические исправления.')
     for iid in request.issue_ids:
         issue=available[iid]
         content.slides[issue.slide].fixed=list(set(content.slides[issue.slide].fixed+[issue.code]))
+    after_issues=audit_deck(content,template,request.variant,source_text(project['source_text'],content))
+    after_ids={i.id for i in after_issues}
+    for iid in request.issue_ids:
+        issue=available[iid]
+        if iid in after_ids:
+            raise HTTPException(422,{'code':'FIX_REQUIRES_EDIT','message':'Автоисправление не устранило замечание. Измените содержание или композицию; черновик не изменён.'})
     db.project_update(pid,content.model_dump(),request.variant,
                       expected_version=request.base_updated_at,user_id=user['id'])
     return project_response(get_project(pid))
@@ -824,6 +834,7 @@ def export(pid: str,format: str,variant: str=Query('a',pattern='^[abc]$'),versio
     if format not in functions: raise HTTPException(422,'Выберите PPTX, PDF или HTML')
     project=get_project(pid,user['id']);content=DeckContent.model_validate(project['content']);template=project_template(project)
     if version: db.require_project_version(project,version,user['id'])
+    validate_content_evidence(content,project['content'],user['id'])
     function,mime=functions[format];payload=function(content,template,variant)
     filename=quote(content.title[:90]+f'-{variant}.{format}',safe='')
     return Response(payload,media_type=mime,headers={'Content-Disposition':f"attachment; filename=deckly-{variant}.{format}; filename*=UTF-8''{filename}"})

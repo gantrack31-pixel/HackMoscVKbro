@@ -36,7 +36,7 @@ def scene_svg(scene):
             elif n['type']=='image': parts.append(f'<image x="{n["x"]}" y="{n["y"]}" width="{n["w"]}" height="{n["h"]}" href="{escape(n["src"],quote=True)}"/>')
             else:
                 spans=''.join(f'<tspan x="{n["x"]}" y="{n["y"]+n["font_size"]+i*n["font_size"]*n.get("line_spacing",1.28)}">{escape(line)}</tspan>' for i,line in enumerate(n['lines']))
-                parts.append(f'<text font-family="{escape(n.get("font_family","Manrope, Arial"),quote=True)}" font-size="{n["font_size"]}" font-weight="{750 if n["bold"] else 400}" fill="{n["color"]}">{spans}</text>')
+                parts.append(f'<text font-family="{escape(n.get("effective_font_family",n.get("font_family","Manrope, Arial")),quote=True)}" font-size="{n["font_size"]}" font-weight="{750 if n["bold"] else 400}" fill="{n["color"]}">{spans}</text>')
     return f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {scene["width"]} {scene["height"]}" role="img">'+''.join(parts)+'</svg>'
 
 def export_html(content,template,variant):
@@ -139,7 +139,7 @@ def export_pptx(content: DeckContent, template: dict, variant: str, *, scenes=No
                 # inside the same measured box; preserve only explicit newlines.
                 for j,line in enumerate(obj.get('text','\n'.join(obj['lines'])).split('\n')):
                     paragraph=frame.paragraphs[0] if j==0 else frame.add_paragraph()
-                    paragraph.text=line;paragraph.font.name=obj.get('font_family',metadata.get('font','Manrope'))
+                    paragraph.text=line;paragraph.font.name=obj.get('effective_font_family','Manrope')
                     paragraph.font.size=Pt(obj['font_size']*point_scale);paragraph.font.bold=obj['bold']
                     paragraph.font.color.rgb=rgb(obj['color']);paragraph.space_after=Pt(0);paragraph.line_spacing=obj.get('line_spacing',1.28)
             elif obj['type']=='chart':
@@ -153,6 +153,7 @@ def export_pptx(content: DeckContent, template: dict, variant: str, *, scenes=No
                 chart.has_legend=False;chart.value_axis.has_title=True;chart.value_axis.axis_title.text_frame.text=obj['unit'] or 'Значение'
                 chart.series[0].format.fill.solid();chart.series[0].format.fill.fore_color.rgb=rgb(obj['fill'])
                 chart.series[0].format.line.color.rgb=rgb(obj['fill'])
+                chart.font.name='Manrope'
                 chart.font.color.rgb=rgb(obj['theme']['text'])
                 for axis in (chart.category_axis,chart.value_axis):
                     axis.tick_labels.font.color.rgb=rgb(obj['theme']['text'])
@@ -169,7 +170,7 @@ def export_pptx(content: DeckContent, template: dict, variant: str, *, scenes=No
                     for ci,value in enumerate(row):
                         cell=table.cell(ri,ci);cell.text=value
                         for paragraph in cell.text_frame.paragraphs:
-                            paragraph.font.size=Pt(obj['font_size']*point_scale);paragraph.font.name=obj.get('font_family',metadata.get('font','Manrope'))
+                            paragraph.font.size=Pt(obj['font_size']*point_scale);paragraph.font.name=obj.get('effective_font_family','Manrope')
                             paragraph.font.bold=ri==0;paragraph.font.color.rgb=rgb(obj['header_color'] if ri==0 else obj['theme']['text'])
                         cell.fill.solid();cell.fill.fore_color.rgb=rgb(obj['fill'] if ri==0 else obj['theme']['surface'] if ri%2==0 else obj['theme']['background'])
         slide.notes_slide.notes_text_frame.text=slide_content.notes+('\nИсточник: '+slide_content.source_quote if slide_content.source_quote else '')

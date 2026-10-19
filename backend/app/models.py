@@ -2,7 +2,7 @@
 from typing import Literal
 from pydantic import BaseModel, Field, ConfigDict, field_validator, model_validator
 from .icon_catalog import IconName
-from .assistant_contract import ConversationTurn, LockedField
+from .assistant_contract import ConversationTurn, LockedField, FactCorrection
 from .analytics_models import AnalyticalVisual
 
 Variant = Literal['a', 'b', 'c']
@@ -133,7 +133,22 @@ class Slide(BaseModel):
             raise ValueError('Таблица должна быть прямоугольной, до шести колонок')
         return value
 
+class EvidenceSource(BaseModel):
+    model_config = ConfigDict(extra='forbid')
+    id: str = Field(min_length=1, max_length=64)
+    text: str = Field(min_length=1, max_length=15000)
+
+
 class DeckContent(BaseModel):
+    evidence_sources: list[EvidenceSource] = Field(default_factory=list, max_length=20)
+
+    @field_validator('evidence_sources')
+    @classmethod
+    def bounded_evidence(cls, sources):
+        if len({s.id for s in sources}) != len(sources) or sum(len(s.text) for s in sources) > 50000:
+            raise ValueError('Дополнительные источники: уникальные ID и до 50 000 символов суммарно.')
+        return sources
+
     brand_style_id: str | None = Field(default=None, max_length=80)
     brand_prefer_template: bool = False
     title: str = Field(min_length=1, max_length=180)
@@ -196,6 +211,8 @@ class AssistantRequest(BaseModel):
     base_updated_at: str = Field(min_length=1, max_length=80)
     instruction: str = Field(default='', max_length=3000)
     action: Literal['edit', 'repair'] = 'edit'
+    allow_fact_corrections: bool = False
+    review_issues: list['Issue'] = Field(default_factory=list, max_length=30)
     slide: int | None = Field(default=None, ge=0, le=199)
     material: str = Field(default='', max_length=15000)
     pinned_brief: str = Field(default='', max_length=4000)
@@ -232,6 +249,7 @@ class SlidePatch(BaseModel):
 class AssistantPlan(BaseModel):
     model_config = ConfigDict(extra='forbid')
     summary: str = Field(min_length=1, max_length=1200)
+    fact_corrections: list[FactCorrection] = Field(default_factory=list, max_length=20)
     changes: list[SlidePatch] = Field(default_factory=list, max_length=200)
 
 class Issue(BaseModel):
@@ -247,3 +265,6 @@ class Issue(BaseModel):
     object_id: str = 'body'
     source_bindings: list[dict] = Field(default_factory=list)
     grounding: Literal['not_applicable', 'located', 'unverified', 'unavailable'] = 'not_applicable'
+
+
+AssistantRequest.model_rebuild()

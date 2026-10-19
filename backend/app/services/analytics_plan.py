@@ -2,7 +2,6 @@
 import math
 import statistics
 from collections import OrderedDict
-from datetime import datetime
 from ..analytics_models import AnalysisSelection, AnalyticalVisual
 from .analytics_ingest import AnalysisError, digest, MISSING
 from .analytics_profile import date, number, fmt, profile_table

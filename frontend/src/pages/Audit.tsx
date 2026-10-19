@@ -315,6 +315,7 @@ export function Audit({
       <PresentationAssistant
           accountId={accountId}
         audit
+        reviewIssues={(selected.length ? issues.filter(issue => selected.includes(issue.id)) : issues).slice(0, 30)}
         project={project}
         content={content}
         index={index}

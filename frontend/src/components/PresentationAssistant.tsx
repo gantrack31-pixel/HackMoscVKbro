@@ -2,8 +2,9 @@ import { useEffect, useId, useRef, useState } from "react";
 import { api } from "../api";
 import { readAccount, writeAccount } from "../state/accountStorage";
 import { Icon } from "./Icon";
+import { ProposalPreview } from "./ProposalPreview";
 import { useAiOperation, AiOperationStatus } from "./useAiOperation";
-import type { AssistantResult, DeckContent, Health, Project } from "../types";
+import type { AssistantResult, DeckContent, Health, Project, Issue } from "../types";
 
 export function PresentationAssistant({
   accountId,
@@ -16,6 +17,7 @@ export function PresentationAssistant({
   onBusy,
   onResult,
   audit = false,
+  reviewIssues = [],
 }: {
   accountId: string;
   project: Project;
@@ -25,16 +27,22 @@ export function PresentationAssistant({
   disabled: boolean;
   busy: boolean;
   audit?: boolean;
+  reviewIssues?: Issue[];
   onBusy: (busy: boolean) => void;
   onResult: (result: AssistantResult) => void;
 }) {
   type Turn = {role: "user" | "assistant"; content: string};
-  type Context = {brief: string; facts: string; turns: Turn[]; material: string};
+  type Context = {version?: number; brief: string; facts: string; turns: Turn[]; material: string};
   const [stored] = useState(() => readAccount<Context>(accountId, `assistant:${project.id}`));
   const [brief, setBrief] = useState(stored?.brief || "");
   const [facts, setFacts] = useState(stored?.facts || "");
-  const [turns, setTurns] = useState<Turn[]>(stored?.turns || []);
-  const [lockedFields, setLockedFields] = useState<string[]>([]);
+  const [turns, setTurns] = useState<Turn[]>(stored?.version === 2 ? stored.turns : []);
+  const [locks, setLocks] = useState<Record<number, string[]>>({});
+  const lockedFields = locks[index] || [];
+  const [allowCorrections, setAllowCorrections] = useState(false);
+  const [previewReady, setPreviewReady] = useState(false);
+  const [pendingTurn, setPendingTurn] = useState<Turn[] | null>(null);
+  const [now, setNow] = useState(Date.now());
   const [reviewDraft, setReviewDraft] = useState("");
   const [instruction, setInstruction] = useState("");
   const [scope, setScope] = useState(audit ? "all" : "slide");
@@ -50,22 +58,35 @@ export function PresentationAssistant({
   const [expanded, setExpanded] = useState(Boolean(available));
   const panelId = useId();
   useEffect(() => {
-    writeAccount(accountId, `assistant:${project.id}`, {brief, facts, turns, material});
+    writeAccount(accountId, `assistant:${project.id}`, {version: 2, brief, facts, turns, material});
   }, [accountId, project.id, brief, facts, turns, material]);
   const proposal = report?.proposal;
   useEffect(() => { if (proposal) proposalPanel.current?.scrollIntoView({block: "nearest", behavior: "auto"}); }, [proposal?.id]);
-  const proposalCurrent = proposal?.base_updated_at === project.updated_at && reviewDraft === JSON.stringify(content);
-  const displayChange = (value: unknown) => typeof value === "string" ? value.slice(0, 800) : JSON.stringify(value ?? "").slice(0, 800);
+  useEffect(() => {
+    if (!proposal) return;
+    setNow(Date.now());
+    const timer = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(timer);
+  }, [proposal?.id]);
+  const expired = Boolean(proposal && Date.parse(proposal.expires_at) <= now);
+  const proposalCurrent = !expired && proposal?.base_updated_at === project.updated_at && reviewDraft === JSON.stringify(content);
+  const displayChange = (value: unknown, field: string) => {
+    if (["image_data", "resource_icon_data"].includes(field)) return value ? "Встроенное изображение" : "Нет изображения";
+    if (field === "evidence_sources" && Array.isArray(value)) return `Источников: ${value.length}`;
+    return typeof value === "string" ? value : JSON.stringify(value ?? "", null, 2);
+  };
   async function resolveProposal(apply: boolean) {
-    if (!proposal || lock.current || (apply && !proposalCurrent)) return;
+    if (!proposal || lock.current || (apply && (!proposalCurrent || !previewReady))) return;
     lock.current = true; setWorking(true); onBusy(true); setError("");
     try {
       if (apply) {
         const result = await api.applyProposal(project.id, proposal.id, content, project.variant, project.updated_at);
         setReport(result); onResult(result);
+        if (pendingTurn) setTurns(previous => [...previous, ...pendingTurn].slice(-10));
+        setPendingTurn(null);
       } else {
         await api.rejectProposal(project.id, proposal.id);
-        setReport(null);
+        setReport(null); setPendingTurn(null);
       }
     } catch (e) { setError((e as Error).message); }
     finally { lock.current = false; setWorking(false); onBusy(false); }
@@ -77,7 +98,7 @@ export function PresentationAssistant({
     setWorking(true);
     onBusy(true);
     setError("");
-    setReport(null);
+    setReport(null); setPendingTurn(null); setPreviewReady(false);
     try {
       const result = await operation.run((options) =>
         api.assistant(
@@ -91,9 +112,11 @@ export function PresentationAssistant({
             slide: scope === "all" ? null : index,
             material,
             pinned_brief: brief,
+            allow_fact_corrections: allowCorrections,
+            review_issues: reviewIssues.slice(0, 30),
             conversation: turns.slice(-10),
             locked_facts: facts.split("\n").map(f => f.trim()).filter(Boolean).map(f => f.slice(0, 500)).slice(0, 30),
-            locked_fields: lockedFields.map(field => ({slide: index, field: field as "title" | "body" | "bullets" | "source_quote" | "chart" | "table" | "notes"})),
+            locked_fields: Object.entries(locks).flatMap(([slide, fields]) => fields.map(field => ({slide: Number(slide), field: field as "title" | "body" | "bullets" | "source_quote" | "chart" | "table" | "notes"}))),
           },
           options,
         ),
@@ -102,7 +125,10 @@ export function PresentationAssistant({
         setReport(result);
         if (contextPanel.current) contextPanel.current.open = false;
         setReviewDraft(JSON.stringify(content));
-        setTurns(previous => [...previous, {role: "user" as const, content: instruction.trim() || "Проверить и предложить исправления"}, {role: "assistant" as const, content: result.summary.slice(0, 3000)}].slice(-10));
+        if (result.proposal) setPendingTurn([
+          {role: "user", content: instruction.trim() || "Проверить и предложить исправления"},
+          {role: "assistant", content: result.summary.slice(0, 3000)},
+        ]);
       }
     } catch (e) {
       setError((e as Error).message);
@@ -212,8 +238,10 @@ export function PresentationAssistant({
             <summary>Задание, ограничения и материалы</summary>
             <label className="field">Закреплённое задание<textarea rows={3} maxLength={4000} value={brief} onChange={e => setBrief(e.target.value)} placeholder="Цель, аудитория, стиль и что обязательно сохранить" /></label>
             <label className="field">Факты, которые нельзя менять<textarea rows={2} maxLength={6000} value={facts} onChange={e => setFacts(e.target.value)} placeholder="По одному факту в строке" /></label>
-            <div className="assistant-locks"><span>Сохранить на текущем слайде:</span>{([['title','Заголовок'],['body','Текст'],['source_quote','Цитату'],['chart','Диаграмму'],['table','Таблицу']] as const).map(([field,label]) => <label key={field}><input type="checkbox" checked={lockedFields.includes(field)} onChange={e => setLockedFields(previous => e.target.checked ? [...previous,field] : previous.filter(f => f !== field))} />{label}</label>)}</div>
+            <div className="assistant-locks"><span>Сохранить на текущем слайде:</span>{([['title','Заголовок'],['body','Текст'],['source_quote','Цитату'],['chart','Диаграмму'],['table','Таблицу']] as const).map(([field,label]) => <label key={field}><input type="checkbox" checked={lockedFields.includes(field)} onChange={e => setLocks(previous => ({...previous, [index]: e.target.checked ? [...(previous[index] || []), field] : (previous[index] || []).filter(f => f !== field)}))} />{label}</label>)}</div>
             {turns.length > 0 && <details><summary>История обсуждения · сообщений: {turns.length}</summary><div className="assistant-conversation">{turns.map((turn,i) => <p key={i}><strong>{turn.role === 'user' ? 'Вы' : 'AI'}: </strong>{turn.content}</p>)}</div></details>}
+            <label><input type="checkbox" checked={allowCorrections} onChange={e => setAllowCorrections(e.target.checked)} /> Разрешить замену ошибочных фактов по источнику</label>
+            <p className="tiny muted">Замены и подтверждающие цитаты будут показаны отдельно. Закреплённые поля и факты остаются неизменными.</p>
             <label className="field">
               Дополнительный материал
               <textarea
@@ -270,9 +298,11 @@ export function PresentationAssistant({
             </strong>
             <p>{report.summary}</p>
             {proposal && <div className="assistant-proposal">
-              <div className="assistant-change-list">{proposal.changes.map((change,i) => <article key={i}><strong>Слайд {change.slide + 1} · {({title:'Заголовок',body:'Текст',bullets:'Тезисы',notes:'Заметки',source_quote:'Цитата',kind:'Вид слайда'} as Record<string,string>)[change.field] || change.field}</strong><div><del><small>Было</small>{displayChange(change.before)}</del><ins><small>Предлагаем</small>{displayChange(change.after)}</ins></div></article>)}</div>
-              {!proposalCurrent && <p className="error-banner">Черновик изменился после запроса. Запросите новое предложение по актуальному содержанию.</p>}
-              <div className="actions"><button className="btn primary" disabled={busy || !proposalCurrent} onClick={() => void resolveProposal(true)}>Принять изменения</button><button className="btn" disabled={busy} onClick={() => void resolveProposal(false)}>Отклонить</button></div>
+              <ProposalPreview project={project} content={content} proposal={proposal} onReady={setPreviewReady} />
+              {report.fact_corrections?.map((fact, i) => <article key={i}><strong>Замена факта</strong><p><del>{fact.before}</del> → <ins>{fact.after}</ins></p><blockquote>{fact.evidence}</blockquote></article>)}
+              <div className="assistant-change-list">{proposal.changes.map((change,i) => <article key={i}><strong>{change.slide < 0 ? "Презентация" : `Слайд ${change.slide + 1}`} · {({title:'Заголовок',body:'Текст',bullets:'Тезисы',notes:'Заметки',source_quote:'Цитата',kind:'Вид слайда'} as Record<string,string>)[change.field] || change.field}</strong><div><del><small>Было</small>{displayChange(change.before, change.field)}</del><ins><small>Предлагаем</small>{displayChange(change.after, change.field)}</ins></div></article>)}</div>
+              {!proposalCurrent && <p className="error-banner">{expired ? "Срок предложения истёк. Запросите новое; черновик не изменён." : "Черновик изменился после запроса. Запросите новое предложение по актуальному содержанию."}</p>}
+              <div className="actions"><button className="btn primary" disabled={busy || !proposalCurrent || !previewReady} onClick={() => void resolveProposal(true)}>Принять изменения</button><button className="btn" disabled={busy} onClick={() => void resolveProposal(false)}>Отклонить</button></div>
             </div>}
             {report.project && (
               <p>
