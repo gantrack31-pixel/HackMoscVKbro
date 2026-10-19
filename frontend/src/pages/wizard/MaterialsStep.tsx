@@ -1,8 +1,10 @@
 import { Icon } from "../../components/Icon";
+import { MaterialsPreview } from "../../components/MaterialsPreview";
 import { TemplateCover } from "../../components/TemplateCover";
 import type { MaterialResource, Template } from "../../types";
 import { sampleMaterial, audiences } from "./content";
 import type { PresentationPurpose, WizardOperation } from "./types";
+import type { SourceBlock } from "./draft";
 
 export function MaterialsStep({
   prompt,
@@ -11,6 +13,7 @@ export function MaterialsStep({
   hasAdditionalMaterial,
   packetFiles,
   resources,
+  sourceBlocks,
   count,
   audience,
   busy,
@@ -33,6 +36,7 @@ export function MaterialsStep({
   hasAdditionalMaterial?: boolean;
   packetFiles: string[];
   resources: MaterialResource[];
+  sourceBlocks: SourceBlock[];
   count: number;
   audience: string;
   busy: boolean;
@@ -113,29 +117,12 @@ export function MaterialsStep({
           </ul>
         )}
         {resources.length > 0 && (
-          <div
-            className="material-resource-list"
-            aria-label="Ресурсы для презентации"
-          >
-            {resources.map((resource) => (
-              <span
-                className={`material-resource material-${resource.kind}`}
-                key={resource.id}
-                title={resource.name}
-              >
-                {resource.name.replace(/\.[^.]+$/, "")}
-                <button
-                  type="button"
-                  className="material-resource-remove"
-                  aria-label={`Удалить ${resource.name}`}
-                  disabled={busy}
-                  onClick={() => onRemoveResource(resource.id)}
-                >
-                  ×
-                </button>
-              </span>
-            ))}
-          </div>
+          <MaterialsPreview
+            resources={resources}
+            sourceBlocks={sourceBlocks}
+            busy={busy}
+            onRemove={onRemoveResource}
+          />
         )}
         <div className="row wrap">
           <button

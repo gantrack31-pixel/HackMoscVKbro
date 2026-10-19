@@ -597,6 +597,7 @@ export function Wizard({
           hasAdditionalMaterial={Boolean(sourceBlocks.length || analytics.length)}
           packetFiles={packetFiles}
           resources={resources}
+          sourceBlocks={sourceBlocks}
           count={count}
           audience={audience}
           busy={busy || Boolean(interruptedJob)}
