@@ -273,6 +273,7 @@ export function Editor({
             onUpdate(result.project);
                 setBaseVersion(result.project.updated_at);
             setContent(result.project.content);
+            setIndex(i => Math.min(i, result.project!.content.slides.length - 1));
             setDirty(false);
             setHasDataErrors(false);
           }

@@ -226,7 +226,7 @@ def image_data(path):
     import base64
     try:
         with Image.open(path) as image:
-            image.thumbnail((1600,1600))
+            image.thumbnail((1024,1024))
             output=BytesIO(); image.convert('RGBA').save(output,format='PNG',optimize=True)
         encoded=base64.b64encode(output.getvalue()).decode()
         if len(encoded)>1_400_000: return ''

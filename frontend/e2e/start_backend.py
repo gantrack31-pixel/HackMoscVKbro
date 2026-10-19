@@ -11,6 +11,7 @@ sys.path.insert(0, str(backend))
 os.chdir(backend)
 
 os.environ.update({
+    "PYTHON_DOTENV_DISABLED": "1",
     "APP_ENV": "development",
     "LLM_MODE": "demo",
     "COOKIE_SECURE": "false",

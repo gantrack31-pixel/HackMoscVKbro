@@ -98,7 +98,7 @@ def test_cancel_ownership_queued_terminal_and_atomic_publish_guards(client):
     assert db.job_get(completed)['state']=='complete'
 
 
-def test_business_deadlines_only_full_builds(client,monkeypatch):
+def test_all_ai_operations_have_business_deadlines(client,monkeypatch):
     limits=[]
     async def spy(jid,factory,*,request=None,business_limit=None):
         limits.append(business_limit)
@@ -110,8 +110,8 @@ def test_business_deadlines_only_full_builds(client,monkeypatch):
     client.post('/api/projects/ai-test/assistant',json=request_for(client))
     client.post('/api/images/generate',json={'prompt':'Original image'})
     client.post('/api/projects/ai-test/audit/content')
-    assert limits==[300,300,None,None,None,None]
-    assert workflow.OUTLINE_BUDGET_SECONDS is None
+    assert limits==[300,300,*[settings.operation_timeout]*4]
+    assert workflow.recipe()['outline_budget_seconds'] == settings.operation_timeout
 
 
 def test_deadline_really_cancels_and_prevents_publish(client):

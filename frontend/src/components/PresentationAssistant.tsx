@@ -46,6 +46,8 @@ export function PresentationAssistant({
   const [reviewDraft, setReviewDraft] = useState("");
   const [instruction, setInstruction] = useState("");
   const [scope, setScope] = useState(audit ? "all" : "slide");
+  const [allowStructure, setAllowStructure] = useState(true);
+  const [preserveFacts, setPreserveFacts] = useState(false);
   const [material, setMaterial] = useState(stored?.material || "");
   const [report, setReport] = useState<AssistantResult | null>(null);
   const [error, setError] = useState("");
@@ -71,9 +73,10 @@ export function PresentationAssistant({
   const expired = Boolean(proposal && Date.parse(proposal.expires_at) <= now);
   const proposalCurrent = !expired && proposal?.base_updated_at === project.updated_at && reviewDraft === JSON.stringify(content);
   const displayChange = (value: unknown, field: string) => {
-    if (["image_data", "resource_icon_data"].includes(field)) return value ? "Встроенное изображение" : "Нет изображения";
+    if (["image_data", "resource_icon_data", "element_images"].includes(field)) return value ? "Встроенные изображения" : "Нет изображений";
     if (field === "evidence_sources" && Array.isArray(value)) return `Источников: ${value.length}`;
-    return typeof value === "string" ? value : JSON.stringify(value ?? "", null, 2);
+    return typeof value === "string" ? value : JSON.stringify(value ?? "", (key, item) =>
+      ["image_data", "resource_icon_data", "element_images"].includes(key) ? "Встроенные изображения" : item, 2);
   };
   async function resolveProposal(apply: boolean) {
     if (!proposal || lock.current || (apply && (!proposalCurrent || !previewReady))) return;
@@ -82,6 +85,10 @@ export function PresentationAssistant({
       if (apply) {
         const result = await api.applyProposal(project.id, proposal.id, content, project.variant, project.updated_at);
         setReport(result); onResult(result);
+        if (result.slide_order) {
+          const order = result.slide_order;
+          setLocks(previous => Object.fromEntries(order.flatMap((original, index) => previous[original]?.length ? [[index, previous[original]]] : [])));
+        }
         if (pendingTurn) setTurns(previous => [...previous, ...pendingTurn].slice(-10));
         setPendingTurn(null);
       } else {
@@ -109,6 +116,8 @@ export function PresentationAssistant({
             base_updated_at: project.updated_at,
             instruction: instruction.trim(),
             action,
+            allow_structure: scope === "all" && allowStructure,
+            preserve_facts: preserveFacts,
             slide: scope === "all" ? null : index,
             material,
             pinned_brief: brief,
@@ -195,7 +204,7 @@ export function PresentationAssistant({
                 maxLength={3000}
                 value={instruction}
                 onChange={(e) => setInstruction(e.target.value)}
-                placeholder="Сократи текст, сохрани цифры или сделай схему…"
+                placeholder="Добавь диаграмму по 1, 2, 3, 4, 5, покрась фон в синий, перемести заголовок…"
               />
             </label>
             <button
@@ -236,6 +245,9 @@ export function PresentationAssistant({
           </div>
           <details ref={contextPanel} className="assistant-context">
             <summary>Задание, ограничения и материалы</summary>
+            <p className="tiny muted">AI может добавлять объекты, менять любые цвета, размеры, расположение и слои. Все правки сначала появятся в предпросмотре.</p>
+            <label><input type="checkbox" checked={preserveFacts} onChange={e => setPreserveFacts(e.target.checked)} /> Сохранять все исходные числа, даже при замене содержания</label>
+            {scope === "all" && <label><input type="checkbox" checked={allowStructure} onChange={e => setAllowStructure(e.target.checked)} /> Разрешить добавление, удаление и перестановку слайдов по запросу</label>}
             <label className="field">Закреплённое задание<textarea rows={3} maxLength={4000} value={brief} onChange={e => setBrief(e.target.value)} placeholder="Цель, аудитория, стиль и что обязательно сохранить" /></label>
             <label className="field">Факты, которые нельзя менять<textarea rows={2} maxLength={6000} value={facts} onChange={e => setFacts(e.target.value)} placeholder="По одному факту в строке" /></label>
             <div className="assistant-locks"><span>Сохранить на текущем слайде:</span>{([['title','Заголовок'],['body','Текст'],['source_quote','Цитату'],['chart','Диаграмму'],['table','Таблицу']] as const).map(([field,label]) => <label key={field}><input type="checkbox" checked={lockedFields.includes(field)} onChange={e => setLocks(previous => ({...previous, [index]: e.target.checked ? [...(previous[index] || []), field] : (previous[index] || []).filter(f => f !== field)}))} />{label}</label>)}</div>
@@ -300,7 +312,7 @@ export function PresentationAssistant({
             {proposal && <div className="assistant-proposal">
               <ProposalPreview project={project} content={content} proposal={proposal} onReady={setPreviewReady} />
               {report.fact_corrections?.map((fact, i) => <article key={i}><strong>Замена факта</strong><p><del>{fact.before}</del> → <ins>{fact.after}</ins></p><blockquote>{fact.evidence}</blockquote></article>)}
-              <div className="assistant-change-list">{proposal.changes.map((change,i) => <article key={i}><strong>{change.slide < 0 ? "Презентация" : `Слайд ${change.slide + 1}`} · {({title:'Заголовок',body:'Текст',bullets:'Тезисы',notes:'Заметки',source_quote:'Цитата',kind:'Вид слайда'} as Record<string,string>)[change.field] || change.field}</strong><div><del><small>Было</small>{displayChange(change.before, change.field)}</del><ins><small>Предлагаем</small>{displayChange(change.after, change.field)}</ins></div></article>)}</div>
+              <div className="assistant-change-list">{proposal.changes.map((change,i) => <article key={i}><strong>{change.slide < 0 ? "Презентация" : `Слайд ${change.slide + 1}`} · {({title:'Заголовок',audience:'Аудитория',slide:change.after ? 'Добавлен слайд' : 'Удалён слайд',body:'Текст',bullets:'Тезисы',notes:'Заметки',source_quote:'Цитата',kind:'Вид слайда'} as Record<string,string>)[change.field] || change.field}</strong><div><del><small>Было</small>{displayChange(change.before, change.field)}</del><ins><small>Предлагаем</small>{displayChange(change.after, change.field)}</ins></div></article>)}</div>
               {!proposalCurrent && <p className="error-banner">{expired ? "Срок предложения истёк. Запросите новое; черновик не изменён." : "Черновик изменился после запроса. Запросите новое предложение по актуальному содержанию."}</p>}
               <div className="actions"><button className="btn primary" disabled={busy || !proposalCurrent || !previewReady} onClick={() => void resolveProposal(true)}>Принять изменения</button><button className="btn" disabled={busy} onClick={() => void resolveProposal(false)}>Отклонить</button></div>
             </div>}

@@ -124,7 +124,7 @@ def test_deadline_rejects_partial_result_and_keeps_retry(client,monkeypatch):
     response=client.post('/api/generate',json={'template_id':'tech','content':{'title':'Deadline','slides':[{'title':'T'}]}})
     job=client.get('/api/jobs/'+response.json()['job_id']).json()
     assert job['state']=='failed' and job['can_retry'] and not job['project_id']
-    assert '5 минут' in job['error']
+    assert '0.04 секунд' in job['error']
     assert client.get('/api/projects').json()==[]
 
 def test_image_provider_is_optional_and_returns_only_bounded_embedded_pixels(client,monkeypatch):

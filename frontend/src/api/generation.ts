@@ -17,6 +17,8 @@ export const generationApi = {
       base_updated_at: string;
       instruction: string;
       action: "edit" | "repair";
+      allow_structure?: boolean;
+      preserve_facts?: boolean;
       slide: number | null;
       material: string;
       allow_fact_corrections?: boolean;

@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { api, type AiOptions } from "../api";
 import { Icon } from "./Icon";
 
@@ -17,6 +17,13 @@ type Ticket = {
 };
 export function useAiOperation() {
   const [state, setState] = useState<State>("idle");
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const startedAt = useRef(0);
+  useEffect(() => {
+    if (state !== "running" && state !== "cancelling") return;
+    const timer = setInterval(() => setElapsedSeconds(Math.floor((Date.now() - startedAt.current) / 1000)), 1000);
+    return () => clearInterval(timer);
+  }, [state]);
   const [stopError, setStopError] = useState("");
   const current = useRef<Ticket | null>(null);
   function begin() {
@@ -26,6 +33,8 @@ export function useAiOperation() {
       controller: new AbortController(),
     };
     current.current = ticket;
+    startedAt.current = Date.now();
+    setElapsedSeconds(0);
     setStopError("");
     setState("running");
     return ticket as Ticket;
@@ -102,7 +111,7 @@ export function useAiOperation() {
   function settle(next: State) {
     setState(next);
   }
-  return { state, stopError, stop, run, startJob, track, settle };
+  return { state, elapsedSeconds, stopError, stop, run, startJob, track, settle };
 }
 
 export function AiOperationStatus({
@@ -129,7 +138,7 @@ export function AiOperationStatus({
               ? "Останавливаем…"
               : operation.state === "cancelled"
                 ? "Остановлено"
-                : "AI работает…"}
+                : `AI работает… ${Math.floor(operation.elapsedSeconds / 60)}:${String(operation.elapsedSeconds % 60).padStart(2, "0")}`}
           </span>
         </div>
         {operation.state !== "cancelled" && (

@@ -52,6 +52,8 @@ class Settings:
     image_api_key: str = field(default_factory=lambda: os.getenv('IMAGE_API_KEY', ''), repr=False)
     model: str = field(default_factory=lambda: os.getenv('LLM_MODEL','Qwen/Qwen3.8-27B') if os.getenv('LLM_BASE_URL') else os.getenv('OPENROUTER_MODEL','qwen/qwen3.8-27b'))
     timeout: int = field(default_factory=lambda: int(os.getenv('LLM_TIMEOUT_SECONDS', '180')))
+    operation_timeout: int = field(default_factory=lambda: int(os.getenv('AI_OPERATION_TIMEOUT_SECONDS', '240')))
+    reasoning_enabled: bool = field(default_factory=lambda: os.getenv('LLM_REASONING_ENABLED', 'false').lower() == 'true')
     max_tokens: int = field(default_factory=lambda: int(os.getenv('LLM_MAX_TOKENS', '8000')))
     outline_max_tokens: int = field(default_factory=lambda: int(os.getenv('LLM_OUTLINE_MAX_TOKENS','12000')))
     design_max_tokens: int = field(default_factory=lambda: int(os.getenv('LLM_DESIGN_MAX_TOKENS','16000')))
@@ -92,7 +94,11 @@ def validate_settings(config: Settings = None) -> None:
         raise ValueError('APP_ENV должен быть development или production.')
     if config.mode not in {'demo', 'live'}:
         raise ValueError('LLM_MODE должен быть demo или live.')
-    if min(config.timeout, config.max_tokens, config.outline_max_tokens, config.design_max_tokens,
+    if not isinstance(config.extra_body, dict):
+        raise ValueError('LLM_EXTRA_BODY должен быть JSON-объектом.')
+    if 'chat_template_kwargs' in config.extra_body and not isinstance(config.extra_body['chat_template_kwargs'], dict):
+        raise ValueError('chat_template_kwargs в LLM_EXTRA_BODY должен быть JSON-объектом.')
+    if min(config.timeout, config.operation_timeout, config.max_tokens, config.outline_max_tokens, config.design_max_tokens,
            config.assistant_max_tokens, config.audit_max_tokens) <= 0:
         raise ValueError('Сетевой таймаут и лимиты токенов должны быть положительными.')
     if config.smtp_port < 1 or config.smtp_port > 65535:

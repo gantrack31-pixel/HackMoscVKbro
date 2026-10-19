@@ -154,8 +154,9 @@ def build_scene(slide: Slide, metadata: dict, variant: str, index: int) -> dict:
         metadata={**metadata,'background':original_background}
     if slide.kind=='analysis' and slide.analytics:
         from .analytical_visuals import analysis_scene
-        return analysis_scene(slide,metadata,variant,index,layout=layout,
-                              background_info=background_info,original_background=original_background)
+        from .canvas import apply_canvas
+        return apply_canvas(analysis_scene(slide,metadata,variant,index,layout=layout,
+                              background_info=background_info,original_background=original_background),slide,metadata)
     width=1280.;height=width/metadata.get('ratio',16/9)
     accent=metadata.get('accent','#0077FF')
     if len(accent)!=7: accent='#0077FF'
@@ -311,4 +312,5 @@ def build_scene(slide: Slide, metadata: dict, variant: str, index: int) -> dict:
     if metadata.get('brand_logo'):
         from .brand_style import add_brand_logo
         scene=add_brand_logo(scene,metadata)
-    return scene
+    from .canvas import apply_canvas
+    return apply_canvas(scene,slide,metadata)

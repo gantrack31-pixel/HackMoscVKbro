@@ -64,6 +64,11 @@ def design_metadata(metadata,design):
     result['heading_font']=metadata.get(design.heading_role+'_font') or metadata.get('font','Manrope')
     if design.foreground_role=='inverse': result['text_color']=metadata.get('colors',{}).get('lt1')
     result['body_font']=metadata.get(design.body_role+'_font') or metadata.get('font','Manrope')
+    if design.background_color: result['background'] = design.background_color
+    if design.objects.get('background') and design.objects['background'].fill:
+        result['background'] = design.objects['background'].fill
+    if design.accent_color: result['accent'] = design.accent_color
+    if design.text_color: result['text_color'] = design.text_color
     return result
 
 def surface_at(obj,previous,default):
@@ -78,6 +83,7 @@ def protect_foregrounds(objects,metadata):
     background=roles(metadata)['background']
     changes=[]
     for index,obj in enumerate(objects):
+        if obj.get('explicit_style'): continue
         surface=surface_at(obj,objects[:index],background)
         key='color' if obj['type']=='text' else 'stroke' if obj['type']=='line' else None
         if key and hex_color(obj.get(key)):

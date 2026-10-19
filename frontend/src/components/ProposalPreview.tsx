@@ -26,14 +26,14 @@ export function ProposalPreview({project, content, proposal, onReady}: {
   return <section className="assistant-visual-review" aria-label="Сравнение предложения AI">
     {changed.length > 1 && <label className="field">Сравнить слайд
       <select value={index} onChange={e => setSelected(Number(e.target.value))}>
-        {changed.map(i => <option key={i} value={i}>{i + 1}. {proposal.content.slides[i].title}</option>)}
+        {changed.map(i => <option key={i} value={i}>{i + 1}. {proposal.content.slides[i]?.title || content.slides[i]?.title || "Удалённый слайд"}</option>)}
       </select>
     </label>}
     {error ? <p className="error-banner" role="alert">Не удалось построить сравнение: {error}</p>
       : !scenes ? <p role="status">Строим предпросмотр предложения…</p>
       : <div className="assistant-visual-pair">
-        <div><strong>Текущий черновик</strong><SlidePreview scene={scenes.before[index]} /></div>
-        <div><strong>После принятия</strong><SlidePreview scene={scenes.after[index]} /></div>
+        <div><strong>Текущий черновик</strong>{scenes.before[index] ? <SlidePreview scene={scenes.before[index]} /> : <p>Новый слайд</p>}</div>
+        <div><strong>После принятия</strong>{scenes.after[index] ? <SlidePreview scene={scenes.after[index]} /> : <p>Слайд удалён</p>}</div>
       </div>}
     <p className="tiny muted">Это отдельный предпросмотр. Черновик изменится только после принятия.</p>
   </section>;

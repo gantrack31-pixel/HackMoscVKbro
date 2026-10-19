@@ -25,7 +25,8 @@ def scene_image(scene):
             w, h = node.get('w', 0), node.get('h', 0)
             if kind in {'rect', 'ellipse'}:
                 if w > 0 and h > 0:
-                    getattr(draw, 'rectangle' if kind == 'rect' else 'ellipse')((x, y, x+w, y+h), fill=node['fill'])
+                    getattr(draw, 'rectangle' if kind == 'rect' else 'ellipse')((x, y, x+w, y+h), fill=node['fill'],
+                        outline=node.get('stroke'), width=max(1, round(node.get('stroke_width',2))))
             elif kind == 'line':
                 draw.line((node['x1'], node['y1'], node['x2'], node['y2']), fill=node['stroke'], width=max(1, round(node['stroke_width'])))
             elif kind in {'polygon', 'hexagon'}:

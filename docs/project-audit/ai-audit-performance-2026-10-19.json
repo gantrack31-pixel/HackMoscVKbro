@@ -1,0 +1,24 @@
+{
+  "kind": "offline_synthetic_no_provider",
+  "slides": 8,
+  "source_characters": 48000,
+  "baseline_commit": "ed93581d205c33ceb72723baac346e672a275352",
+  "before": {
+    "model_calls": 2,
+    "source_binding_calls": 48,
+    "local_seconds": 1.8283,
+    "first_request_bytes": 125233,
+    "schema_bytes": 8221,
+    "remaining_errors": 8
+  },
+  "after": {
+    "model_calls": 1,
+    "source_binding_calls": 16,
+    "local_seconds": 1.193,
+    "first_request_bytes": 121965,
+    "schema_bytes": 4881,
+    "remaining_errors": 8
+  },
+  "first_request_reduction_percent": 2.6,
+  "local_speedup": 1.53
+}

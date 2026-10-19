@@ -1,11 +1,13 @@
 """Owner-scoped cancellation for background jobs and direct AI requests."""
 import asyncio
+import logging
 from contextvars import ContextVar
 from functools import wraps
 from time import monotonic
 from uuid import uuid4
 from fastapi import HTTPException
 from .. import database as db
+from ..config import settings
 
 current_operation = ContextVar('current_operation', default=None)
 operation_deadline = ContextVar('operation_deadline', default=None)
@@ -16,7 +18,7 @@ class OperationCancelled(Exception):
 def check_deadline():
     deadline=operation_deadline.get()
     if deadline is not None and monotonic() >= deadline:
-        raise TimeoutError('Full build deadline exceeded')
+        raise TimeoutError('AI operation deadline exceeded')
 
 def checkpoint():
     """Also gate stage transitions between watcher ticks."""
@@ -35,9 +37,10 @@ async def run_operation(jid, factory, *, request=None, business_limit=None):
     token=current_operation.set(jid)
     deadline_token=operation_deadline.set(monotonic()+business_limit if business_limit is not None else None)
     work=asyncio.create_task(factory())
+    started=monotonic()
     async def watch():
         while True:
-            job=db.job_get(jid)
+            job=await asyncio.to_thread(db.job_get,jid)
             if not job or job['state']=='cancelled': return
             await asyncio.sleep(.1)
     watcher=asyncio.create_task(watch())
@@ -45,7 +48,9 @@ async def run_operation(jid, factory, *, request=None, business_limit=None):
         # None disables the business deadline; HTTP idle/connect timeouts remain.
         async with asyncio.timeout(business_limit):
             done,_=await asyncio.wait((work,watcher),return_when=asyncio.FIRST_COMPLETED)
-            if watcher in done: raise OperationCancelled()
+            if watcher in done:
+                await watcher  # Propagate watcher failures instead of reporting false cancellation.
+                raise OperationCancelled()
             result=await work
             if request is not None and not db.job_finish_ai(jid): raise OperationCancelled()
             return result
@@ -58,8 +63,11 @@ async def run_operation(jid, factory, *, request=None, business_limit=None):
         if job: db.job_cancel(jid, job['user_id'])
         raise
     except TimeoutError:
-        db.job_set(jid,'failed','failed',error='Полная сборка превысила лимит 300 секунд (5 минут). Результат не опубликован.')
-        if request is not None: raise
+        limit=f'{business_limit:g} секунд' if business_limit is not None else 'времени ожидания'
+        message=f'AI-операция превысила общий лимит {limit}. Попробуйте уменьшить объём запроса.'
+        db.job_set(jid,'failed','failed',error=message)
+        if request is not None:
+            raise HTTPException(504, {'code':'AI_TIMEOUT','message':message}) from None
     except Exception:
         job=db.job_get(jid)
         if job and job['state']=='cancelled':
@@ -73,6 +81,7 @@ async def run_operation(jid, factory, *, request=None, business_limit=None):
         await asyncio.gather(work,watcher,return_exceptions=True)
         current_operation.reset(token)
         operation_deadline.reset(deadline_token)
+        logging.getLogger(__name__).info('AI operation duration=%.3fs limit=%s', monotonic()-started, business_limit)
 
 def standalone_ai(function):
     @wraps(function)
@@ -88,5 +97,6 @@ def standalone_ai(function):
         else:
             jid=str(uuid4());db.job_create(jid,user['id'],'ai',{})
         if not db.job_start(jid,user['id']): raise HTTPException(409,'Операция уже запущена')
-        return await run_operation(jid,lambda:function(*args,**kwargs),request=request)
+        return await run_operation(jid,lambda:function(*args,**kwargs),request=request,
+                                   business_limit=settings.operation_timeout)
     return wrapped

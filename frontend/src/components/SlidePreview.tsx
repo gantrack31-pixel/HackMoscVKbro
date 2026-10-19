@@ -2,7 +2,7 @@ import { memo } from "react";
 import type { Scene, SceneObject } from "../types";
 function ObjectView({ object: o }: { object: SceneObject }) {
   if (o.type === "rect")
-    return <rect x={o.x} y={o.y} width={o.w} height={o.h} fill={o.fill} />;
+    return <rect x={o.x} y={o.y} width={o.w} height={o.h} fill={o.fill} stroke={o.stroke} strokeWidth={o.stroke_width} />;
   if (o.type === "ellipse")
     return (
       <ellipse
@@ -11,6 +11,8 @@ function ObjectView({ object: o }: { object: SceneObject }) {
         rx={o.w / 2}
         ry={o.h / 2}
         fill={o.fill}
+        stroke={o.stroke}
+        strokeWidth={o.stroke_width}
       />
     );
   if (o.type === "hexagon")

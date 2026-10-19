@@ -24,8 +24,9 @@ def scene_svg(scene):
     parts=[]
     for obj in scene.get('render_objects',scene['objects']):
         for n in ([obj] if 'render_objects' in scene else geometry_nodes(obj)):
-            if n['type']=='rect': parts.append(f'<rect x="{n["x"]}" y="{n["y"]}" width="{n["w"]}" height="{n["h"]}" fill="{n["fill"]}"/>')
-            elif n['type']=='ellipse': parts.append(f'<ellipse cx="{n["x"]+n["w"]/2}" cy="{n["y"]+n["h"]/2}" rx="{n["w"]/2}" ry="{n["h"]/2}" fill="{n["fill"]}"/>')
+            outline=f' stroke="{n["stroke"]}" stroke-width="{n.get("stroke_width",2)}"' if n.get('stroke') else ''
+            if n['type']=='rect': parts.append(f'<rect x="{n["x"]}" y="{n["y"]}" width="{n["w"]}" height="{n["h"]}" fill="{n["fill"]}"{outline}/>')
+            elif n['type']=='ellipse': parts.append(f'<ellipse cx="{n["x"]+n["w"]/2}" cy="{n["y"]+n["h"]/2}" rx="{n["w"]/2}" ry="{n["h"]/2}" fill="{n["fill"]}"{outline}/>')
             elif n['type']=='hexagon':
                 points=' '.join(f'{x},{y}' for x,y in hexagon_points(n))
                 parts.append(f'<polygon points="{points}" fill="{n["fill"]}"/>')
@@ -43,22 +44,25 @@ def export_html(content,template,variant):
     font=base64.b64encode((FONTS/'Manrope-Regular.ttf').read_bytes()).decode()
     bold_font=base64.b64encode((FONTS/'Manrope-Bold.ttf').read_bytes()).decode()
     slides=''.join('<section>'+scene_svg(build_scene(slide,template['metadata'],variant,i))+'</section>' for i,slide in enumerate(content.slides))
-    attribution=f'<footer>{escape(ATTRIBUTION)}</footer>' if any(s.kind=='icons' for s in content.slides) else ''
+    attribution=f'<footer>{escape(ATTRIBUTION)}</footer>' if any(s.kind=='icons' or any(e.type=='icon' for e in s.elements) for s in content.slides) else ''
     html=f'<!doctype html><html lang="ru"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>{escape(content.title)}</title><style>@font-face{{font-family:Manrope;src:url(data:font/ttf;base64,{font});font-weight:400}}@font-face{{font-family:Manrope;src:url(data:font/ttf;base64,{bold_font});font-weight:700 900}}body{{background:#e2e8f0;margin:0;padding:24px}}section{{max-width:1280px;margin:0 auto 24px;break-after:page}}svg{{display:block;width:100%;background:white}}@media print{{body{{padding:0}}section{{margin:0}}@page{{size:landscape;margin:0}}}}</style>{slides}{attribution}</html>'
     return html.encode('utf-8')
 
 def export_pdf(content,template,variant):
     stream=BytesIO();metadata=template['metadata'];height=1280/metadata['ratio']
     pdf=canvas.Canvas(stream,pagesize=(1280,height));pdf.setTitle(content.title)
-    if any(s.kind=='icons' for s in content.slides): pdf.setSubject(ATTRIBUTION)
+    if any(s.kind=='icons' or any(e.type=='icon' for e in s.elements) for s in content.slides): pdf.setSubject(ATTRIBUTION)
     for i,slide in enumerate(content.slides):
         scene=build_scene(slide,metadata,variant,i)
         for obj in scene.get('render_objects',scene['objects']):
             for n in ([obj] if 'render_objects' in scene else geometry_nodes(obj)):
+                outline = bool(n.get('stroke'))
+                if outline:
+                    pdf.setStrokeColor(HexColor(n['stroke']));pdf.setLineWidth(n.get('stroke_width',2))
                 if n['type']=='rect':
-                    pdf.setFillColor(HexColor(n['fill']));pdf.rect(n['x'],height-n['y']-n['h'],n['w'],n['h'],fill=1,stroke=0)
+                    pdf.setFillColor(HexColor(n['fill']));pdf.rect(n['x'],height-n['y']-n['h'],n['w'],n['h'],fill=1,stroke=int(outline))
                 elif n['type']=='ellipse':
-                    pdf.setFillColor(HexColor(n['fill']));pdf.ellipse(n['x'],height-n['y']-n['h'],n['x']+n['w'],height-n['y'],fill=1,stroke=0)
+                    pdf.setFillColor(HexColor(n['fill']));pdf.ellipse(n['x'],height-n['y']-n['h'],n['x']+n['w'],height-n['y'],fill=1,stroke=int(outline))
                 elif n['type'] in {'hexagon','polygon'}:
                     points=hexagon_points(n) if n['type']=='hexagon' else n['points']; path=pdf.beginPath();path.moveTo(points[0][0],height-points[0][1])
                     for x,y in points[1:]:path.lineTo(x,height-y)
@@ -117,6 +121,8 @@ def export_pptx(content: DeckContent, template: dict, variant: str, *, scenes=No
                 shape=slide.shapes.add_shape({'ellipse':MSO_SHAPE.OVAL,'hexagon':MSO_SHAPE.HEXAGON,'rect':MSO_SHAPE.RECTANGLE}[obj['type']],x,y,w,h)
                 if obj['type']=='hexagon': shape.adjustments[0]=.18
                 shape.fill.solid();shape.fill.fore_color.rgb=rgb(obj['fill']);shape.line.fill.background()
+                if obj.get('stroke'):
+                    shape.line.color.rgb=rgb(obj['stroke']);shape.line.width=Pt(obj.get('stroke_width',2)*point_scale)
             elif obj['type']=='line':
                 line=slide.shapes.add_connector(MSO_CONNECTOR.STRAIGHT,*[int(obj[k]*scale) for k in ('x1','y1','x2','y2')])
                 line.line.color.rgb=rgb(obj['stroke']);line.line.width=Pt(obj['stroke_width']*point_scale)
@@ -155,8 +161,10 @@ def export_pptx(content: DeckContent, template: dict, variant: str, *, scenes=No
                 chart.series[0].format.line.color.rgb=rgb(obj['fill'])
                 chart.font.name='Manrope'
                 chart.font.color.rgb=rgb(obj['theme']['text'])
+                if obj.get('font_size'): chart.font.size=Pt(obj['font_size']*point_scale)
                 for axis in (chart.category_axis,chart.value_axis):
                     axis.tick_labels.font.color.rgb=rgb(obj['theme']['text'])
+                    if obj.get('font_size'): axis.tick_labels.font.size=Pt(obj['font_size']*point_scale)
                 for paragraph in chart.value_axis.axis_title.text_frame.paragraphs:
                     paragraph.font.color.rgb=rgb(obj['theme']['text'])
                 # Chart area defaults must not silently use white on a dark slide.
@@ -180,5 +188,6 @@ def export_pptx(content: DeckContent, template: dict, variant: str, *, scenes=No
             slide.notes_slide.notes_text_frame.text+='\nИсточник данных: '+analytical.source+'\nВопрос: '+analytical.question+'\nПочему эта диаграмма: '+analytical.why
             slide.notes_slide.notes_text_frame.text+='\nРасчёты: '+json.dumps([r.model_dump() for r in analytical.calculations],ensure_ascii=False)
             if analytical.warnings:slide.notes_slide.notes_text_frame.text+='\nОграничения: '+'; '.join(analytical.warnings)
-        if slide_content.kind=='icons': slide.notes_slide.notes_text_frame.text+='\n'+ATTRIBUTION
+        if slide_content.kind=='icons' or any(element.type == 'icon' for element in slide_content.elements):
+            slide.notes_slide.notes_text_frame.text+='\n'+ATTRIBUTION
     stream=BytesIO();prs.save(stream);return stream.getvalue()

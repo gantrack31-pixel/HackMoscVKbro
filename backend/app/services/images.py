@@ -24,7 +24,7 @@ async def generate_image(prompt, client=None):
     transport=client or httpx.AsyncClient(timeout=100,follow_redirects=False)
     try:
         headers={'Authorization':'Bearer '+settings.image_api_key} if settings.image_api_key else {}
-        async with transport.stream('POST',settings.image_base_url+'/generate',headers=headers,
+        async with asyncio.timeout(100), transport.stream('POST',settings.image_base_url+'/generate',headers=headers,
                                     json={'prompt':prompt,'model':MODEL,'steps':4,'size':512},
                                     timeout=httpx.Timeout(100,connect=15,pool=15)) as response:
             if response.status_code!=200:
@@ -47,16 +47,21 @@ async def generate_image(prompt, client=None):
     finally:
         if owned: await transport.aclose()
 
-async def fill_missing_images(content):
+async def fill_missing_images(content, *, slide_indices=None):
     from .operations import checkpoint
     slots=asyncio.Semaphore(settings.image_concurrency)
-    async def fill(slide):
+    async def fill(slide, element=None):
         async with slots:
             checkpoint()
-            result=await generate_image(slide.image_prompt)
-            slide.image_data=result['image_data']
-    tasks=[asyncio.create_task(fill(slide)) for slide in content.slides
+            result=await generate_image(element.image_prompt if element else slide.image_prompt)
+            if element: slide.element_images[element.id]=result['image_data']
+            else: slide.image_data=result['image_data']
+    slides=[slide for i,slide in enumerate(content.slides) if slide_indices is None or i in slide_indices]
+    tasks=[asyncio.create_task(fill(slide)) for slide in slides
            if slide.kind=='image' and slide.image_prompt and not slide.image_data and not slide.template_asset_id]
+    tasks += [asyncio.create_task(fill(slide, element)) for slide in slides for element in slide.elements
+              if element.type == 'image' and element.image_prompt and not element.template_asset_id
+              and not element.resource_id and not slide.element_images.get(element.id)]
     try:
         if tasks: await asyncio.gather(*tasks)
     finally:

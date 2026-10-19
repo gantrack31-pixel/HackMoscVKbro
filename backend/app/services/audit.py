@@ -21,7 +21,7 @@ def source_status(quote: str, source: str) -> str:
     return 'matched' if normalize(quote) in normalize(source) else 'not_found'
 
 
-def audit_deck(content: DeckContent, template: dict, variant: str, source: str, *, scenes=None) -> list[Issue]:
+def audit_deck(content: DeckContent, template: dict, variant: str, source: str, *, scenes=None, bindings=None) -> list[Issue]:
     if scenes is not None and len(scenes)!=len(content.slides): raise ValueError('Scene count does not match content')
     issues=[]
     for index,slide in enumerate(content.slides):
@@ -61,6 +61,7 @@ def audit_deck(content: DeckContent, template: dict, variant: str, source: str, 
         color_issues={}
         color_validity={}
         for obj in scene.get('render_objects',scene['objects']):
+            if obj.get('explicit_style'): continue
             for key in ('color','fill','stroke'):
                 value=obj.get(key)
                 if value and value not in color_validity:
@@ -114,7 +115,7 @@ def audit_deck(content: DeckContent, template: dict, variant: str, source: str, 
                 add('analysis_headline_changed','Вывод изменён после расчёта','Текущий заголовок отличается от вычисленного вывода. Проверьте числа и смысл или пересоберите анализ.',category='content',obj='title')
             for warning in scene.get('font_warnings',[]):
                 add('analysis_font_fallback','Использован доступный шрифт',warning,category='template',severity='info',obj='title')
-        binding=slide_binding(slide,source) if not slide.analytics else {'status':'matched'}
+        binding=bindings[index] if bindings is not None else slide_binding(slide,source) if not slide.analytics else {'status':'matched'}
         status=binding['status']
         if status=='related':
             add('source_related','Найден похожий фрагмент источника',
@@ -129,6 +130,11 @@ def audit_deck(content: DeckContent, template: dict, variant: str, source: str, 
             add('placeholder','Остался служебный текст','Замените заглушку содержанием.',category='content',severity='error')
         if slide.kind=='image' and not slide.image_data and not any(a['id']==slide.template_asset_id for a in template['metadata'].get('assets',[])):
             add('image_missing','Нет иллюстрации','Подключите генератор изображений и создайте иллюстрацию в редакторе.',category='content',severity='error',obj='image-placeholder')
+        for element in slide.elements:
+            if element.type == 'image' and not slide.element_images.get(element.id) and not any(
+                    a['id'] == element.template_asset_id and a.get('data') for a in template['metadata'].get('assets', [])):
+                add('image_missing', 'Нет изображения объекта', 'Выберите доступное изображение или создайте иллюстрацию.',
+                    category='content', severity='error', obj=element.id)
         if slide.kind in {'icons','diagram'} and len(slide.bullets)>6:
             add('visual_capacity','Схема содержит больше шести элементов','Разделите схему: на этом слайде показаны только первые шесть пунктов.',category='content',severity='error')
         if slide.kind=='diagram' and not slide.bullets:

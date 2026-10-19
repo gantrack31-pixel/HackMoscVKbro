@@ -326,6 +326,7 @@ export function Audit({
         onResult={(result) => {
           if (result.project) {
             setDraft(null);
+            setIndex(i => Math.min(i, result.project!.content.slides.length - 1));
             setFocus("");
             setDirty(false);
             setValid(true);

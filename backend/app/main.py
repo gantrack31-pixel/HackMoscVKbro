@@ -434,7 +434,7 @@ def template_asset(tid:str,asset_id:str,request:Request):
 @app.post('/api/outline')
 @standalone_ai
 async def outline(request: OutlineRequest,http_request:Request,user=Depends(current_user)):
-    template=get_template(request.template_id,user['id'])
+    template=await asyncio.to_thread(get_template,request.template_id,user['id'])
     resources=db.materials_get(request.resource_ids,user['id'])
     if len(resources)!=len(set(request.resource_ids)):
         raise HTTPException(404,'Один из материалов больше недоступен.')
@@ -465,7 +465,9 @@ async def assemble_variants(jid, content, template, source, user_id, timings, re
     timings['layout']=monotonic()-tick
     checkpoint()
     tick=monotonic();db.job_set(jid,'running','audit',user_id=user_id)
-    checks=await asyncio.gather(*(asyncio.to_thread(audit_deck,content,template,v,source,scenes=scenes[v]) for v in ('a','b','c')))
+    bindings=await asyncio.to_thread(lambda:[slide_binding(slide,source) if not slide.analytics else {'status':'matched'}
+                                             for slide in content.slides])
+    checks=await asyncio.gather(*(asyncio.to_thread(audit_deck,content,template,v,source,scenes=scenes[v],bindings=bindings) for v in ('a','b','c')))
     timings['audit']=monotonic()-tick
     return {v:{'issues':len(issues),'errors':sum(i.severity=='error' for i in issues)} for v,issues in zip(('a','b','c'),checks)}
 
@@ -667,11 +669,14 @@ async def assistant_edit(pid: str, request: AssistantRequest,http_request:Reques
         raise HTTPException(422,'Напишите, что изменить в презентации.')
     if request.slide is not None and request.slide >= len(request.content.slides):
         raise HTTPException(422,'Указанный слайд отсутствует.')
-    template=project_template({**project,'content':request.content.model_dump()})
+    template=await asyncio.to_thread(project_template,{**project,'content':request.content.model_dump()})
     validate_content_evidence(request.content,project['content'],user['id'])
+    resources=db.materials_get(request.content.resource_ids,user['id'])
+    if len(resources)!=len(set(request.content.resource_ids)):
+        raise HTTPException(404,'Один из материалов больше недоступен.')
     try:
         async with generation_slots:
-            result,report=await edit_presentation(request,template,project['source_text'])
+            result,report=await edit_presentation(request,template,project['source_text'],resources=resources)
         if result != request.content:
             proposal=create_proposal(pid,user['id'],request,result,project['source_text'],report,current_operation.get())
             return {'project':None, 'proposal':proposal, **report}

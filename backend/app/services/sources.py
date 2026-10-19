@@ -2,6 +2,7 @@
 import re
 from hashlib import sha256
 from difflib import SequenceMatcher
+from functools import lru_cache
 
 
 def related_chunks(slide, source):
@@ -13,13 +14,18 @@ def related_chunks(slide, source):
     wanted=tokens(text)
     if len(wanted)<3 or not source.strip(): return []
     numbers=set(re.findall(r'\d+(?:[.,]\d+)?',text))
+    # Repeated source words across chunks used to run the same fuzzy comparisons
+    # thousands of times. Cache only within this call; retain no private source.
+    @lru_cache(maxsize=8192)
+    def similar(token, candidate):
+        return (min(len(token),len(candidate))>=5 and abs(len(token)-len(candidate))<=3
+                and SequenceMatcher(None,token,candidate).ratio()>=.8)
     ranked=[]
     for chunk in source_chunks(source):
         available=tokens(chunk['text'])
         if not numbers <= set(re.findall(r'\d+(?:[.,]\d+)?',chunk['text'])): continue
         # Conservative fuzzy token alignment handles inflection and minor paraphrases.
-        common=sum(any(t==s or (min(len(t),len(s))>=5 and abs(len(t)-len(s))<=3
-                               and SequenceMatcher(None,t,s).ratio()>=.8) for s in available) for t in wanted)
+        common=sum(t in available or any(similar(t,s) for s in available) for t in wanted)
         score=common/len(wanted)
         if common>=3 and score>=.65: ranked.append((score,chunk))
     ranked.sort(key=lambda item:item[0],reverse=True)

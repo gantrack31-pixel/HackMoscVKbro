@@ -57,6 +57,19 @@ export interface Template {
     warnings: string[];
   };
 }
+export interface ObjectStyle {
+  x?: number; y?: number; w?: number; h?: number;
+  color?: string | null; fill?: string | null; stroke?: string | null;
+  stroke_width?: number; font_size?: number; bold?: boolean; hidden?: boolean; z_index?: number;
+}
+export interface CanvasElement {
+  id: string; type: "text" | "rect" | "ellipse" | "line" | "image" | "icon" | "chart" | "table";
+  x: number; y: number; w: number; h: number;
+  text?: string; color?: string; fill?: string; stroke?: string; stroke_width?: number;
+  font_size?: number; bold?: boolean; z_index?: number; reverse_line?: boolean;
+  chart?: Slide["chart"]; table?: string[][]; icon_name?: string | null;
+  template_asset_id?: string; resource_id?: string; image_prompt?: string;
+}
 export interface Slide {
   title: string;
   body: string;
@@ -76,8 +89,13 @@ export interface Slide {
     foreground_role?: "text" | "inverse";
     heading_role?: "heading" | "body";
     body_role?: "body" | "heading";
-    heading_scale?: 0.9 | 1 | 1.1;
-    body_scale?: 0.9 | 1 | 1.05;
+    heading_scale?: number;
+    body_scale?: number;
+    background_color?: string | null;
+    text_color?: string | null;
+    heading_color?: string | null;
+    accent_color?: string | null;
+    objects?: Record<string, ObjectStyle>;
     heading_weight?: "normal" | "bold";
     diagram_style?: NonNullable<Slide["diagram_type"]> | null;
     smartart?: { type: NonNullable<Slide["diagram_type"]>; nodes: {bullet:number; x:number; y:number; w:number; h:number; group:number}[]; edges: {source:number; target:number; direction:"forward"|"both"|"none"}[] } | null;
@@ -90,6 +108,8 @@ export interface Slide {
   template_asset_id?: string;
   resource_id?: string;
   resource_icon_ids?: string[];
+  elements?: CanvasElement[];
+  element_images?: Record<string, string>;
   designs?: Partial<Record<Variant, NonNullable<Slide["design"]>>>;
 }
 export interface DeckContent {
@@ -226,6 +246,7 @@ export interface AssistantResult {
   project: Project | null;
   summary: string;
   changed_slides: number[];
+  slide_order?: number[];
   before: number;
   fact_corrections?: {before: string; after: string; evidence: string}[];
   variant_issues?: Record<string, Issue[]>;

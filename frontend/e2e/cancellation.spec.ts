@@ -51,14 +51,14 @@ test("assistant and image Stop retain unsaved edits",async({page})=>{
   await text.fill("Моя несохранённая правка.");
   const assistant=await holdDirect(page,"**/api/projects/*/assistant");
   await page.getByLabel("Что изменить с помощью AI?").fill("Сократи текст");
-  await page.getByRole("button",{name:"Применить запрос AI",exact:true}).click();
+  await page.getByRole("button",{name:"Предложить изменения",exact:true}).click();
   await confirmStop(page,assistant.id);assistant.release();
   await expect(text).toHaveValue("Моя несохранённая правка.");
   await page.getByRole("combobox",{name:"Тип слайда",exact:true}).selectOption("image");
   await page.getByLabel("Описание иллюстрации").fill("Светлая мастерская");
   const image=await holdDirect(page,"**/api/images/generate");
   await page.getByRole("button",{name:"Создать иллюстрацию",exact:true}).click();
-  await expect(page.getByRole("button",{name:"Применить запрос AI",exact:true})).toBeDisabled();
+  await expect(page.getByRole("button",{name:"Предложить изменения",exact:true})).toBeDisabled();
   await confirmStop(page,image.id);image.release();
   await expect(text).toHaveValue("Моя несохранённая правка.");
   await expect(page.getByRole("button",{name:"Создать иллюстрацию",exact:true})).toBeEnabled();

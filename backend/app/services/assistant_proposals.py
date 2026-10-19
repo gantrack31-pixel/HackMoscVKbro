@@ -5,7 +5,7 @@ import json
 from uuid import uuid4
 from fastapi import HTTPException
 from .. import database as db
-from .operations import OperationCancelled
+from .operations import OperationCancelled, check_deadline
 
 
 def fingerprint(value):
@@ -24,12 +24,20 @@ def changes_between(before, after):
             if old.get(field) != new[field]:
                 changes.append({'slide': index, 'field': field,
                                 'before': old.get(field), 'after': new[field]})
+    for index in range(min(len(before['slides']), len(after['slides'])), max(len(before['slides']), len(after['slides']))):
+        changes.append({'slide': index, 'field': 'slide',
+                        'before': before['slides'][index] if index < len(before['slides']) else None,
+                        'after': after['slides'][index] if index < len(after['slides']) else None})
+    for field in ('title', 'audience'):
+        if before.get(field) != after.get(field):
+            changes.append({'slide': -1, 'field': field, 'before': before.get(field), 'after': after.get(field)})
     if before.get('evidence_sources', []) != after.get('evidence_sources', []):
         changes.append({'slide': -1, 'field': 'evidence_sources', 'before': before.get('evidence_sources', []), 'after': after.get('evidence_sources', [])})
     return changes
 
 
 def create_proposal(pid, user_id, request, content, source, report, operation_id):
+    check_deadline()
     draft = request.content.model_dump()
     proposed = content.model_dump()
     created = datetime.now(timezone.utc)
@@ -43,6 +51,7 @@ def create_proposal(pid, user_id, request, content, source, report, operation_id
                'slide': request.slide, 'report': report}
     with db.connection() as conn:
         conn.execute('BEGIN IMMEDIATE')
+        check_deadline()
         job = conn.execute('SELECT state FROM jobs WHERE id=? AND user_id=?', (operation_id, user_id)).fetchone()
         if not job or job['state'] != 'running':
             raise OperationCancelled()
@@ -62,6 +71,7 @@ def create_proposal(pid, user_id, request, content, source, report, operation_id
                       created.isoformat(), result['expires_at']))
         # Stop and publication use the same DB transaction: only one can win.
         conn.execute("UPDATE jobs SET state='complete',stage='complete',updated_at=? WHERE id=?", (db.now(), operation_id))
+        check_deadline()  # Roll back if lock waiting/serialization exhausted the budget.
     return result
 
 

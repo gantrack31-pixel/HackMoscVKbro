@@ -1,5 +1,5 @@
 """Общий контракт: LLM, API и интерфейс работают с одной структурой слайдов."""
-from typing import Literal
+from typing import Annotated, Literal
 from pydantic import BaseModel, Field, ConfigDict, field_validator, model_validator
 from .icon_catalog import IconName
 from .assistant_contract import ConversationTurn, LockedField, FactCorrection
@@ -47,10 +47,30 @@ class SmartArt(BaseModel):
                     raise ValueError('Узлы схемы не должны перекрываться')
         return self
 
+HexColor = Annotated[str, Field(pattern=r'^#[0-9a-fA-F]{6}$')]
+
+
+class ObjectStyle(BaseModel):
+    """Explicit canvas coordinates in scene pixels, shared by all exporters."""
+    model_config = ConfigDict(extra='forbid', allow_inf_nan=False)
+    x: float | None = Field(default=None, ge=0, le=10000)
+    y: float | None = Field(default=None, ge=0, le=10000)
+    w: float | None = Field(default=None, gt=0, le=10000)
+    h: float | None = Field(default=None, gt=0, le=10000)
+    color: HexColor | None = None
+    fill: HexColor | None = None
+    stroke: HexColor | None = None
+    stroke_width: float | None = Field(default=None, ge=.1, le=40)
+    font_size: float | None = Field(default=None, ge=8, le=160)
+    bold: bool | None = None
+    hidden: bool = False
+    z_index: int | None = Field(default=None, ge=-1000, le=1000)
+
+
 class SlideDesign(BaseModel):
-    """Validated design choices; the model cannot inject text or arbitrary geometry."""
+    """Template choices plus explicit user-directed colors and object placement."""
     model_config = ConfigDict(extra='forbid')
-    composition: Literal['split', 'editorial', 'grid']
+    composition: Literal['split', 'editorial', 'grid'] = 'editorial'
     density: Literal['compact', 'balanced', 'airy'] = 'balanced'
     layout_shift: Literal[0, 1, 2] = 0
     smartart: SmartArt | None = None
@@ -58,10 +78,17 @@ class SlideDesign(BaseModel):
     foreground_role: Literal['text','inverse'] = 'text'
     heading_role: Literal['heading','body'] = 'heading'
     body_role: Literal['body','heading'] = 'body'
-    heading_scale: Literal[0.9,1.0,1.1] = 1.0
-    body_scale: Literal[0.9,1.0,1.05] = 1.0
+    heading_scale: float = Field(default=1.0, ge=.5, le=2)
+    body_scale: float = Field(default=1.0, ge=.5, le=2)
     heading_weight: Literal['normal','bold'] = 'bold'
     diagram_style: DiagramType | None = None
+    background_color: HexColor | None = None
+    text_color: HexColor | None = None
+    heading_color: HexColor | None = None
+    accent_color: HexColor | None = None
+    objects: dict[str, ObjectStyle] = Field(default_factory=dict, max_length=100)
+
+
 
 class ChartData(BaseModel):
     model_config = ConfigDict(extra='forbid',allow_inf_nan=False)
@@ -73,6 +100,46 @@ class ChartData(BaseModel):
     def same_length(self):
         if len(self.labels) != len(self.values):
             raise ValueError('Подписи и значения диаграммы должны совпадать по количеству')
+        return self
+
+
+class CanvasElement(BaseModel):
+    model_config = ConfigDict(extra='forbid', allow_inf_nan=False)
+    id: str = Field(pattern=r'^custom-[a-zA-Z0-9_-]{1,60}$')
+    type: Literal['text', 'rect', 'ellipse', 'line', 'image', 'icon', 'chart', 'table']
+    x: float = Field(ge=0, le=10000)
+    y: float = Field(ge=0, le=10000)
+    w: float = Field(ge=0, le=10000)
+    h: float = Field(ge=0, le=10000)
+    text: str = Field(default='', max_length=3000)
+    color: HexColor = '#0F172A'
+    fill: HexColor = '#0077FF'
+    stroke: HexColor = '#0077FF'
+    stroke_width: float = Field(default=2, ge=.1, le=40)
+    font_size: float = Field(default=24, ge=8, le=160)
+    bold: bool = False
+    z_index: int = Field(default=100, ge=-1000, le=1000)
+    reverse_line: bool = False
+    chart: ChartData | None = None
+    table: list[list[str]] = Field(default_factory=list, max_length=9)
+    icon_name: IconName | None = None
+    template_asset_id: str = Field(default='', max_length=32)
+    resource_id: str = Field(default='', max_length=64)
+    image_prompt: str = Field(default='', max_length=1000)
+
+    @model_validator(mode='after')
+    def complete_element(self):
+        if (self.type != 'line' and (self.w == 0 or self.h == 0)) or (self.w == 0 and self.h == 0):
+            raise ValueError('Объект должен иметь ненулевой размер.')
+        if self.type == 'chart' and self.chart is None:
+            raise ValueError('Добавьте данные диаграммы объекта.')
+        if self.type == 'table' and (not self.table or not self.table[0] or len(self.table[0]) > 6
+                                     or any(len(row) != len(self.table[0]) for row in self.table)):
+            raise ValueError('Добавьте прямоугольную таблицу до 6 колонок.')
+        if self.type == 'icon' and self.icon_name is None:
+            raise ValueError('Выберите иконку из каталога.')
+        if self.type == 'image' and not (self.template_asset_id or self.resource_id or self.image_prompt):
+            raise ValueError('Для изображения нужен материал, asset шаблона или описание генерации.')
         return self
 
 class Slide(BaseModel):
@@ -98,6 +165,23 @@ class Slide(BaseModel):
     resource_icon_ids: list[str] = Field(default_factory=list, max_length=6)
     resource_icon_data: list[str] = Field(default_factory=list, max_length=6)
     image_data: str = Field(default='', max_length=1500000)
+    elements: list[CanvasElement] = Field(default_factory=list, max_length=60)
+    element_images: dict[str, str] = Field(default_factory=dict, max_length=60)
+    @field_validator('element_images')
+    @classmethod
+    def safe_element_images(cls, values):
+        if sum(map(len, values.values())) > 6_000_000:
+            raise ValueError('Изображения объектов одного слайда: до 6 МБ.')
+        return {key: cls.safe_image(value) for key, value in values.items()}
+
+    @field_validator('elements')
+    @classmethod
+    def unique_elements(cls, values):
+        if len({element.id for element in values}) != len(values):
+            raise ValueError('ID объектов слайда должны быть уникальными.')
+        if sum(len(element.text) + sum(len(cell) for row in element.table for cell in row) for element in values) > 24000:
+            raise ValueError('Дополнительный текст одного слайда: до 24 000 символов.')
+        return values
     @field_validator('image_data')
     @classmethod
     def safe_image(cls, value):
@@ -211,6 +295,8 @@ class AssistantRequest(BaseModel):
     base_updated_at: str = Field(min_length=1, max_length=80)
     instruction: str = Field(default='', max_length=3000)
     action: Literal['edit', 'repair'] = 'edit'
+    allow_structure: bool = True
+    preserve_facts: bool = True
     allow_fact_corrections: bool = False
     review_issues: list['Issue'] = Field(default_factory=list, max_length=30)
     slide: int | None = Field(default=None, ge=0, le=199)
@@ -242,15 +328,22 @@ class SlidePatch(BaseModel):
     diagram_type: DiagramType | None = None
     icon_names: list[IconName | Literal['auto']] | None = Field(default=None, max_length=6)
     template_asset_id: str | None = Field(default=None, max_length=32)
+    image_prompt: str | None = Field(default=None, max_length=1000)
     resource_id: str | None = Field(default=None, max_length=64)
     resource_icon_ids: list[str] | None = Field(default=None, max_length=6)
     design: SlideDesign | None = None
+    elements: list[CanvasElement] | None = Field(default=None, max_length=60)
 
 class AssistantPlan(BaseModel):
     model_config = ConfigDict(extra='forbid')
     summary: str = Field(min_length=1, max_length=1200)
     fact_corrections: list[FactCorrection] = Field(default_factory=list, max_length=20)
     changes: list[SlidePatch] = Field(default_factory=list, max_length=200)
+    title: str | None = Field(default=None, min_length=1, max_length=180)
+    audience: str | None = Field(default=None, max_length=100)
+    # References are original indices; added slides follow the original deck.
+    added_slides: list[SlidePatch] = Field(default_factory=list, max_length=50)
+    slide_order: list[int] | None = Field(default=None, min_length=1, max_length=200)
 
 class Issue(BaseModel):
     id: str

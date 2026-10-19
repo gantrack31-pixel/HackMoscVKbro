@@ -5,7 +5,6 @@ import json
 from ..config import BASE, settings
 
 BUDGET_SECONDS = 300
-OUTLINE_BUDGET_SECONDS = None  # standalone AI: no business deadline
 ASSEMBLY_BUDGET_SECONDS = 300
 RECIPE_VERSION = '2026.10.19.1'
 VARIANT_AXES = [
@@ -32,14 +31,14 @@ def recipe():
     code = []
     for name in ('main.py', 'models.py', 'icon_catalog.py', 'services/operations.py', 'services/provider_http.py', 'services/icons.py', 'services/workflow.py', 'services/templates.py',
                  'services/materials.py', 'services/llm.py', 'services/narrative.py', 'services/images.py', 'services/assistant.py', 'services/assistant_proposals.py', 'assistant_contract.py', 'services/template_context.py',
-                 'services/layout.py', 'services/visuals.py', 'services/audit.py', 'services/export.py',
+                 'services/layout.py', 'services/canvas.py', 'services/visuals.py', 'services/audit.py', 'services/export.py',
                  'analytics_models.py', 'services/analytics_ingest.py', 'services/analytics_profile.py', 'services/analytics_plan.py', 'services/analytics_store.py', 'services/analytical_visuals.py', 'services/analytical_pptx.py', 'services/brand_parser.py', 'services/brand_style.py', 'services/sources.py', 'services/template_package.py', 'services/template_parser.py', 'services/palette.py'):
         path = BASE / 'app' / name
         code.append({'id': name, 'sha256': sha256(path.read_bytes()).hexdigest()})
     fingerprint = sha256(json.dumps({'snippets': snippets, 'code': code}, sort_keys=True).encode()).hexdigest()
     return {'version': RECIPE_VERSION, 'fingerprint': fingerprint, 'stages': STAGES, 'snippets': snippets,
             'components': code, 'variants': VARIANT_AXES, 'budget_seconds': BUDGET_SECONDS,
-            'outline_budget_seconds': OUTLINE_BUDGET_SECONDS, 'assembly_budget_seconds': ASSEMBLY_BUDGET_SECONDS,
+            'outline_budget_seconds': settings.operation_timeout, 'assembly_budget_seconds': ASSEMBLY_BUDGET_SECONDS,
             'native_exports': ['text', 'chart', 'table', 'shape', 'connector', 'picture']}
 
 def manifest(template, content, source, audit_counts, duration, jid, timings=None):

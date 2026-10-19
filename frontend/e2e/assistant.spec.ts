@@ -7,6 +7,7 @@ test("AI edits include the manual draft, save a revision and can be undone", asy
     await route.fulfill({ json: { ...await original.json(), mode: "live", llm_configured: true } });
   });
   let calls = 0;
+  let proposed: any = null;
   await page.route("**/api/projects/*/assistant", async route => {
     const input = route.request().postDataJSON();
     expect(input.content.slides[0].body).toContain("Ручной текст");
@@ -15,11 +16,19 @@ test("AI edits include the manual draft, save a revision and can be undone", asy
     calls++;
     const content = structuredClone(input.content);
     content.slides[0].body = "AI сократил текст.";
-    // Deterministic model substitute; persist through the real authenticated API.
-    const url = route.request().url().replace(/\/assistant$/, "");
-    const saved = await page.request.put(url, { headers: route.request().headers(), data: { content, variant: input.variant } });
+    proposed = content;
+    await route.fulfill({ json: { project: null, summary: "Текст сокращён.", changed_slides: [0], before: 2, issues: [], proposal: {
+      id: "browser-proposal", content, base_updated_at: input.base_updated_at,
+      expires_at: new Date(Date.now() + 60000).toISOString(),
+      changes: [{slide: 0, field: "body", before: input.content.slides[0].body, after: content.slides[0].body}],
+    } } });
+  });
+  await page.route("**/api/projects/*/assistant/proposals/browser-proposal/apply", async route => {
+    const input = route.request().postDataJSON();
+    const url = route.request().url().replace(/\/assistant\/proposals\/.*$/, "");
+    const saved = await page.request.put(url, { headers: route.request().headers(), data: { ...input, content: proposed } });
     expect(saved.ok()).toBeTruthy();
-    await route.fulfill({ json: { project: await saved.json(), summary: "Текст сокращён.", changed_slides: [0], before: 2, issues: [] } });
+    await route.fulfill({ json: { project: await saved.json(), proposal: null, summary: "Текст сокращён.", changed_slides: [0], issues: [] } });
   });
   await page.goto("/");
   const app = new DecklyPage(page);
@@ -28,7 +37,9 @@ test("AI edits include the manual draft, save a revision and can be undone", asy
   const text = page.getByRole("textbox", { name: "Основной текст" });
   await text.fill("Ручной текст с подробностями, который нужно сократить.");
   await page.getByLabel("Что изменить с помощью AI?").fill("Сократи мой текст");
-  await page.getByRole("button", { name: "Применить запрос AI", exact: true }).click();
+  await page.getByRole("button", { name: "Предложить изменения", exact: true }).click();
+  await expect(text).toHaveValue("Ручной текст с подробностями, который нужно сократить.");
+  await page.getByRole("button", { name: "Принять изменения", exact: true }).click();
   await expect(text).toHaveValue("AI сократил текст.");
   await expect(page.getByText("Правки сохранены", { exact: true })).toBeVisible();
   expect(calls).toBe(1);
@@ -41,7 +52,7 @@ test("AI edits include the manual draft, save a revision and can be undone", asy
   await page.getByRole("button", { name: "Проверить", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Исправить презентацию с AI", exact: true })).toBeVisible();
   await expect(page.getByLabel("Область изменений")).toHaveValue("all");
-  await expect(page.getByRole("button", { name: "Исправить автоматически с AI", exact: true })).toBeEnabled();
+  await expect(page.getByRole("button", { name: "Предложить исправления", exact: true })).toBeEnabled();
 });
 
 test("AI failure leaves the unsaved text editable", async ({ page }) => {
@@ -54,7 +65,7 @@ test("AI failure leaves the unsaved text editable", async ({ page }) => {
   const app = new DecklyPage(page); await app.register(); await app.createPresentation();
   const text = page.getByRole("textbox", { name: "Основной текст" });
   await text.fill("Моя работа не должна исчезнуть.");
-  await page.getByRole("button", { name: "Исправить автоматически с AI", exact: true }).click();
+  await page.getByRole("button", { name: "Предложить исправления", exact: true }).click();
   await expect(page.getByRole("alert")).toContainText("Модель временно недоступна");
   await expect(text).toHaveValue("Моя работа не должна исчезнуть.");
   await expect(page.getByRole("button", { name: "Сохранить изменения", exact: true })).toBeEnabled();
