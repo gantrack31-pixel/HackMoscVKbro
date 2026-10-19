@@ -1,4 +1,4 @@
-import { ThinkingSkeleton } from "../../components/ThinkingSkeleton";
+import { DecklyMascot } from "../../components/DecklyMascot";
 import { generationStages } from "./content";
 import type { FailedGenerationJob } from "./types";
 
@@ -20,22 +20,38 @@ export function GenerationProgress({
   return (
     <section className="generation panel" aria-busy={busy}>
       {failedJob && !hasContent && (
-        <div className="error-banner" role="alert">
-          <span>{failedJob.message}</span>
-          <button className="btn ghost sm" disabled={busy} onClick={onRestart}>
-            Начать заново
-          </button>
+        <div className="generation-mascot-error">
+          <DecklyMascot animation="error" size={160} />
+          <div className="error-banner" role="alert">
+            <span>{failedJob.message}</span>
+            <button
+              className="btn ghost sm"
+              disabled={busy}
+              onClick={onRestart}
+            >
+              Начать заново
+            </button>
+          </div>
         </div>
       )}
       {!failedJob && (
         <>
-          <ThinkingSkeleton
-            label={
-              live
+          <div className="generation-mascot">
+            <DecklyMascot
+              animation={
+                stage === "queued" || stage === "design" || stage === "audit"
+                  ? "think"
+                  : "laptop"
+              }
+              size={190}
+              working={busy}
+            />
+            <span className="generation-mascot-label">
+              {live
                 ? "AI собирает вашу презентацию"
-                : "Собираем презентацию по шаблону"
-            }
-          />
+                : "Собираем презентацию по шаблону"}
+            </span>
+          </div>
           <h2>У вашей идеи появляется форма</h2>
           <p className="small muted">
             {live
