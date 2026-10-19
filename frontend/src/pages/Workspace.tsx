@@ -79,6 +79,7 @@ export function Workspace({
         return;
       }
       setRoute(next);
+      setError("");
       window.scrollTo(0, 0);
     };
     window.addEventListener("hashchange", change);
@@ -404,6 +405,7 @@ export function Workspace({
             } else {
               setPending(null);
               setDirty(false);
+              setError("");
               history.replaceState(null, "", `#${next}`);
               setRoute(next);
               window.scrollTo(0, 0);
