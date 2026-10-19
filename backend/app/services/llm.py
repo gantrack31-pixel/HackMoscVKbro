@@ -12,6 +12,7 @@ from . import provider_http
 from .visual_grounding import validate_visual, validate_diagram_design, normalize_model_icons
 from .sources import source_chunks, slide_binding, validate_bindings
 from .materials import compact_resource
+from .narrative import brief_from_request, validate_narrative_slide
 
 class LLMError(RuntimeError): pass
 class LLMFormatError(LLMError): pass
@@ -178,6 +179,7 @@ async def make_outline(request: OutlineRequest, template: dict, resources: list[
     system=(BASE/'prompts/outline.txt').read_text('utf-8')
     metadata=template['metadata']
     payload={'task':request.model_dump(),'template':model_template(template),
+             'narrative_brief':brief_from_request(request),
              'icon_library':model_icons(),
              'resource_catalog':[compact_resource(item) for item in (resources or [])][:80],
              'image_generation_available':bool(settings.image_base_url),'schema':compact_schema(DeckContent)}
@@ -191,6 +193,7 @@ async def make_outline(request: OutlineRequest, template: dict, resources: list[
                 raise ValueError('Используй только asset_id из выбранного шаблона.')
             if len(result.slides)!=request.count: raise ValueError(f'Нужно ровно {request.count} слайдов')
             for slide in result.slides:
+                validate_narrative_slide(slide,request.prompt)
                 validate_visual(slide,request.prompt)
                 if slide.kind in {'diagram','icons'} and len(slide.bullets)>6:
                     raise ValueError('Схема или пиктограммы вмещают до 6 тезисов; подробности перенеси в notes.')
@@ -244,6 +247,17 @@ async def review_content(content: dict, source: str) -> list[dict]:
 
 async def create_design_variants(content: DeckContent, template: dict, instruction: str = '', resources: list[dict] | None = None) -> DeckContent:
     """One model request plans all three variants; the renderer owns safe geometry."""
+    # Analytical evidence and geometry are deterministic. Only narrative slides need LLM styling.
+    analytical = [i for i, slide in enumerate(content.slides) if slide.analytics is not None]
+    if analytical:
+        result = content.model_copy(deep=True)
+        narrative = [i for i in range(len(content.slides)) if i not in analytical]
+        if narrative:
+            subset = content.model_copy(update={'slides': [content.slides[i] for i in narrative]})
+            styled = await create_design_variants(subset, template, instruction, resources)
+            for index, slide in zip(narrative, styled.slides): result.slides[index] = slide
+        return result
+
     if settings.mode=='demo':
         return await redesign_layout(content,template,instruction) if instruction else content.model_copy(deep=True)
     if settings.mode!='live': raise LLMError('LLM_MODE должен быть demo или live.')

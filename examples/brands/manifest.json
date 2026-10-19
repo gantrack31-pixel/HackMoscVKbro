@@ -1,0 +1,33 @@
+{
+  "synthetic": true,
+  "parser": "brand-1",
+  "inputs": [
+    "north-tokens.json",
+    "north-guide.pdf",
+    "figma-document.json",
+    "north-brand-package.zip"
+  ],
+  "expected": {
+    "accent": "#006AD8",
+    "font": "Manrope",
+    "margin": 64,
+    "logo_aspect": 4.2,
+    "types": [
+      "table",
+      "line",
+      "bar",
+      "histogram",
+      "pie",
+      "scatter",
+      "grouped",
+      "stacked",
+      "kpi"
+    ]
+  },
+  "validation": "Adapter fixtures; not evidence of a real model call or native PowerPoint visual rendering.",
+  "audit_errors": {
+    "a": 0,
+    "b": 0,
+    "c": 0
+  }
+}

@@ -23,6 +23,8 @@ from .config import settings, BASE, validate_settings
 from . import database as db
 from .models import OutlineRequest, GenerateRequest, RegenerateRequest, ProjectUpdate, FixRequest, DeckContent, Issue, AssistantRequest
 from .services.assistant import edit_presentation
+from .services.assistant_proposals import create_proposal, apply_proposal, reject_proposal
+from .assistant_contract import ProjectVersionRequest
 from .services.templates import seed_templates, analyze_template, BUILTIN_IDS
 from .services.template_parser import NORMALIZATION_VERSION, fingerprint
 from .services.pptx_security import validate_pptx_archive
@@ -75,6 +77,10 @@ app.add_middleware(CORSMiddleware,allow_origins=settings.origins,allow_credentia
                    allow_methods=['GET','POST','PUT','DELETE'],allow_headers=['Content-Type','X-CSRF-Token','X-AI-Operation-ID'])
 app.add_middleware(JsonCompressionMiddleware)
 app.include_router(auth_router)
+from .analytics_routes import router as analytics_router
+app.include_router(analytics_router)
+from .brand_routes import router as brand_router
+app.include_router(brand_router)
 
 @app.exception_handler(RequestValidationError)
 async def private_validation_error(request: Request, exc: RequestValidationError):
@@ -119,7 +125,7 @@ def get_template(tid,user_id=None):
                      or result['metadata'].get('file_fingerprint') != fingerprint(result['path']))
             if stale:
                 fresh=analyze_template(Path(result['path']))
-                catalog={k:result['metadata'][k] for k in ('category','cover_title') if k in result['metadata']}
+                catalog={k:result['metadata'][k] for k in ('category','cover_title','bundled_pack','original_name','master_only','cover_slide') if k in result['metadata']}
                 result['metadata']={**catalog,**fresh}
                 db.template_save(tid,result['name'],result['path'],result['metadata'],result.get('user_id'))
         except (OSError,ValueError):
@@ -130,6 +136,23 @@ def get_project(pid,user_id=None):
     result=db.project_get(pid)
     if not result or (user_id and result.get('user_id')!=user_id): raise HTTPException(404,'Презентация не найдена')
     return result
+
+def styled_template(template, content, user_id):
+    from .services.brand_style import apply_brand
+    content=content.model_dump() if isinstance(content,DeckContent) else content
+    resources=db.materials_get(content.get('resource_ids',[]),user_id)
+    template=template_with_material_palette(template,resources)
+    try: return apply_brand(template,content.get('brand_style_id'),user_id,content.get('brand_prefer_template',False))
+    except KeyError: raise HTTPException(404,'Брендбук больше недоступен. Выберите другой стиль.') from None
+
+
+def project_template(project):
+    template=get_template(project['template_id'])
+    saved=(project.get('provenance') or {}).get('effective_style')
+    content=project['content']
+    if saved and saved.get('brand_style_id')==content.get('brand_style_id') and saved.get('prefer_template',False)==content.get('brand_prefer_template',False):
+        return {**template,'metadata':{**template['metadata'],**saved['metadata']}}
+    return styled_template(template,content,project.get('user_id'))
 
 def public_template(template, *, summary=False):
     result={key:value for key,value in template.items() if key not in {'path','user_id'}}
@@ -146,7 +169,7 @@ def public_template(template, *, summary=False):
     return result
 
 def project_response(project):
-    content=DeckContent.model_validate(project['content']);template=get_template(project['template_id'])
+    content=DeckContent.model_validate(project['content']);template=project_template(project)
     return {**{k:v for k,v in project.items() if k not in {'revisions','future','user_id'}},'can_undo':bool(project.get('revisions')),
             'can_redo':bool(project.get('future')),
             'template':public_template(template),
@@ -167,37 +190,42 @@ def workflow(user=Depends(current_user)):
 
 @app.post('/api/materials/import')
 async def import_materials(files: list[UploadFile], user=Depends(current_user)):
+    created=[]
     try:
-        if not 1<=len(files)<=8:raise HTTPException(422,'Выберите от одного до восьми файлов.')
-        documents=[];resources=[];total=0
-        folder=settings.storage/'materials'/user['id'];folder.mkdir(parents=True,exist_ok=True)
+        if not 1<=len(files)<=8: raise HTTPException(422,'Выберите от одного до восьми файлов.')
+        parsed=[];total=0
         for file in files:
             data=await file.read(MAX_FILE_BYTES+1)
             total+=len(data)
-            if total>15*1024*1024:raise HTTPException(413,'Пакет должен быть не больше 15 МБ.')
+            if total>15*1024*1024: raise HTTPException(413,'Пакет должен быть не больше 15 МБ.')
             name=Path((file.filename or 'Документ').replace('\\','/')).name
             doc=await asyncio.to_thread(process_material,name,data)
-            mid=str(uuid4())
-            path=folder/(mid+Path(name).suffix.lower())
+            parsed.append((doc,data))
+        text='\n\n'.join(f'Источник: {doc["name"]}\n{doc.get("text","")}' for doc,_ in parsed if doc.get('kind')=='document')
+        if len(text)>MAX_PACKET_CHARS: raise HTTPException(413,'В пакете больше 50 000 символов. Уберите часть документов.')
+        folder=settings.storage/'materials'/user['id'];folder.mkdir(parents=True,exist_ok=True)
+        documents=[];resources=[]
+        for doc,data in parsed:
+            mid=str(uuid4());path=folder/(mid+Path(doc['name']).suffix.lower())
             await asyncio.to_thread(path.write_bytes,data)
+            created.append((mid,path))
             metadata={**doc.get('metadata',{}),'name':doc['name']}
             saved_id=await asyncio.to_thread(db.material_save,mid,user['id'],doc['name'],doc['kind'],str(path),metadata,doc['sha256'])
-            resource={'id':saved_id,'user_id':user['id'],'name':doc['name'],'kind':doc['kind'],'path':str(path),
-                      'metadata':metadata,'sha256':doc['sha256'],'created_at':db.now()}
+            if saved_id!=mid:
+                path.unlink(missing_ok=True);created.remove((mid,path))
+            resource=db.materials_get([saved_id],user['id'])[0]
             resources.append(compact_resource(resource))
             documents.append({**doc,'id':saved_id,'metadata':metadata})
-        # Keep document text in memory only; binary assets are referenced by stable IDs.
-        text_parts=[]
-        for item in documents:
-            if item.get('kind')=='document':
-                # The original parsed text is attached before the response is compacted below.
-                text_parts.append(f'Источник: {item["name"]}\n{item.get("text","")}')
-        text='\n\n'.join(text_parts)
-        if len(text)>MAX_PACKET_CHARS:raise HTTPException(413,'В пакете больше 50 000 символов. Уберите часть документов.')
-        return {'text':text,'resource_ids':[r['id'] for r in resources],
-                'resources':resources,'documents':[{k:v for k,v in d.items() if k not in {'text','metadata'}} for d in documents]}
+        return {'text':text,'resource_ids':list(dict.fromkeys(r['id'] for r in resources)),
+                'resources':list({r['id']:r for r in resources}.values()),
+                'documents':[{k:v for k,v in d.items() if k!='metadata'} for d in documents]}
+    except Exception:
+        for mid,path in created:
+            db.material_delete(mid,user['id'])
+            path.unlink(missing_ok=True)
+        raise
     finally:
-        for file in files:await file.close()
+        for file in files: await file.close()
 
 @app.get('/api/materials')
 def list_materials(user=Depends(current_user)):
@@ -370,6 +398,12 @@ def original_template(tid: str,user=Depends(current_user)):
 @app.get('/api/templates/{tid}/thumbnail')
 def template_thumbnail(tid:str,request:Request,optimized:bool=False):
     from .auth import session_user
+    from .services.bundled_templates import pack_cover
+    # Pack covers are rendered ahead of time; serving a card must not analyze
+    # dozens of large PowerPoint packages or populate the database with assets.
+    cover=pack_cover(tid)
+    if cover:
+        return private_image_response(cover, request)
     user=session_user(request)
     template=get_template(tid)
     if tid not in BUILTIN_IDS and (not user or not visible_template(template,user['id'])):
@@ -449,7 +483,7 @@ async def generate_job(jid: str, request: GenerateRequest,user_id: str, result_p
             resources=db.materials_get(source.resource_ids,user_id)
             if len(resources)!=len(set(source.resource_ids)):
                 raise HTTPException(404,'Один из материалов больше недоступен.')
-            template=template_with_material_palette(template,resources)
+            template=styled_template(template,source,user_id)
             content=await create_design_variants(source,template,resources=resources)
             timings['design']=monotonic()-tick
             counts=await assemble_variants(jid,content,template,request.source_text,user_id,timings,resources)
@@ -467,7 +501,13 @@ async def generate_job(jid: str, request: GenerateRequest,user_id: str, result_p
 
 @app.post('/api/generate',status_code=202)
 def generate(request: GenerateRequest,tasks: BackgroundTasks,user=Depends(current_user)):
-    get_template(request.template_id,user['id'])
+    styled_template(get_template(request.template_id,user['id']),request.content,user['id'])
+    if any(slide.analytics for slide in request.content.slides):
+        from .services.analytics_store import validate_requested_analytics
+        from .services.analytics_ingest import AnalysisError
+        try: validate_requested_analytics(user['id'],request.content.slides)
+        except KeyError: raise HTTPException(404,'Исходный набор данных недоступен этому аккаунту.') from None
+        except AnalysisError as exc: raise HTTPException(409,str(exc)) from exc
     if settings.mode=='live' and not configured():
         raise HTTPException(409,'Модель ещё не подключена. Настройте её на сервере и повторите.')
     jid=str(uuid4());pid=str(uuid4())
@@ -539,7 +579,7 @@ async def regenerate_job(jid: str, original: dict, instruction: str, user_id: st
             resources=db.materials_get(base.resource_ids,user_id)
             if len(resources)!=len(set(base.resource_ids)):
                 raise HTTPException(404,'Один из материалов больше недоступен.')
-            template=template_with_material_palette(template,resources)
+            template=project_template(original)
             content=await create_design_variants(base,template,instruction,resources)
             timings['design']=monotonic()-tick
             counts=await assemble_variants(jid,content,template,original['source_text'],user_id,timings,resources)
@@ -567,9 +607,11 @@ def regenerate(pid: str, request: RegenerateRequest, tasks: BackgroundTasks, use
     result_project_id=str(uuid4())
     regeneration_source={
         'id':original['id'],
+        'user_id':original['user_id'],
         'template_id':original['template_id'],
         'content':original['content'],
         'source_text':original['source_text'],
+        'provenance':original.get('provenance',{}),
     }
     db.job_create(jid,user['id'],'regenerate',{
         'project_id':pid,'instruction':request.instruction,'original':regeneration_source,
@@ -586,12 +628,28 @@ def project(pid: str,user=Depends(current_user)): return project_response(get_pr
 
 @app.put('/api/projects/{pid}')
 def update_project(pid: str,request: ProjectUpdate,user=Depends(current_user)):
-    get_project(pid,user['id']);db.project_update(pid,request.content.model_dump(),request.variant)
+    existing=get_project(pid,user['id'])
+    project_template({**existing,'content':request.content.model_dump()})
+    get_project(pid,user['id'])
+    require_version(request.base_updated_at)
+    db.project_update(pid,request.content.model_dump(),request.variant,
+                      expected_version=request.base_updated_at,user_id=user['id'])
     return project_response(get_project(pid))
+
+
+def require_version(value):
+    if not value:
+        raise HTTPException(409, {'code':'VERSION_REQUIRED',
+            'message':'Нужна актуальная версия презентации. Сохраните черновик и обновите страницу перед повторной попыткой.'})
+
+
+@app.exception_handler(db.ProjectConflict)
+async def project_conflict(request: Request, exc: db.ProjectConflict):
+    return JSONResponse({'detail':{'code':'VERSION_CONFLICT','message':str(exc)}}, status_code=409)
 
 @app.post('/api/projects/{pid}/preview')
 def preview_project(pid: str, request: ProjectUpdate, user=Depends(current_user)):
-    project=get_project(pid,user['id']);template=get_template(project['template_id'])
+    project=get_project(pid,user['id']);template=project_template({**project,'content':request.content.model_dump()})
     return {'scenes':[build_scene(slide,template['metadata'],request.variant,i)
                       for i,slide in enumerate(request.content.slides)]}
 
@@ -607,22 +665,34 @@ async def assistant_edit(pid: str, request: AssistantRequest,http_request:Reques
         raise HTTPException(422,'Напишите, что изменить в презентации.')
     if request.slide is not None and request.slide >= len(request.content.slides):
         raise HTTPException(422,'Указанный слайд отсутствует.')
-    template=get_template(project['template_id'])
+    template=project_template(project)
     try:
         async with generation_slots:
             result,report=await edit_presentation(request,template,project['source_text'])
             await asyncio.to_thread(lambda:[build_scene(s,template['metadata'],v,i)
                 for v in ('a','b','c') for i,s in enumerate(result.slides)])
         if result != request.content:
-            if not db.project_ai_update(pid,user['id'],request.base_updated_at,
-                                        request.content.model_dump(),result.model_dump(),request.variant,current_operation.get()):
-                raise HTTPException(409,'Во время работы AI презентация изменилась. Результат не перезаписал новые правки; повторите запрос из актуальной версии.')
+            proposal=create_proposal(pid,user['id'],request,result,project['source_text'],report,current_operation.get())
+            return {'project':None, 'proposal':proposal, **report}
         else:
             # No AI changes: retain unsaved client draft instead of losing it in a saved-project response.
-            return {'project':None, **report}
-        return {'project':project_response(get_project(pid,user['id'])), **report}
+            return {'project':None, 'proposal':None, **report}
     except LLMError as exc:
         raise HTTPException(502,str(exc)) from exc
+
+
+@app.post('/api/projects/{pid}/assistant/proposals/{proposal_id}/apply')
+def apply_assistant_proposal(pid: str, proposal_id: str, request: ProjectUpdate, user=Depends(current_user)):
+    get_project(pid,user['id'])
+    require_version(request.base_updated_at)
+    report=apply_proposal(pid,user['id'],proposal_id,request)
+    return {'project':project_response(get_project(pid,user['id'])), 'proposal':None, **report}
+
+
+@app.post('/api/projects/{pid}/assistant/proposals/{proposal_id}/reject')
+def reject_assistant_proposal(pid: str, proposal_id: str, user=Depends(current_user)):
+    get_project(pid,user['id'])
+    return reject_proposal(pid,user['id'],proposal_id)
 
 @app.exception_handler(cloud.CloudError)
 async def cloud_error(request: Request, exc: cloud.CloudError):
@@ -653,7 +723,7 @@ def disk_connect(request:Request,response:Response,user=Depends(current_user)):
 async def save_disk(pid:str,user=Depends(current_user)):
     project=get_project(pid,user['id'])
     yandex_disk.token_for(user['id'])
-    content=DeckContent.model_validate(project['content']);template=get_template(project['template_id'],user['id'])
+    content=DeckContent.model_validate(project['content']);template=project_template(project)
     data=await asyncio.to_thread(export_pptx,content,template,project['variant'])
     return await yandex_disk.upload(user['id'],project['title'],data)
 
@@ -694,20 +764,24 @@ def delete_project(pid: str,user=Depends(current_user)):
     get_project(pid,user['id']);db.project_delete(pid)
 
 @app.post('/api/projects/{pid}/undo')
-def undo(pid: str,user=Depends(current_user)):
+def undo(pid: str,request: ProjectVersionRequest | None = None,user=Depends(current_user)):
     get_project(pid,user['id'])
-    if not db.project_undo(pid): raise HTTPException(409,'Нет предыдущей версии')
+    version=request.base_updated_at if request else None
+    require_version(version)
+    if not db.project_undo(pid,expected_version=version,user_id=user['id']): raise HTTPException(409,'Нет предыдущей версии')
     return project_response(get_project(pid))
 
 @app.post('/api/projects/{pid}/redo')
-def redo(pid: str,user=Depends(current_user)):
+def redo(pid: str,request: ProjectVersionRequest | None = None,user=Depends(current_user)):
     get_project(pid,user['id'])
-    if not db.project_history(pid,'redo'): raise HTTPException(409,'Нет следующей версии')
+    version=request.base_updated_at if request else None
+    require_version(version)
+    if not db.project_history(pid,'redo',expected_version=version,user_id=user['id']): raise HTTPException(409,'Нет следующей версии')
     return project_response(get_project(pid))
 
 @app.get('/api/projects/{pid}/audit')
 def audit(pid: str,variant: str=Query('a',pattern='^[abc]$'),user=Depends(current_user)):
-    project=get_project(pid,user['id']);template=get_template(project['template_id'])
+    project=get_project(pid,user['id']);template=project_template(project)
     issues=audit_deck(DeckContent.model_validate(project['content']),template,variant,project['source_text'])
     return {'issues':[i.model_dump() for i in issues],
             'sources':[{'slide':i,**slide_binding(s,project['source_text'])} for i,s in enumerate(DeckContent.model_validate(project['content']).slides)],
@@ -731,21 +805,25 @@ async def content_audit(pid: str,http_request:Request,user=Depends(current_user)
 
 @app.post('/api/projects/{pid}/fix')
 def fix(pid: str,request: FixRequest,user=Depends(current_user)):
-    project=get_project(pid,user['id']);content=DeckContent.model_validate(project['content']);template=get_template(project['template_id'])
+    project=get_project(pid,user['id']);content=DeckContent.model_validate(project['content']);template=project_template(project)
+    require_version(request.base_updated_at)
+    db.require_project_version(project,request.base_updated_at,user['id'])
     available={i.id:i for i in audit_deck(content,template,request.variant,project['source_text']) if i.fixable}
     if any(i not in available for i in request.issue_ids): raise HTTPException(422,'Выберите только доступные автоматические исправления.')
     for iid in request.issue_ids:
         issue=available[iid]
         content.slides[issue.slide].fixed=list(set(content.slides[issue.slide].fixed+[issue.code]))
-    db.project_update(pid,content.model_dump(),request.variant)
+    db.project_update(pid,content.model_dump(),request.variant,
+                      expected_version=request.base_updated_at,user_id=user['id'])
     return project_response(get_project(pid))
 
 @app.get('/api/projects/{pid}/export/{format}')
-def export(pid: str,format: str,variant: str=Query('a',pattern='^[abc]$'),user=Depends(current_user)):
+def export(pid: str,format: str,variant: str=Query('a',pattern='^[abc]$'),version: str | None = Query(default=None,max_length=80),user=Depends(current_user)):
     functions={'pptx':(export_pptx,'application/vnd.openxmlformats-officedocument.presentationml.presentation'),
                'pdf':(export_pdf,'application/pdf'),'html':(export_html,'text/html; charset=utf-8')}
     if format not in functions: raise HTTPException(422,'Выберите PPTX, PDF или HTML')
-    project=get_project(pid,user['id']);content=DeckContent.model_validate(project['content']);template=get_template(project['template_id'])
+    project=get_project(pid,user['id']);content=DeckContent.model_validate(project['content']);template=project_template(project)
+    if version: db.require_project_version(project,version,user['id'])
     function,mime=functions[format];payload=function(content,template,variant)
     filename=quote(content.title[:90]+f'-{variant}.{format}',safe='')
     return Response(payload,media_type=mime,headers={'Content-Disposition':f"attachment; filename=deckly-{variant}.{format}; filename*=UTF-8''{filename}"})

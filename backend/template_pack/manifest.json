@@ -1,0 +1,3277 @@
+[
+  {
+    "id": "pack-63f2742517f3",
+    "name": "Процессы и документация",
+    "file": "pack-63f2742517f3.pptx",
+    "cover": "pack-63f2742517f3.webp",
+    "metadata": {
+      "count": 10,
+      "ratio": 1.77778,
+      "width_emu": 14630400,
+      "height_emu": 8229600,
+      "font": "Calibri Light",
+      "heading_font": "Calibri Light",
+      "body_font": "Calibri Light",
+      "heading_pt": 32,
+      "body_pt": 18,
+      "colors": {
+        "dk1": "#000000",
+        "lt1": "#FFFFFF",
+        "dk2": "#44546A",
+        "lt2": "#E7E6E6",
+        "accent1": "#4472C4",
+        "accent2": "#ED7D31",
+        "accent3": "#A5A5A5",
+        "accent4": "#FFC000",
+        "accent5": "#5B9BD5",
+        "accent6": "#70AD47",
+        "hlink": "#0563C1",
+        "folHlink": "#954F72"
+      },
+      "palette": [
+        "#000000",
+        "#FFFFFF",
+        "#44546A",
+        "#E7E6E6",
+        "#4472C4",
+        "#ED7D31",
+        "#A5A5A5",
+        "#FFC000",
+        "#5B9BD5",
+        "#70AD47",
+        "#0563C1",
+        "#954F72"
+      ],
+      "accent": "#4472C4",
+      "background": "#FFFFFF",
+      "layouts": [
+        {
+          "master": 0,
+          "index": 0,
+          "name": "DEFAULT",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 1,
+          "name": "Slide 1 master",
+          "boxes": [],
+          "static_shapes": 3
+        },
+        {
+          "master": 0,
+          "index": 2,
+          "name": "Slide 2 master",
+          "boxes": [],
+          "static_shapes": 3
+        },
+        {
+          "master": 0,
+          "index": 3,
+          "name": "Slide 3 master",
+          "boxes": [],
+          "static_shapes": 3
+        },
+        {
+          "master": 0,
+          "index": 4,
+          "name": "Slide 4 master",
+          "boxes": [],
+          "static_shapes": 3
+        },
+        {
+          "master": 0,
+          "index": 5,
+          "name": "Slide 5 master",
+          "boxes": [],
+          "static_shapes": 3
+        },
+        {
+          "master": 0,
+          "index": 6,
+          "name": "Slide 6 master",
+          "boxes": [],
+          "static_shapes": 3
+        },
+        {
+          "master": 0,
+          "index": 7,
+          "name": "Slide 7 master",
+          "boxes": [],
+          "static_shapes": 3
+        },
+        {
+          "master": 0,
+          "index": 8,
+          "name": "Slide 8 master",
+          "boxes": [],
+          "static_shapes": 3
+        },
+        {
+          "master": 0,
+          "index": 9,
+          "name": "Slide 9 master",
+          "boxes": [],
+          "static_shapes": 3
+        },
+        {
+          "master": 0,
+          "index": 10,
+          "name": "Slide 10 master",
+          "boxes": [],
+          "static_shapes": 3
+        }
+      ],
+      "source": "pptx",
+      "category": "Пак презентаций",
+      "cover_title": "Процессы и документация",
+      "file_fingerprint": "63f2742517f30999907f8b13ef86d6b75f5ac1fba6eff7c62a0ac6a0657f46ae",
+      "bundled_pack": true,
+      "original_name": "Copy-of-Process-Documentation.pptx",
+      "master_only": false,
+      "warnings": [],
+      "master_count": 1,
+      "cover_slide": 1
+    }
+  },
+  {
+    "id": "pack-81044a0a6a3c",
+    "name": "Экология города",
+    "file": "pack-81044a0a6a3c.pptx",
+    "cover": "pack-81044a0a6a3c.webp",
+    "metadata": {
+      "count": 10,
+      "ratio": 1.77778,
+      "width_emu": 12192000,
+      "height_emu": 6858000,
+      "font": "Calibri Light",
+      "heading_font": "Calibri Light",
+      "body_font": "Calibri Light",
+      "heading_pt": 32,
+      "body_pt": 18,
+      "colors": {
+        "dk1": "#000000",
+        "lt1": "#FFFFFF",
+        "dk2": "#373545",
+        "lt2": "#CEDBE6",
+        "accent1": "#3494BA",
+        "accent2": "#58B6C0",
+        "accent3": "#75BDA7",
+        "accent4": "#7A8C8E",
+        "accent5": "#84ACB6",
+        "accent6": "#2683C6",
+        "hlink": "#6B9F25",
+        "folHlink": "#9F6715"
+      },
+      "palette": [
+        "#000000",
+        "#FFFFFF",
+        "#373545",
+        "#CEDBE6",
+        "#3494BA",
+        "#58B6C0",
+        "#75BDA7",
+        "#7A8C8E",
+        "#84ACB6",
+        "#2683C6",
+        "#6B9F25",
+        "#9F6715"
+      ],
+      "accent": "#3494BA",
+      "background": "#FFFFFF",
+      "layouts": [
+        {
+          "master": 0,
+          "index": 0,
+          "name": "Title Slide",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 1,
+          "name": "Title and Content",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 2,
+          "name": "Section Header",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 3,
+          "name": "Two Content",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 4,
+          "name": "Comparison",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 5,
+          "name": "Title Only",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 6,
+          "name": "Blank",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 7,
+          "name": "Content with Caption",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 8,
+          "name": "Picture with Caption",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 9,
+          "name": "Title and Vertical Text",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 10,
+          "name": "Vertical Title and Text",
+          "boxes": [],
+          "static_shapes": 0
+        }
+      ],
+      "source": "pptx",
+      "category": "Пак презентаций",
+      "cover_title": "Экология города",
+      "file_fingerprint": "81044a0a6a3c73d5fd79c5d3e05da90e6f4cd08a20fb3d2dd611a95a3a9cafc8",
+      "bundled_pack": true,
+      "original_name": "ecologiya-goroda-wide.pptx",
+      "master_only": false,
+      "warnings": [],
+      "master_count": 1,
+      "cover_slide": 1
+    }
+  },
+  {
+    "id": "pack-86a27191a2a3",
+    "name": "Forest · Лес",
+    "file": "pack-86a27191a2a3.pptx",
+    "cover": "pack-86a27191a2a3.webp",
+    "metadata": {
+      "count": 0,
+      "ratio": 1.77783,
+      "width_emu": 12195175,
+      "height_emu": 6859588,
+      "font": "Calibri",
+      "heading_font": "Calibri",
+      "body_font": "Calibri",
+      "heading_pt": 32,
+      "body_pt": 18,
+      "colors": {
+        "dk1": "#000000",
+        "lt1": "#FFFFFF",
+        "dk2": "#1F497D",
+        "lt2": "#EEECE1",
+        "accent1": "#4F81BD",
+        "accent2": "#C0504D",
+        "accent3": "#9BBB59",
+        "accent4": "#8064A2",
+        "accent5": "#4BACC6",
+        "accent6": "#F79646",
+        "hlink": "#0000FF",
+        "folHlink": "#800080"
+      },
+      "palette": [
+        "#000000",
+        "#FFFFFF",
+        "#1F497D",
+        "#EEECE1",
+        "#4F81BD",
+        "#C0504D",
+        "#9BBB59",
+        "#8064A2",
+        "#4BACC6",
+        "#F79646",
+        "#0000FF",
+        "#800080"
+      ],
+      "accent": "#4F81BD",
+      "background": "#FFFFFF",
+      "layouts": [
+        {
+          "master": 0,
+          "index": 0,
+          "name": "Пользовательский макет",
+          "boxes": [],
+          "static_shapes": 5
+        },
+        {
+          "master": 0,
+          "index": 1,
+          "name": "Text",
+          "boxes": [],
+          "static_shapes": 5
+        },
+        {
+          "master": 0,
+          "index": 2,
+          "name": "Hero_text",
+          "boxes": [],
+          "static_shapes": 3
+        },
+        {
+          "master": 0,
+          "index": 3,
+          "name": "Text with picture",
+          "boxes": [],
+          "static_shapes": 3
+        },
+        {
+          "master": 0,
+          "index": 4,
+          "name": "Picture",
+          "boxes": [],
+          "static_shapes": 4
+        },
+        {
+          "master": 0,
+          "index": 5,
+          "name": "End",
+          "boxes": [],
+          "static_shapes": 4
+        }
+      ],
+      "source": "pptx",
+      "category": "Пак презентаций",
+      "cover_title": "Forest · Лес",
+      "file_fingerprint": "86a27191a2a3dd451aac9c7ef28202daa22473166a619456d2b74254a61b4493",
+      "bundled_pack": true,
+      "original_name": "Forest.pptx",
+      "master_only": true,
+      "warnings": [
+        "Исходный файл содержит тему и макеты без готовых слайдов."
+      ],
+      "master_count": 1,
+      "cover_slide": 0
+    }
+  },
+  {
+    "id": "pack-5b5fe6fd5452",
+    "name": "Every · Минимализм",
+    "file": "pack-5b5fe6fd5452.pptx",
+    "cover": "pack-5b5fe6fd5452.webp",
+    "metadata": {
+      "count": 11,
+      "ratio": 1.77778,
+      "width_emu": 12192000,
+      "height_emu": 6858000,
+      "font": "Montserrat ExtraBold",
+      "heading_font": "Montserrat ExtraBold",
+      "body_font": "Montserrat ExtraBold",
+      "heading_pt": 32,
+      "body_pt": 18,
+      "colors": {
+        "dk1": "#000000",
+        "lt1": "#FFFFFF",
+        "dk2": "#000000",
+        "lt2": "#FFFFFF",
+        "accent1": "#F44336",
+        "accent2": "#E91E63",
+        "accent3": "#9C27B0",
+        "accent4": "#673AB7",
+        "accent5": "#3F51B5",
+        "accent6": "#2196F3",
+        "hlink": "#0563C1",
+        "folHlink": "#954F72"
+      },
+      "palette": [
+        "#000000",
+        "#FFFFFF",
+        "#000000",
+        "#FFFFFF",
+        "#F44336",
+        "#E91E63",
+        "#9C27B0",
+        "#673AB7",
+        "#3F51B5",
+        "#2196F3",
+        "#0563C1",
+        "#954F72"
+      ],
+      "accent": "#F44336",
+      "background": "#FFFFFF",
+      "layouts": [
+        {
+          "master": 0,
+          "index": 0,
+          "name": "Title Slide",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 1,
+          "name": "7_Custom Layout",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 2,
+          "name": "12_Custom Layout",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 3,
+          "name": "13_Custom Layout",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 4,
+          "name": "19_Custom Layout",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 5,
+          "name": "5_Title Slide",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 6,
+          "name": "45_Title Slide",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 7,
+          "name": "1_Title Slide",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 8,
+          "name": "31_Custom Layout",
+          "boxes": [],
+          "static_shapes": 0
+        }
+      ],
+      "source": "pptx",
+      "category": "Пак презентаций",
+      "cover_title": "Every · Минимализм",
+      "file_fingerprint": "5b5fe6fd54528bf0b55d7a1946771be43af9aec828acda7d6ab95882342d8222",
+      "bundled_pack": true,
+      "original_name": "Every-Powerpoint.pptx",
+      "master_only": false,
+      "warnings": [],
+      "master_count": 1,
+      "cover_slide": 3
+    }
+  },
+  {
+    "id": "pack-e052dbea0f5d",
+    "name": "Blockchain",
+    "file": "pack-e052dbea0f5d.pptx",
+    "cover": "pack-e052dbea0f5d.webp",
+    "metadata": {
+      "count": 11,
+      "ratio": 1.77778,
+      "width_emu": 12192000,
+      "height_emu": 6858000,
+      "font": "SourceSansPro-Bold",
+      "heading_font": "SourceSansPro-Bold",
+      "body_font": "SourceSansPro-Bold",
+      "heading_pt": 32,
+      "body_pt": 18,
+      "colors": {
+        "dk1": "#242524",
+        "lt1": "#FFFFFF",
+        "dk2": "#242524",
+        "lt2": "#FEFCFF",
+        "accent1": "#F44235",
+        "accent2": "#E81E62",
+        "accent3": "#9B27AF",
+        "accent4": "#3F50B5",
+        "accent5": "#2195F3",
+        "accent6": "#FFEB3A",
+        "hlink": "#0563C1",
+        "folHlink": "#954F72"
+      },
+      "palette": [
+        "#242524",
+        "#FFFFFF",
+        "#242524",
+        "#FEFCFF",
+        "#F44235",
+        "#E81E62",
+        "#9B27AF",
+        "#3F50B5",
+        "#2195F3",
+        "#FFEB3A",
+        "#0563C1",
+        "#954F72"
+      ],
+      "accent": "#F44235",
+      "background": "#FFFFFF",
+      "layouts": [
+        {
+          "master": 0,
+          "index": 0,
+          "name": "13_Custom Layout",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 1,
+          "name": "79_Custom Layout",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 2,
+          "name": "20_Custom Layout",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 3,
+          "name": "Title Slide",
+          "boxes": [],
+          "static_shapes": 1
+        },
+        {
+          "master": 0,
+          "index": 4,
+          "name": "6_Custom Layout",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 5,
+          "name": "9_Custom Layout",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 6,
+          "name": "31_Custom Layout",
+          "boxes": [],
+          "static_shapes": 1
+        },
+        {
+          "master": 0,
+          "index": 7,
+          "name": "30_Title Slide",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 8,
+          "name": "47_Custom Layout",
+          "boxes": [],
+          "static_shapes": 0
+        }
+      ],
+      "source": "pptx",
+      "category": "Пак презентаций",
+      "cover_title": "Blockchain",
+      "file_fingerprint": "e052dbea0f5d56aa554e0da44a9c6a530f52960450c8336e2f9aed6254f5bb31",
+      "bundled_pack": true,
+      "original_name": "Blockchain_powerpoint_template.pptx",
+      "master_only": false,
+      "warnings": [],
+      "master_count": 1,
+      "cover_slide": 2
+    }
+  },
+  {
+    "id": "pack-632eed67a3d5",
+    "name": "Комнатные растения",
+    "file": "pack-632eed67a3d5.pptx",
+    "cover": "pack-632eed67a3d5.webp",
+    "metadata": {
+      "count": 10,
+      "ratio": 1.77778,
+      "width_emu": 12192000,
+      "height_emu": 6858000,
+      "font": "Calibri Light",
+      "heading_font": "Calibri Light",
+      "body_font": "Calibri Light",
+      "heading_pt": 32,
+      "body_pt": 18,
+      "colors": {
+        "dk1": "#000000",
+        "lt1": "#FFFFFF",
+        "dk2": "#444D26",
+        "lt2": "#FEFAC9",
+        "accent1": "#A5B592",
+        "accent2": "#F3A447",
+        "accent3": "#E7BC29",
+        "accent4": "#D092A7",
+        "accent5": "#9C85C0",
+        "accent6": "#809EC2",
+        "hlink": "#8E58B6",
+        "folHlink": "#7F6F6F"
+      },
+      "palette": [
+        "#000000",
+        "#FFFFFF",
+        "#444D26",
+        "#FEFAC9",
+        "#A5B592",
+        "#F3A447",
+        "#E7BC29",
+        "#D092A7",
+        "#9C85C0",
+        "#809EC2",
+        "#8E58B6",
+        "#7F6F6F"
+      ],
+      "accent": "#A5B592",
+      "background": "#FFFFFF",
+      "layouts": [
+        {
+          "master": 0,
+          "index": 0,
+          "name": "Титульный слайд",
+          "boxes": [],
+          "static_shapes": 1
+        },
+        {
+          "master": 0,
+          "index": 1,
+          "name": "Заголовок и объект",
+          "boxes": [],
+          "static_shapes": 1
+        },
+        {
+          "master": 0,
+          "index": 2,
+          "name": "2_Заголовок и объект",
+          "boxes": [],
+          "static_shapes": 4
+        },
+        {
+          "master": 0,
+          "index": 3,
+          "name": "Заголовок раздела",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 4,
+          "name": "Два объекта",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 5,
+          "name": "Сравнение",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 6,
+          "name": "Только заголовок",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 7,
+          "name": "Пустой слайд",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 8,
+          "name": "Объект с подписью",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 9,
+          "name": "Рисунок с подписью",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 10,
+          "name": "Заголовок и вертикальный текст",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 11,
+          "name": "Вертикальный заголовок и текст",
+          "boxes": [],
+          "static_shapes": 0
+        }
+      ],
+      "source": "pptx",
+      "category": "Пак презентаций",
+      "cover_title": "Комнатные растения",
+      "file_fingerprint": "632eed67a3d54b5fffb108fde1050bed78e22c24fc4634fb0abd4c0ab5a6a6c5",
+      "bundled_pack": true,
+      "original_name": "gostinaya-rasteniya.pptx",
+      "master_only": false,
+      "warnings": [],
+      "master_count": 1,
+      "cover_slide": 1
+    }
+  },
+  {
+    "id": "pack-eccb46808c62",
+    "name": "Горные лыжи",
+    "file": "pack-eccb46808c62.pptx",
+    "cover": "pack-eccb46808c62.webp",
+    "metadata": {
+      "count": 10,
+      "ratio": 1.77778,
+      "width_emu": 12192000,
+      "height_emu": 6858000,
+      "font": "Calibri Light",
+      "heading_font": "Calibri Light",
+      "body_font": "Calibri Light",
+      "heading_pt": 32,
+      "body_pt": 18,
+      "colors": {
+        "dk1": "#000000",
+        "lt1": "#FFFFFF",
+        "dk2": "#455F51",
+        "lt2": "#E3DED1",
+        "accent1": "#549E39",
+        "accent2": "#8AB833",
+        "accent3": "#C0CF3A",
+        "accent4": "#029676",
+        "accent5": "#4AB5C4",
+        "accent6": "#0989B1",
+        "hlink": "#6B9F25",
+        "folHlink": "#BA6906"
+      },
+      "palette": [
+        "#000000",
+        "#FFFFFF",
+        "#455F51",
+        "#E3DED1",
+        "#549E39",
+        "#8AB833",
+        "#C0CF3A",
+        "#029676",
+        "#4AB5C4",
+        "#0989B1",
+        "#6B9F25",
+        "#BA6906"
+      ],
+      "accent": "#549E39",
+      "background": "#FFFFFF",
+      "layouts": [
+        {
+          "master": 0,
+          "index": 0,
+          "name": "Title Slide",
+          "boxes": [],
+          "static_shapes": 1
+        },
+        {
+          "master": 0,
+          "index": 1,
+          "name": "Title and Content",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 2,
+          "name": "Section Header",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 3,
+          "name": "Two Content",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 4,
+          "name": "Comparison",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 5,
+          "name": "Title Only",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 6,
+          "name": "Blank",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 7,
+          "name": "Content with Caption",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 8,
+          "name": "Picture with Caption",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 9,
+          "name": "Title and Vertical Text",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 10,
+          "name": "Vertical Title and Text",
+          "boxes": [],
+          "static_shapes": 0
+        }
+      ],
+      "source": "pptx",
+      "category": "Пак презентаций",
+      "cover_title": "Горные лыжи",
+      "file_fingerprint": "eccb46808c6234a55526c8b465d83c71cc837e6c84244fd5fd846a0d6042970e",
+      "bundled_pack": true,
+      "original_name": "katanie-na-gornih-ligah-wide.pptx",
+      "master_only": false,
+      "warnings": [],
+      "master_count": 1,
+      "cover_slide": 1
+    }
+  },
+  {
+    "id": "pack-21ee9183c2de",
+    "name": "Mango · Красный",
+    "file": "pack-21ee9183c2de.pptx",
+    "cover": "pack-21ee9183c2de.webp",
+    "metadata": {
+      "count": 31,
+      "ratio": 1.77778,
+      "width_emu": 9144000,
+      "height_emu": 5143500,
+      "font": "Philosopher",
+      "heading_font": "Philosopher",
+      "body_font": "Philosopher",
+      "heading_pt": 32,
+      "body_pt": 18,
+      "colors": {
+        "dk1": "#000000",
+        "lt1": "#FFFFFF",
+        "dk2": "#FF0000",
+        "lt2": "#FF9999",
+        "accent1": "#FF6566",
+        "accent2": "#BF0000",
+        "accent3": "#7F0000",
+        "accent4": "#FF0000",
+        "accent5": "#FF9999",
+        "accent6": "#FF6566",
+        "hlink": "#BF0000",
+        "folHlink": "#7F0000"
+      },
+      "palette": [
+        "#000000",
+        "#FFFFFF",
+        "#FF0000",
+        "#FF9999",
+        "#FF6566",
+        "#BF0000",
+        "#7F0000",
+        "#FF0000",
+        "#FF9999",
+        "#FF6566",
+        "#BF0000",
+        "#7F0000"
+      ],
+      "accent": "#FF6566",
+      "background": "#FFFFFF",
+      "layouts": [
+        {
+          "master": 0,
+          "index": 0,
+          "name": "Blank Slide",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 1,
+          "name": "Full Image",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 2,
+          "name": "image 1",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 3,
+          "name": "Image 2",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 4,
+          "name": "Image 3",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 5,
+          "name": "Image 4",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 6,
+          "name": "Image 5",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 7,
+          "name": "image 6",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 8,
+          "name": "Image 7",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 9,
+          "name": "Image 8",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 10,
+          "name": "Image 9",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 11,
+          "name": "Image 10",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 12,
+          "name": "Image 11",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 13,
+          "name": "Image 12",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 14,
+          "name": "Image 13",
+          "boxes": [],
+          "static_shapes": 1
+        },
+        {
+          "master": 0,
+          "index": 15,
+          "name": "Image 14",
+          "boxes": [],
+          "static_shapes": 1
+        },
+        {
+          "master": 0,
+          "index": 16,
+          "name": "Image 15",
+          "boxes": [],
+          "static_shapes": 1
+        }
+      ],
+      "source": "pptx",
+      "category": "Пак презентаций",
+      "cover_title": "Mango · Красный",
+      "file_fingerprint": "21ee9183c2de457b2b9bec76ba2c11f5bc01ac480033a3284dbccbf8baaba2fa",
+      "bundled_pack": true,
+      "original_name": "Mango-Red.pptx",
+      "master_only": false,
+      "warnings": [],
+      "master_count": 1,
+      "cover_slide": 1
+    }
+  },
+  {
+    "id": "pack-97a7bea6b815",
+    "name": "Мрамор",
+    "file": "pack-97a7bea6b815.pptx",
+    "cover": "pack-97a7bea6b815.webp",
+    "metadata": {
+      "count": 10,
+      "ratio": 1.77778,
+      "width_emu": 12192000,
+      "height_emu": 6858000,
+      "font": "Calibri Light",
+      "heading_font": "Calibri Light",
+      "body_font": "Calibri Light",
+      "heading_pt": 32,
+      "body_pt": 18,
+      "colors": {
+        "dk1": "#000000",
+        "lt1": "#FFFFFF",
+        "dk2": "#000000",
+        "lt2": "#F8F8F8",
+        "accent1": "#DDDDDD",
+        "accent2": "#B2B2B2",
+        "accent3": "#969696",
+        "accent4": "#808080",
+        "accent5": "#5F5F5F",
+        "accent6": "#4D4D4D",
+        "hlink": "#5F5F5F",
+        "folHlink": "#919191"
+      },
+      "palette": [
+        "#000000",
+        "#FFFFFF",
+        "#000000",
+        "#F8F8F8",
+        "#DDDDDD",
+        "#B2B2B2",
+        "#969696",
+        "#808080",
+        "#5F5F5F",
+        "#4D4D4D",
+        "#5F5F5F",
+        "#919191"
+      ],
+      "accent": "#DDDDDD",
+      "background": "#FFFFFF",
+      "layouts": [
+        {
+          "master": 0,
+          "index": 0,
+          "name": "Титульный слайд",
+          "boxes": [],
+          "static_shapes": 1
+        },
+        {
+          "master": 0,
+          "index": 1,
+          "name": "Заголовок и объект",
+          "boxes": [],
+          "static_shapes": 1
+        },
+        {
+          "master": 0,
+          "index": 2,
+          "name": "2_Заголовок и объект",
+          "boxes": [],
+          "static_shapes": 4
+        },
+        {
+          "master": 0,
+          "index": 3,
+          "name": "Заголовок раздела",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 4,
+          "name": "Два объекта",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 5,
+          "name": "Сравнение",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 6,
+          "name": "Только заголовок",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 7,
+          "name": "Пустой слайд",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 8,
+          "name": "Объект с подписью",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 9,
+          "name": "Рисунок с подписью",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 10,
+          "name": "Заголовок и вертикальный текст",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 11,
+          "name": "Вертикальный заголовок и текст",
+          "boxes": [],
+          "static_shapes": 0
+        }
+      ],
+      "source": "pptx",
+      "category": "Пак презентаций",
+      "cover_title": "Мрамор",
+      "file_fingerprint": "97a7bea6b815a79beda185604e419aee7fa501af7d9adc945481218f1ca43f28",
+      "bundled_pack": true,
+      "original_name": "mrarmor.pptx",
+      "master_only": false,
+      "warnings": [],
+      "master_count": 1,
+      "cover_slide": 1
+    }
+  },
+  {
+    "id": "pack-4e4e1800e911",
+    "name": "Неон",
+    "file": "pack-4e4e1800e911.pptx",
+    "cover": "pack-4e4e1800e911.webp",
+    "metadata": {
+      "count": 10,
+      "ratio": 1.77778,
+      "width_emu": 12192000,
+      "height_emu": 6858000,
+      "font": "Calibri Light",
+      "heading_font": "Calibri Light",
+      "body_font": "Calibri Light",
+      "heading_pt": 32,
+      "body_pt": 18,
+      "colors": {
+        "dk1": "#000000",
+        "lt1": "#FFFFFF",
+        "dk2": "#454551",
+        "lt2": "#D8D9DC",
+        "accent1": "#E32D91",
+        "accent2": "#C830CC",
+        "accent3": "#4EA6DC",
+        "accent4": "#4775E7",
+        "accent5": "#8971E1",
+        "accent6": "#D54773",
+        "hlink": "#6B9F25",
+        "folHlink": "#8C8C8C"
+      },
+      "palette": [
+        "#000000",
+        "#FFFFFF",
+        "#454551",
+        "#D8D9DC",
+        "#E32D91",
+        "#C830CC",
+        "#4EA6DC",
+        "#4775E7",
+        "#8971E1",
+        "#D54773",
+        "#6B9F25",
+        "#8C8C8C"
+      ],
+      "accent": "#E32D91",
+      "background": "#FFFFFF",
+      "layouts": [
+        {
+          "master": 0,
+          "index": 0,
+          "name": "Титульный слайд",
+          "boxes": [],
+          "static_shapes": 1
+        },
+        {
+          "master": 0,
+          "index": 1,
+          "name": "Заголовок и объект",
+          "boxes": [],
+          "static_shapes": 1
+        },
+        {
+          "master": 0,
+          "index": 2,
+          "name": "2_Заголовок и объект",
+          "boxes": [],
+          "static_shapes": 4
+        },
+        {
+          "master": 0,
+          "index": 3,
+          "name": "1_Заголовок и объект",
+          "boxes": [],
+          "static_shapes": 1
+        },
+        {
+          "master": 0,
+          "index": 4,
+          "name": "Заголовок раздела",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 5,
+          "name": "Два объекта",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 6,
+          "name": "Сравнение",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 7,
+          "name": "Только заголовок",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 8,
+          "name": "Пустой слайд",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 9,
+          "name": "Объект с подписью",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 10,
+          "name": "Рисунок с подписью",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 11,
+          "name": "Заголовок и вертикальный текст",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 12,
+          "name": "Вертикальный заголовок и текст",
+          "boxes": [],
+          "static_shapes": 0
+        }
+      ],
+      "source": "pptx",
+      "category": "Пак презентаций",
+      "cover_title": "Неон",
+      "file_fingerprint": "4e4e1800e911ec7bf98f94f8625db5700260da4a37c0298f74a1d058d0dff659",
+      "bundled_pack": true,
+      "original_name": "neon.pptx",
+      "master_only": false,
+      "warnings": [],
+      "master_count": 1,
+      "cover_slide": 1
+    }
+  },
+  {
+    "id": "pack-c4b30dc399e4",
+    "name": "Приют для животных",
+    "file": "pack-c4b30dc399e4.pptx",
+    "cover": "pack-c4b30dc399e4.webp",
+    "metadata": {
+      "count": 10,
+      "ratio": 1.77778,
+      "width_emu": 12192000,
+      "height_emu": 6858000,
+      "font": "Calibri Light",
+      "heading_font": "Calibri Light",
+      "body_font": "Calibri Light",
+      "heading_pt": 32,
+      "body_pt": 18,
+      "colors": {
+        "dk1": "#000000",
+        "lt1": "#FFFFFF",
+        "dk2": "#593A2E",
+        "lt2": "#C49060",
+        "accent1": "#593A2E",
+        "accent2": "#C49060",
+        "accent3": "#F2C49B",
+        "accent4": "#484735",
+        "accent5": "#BACBD9",
+        "accent6": "#838C3F",
+        "hlink": "#0563C1",
+        "folHlink": "#954F72"
+      },
+      "palette": [
+        "#000000",
+        "#FFFFFF",
+        "#593A2E",
+        "#C49060",
+        "#593A2E",
+        "#C49060",
+        "#F2C49B",
+        "#484735",
+        "#BACBD9",
+        "#838C3F",
+        "#0563C1",
+        "#954F72"
+      ],
+      "accent": "#593A2E",
+      "background": "#FFFFFF",
+      "layouts": [
+        {
+          "master": 0,
+          "index": 0,
+          "name": "Титульный слайд",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 1,
+          "name": "Пользовательский макет",
+          "boxes": [],
+          "static_shapes": 1
+        },
+        {
+          "master": 0,
+          "index": 2,
+          "name": "2_Пользовательский макет",
+          "boxes": [],
+          "static_shapes": 1
+        },
+        {
+          "master": 0,
+          "index": 3,
+          "name": "6_Пользовательский макет",
+          "boxes": [],
+          "static_shapes": 1
+        },
+        {
+          "master": 0,
+          "index": 4,
+          "name": "1_Пользовательский макет",
+          "boxes": [],
+          "static_shapes": 2
+        },
+        {
+          "master": 0,
+          "index": 5,
+          "name": "5_Заголовок и объект",
+          "boxes": [],
+          "static_shapes": 1
+        },
+        {
+          "master": 0,
+          "index": 6,
+          "name": "4_Заголовок и объект",
+          "boxes": [],
+          "static_shapes": 2
+        },
+        {
+          "master": 0,
+          "index": 7,
+          "name": "Заголовок и объект",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 8,
+          "name": "2_Заголовок и объект",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 9,
+          "name": "Заголовок раздела",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 10,
+          "name": "Два объекта",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 11,
+          "name": "Сравнение",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 12,
+          "name": "Только заголовок",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 13,
+          "name": "Пустой слайд",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 14,
+          "name": "Объект с подписью",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 15,
+          "name": "Рисунок с подписью",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 16,
+          "name": "Заголовок и вертикальный текст",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 17,
+          "name": "Вертикальный заголовок и текст",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 18,
+          "name": "1_Заголовок и объект",
+          "boxes": [],
+          "static_shapes": 0
+        }
+      ],
+      "source": "pptx",
+      "category": "Пак презентаций",
+      "cover_title": "Приют для животных",
+      "file_fingerprint": "c4b30dc399e44f8055979194a782f2ae6de4034aca38dd0c427195df37e8606e",
+      "bundled_pack": true,
+      "original_name": "priyut-dlya-givotnih.pptx",
+      "master_only": false,
+      "warnings": [],
+      "master_count": 1,
+      "cover_slide": 1
+    }
+  },
+  {
+    "id": "pack-1b61cfe18363",
+    "name": "Rexi · Минимализм",
+    "file": "pack-1b61cfe18363.pptx",
+    "cover": "pack-1b61cfe18363.webp",
+    "metadata": {
+      "count": 32,
+      "ratio": 1.77778,
+      "width_emu": 12192000,
+      "height_emu": 6858000,
+      "font": "Raleway",
+      "heading_font": "Raleway",
+      "body_font": "Raleway",
+      "heading_pt": 32,
+      "body_pt": 18,
+      "colors": {
+        "dk1": "#000000",
+        "lt1": "#FFFFFF",
+        "dk2": "#44546A",
+        "lt2": "#E7E6E6",
+        "accent1": "#F9B658",
+        "accent2": "#DA8E50",
+        "accent3": "#9F664B",
+        "accent4": "#423745",
+        "accent5": "#312933",
+        "accent6": "#00263B",
+        "hlink": "#0563C1",
+        "folHlink": "#954F72"
+      },
+      "palette": [
+        "#000000",
+        "#FFFFFF",
+        "#44546A",
+        "#E7E6E6",
+        "#F9B658",
+        "#DA8E50",
+        "#9F664B",
+        "#423745",
+        "#312933",
+        "#00263B",
+        "#0563C1",
+        "#954F72"
+      ],
+      "accent": "#F9B658",
+      "background": "#FFFFFF",
+      "layouts": [
+        {
+          "master": 0,
+          "index": 0,
+          "name": "Title Slide",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 1,
+          "name": "1_Title Slide",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 2,
+          "name": "2_Title Slide",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 3,
+          "name": "3_Title Slide",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 4,
+          "name": "4_Title Slide",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 5,
+          "name": "7_Title Slide",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 6,
+          "name": "8_Title Slide",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 7,
+          "name": "9_Title Slide",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 8,
+          "name": "10_Title Slide",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 9,
+          "name": "12_Title Slide",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 10,
+          "name": "11_Title Slide",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 11,
+          "name": "13_Title Slide",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 12,
+          "name": "14_Title Slide",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 13,
+          "name": "15_Title Slide",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 14,
+          "name": "16_Title Slide",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 15,
+          "name": "17_Title Slide",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 16,
+          "name": "19_Title Slide",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 17,
+          "name": "18_Title Slide",
+          "boxes": [],
+          "static_shapes": 0
+        }
+      ],
+      "source": "pptx",
+      "category": "Пак презентаций",
+      "cover_title": "Rexi · Минимализм",
+      "file_fingerprint": "1b61cfe1836322183811c5254d738f5b387a5eff488b46136b215af9692c6714",
+      "bundled_pack": true,
+      "original_name": "Rexi.pptx",
+      "master_only": false,
+      "warnings": [],
+      "master_count": 1,
+      "cover_slide": 1
+    }
+  },
+  {
+    "id": "pack-62002d517f58",
+    "name": "Шахматный турнир",
+    "file": "pack-62002d517f58.pptx",
+    "cover": "pack-62002d517f58.webp",
+    "metadata": {
+      "count": 10,
+      "ratio": 1.77778,
+      "width_emu": 12192000,
+      "height_emu": 6858000,
+      "font": "Calibri Light",
+      "heading_font": "Calibri Light",
+      "body_font": "Calibri Light",
+      "heading_pt": 32,
+      "body_pt": 18,
+      "colors": {
+        "dk1": "#000000",
+        "lt1": "#FFFFFF",
+        "dk2": "#000000",
+        "lt2": "#F8F8F8",
+        "accent1": "#DDDDDD",
+        "accent2": "#B2B2B2",
+        "accent3": "#969696",
+        "accent4": "#808080",
+        "accent5": "#5F5F5F",
+        "accent6": "#4D4D4D",
+        "hlink": "#5F5F5F",
+        "folHlink": "#919191"
+      },
+      "palette": [
+        "#000000",
+        "#FFFFFF",
+        "#000000",
+        "#F8F8F8",
+        "#DDDDDD",
+        "#B2B2B2",
+        "#969696",
+        "#808080",
+        "#5F5F5F",
+        "#4D4D4D",
+        "#5F5F5F",
+        "#919191"
+      ],
+      "accent": "#DDDDDD",
+      "background": "#FFFFFF",
+      "layouts": [
+        {
+          "master": 0,
+          "index": 0,
+          "name": "Title Slide",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 1,
+          "name": "Title and Content",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 2,
+          "name": "Section Header",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 3,
+          "name": "Two Content",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 4,
+          "name": "Comparison",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 5,
+          "name": "Title Only",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 6,
+          "name": "Blank",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 7,
+          "name": "Content with Caption",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 8,
+          "name": "Picture with Caption",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 9,
+          "name": "Title and Vertical Text",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 10,
+          "name": "Vertical Title and Text",
+          "boxes": [],
+          "static_shapes": 0
+        }
+      ],
+      "source": "pptx",
+      "category": "Пак презентаций",
+      "cover_title": "Шахматный турнир",
+      "file_fingerprint": "62002d517f588ba6c008f37932924a016892eca0f2b21f2e7b36f03945a50db7",
+      "bundled_pack": true,
+      "original_name": "shahmatniy-turnir-wide.pptx",
+      "master_only": false,
+      "warnings": [],
+      "master_count": 1,
+      "cover_slide": 1
+    }
+  },
+  {
+    "id": "pack-34c8c9abd8cb",
+    "name": "Startup · Стартап",
+    "file": "pack-34c8c9abd8cb.pptx",
+    "cover": "pack-34c8c9abd8cb.webp",
+    "metadata": {
+      "count": 0,
+      "ratio": 1.77783,
+      "width_emu": 12195175,
+      "height_emu": 6859588,
+      "font": "Calibri",
+      "heading_font": "Calibri",
+      "body_font": "Calibri",
+      "heading_pt": 32,
+      "body_pt": 18,
+      "colors": {
+        "dk1": "#000000",
+        "lt1": "#FFFFFF",
+        "dk2": "#1F497D",
+        "lt2": "#EEECE1",
+        "accent1": "#4F81BD",
+        "accent2": "#C0504D",
+        "accent3": "#9BBB59",
+        "accent4": "#8064A2",
+        "accent5": "#4BACC6",
+        "accent6": "#F79646",
+        "hlink": "#0000FF",
+        "folHlink": "#800080"
+      },
+      "palette": [
+        "#000000",
+        "#FFFFFF",
+        "#1F497D",
+        "#EEECE1",
+        "#4F81BD",
+        "#C0504D",
+        "#9BBB59",
+        "#8064A2",
+        "#4BACC6",
+        "#F79646",
+        "#0000FF",
+        "#800080"
+      ],
+      "accent": "#4F81BD",
+      "background": "#FFFFFF",
+      "layouts": [
+        {
+          "master": 0,
+          "index": 0,
+          "name": "Пользовательский макет",
+          "boxes": [],
+          "static_shapes": 5
+        },
+        {
+          "master": 0,
+          "index": 1,
+          "name": "Text",
+          "boxes": [],
+          "static_shapes": 5
+        },
+        {
+          "master": 0,
+          "index": 2,
+          "name": "Hero_text",
+          "boxes": [],
+          "static_shapes": 4
+        },
+        {
+          "master": 0,
+          "index": 3,
+          "name": "Text with picture",
+          "boxes": [],
+          "static_shapes": 4
+        },
+        {
+          "master": 0,
+          "index": 4,
+          "name": "Picture",
+          "boxes": [],
+          "static_shapes": 3
+        },
+        {
+          "master": 0,
+          "index": 5,
+          "name": "End",
+          "boxes": [],
+          "static_shapes": 3
+        }
+      ],
+      "source": "pptx",
+      "category": "Пак презентаций",
+      "cover_title": "Startup · Стартап",
+      "file_fingerprint": "34c8c9abd8cb88338fbb440581b9f4da42cd5eba75441e4dc5603c0db1570fc4",
+      "bundled_pack": true,
+      "original_name": "Startup.pptx",
+      "master_only": true,
+      "warnings": [
+        "Исходный файл содержит тему и макеты без готовых слайдов."
+      ],
+      "master_count": 1,
+      "cover_slide": 0
+    }
+  },
+  {
+    "id": "pack-fdb7c2aec4ae",
+    "name": "Мой портфель · Школьный планер",
+    "file": "pack-fdb7c2aec4ae.pptx",
+    "cover": "pack-fdb7c2aec4ae.webp",
+    "metadata": {
+      "count": 11,
+      "ratio": 1.77773,
+      "width_emu": 12191695,
+      "height_emu": 6858000,
+      "font": "Arial",
+      "heading_font": "Arial",
+      "body_font": "Arial",
+      "heading_pt": 32,
+      "body_pt": 18,
+      "colors": {
+        "dk1": "#000000",
+        "lt1": "#FFFFFF",
+        "dk2": "#44546A",
+        "lt2": "#E7E6E6",
+        "accent1": "#4472C4",
+        "accent2": "#ED7D31",
+        "accent3": "#A5A5A5",
+        "accent4": "#FFC000",
+        "accent5": "#5B9BD5",
+        "accent6": "#70AD47",
+        "hlink": "#0563C1",
+        "folHlink": "#954F72"
+      },
+      "palette": [
+        "#000000",
+        "#FFFFFF",
+        "#44546A",
+        "#E7E6E6",
+        "#4472C4",
+        "#ED7D31",
+        "#A5A5A5",
+        "#FFC000",
+        "#5B9BD5",
+        "#70AD47",
+        "#0563C1",
+        "#954F72"
+      ],
+      "accent": "#4472C4",
+      "background": "#FFFFFF",
+      "layouts": [
+        {
+          "master": 0,
+          "index": 0,
+          "name": "DEFAULT",
+          "boxes": [],
+          "static_shapes": 0
+        }
+      ],
+      "source": "pptx",
+      "category": "Пак презентаций",
+      "cover_title": "Мой портфель · Школьный планер",
+      "file_fingerprint": "fdb7c2aec4ae8eaa8fcd709269e9e943ba046059b1b5d5d67ae047171796b36a",
+      "bundled_pack": true,
+      "original_name": "template.pptx",
+      "master_only": false,
+      "warnings": [],
+      "master_count": 1,
+      "cover_slide": 1
+    }
+  },
+  {
+    "id": "pack-179240378c2f",
+    "name": "Пастельные пузыри",
+    "file": "pack-179240378c2f.pptx",
+    "cover": "pack-179240378c2f.webp",
+    "metadata": {
+      "count": 20,
+      "ratio": 1.77778,
+      "width_emu": 18288000,
+      "height_emu": 10287000,
+      "font": "Calibri",
+      "heading_font": "Calibri",
+      "body_font": "Calibri",
+      "heading_pt": 32,
+      "body_pt": 18,
+      "colors": {
+        "dk1": "#000000",
+        "lt1": "#FFFFFF",
+        "dk2": "#1F497D",
+        "lt2": "#EEECE1",
+        "accent1": "#4F81BD",
+        "accent2": "#C0504D",
+        "accent3": "#9BBB59",
+        "accent4": "#8064A2",
+        "accent5": "#4BACC6",
+        "accent6": "#F79646",
+        "hlink": "#0000FF",
+        "folHlink": "#800080"
+      },
+      "palette": [
+        "#000000",
+        "#FFFFFF",
+        "#1F497D",
+        "#EEECE1",
+        "#4F81BD",
+        "#C0504D",
+        "#9BBB59",
+        "#8064A2",
+        "#4BACC6",
+        "#F79646",
+        "#0000FF",
+        "#800080"
+      ],
+      "accent": "#4F81BD",
+      "background": "#FFFFFF",
+      "layouts": [
+        {
+          "master": 0,
+          "index": 0,
+          "name": "Title Slide",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 1,
+          "name": "Title and Content",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 2,
+          "name": "Section Header",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 3,
+          "name": "Two Content",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 4,
+          "name": "Comparison",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 5,
+          "name": "Title Only",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 6,
+          "name": "Blank",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 7,
+          "name": "Content with Caption",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 8,
+          "name": "Picture with Caption",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 9,
+          "name": "Title and Vertical Text",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 10,
+          "name": "Vertical Title and Text",
+          "boxes": [],
+          "static_shapes": 0
+        }
+      ],
+      "source": "pptx",
+      "category": "Пак презентаций",
+      "cover_title": "Пастельные пузыри",
+      "file_fingerprint": "179240378c2f2e5e73ed3aecb4fb28e94d69f93c8e8921ce1fdde7d717857813",
+      "bundled_pack": true,
+      "original_name": "Пастельная Пузыри Базовая Простая Презентация.pptx",
+      "master_only": false,
+      "warnings": [],
+      "master_count": 1,
+      "cover_slide": 1
+    }
+  },
+  {
+    "id": "pack-9c559e7cf3aa",
+    "name": "Eco Environment · Синий",
+    "file": "pack-9c559e7cf3aa.pptx",
+    "cover": "pack-9c559e7cf3aa.webp",
+    "metadata": {
+      "count": 33,
+      "ratio": 1.77778,
+      "width_emu": 12192000,
+      "height_emu": 6858000,
+      "font": "Domine",
+      "heading_font": "Domine",
+      "body_font": "Domine",
+      "heading_pt": 32,
+      "body_pt": 18,
+      "colors": {
+        "dk1": "#000000",
+        "lt1": "#FFFFFF",
+        "dk2": "#17406D",
+        "lt2": "#DBEFF9",
+        "accent1": "#0F6FC6",
+        "accent2": "#009DD9",
+        "accent3": "#0BD0D9",
+        "accent4": "#10CF9B",
+        "accent5": "#7CCA62",
+        "accent6": "#A5C249",
+        "hlink": "#F49100",
+        "folHlink": "#85DFD0"
+      },
+      "palette": [
+        "#000000",
+        "#FFFFFF",
+        "#17406D",
+        "#DBEFF9",
+        "#0F6FC6",
+        "#009DD9",
+        "#0BD0D9",
+        "#10CF9B",
+        "#7CCA62",
+        "#A5C249",
+        "#F49100",
+        "#85DFD0"
+      ],
+      "accent": "#0F6FC6",
+      "background": "#FFFFFF",
+      "layouts": [
+        {
+          "master": 0,
+          "index": 0,
+          "name": "Title Slide",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 1,
+          "name": "Title and Content",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 2,
+          "name": "Section Header",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 3,
+          "name": "Two Content",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 4,
+          "name": "Comparison",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 5,
+          "name": "Title Only",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 6,
+          "name": "Blank",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 7,
+          "name": "Content with Caption",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 8,
+          "name": "Picture with Caption",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 9,
+          "name": "Title and Vertical Text",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 10,
+          "name": "Vertical Title and Text",
+          "boxes": [],
+          "static_shapes": 0
+        }
+      ],
+      "source": "pptx",
+      "category": "Пак презентаций",
+      "cover_title": "Eco Environment · Синий",
+      "file_fingerprint": "9c559e7cf3aa82bb9f35e8f9406dab4f7909d6abe135e60c00eeef3cf407ee3a",
+      "bundled_pack": true,
+      "original_name": "Eco Environment PPT - Blue.pptx",
+      "master_only": false,
+      "warnings": [],
+      "master_count": 1,
+      "cover_slide": 1
+    }
+  },
+  {
+    "id": "pack-a05c00104673",
+    "name": "Eco Environment · Коричневый",
+    "file": "pack-a05c00104673.pptx",
+    "cover": "pack-a05c00104673.webp",
+    "metadata": {
+      "count": 33,
+      "ratio": 1.77778,
+      "width_emu": 12192000,
+      "height_emu": 6858000,
+      "font": "Domine",
+      "heading_font": "Domine",
+      "body_font": "Domine",
+      "heading_pt": 32,
+      "body_pt": 18,
+      "colors": {
+        "dk1": "#000000",
+        "lt1": "#FFFFFF",
+        "dk2": "#4E3B30",
+        "lt2": "#FBEEC9",
+        "accent1": "#955D0A",
+        "accent2": "#F3B559",
+        "accent3": "#976C00",
+        "accent4": "#C3986D",
+        "accent5": "#A19574",
+        "accent6": "#C17529",
+        "hlink": "#AD1F1F",
+        "folHlink": "#FFC42F"
+      },
+      "palette": [
+        "#000000",
+        "#FFFFFF",
+        "#4E3B30",
+        "#FBEEC9",
+        "#955D0A",
+        "#F3B559",
+        "#976C00",
+        "#C3986D",
+        "#A19574",
+        "#C17529",
+        "#AD1F1F",
+        "#FFC42F"
+      ],
+      "accent": "#955D0A",
+      "background": "#FFFFFF",
+      "layouts": [
+        {
+          "master": 0,
+          "index": 0,
+          "name": "Title Slide",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 1,
+          "name": "Title and Content",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 2,
+          "name": "Section Header",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 3,
+          "name": "Two Content",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 4,
+          "name": "Comparison",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 5,
+          "name": "Title Only",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 6,
+          "name": "Blank",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 7,
+          "name": "Content with Caption",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 8,
+          "name": "Picture with Caption",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 9,
+          "name": "Title and Vertical Text",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 10,
+          "name": "Vertical Title and Text",
+          "boxes": [],
+          "static_shapes": 0
+        }
+      ],
+      "source": "pptx",
+      "category": "Пак презентаций",
+      "cover_title": "Eco Environment · Коричневый",
+      "file_fingerprint": "a05c0010467354b30bc2273c4b4c4e76e778ad76a99f04ee7831cfa75f78f11e",
+      "bundled_pack": true,
+      "original_name": "Eco Environment PPT - Brown.pptx",
+      "master_only": false,
+      "warnings": [],
+      "master_count": 1,
+      "cover_slide": 1
+    }
+  },
+  {
+    "id": "pack-b40b6dac7799",
+    "name": "Eco Environment · Монохромный",
+    "file": "pack-b40b6dac7799.pptx",
+    "cover": "pack-b40b6dac7799.webp",
+    "metadata": {
+      "count": 33,
+      "ratio": 1.77778,
+      "width_emu": 12192000,
+      "height_emu": 6858000,
+      "font": "Domine",
+      "heading_font": "Domine",
+      "body_font": "Domine",
+      "heading_pt": 32,
+      "body_pt": 18,
+      "colors": {
+        "dk1": "#000000",
+        "lt1": "#FFFFFF",
+        "dk2": "#000000",
+        "lt2": "#F8F8F8",
+        "accent1": "#373737",
+        "accent2": "#6E6E6E",
+        "accent3": "#969696",
+        "accent4": "#707070",
+        "accent5": "#5F5F5F",
+        "accent6": "#4D4D4D",
+        "hlink": "#5F5F5F",
+        "folHlink": "#919191"
+      },
+      "palette": [
+        "#000000",
+        "#FFFFFF",
+        "#000000",
+        "#F8F8F8",
+        "#373737",
+        "#6E6E6E",
+        "#969696",
+        "#707070",
+        "#5F5F5F",
+        "#4D4D4D",
+        "#5F5F5F",
+        "#919191"
+      ],
+      "accent": "#373737",
+      "background": "#FFFFFF",
+      "layouts": [
+        {
+          "master": 0,
+          "index": 0,
+          "name": "Title Slide",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 1,
+          "name": "Title and Content",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 2,
+          "name": "Section Header",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 3,
+          "name": "Two Content",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 4,
+          "name": "Comparison",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 5,
+          "name": "Title Only",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 6,
+          "name": "Blank",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 7,
+          "name": "Content with Caption",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 8,
+          "name": "Picture with Caption",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 9,
+          "name": "Title and Vertical Text",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 10,
+          "name": "Vertical Title and Text",
+          "boxes": [],
+          "static_shapes": 0
+        }
+      ],
+      "source": "pptx",
+      "category": "Пак презентаций",
+      "cover_title": "Eco Environment · Монохромный",
+      "file_fingerprint": "b40b6dac7799694c1f045cac992ef1a09c3f522e9db35107017fdbda09d6ff2f",
+      "bundled_pack": true,
+      "original_name": "Eco Environment PPT - BW.pptx",
+      "master_only": false,
+      "warnings": [],
+      "master_count": 1,
+      "cover_slide": 1
+    }
+  },
+  {
+    "id": "pack-709768e99ea7",
+    "name": "Eco Environment · Зелёный",
+    "file": "pack-709768e99ea7.pptx",
+    "cover": "pack-709768e99ea7.webp",
+    "metadata": {
+      "count": 33,
+      "ratio": 1.77778,
+      "width_emu": 12192000,
+      "height_emu": 6858000,
+      "font": "Domine",
+      "heading_font": "Domine",
+      "body_font": "Domine",
+      "heading_pt": 32,
+      "body_pt": 18,
+      "colors": {
+        "dk1": "#000000",
+        "lt1": "#FFFFFF",
+        "dk2": "#FDFBF8",
+        "lt2": "#E7E6E6",
+        "accent1": "#2B361E",
+        "accent2": "#EFC94C",
+        "accent3": "#ECE7DF",
+        "accent4": "#FFC000",
+        "accent5": "#4472C4",
+        "accent6": "#70AD47",
+        "hlink": "#0563C1",
+        "folHlink": "#954F72"
+      },
+      "palette": [
+        "#000000",
+        "#FFFFFF",
+        "#FDFBF8",
+        "#E7E6E6",
+        "#2B361E",
+        "#EFC94C",
+        "#ECE7DF",
+        "#FFC000",
+        "#4472C4",
+        "#70AD47",
+        "#0563C1",
+        "#954F72"
+      ],
+      "accent": "#2B361E",
+      "background": "#FFFFFF",
+      "layouts": [
+        {
+          "master": 0,
+          "index": 0,
+          "name": "Title Slide",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 1,
+          "name": "Title and Content",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 2,
+          "name": "Section Header",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 3,
+          "name": "Two Content",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 4,
+          "name": "Comparison",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 5,
+          "name": "Title Only",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 6,
+          "name": "Blank",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 7,
+          "name": "Content with Caption",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 8,
+          "name": "Picture with Caption",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 9,
+          "name": "Title and Vertical Text",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 10,
+          "name": "Vertical Title and Text",
+          "boxes": [],
+          "static_shapes": 0
+        }
+      ],
+      "source": "pptx",
+      "category": "Пак презентаций",
+      "cover_title": "Eco Environment · Зелёный",
+      "file_fingerprint": "709768e99ea72b084a913a4b69de9e5d2e4ec5f2053ce78932baf081e118b0b2",
+      "bundled_pack": true,
+      "original_name": "Eco Environment PPT - Green.pptx",
+      "master_only": false,
+      "warnings": [],
+      "master_count": 1,
+      "cover_slide": 1
+    }
+  },
+  {
+    "id": "pack-2383ec0c4350",
+    "name": "Eco Environment · Оранжевый",
+    "file": "pack-2383ec0c4350.pptx",
+    "cover": "pack-2383ec0c4350.webp",
+    "metadata": {
+      "count": 33,
+      "ratio": 1.77778,
+      "width_emu": 12192000,
+      "height_emu": 6858000,
+      "font": "Domine",
+      "heading_font": "Domine",
+      "body_font": "Domine",
+      "heading_pt": 32,
+      "body_pt": 18,
+      "colors": {
+        "dk1": "#000000",
+        "lt1": "#FFFFFF",
+        "dk2": "#637052",
+        "lt2": "#F2F2F2",
+        "accent1": "#E48312",
+        "accent2": "#AB620D",
+        "accent3": "#FFC000",
+        "accent4": "#9B8357",
+        "accent5": "#C2BC80",
+        "accent6": "#94A088",
+        "hlink": "#2998E3",
+        "folHlink": "#8C8C8C"
+      },
+      "palette": [
+        "#000000",
+        "#FFFFFF",
+        "#637052",
+        "#F2F2F2",
+        "#E48312",
+        "#AB620D",
+        "#FFC000",
+        "#9B8357",
+        "#C2BC80",
+        "#94A088",
+        "#2998E3",
+        "#8C8C8C"
+      ],
+      "accent": "#E48312",
+      "background": "#FFFFFF",
+      "layouts": [
+        {
+          "master": 0,
+          "index": 0,
+          "name": "Title Slide",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 1,
+          "name": "Title and Content",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 2,
+          "name": "Section Header",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 3,
+          "name": "Two Content",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 4,
+          "name": "Comparison",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 5,
+          "name": "Title Only",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 6,
+          "name": "Blank",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 7,
+          "name": "Content with Caption",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 8,
+          "name": "Picture with Caption",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 9,
+          "name": "Title and Vertical Text",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 10,
+          "name": "Vertical Title and Text",
+          "boxes": [],
+          "static_shapes": 0
+        }
+      ],
+      "source": "pptx",
+      "category": "Пак презентаций",
+      "cover_title": "Eco Environment · Оранжевый",
+      "file_fingerprint": "2383ec0c4350756770258d845a5622a065f69b8357db309b0822eea1e3eb9a1a",
+      "bundled_pack": true,
+      "original_name": "Eco Environment PPT - Orange.pptx",
+      "master_only": false,
+      "warnings": [],
+      "master_count": 1,
+      "cover_slide": 1
+    }
+  },
+  {
+    "id": "pack-bb6f475acad0",
+    "name": "Eco Environment · Фиолетовый",
+    "file": "pack-bb6f475acad0.pptx",
+    "cover": "pack-bb6f475acad0.webp",
+    "metadata": {
+      "count": 33,
+      "ratio": 1.77778,
+      "width_emu": 12192000,
+      "height_emu": 6858000,
+      "font": "Domine",
+      "heading_font": "Domine",
+      "body_font": "Domine",
+      "heading_pt": 32,
+      "body_pt": 18,
+      "colors": {
+        "dk1": "#000000",
+        "lt1": "#FFFFFF",
+        "dk2": "#632E62",
+        "lt2": "#EAE5EB",
+        "accent1": "#92278F",
+        "accent2": "#9B57D3",
+        "accent3": "#755DD9",
+        "accent4": "#665EB8",
+        "accent5": "#45A5ED",
+        "accent6": "#5982DB",
+        "hlink": "#0066FF",
+        "folHlink": "#666699"
+      },
+      "palette": [
+        "#000000",
+        "#FFFFFF",
+        "#632E62",
+        "#EAE5EB",
+        "#92278F",
+        "#9B57D3",
+        "#755DD9",
+        "#665EB8",
+        "#45A5ED",
+        "#5982DB",
+        "#0066FF",
+        "#666699"
+      ],
+      "accent": "#92278F",
+      "background": "#FFFFFF",
+      "layouts": [
+        {
+          "master": 0,
+          "index": 0,
+          "name": "Title Slide",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 1,
+          "name": "Title and Content",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 2,
+          "name": "Section Header",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 3,
+          "name": "Two Content",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 4,
+          "name": "Comparison",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 5,
+          "name": "Title Only",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 6,
+          "name": "Blank",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 7,
+          "name": "Content with Caption",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 8,
+          "name": "Picture with Caption",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 9,
+          "name": "Title and Vertical Text",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 10,
+          "name": "Vertical Title and Text",
+          "boxes": [],
+          "static_shapes": 0
+        }
+      ],
+      "source": "pptx",
+      "category": "Пак презентаций",
+      "cover_title": "Eco Environment · Фиолетовый",
+      "file_fingerprint": "bb6f475acad06707f0eefc5d29bbd4a8df13f73a31e1977a51c7ed04d37f1073",
+      "bundled_pack": true,
+      "original_name": "Eco Environment PPT - Purple.pptx",
+      "master_only": false,
+      "warnings": [],
+      "master_count": 1,
+      "cover_slide": 1
+    }
+  },
+  {
+    "id": "pack-7208d2b48331",
+    "name": "Eco Environment · Красный",
+    "file": "pack-7208d2b48331.pptx",
+    "cover": "pack-7208d2b48331.webp",
+    "metadata": {
+      "count": 33,
+      "ratio": 1.77778,
+      "width_emu": 12192000,
+      "height_emu": 6858000,
+      "font": "Domine",
+      "heading_font": "Domine",
+      "body_font": "Domine",
+      "heading_pt": 32,
+      "body_pt": 18,
+      "colors": {
+        "dk1": "#000000",
+        "lt1": "#FFFFFF",
+        "dk2": "#323232",
+        "lt2": "#E5C243",
+        "accent1": "#A5300F",
+        "accent2": "#D55816",
+        "accent3": "#E19825",
+        "accent4": "#B19C7D",
+        "accent5": "#7F5F52",
+        "accent6": "#B27D49",
+        "hlink": "#6B9F25",
+        "folHlink": "#B26B02"
+      },
+      "palette": [
+        "#000000",
+        "#FFFFFF",
+        "#323232",
+        "#E5C243",
+        "#A5300F",
+        "#D55816",
+        "#E19825",
+        "#B19C7D",
+        "#7F5F52",
+        "#B27D49",
+        "#6B9F25",
+        "#B26B02"
+      ],
+      "accent": "#A5300F",
+      "background": "#FFFFFF",
+      "layouts": [
+        {
+          "master": 0,
+          "index": 0,
+          "name": "Title Slide",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 1,
+          "name": "Title and Content",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 2,
+          "name": "Section Header",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 3,
+          "name": "Two Content",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 4,
+          "name": "Comparison",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 5,
+          "name": "Title Only",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 6,
+          "name": "Blank",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 7,
+          "name": "Content with Caption",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 8,
+          "name": "Picture with Caption",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 9,
+          "name": "Title and Vertical Text",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 10,
+          "name": "Vertical Title and Text",
+          "boxes": [],
+          "static_shapes": 0
+        }
+      ],
+      "source": "pptx",
+      "category": "Пак презентаций",
+      "cover_title": "Eco Environment · Красный",
+      "file_fingerprint": "7208d2b483313a33cd6f74ac9c739158e8aaa3b946d55d9a6f9f0c2d08a6ec03",
+      "bundled_pack": true,
+      "original_name": "Eco Environment PPT - Red.pptx",
+      "master_only": false,
+      "warnings": [],
+      "master_count": 1,
+      "cover_slide": 1
+    }
+  },
+  {
+    "id": "pack-847c846ff3c2",
+    "name": "Eco Environment · Бирюзовый",
+    "file": "pack-847c846ff3c2.pptx",
+    "cover": "pack-847c846ff3c2.webp",
+    "metadata": {
+      "count": 33,
+      "ratio": 1.77778,
+      "width_emu": 12192000,
+      "height_emu": 6858000,
+      "font": "Domine",
+      "heading_font": "Domine",
+      "body_font": "Domine",
+      "heading_pt": 32,
+      "body_pt": 18,
+      "colors": {
+        "dk1": "#000000",
+        "lt1": "#FFFFFF",
+        "dk2": "#373545",
+        "lt2": "#CEDBE6",
+        "accent1": "#3494BA",
+        "accent2": "#58B6C0",
+        "accent3": "#75BDA7",
+        "accent4": "#7A8C8E",
+        "accent5": "#84ACB6",
+        "accent6": "#2683C6",
+        "hlink": "#6B9F25",
+        "folHlink": "#9F6715"
+      },
+      "palette": [
+        "#000000",
+        "#FFFFFF",
+        "#373545",
+        "#CEDBE6",
+        "#3494BA",
+        "#58B6C0",
+        "#75BDA7",
+        "#7A8C8E",
+        "#84ACB6",
+        "#2683C6",
+        "#6B9F25",
+        "#9F6715"
+      ],
+      "accent": "#3494BA",
+      "background": "#FFFFFF",
+      "layouts": [
+        {
+          "master": 0,
+          "index": 0,
+          "name": "Title Slide",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 1,
+          "name": "Title and Content",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 2,
+          "name": "Section Header",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 3,
+          "name": "Two Content",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 4,
+          "name": "Comparison",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 5,
+          "name": "Title Only",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 6,
+          "name": "Blank",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 7,
+          "name": "Content with Caption",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 8,
+          "name": "Picture with Caption",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 9,
+          "name": "Title and Vertical Text",
+          "boxes": [],
+          "static_shapes": 0
+        },
+        {
+          "master": 0,
+          "index": 10,
+          "name": "Vertical Title and Text",
+          "boxes": [],
+          "static_shapes": 0
+        }
+      ],
+      "source": "pptx",
+      "category": "Пак презентаций",
+      "cover_title": "Eco Environment · Бирюзовый",
+      "file_fingerprint": "847c846ff3c255914b1533f9e77744c9cbe46b02ce84dccffa9001484298a527",
+      "bundled_pack": true,
+      "original_name": "Eco Environment PPT - Turquoise.pptx",
+      "master_only": false,
+      "warnings": [],
+      "master_count": 1,
+      "cover_slide": 1
+    }
+  }
+]

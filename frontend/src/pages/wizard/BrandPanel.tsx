@@ -1,0 +1,27 @@
+import { useEffect, useState } from "react";
+import { request, json } from "../../api/client";
+import { Icon } from "../../components/Icon";
+
+type Brand = {id:string;name:string;warnings?:string[];tokens?:{palette:string[];typography:Record<string,string|number>;spacing:Record<string,number>};unresolved_rules?:string[]};
+type Receipt = {name:string;precedence:string;conflicts:{field:string;template?:unknown;brand?:unknown;effective?:unknown}[];warnings:string[];font_mapping:{role:string;requested:string;effective:string;substituted:boolean}[];effective:Record<string,unknown>;unresolved_rules:string[]};
+export function BrandPanel({value,preferTemplate,onChange,templateId,disabled}:{value:string|null;preferTemplate:boolean;onChange:(id:string|null,prefer:boolean)=>void;templateId:string;disabled:boolean}) {
+  const [brands,setBrands]=useState<Brand[]>([]),[busy,setBusy]=useState(false),[error,setError]=useState("");
+  const [receipt,setReceipt]=useState<Receipt|null>(null);
+  const [revision,setRevision]=useState(0);
+  useEffect(()=>{let active=true;request<Brand[]>("/brands").then(r=>{if(active)setBrands(r);}).catch(e=>{if(active)setError(e.message);});return()=>{active=false;};},[revision]);
+  useEffect(()=>{let active=true;setReceipt(null);if(value)request<{brand_style?:Receipt;metadata?:{brand_style:Receipt}}>(`/brands/${value}/preview`,json("POST",{template_id:templateId,prefer_template:preferTemplate})).then(r=>{if(active)setReceipt(r.brand_style||r.metadata?.brand_style||null);}).catch(e=>{if(active)setError(e.message);});return()=>{active=false;};},[value,templateId,preferTemplate,revision]);
+  async function upload(files:File[]) {if(busy||!files.length)return;setBusy(true);setError("");try{const added:Brand[]=[];for(const file of files){const body=new FormData();body.append("file",file);added.push(await request<Brand>("/brands/upload",{method:"POST",body}));}const selected=added.length>1?await request<Brand>("/brands/combine",json("POST",{brand_ids:added.map(b=>b.id),name:"Фирменный стиль"})):added[0];setBrands(previous=>[...previous,...added,...(added.length>1?[selected]:[])]);onChange(selected.id,false);}catch(e){setError((e as Error).message);setRevision(n=>n+1);}finally{setBusy(false);}}
+  return <section className="panel brand-panel" aria-label="Фирменный стиль"><div className="wizard-section-heading"><span className="wizard-heading-icon"><Icon name="flow-style-step" /></span><div><h2>Ваш фирменный стиль</h2><p className="small muted">Добавьте правила бренда или оставьте оформление шаблона.</p></div></div>
+    <fieldset disabled={disabled||busy}><div className="analysis-import"><label className="field">Источник оформления<select value={value||''} onChange={e=>onChange(e.target.value||null,preferTemplate)}><option value="">Только шаблон презентации</option>{brands.map(brand=><option key={brand.id} value={brand.id}>{brand.name}</option>)}</select></label><label className="btn file-label"><Icon name="flow-import"/>{busy?'Читаем стиль…':'Добавить брендбук'}<input hidden type="file" multiple accept=".pdf,.json,.zip,.fig,.png,.jpg,.jpeg,.webp,.svg" onChange={e=>{const files=Array.from(e.target.files||[]);e.target.value='';void upload(files);}}/></label></div>
+      <p className="tiny muted">PDF, токены JSON, JSON документа Figma или ZIP с логотипами и примерами · до 8 МБ на файл. Несколько файлов объединяются в выбранном порядке.</p>
+      <details><summary>Как добавить дизайн из Figma</summary><p className="small muted">Загрузите JSON документа, полученный через официальный API Figma, или экспорт цветов и типографики в JSON. Бинарный .fig пока не разбирается: приложение сообщит об этом и предложит экспорт. Ссылка сама по себе не даёт доступа к документу.</p></details>
+      {value&&<label className="check"><input type="checkbox" checked={preferTemplate} onChange={e=>onChange(value,e.target.checked)}/>При конфликте использовать правила шаблона</label>}
+    </fieldset>
+    {receipt&&<div className="brand-receipt"><div className="between"><strong>{receipt.name}</strong><span className="badge blue">Приоритет: {receipt.precedence==='template'?'шаблон':'брендбук'}</span></div><div className="brand-swatches">{['accent','background','text_color'].map(key=>typeof receipt.effective[key]==='string'&&<span key={key}><i style={{background:String(receipt.effective[key])}}/>{String(receipt.effective[key])}</span>)}</div>
+      {receipt.font_mapping.map(font=><p key={font.role} className="tiny muted">{font.role==='heading_font'?'Заголовки':'Основной текст'}: {font.requested}{font.substituted?` → ${font.effective}`:''}</p>)}
+      {receipt.conflicts.length>0&&<details><summary>Совмещены правила: {receipt.conflicts.length}</summary><ul>{receipt.conflicts.map((conflict,i)=><li key={i}>{({accent:'Акцент',background:'Фон',text_color:'Текст',heading_font:'Шрифт заголовков',body_font:'Шрифт текста',heading_pt:'Размер заголовка',body_pt:'Размер текста',slide_margin:'Поля'} as Record<string,string>)[conflict.field]||conflict.field}: {String(conflict.template??'—')} → {String(conflict.effective??'—')}</li>)}</ul></details>}
+      {[...receipt.warnings,...receipt.unresolved_rules].map((warning,i)=><p key={i} className="analysis-warning">{warning}</p>)}
+    </div>}
+    {error&&<div className="error-banner" role="alert"><span>{error}</span><button className="btn sm" onClick={()=>{setError('');setRevision(n=>n+1);}}>Повторить</button></div>}
+  </section>;
+}

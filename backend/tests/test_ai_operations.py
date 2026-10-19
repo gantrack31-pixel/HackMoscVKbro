@@ -54,7 +54,7 @@ def test_cancel_full_work_stops_pipeline_without_publication(client,monkeypatch,
     db.job_create(jid,uid,'regenerate' if regenerate else 'generate',{})
     async def check():
         started=asyncio.Event();stopped=asyncio.Event()
-        async def design(*args):
+        async def design(*args, **kwargs):
             started.set()
             try: await asyncio.Future()
             finally: stopped.set()

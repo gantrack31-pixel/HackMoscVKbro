@@ -49,7 +49,7 @@ test("light catalog keeps real covers and loads passport images only when opened
   await app.openPreview();
   expect(imageRequests).toEqual([]);
   const dialog = page.getByRole("dialog");
-  await dialog.getByText("Правила и токены шаблона", { exact: true }).click();
+  await dialog.getByText("Об оформлении", { exact: true }).click();
   const image = dialog.locator(".template-assets img").first();
   await image.scrollIntoViewIfNeeded();
   await expect

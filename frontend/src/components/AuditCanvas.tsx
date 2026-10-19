@@ -7,6 +7,7 @@ export function AuditCanvas({
   index,
   scene,
   displayed,
+  slideIssueCounts,
   loading,
   loadError,
   focus,
@@ -23,6 +24,7 @@ export function AuditCanvas({
   index: number;
   scene: Scene | undefined;
   displayed: Issue[];
+  slideIssueCounts: number[];
   loading: boolean;
   loadError: string;
   focus: string;
@@ -37,13 +39,19 @@ export function AuditCanvas({
 }) {
   return (
     <section className="audit-canvas panel">
-      <div className="between">
-        <span className="label">
-          Слайд {index + 1} / {project.content.slides.length}
-        </span>
-        <div className="row">
+      <div className="between audit-canvas-toolbar">
+        <div className="audit-canvas-heading">
+          <span className="audit-section-label">
+            Слайд {String(index + 1).padStart(2, "0")}{" "}
+            <span>
+              / {String(project.content.slides.length).padStart(2, "0")}
+            </span>
+          </span>
+          <strong>{project.content.slides[index]?.title}</strong>
+        </div>
+        <div className="row audit-canvas-actions">
           <button className="btn sm" onClick={() => onView()} disabled={!scene}>
-            <Icon name="play" />
+            <Icon name="editor-preview" />
             Смотреть
           </button>
           <button
@@ -52,7 +60,7 @@ export function AuditCanvas({
             disabled={locked || index === 0}
             onClick={() => onSlideTo(index - 1)}
           >
-            ←
+            <Icon name="library-previous-template" />
           </button>
           <button
             className="btn sm"
@@ -60,7 +68,7 @@ export function AuditCanvas({
             disabled={locked || index === project.content.slides.length - 1}
             onClick={() => onSlideTo(index + 1)}
           >
-            →
+            <Icon name="library-next-template" />
           </button>
         </div>
       </div>
@@ -71,35 +79,56 @@ export function AuditCanvas({
           focus={focus}
           locked={locked}
           busy={busy}
-              onInspect={onInspect}
+          onInspect={onInspect}
         />
       )}
-      <p className="tiny muted" role="status">
+      {!scene && (
+        <div className="audit-canvas-placeholder" role="status">
+          <Icon name="editor-audit-preview" />
+          <span>Готовим предпросмотр слайда…</span>
+        </div>
+      )}
+      <p className="tiny muted audit-canvas-hint" role="status">
         {dirty
           ? previewError ||
             (previewPending
               ? "Обновляем предпросмотр…"
               : "Предпросмотр изменений. Нажмите «Сохранить и проверить».")
-          : displayed.length
-            ? "Выберите метку или замечание. Рамка покажет связанный блок слайда."
-            : "Здесь появятся отметки, если проверка найдёт замечания."}
+          : loading
+            ? "Проверяем слайды — отметки появятся после проверки."
+            : loadError
+              ? "Проверка недоступна. Предпросмотр слайда сохранён."
+              : displayed.length
+                ? "Выберите метку или замечание. Рамка покажет связанный блок слайда."
+                : "Здесь появятся отметки, если проверка найдёт замечания."}
       </p>
-      <div className="slide-select-strip">
-        {project.content.slides.map((_, i) => (
+      <div className="audit-strip-heading">
+        <span>Слайды презентации</span>
+        <span>{project.content.slides.length}</span>
+      </div>
+      <div className="slide-select-strip" aria-label="Слайды презентации">
+        {project.content.slides.map((slide, i) => (
           <button
             key={i}
             disabled={locked}
             className={`btn sm ${i === index ? "primary" : ""}`}
             aria-label={`Перейти к слайду ${i + 1}`}
             aria-current={i === index ? "true" : undefined}
+            title={`${i + 1}. ${slide.title}${!loading && !loadError && slideIssueCounts[i] ? ` · Замечаний: ${slideIssueCounts[i]}` : ""}`}
             onClick={() => onSlideTo(i)}
           >
-            {i + 1}
+            {String(i + 1).padStart(2, "0")}
+            {!loading && !loadError && slideIssueCounts[i] > 0 && (
+              <span className="audit-slide-issue-dot" aria-hidden="true" />
+            )}
           </button>
         ))}
       </div>
       <details className="audit-source">
-        <summary>Исходный материал</summary>
+        <summary>
+          <Icon name="editor-source" />
+          <span>Исходный материал</span>
+        </summary>
         <pre>{project.source_text || "Материал не добавлен."}</pre>
       </details>
     </section>

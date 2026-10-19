@@ -1,9 +1,9 @@
-import { Sparkles } from "lucide-react";
+import { Icon } from "./Icon";
 export function ThinkingSkeleton({ label }: { label: string }) {
   return (
     <div className="thinking" role="status" aria-live="polite" aria-busy="true">
       <div className="thinking-label">
-        <Sparkles size={20} />
+        <Icon name="ui-thinking" size={20} />
         <span>{label}…</span>
       </div>
       <div className="thinking-slides" aria-hidden="true">

@@ -10,6 +10,8 @@ import { pageLoaders } from "../navigation/pageLoaders";
 import type { Health, Project, Route, Template, User } from "../types";
 
 import { clearPendingGenerationJob } from "./wizard/pendingJob";
+import { readAccount, writeAccount } from "../state/accountStorage";
+import { archiveWizardDraft } from "./wizard/draft";
 
 const Finish = lazy(pageLoaders.finish);
 const Home = lazy(pageLoaders.home);
@@ -47,6 +49,9 @@ export function Workspace({
     [preview, setPreview] = useState<Template | null>(null),
     [mode, setMode] = useState<"text" | "description">("description"),
     [wizardKey, setWizardKey] = useState(0);
+  const [bootstrapRevision, setBootstrapRevision] = useState(0);
+  const [bootstrapErrors, setBootstrapErrors] = useState<Record<string, string>>({});
+  const [templatesLoading, setTemplatesLoading] = useState(true);
   const [favorites, setFavorites] = useState<string[]>([]);
   const favoriteBusy = useRef(new Set<string>());
   const uploadInput = useRef<HTMLInputElement>(null);
@@ -94,34 +99,31 @@ export function Workspace({
   }, [dirty, route]);
   useEffect(() => {
     const controller = new AbortController();
-    Promise.all([
-      api.templates(controller.signal),
-      api.health(),
-      api.favorites(),
-    ])
-      .then(([t, h, f]) => {
-        if (controller.signal.aborted) return;
-        setTemplates(t);
-        setSelected(t[0]);
-        setHealth(h);
-        setFavorites(f);
-      })
-      .catch((e) => {
-        if (!controller.signal.aborted) setError(e.message);
-      });
-    const id = localStorage.getItem("deckly-active-project");
-    if (id)
-      api
-        .project(id, controller.signal)
-        .then((project) => {
-          if (!controller.signal.aborted) setProject(project);
-        })
-        .catch(() => {
-          if (!controller.signal.aborted)
-            localStorage.removeItem("deckly-active-project");
-        });
+    setTemplatesLoading(true);
+    setBootstrapErrors({});
+    const fail = (section: string, e: Error) => {
+      if (!controller.signal.aborted) setBootstrapErrors(previous => ({ ...previous, [section]: e.message }));
+    };
+    void api.templates(controller.signal).then(t => {
+      if (controller.signal.aborted) return;
+      setTemplates(t);
+      const draft = readAccount<{templateId?: string}>(user.id, "wizard-draft");
+      setSelected(previous => previous || t.find(item => item.id === draft?.templateId) || t[0] || null);
+    }).catch(e => fail("Шаблоны", e)).finally(() => {
+      if (!controller.signal.aborted) setTemplatesLoading(false);
+    });
+    void api.health().then(h => { if (!controller.signal.aborted) setHealth(h); }).catch(e => fail("Состояние AI", e));
+    void api.favorites().then(f => { if (!controller.signal.aborted) setFavorites(f); }).catch(e => fail("Избранное", e));
+    const id = readAccount<string>(user.id, "active-project");
+    if (id) void api.project(id, controller.signal).then(p => {
+      if (!controller.signal.aborted) { setProject(p); writeAccount(user.id, "active-project", p.id); localStorage.removeItem("deckly-active-project"); }
+    }).catch(e => {
+      if (controller.signal.aborted) return;
+      if (e.status === 404) writeAccount(user.id, "active-project", null);
+      else fail("Последняя презентация", e);
+    });
     return () => controller.abort();
-  }, []);
+  }, [user.id, bootstrapRevision]);
   useEffect(() => {
     if (!toast) return;
     const timer = setTimeout(() => setToast(""), 4500);
@@ -129,7 +131,7 @@ export function Workspace({
   }, [toast]);
   function update(p: Project) {
     setProject(p);
-    localStorage.setItem("deckly-active-project", p.id);
+    writeAccount(user.id, "active-project", p.id);
   }
   function open(p: Project) {
     update(p);
@@ -138,8 +140,11 @@ export function Workspace({
     );
     location.hash = "editor";
   }
-  function start(m: "text" | "description", t?: Template) {
-    clearPendingGenerationJob();
+  function start(m: "text" | "description", t?: Template, reset = false) {
+    if (reset) {
+      if (!archiveWizardDraft(user.id)) { setError("Не удалось сохранить предыдущий черновик. Освободите место в браузере и повторите."); return; }
+      clearPendingGenerationJob(user.id);
+    }
     setMode(m);
     if (t) setSelected(t);
     setWizardKey((k) => k + 1);
@@ -204,7 +209,7 @@ export function Workspace({
         route={route}
         favoriteCount={favorites.length}
         onLogout={() => setPending("logout")}
-        onNewPresentation={() => start("description")}
+        onNewPresentation={() => start("description", undefined, true)}
       >
         <Suspense
           fallback={
@@ -219,24 +224,28 @@ export function Workspace({
           <WorkspacePage route={route}>
             {error && (
               <div className="error-banner" role="alert">
-                <Icon name="alert" />
+                <Icon name="ui-notice" />
                 <span>{error}</span>
                 <button
                   className="btn ghost sm"
                   onClick={() => setError("")}
                   aria-label="Закрыть сообщение"
                 >
-                  <Icon name="close" />
+                  Скрыть
                 </button>
               </div>
             )}
+            {Object.keys(bootstrapErrors).length > 0 && <div className="error-banner" role="alert">
+              <span>{Object.entries(bootstrapErrors).map(([section, message]) => `${section}: ${message}`).join(" · ")}</span>
+              <button className="btn sm" onClick={() => setBootstrapRevision(n => n + 1)}>Повторить загрузку</button>
+            </div>}
             {uploading && (
               <div className="demo-notice" role="status">
                 <i className="spinner" />
                 Читаем структуру PPTX…
               </div>
             )}
-            {!templates.length && !error ? (
+            {templatesLoading && !templates.length ? (
               <section className="empty">
                 <i className="spinner" />
                 <p>Готовим рабочее пространство…</p>
@@ -261,6 +270,7 @@ export function Workspace({
                 {route === "create" && selected && (
                   <Wizard
                     key={wizardKey}
+                    accountId={user.id}
                     template={selected}
                     templates={templates}
                     initialMode={mode}
@@ -268,7 +278,7 @@ export function Workspace({
                     onSelect={setSelected}
                     onOpen={open}
                     onError={setError}
-                    onRestart={() => start("description")}
+                    onRestart={() => start("description", undefined, true)}
                   />
                 )}
                 {route === "projects" && (
@@ -281,6 +291,7 @@ export function Workspace({
                 {route === "editor" && project && (
                   <Editor
                     key={project.id}
+                    accountId={user.id}
                     project={project}
                     imageGenerationAvailable={health?.image_generation}
                     health={health}
@@ -295,6 +306,7 @@ export function Workspace({
                 {route === "audit" && project && (
                   <Audit
                     key={project.id}
+                    accountId={user.id}
                     onDirty={setDirty}
                     project={project}
                     health={health}

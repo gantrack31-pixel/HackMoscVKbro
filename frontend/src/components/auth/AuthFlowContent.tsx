@@ -1,13 +1,5 @@
 import type { FormEvent } from "react";
-import {
-  Mail,
-  UserRound,
-  LockKeyhole,
-  Eye,
-  EyeOff,
-  ArrowRight,
-  ArrowLeft,
-} from "lucide-react";
+import { Icon } from "../Icon";
 
 export type AuthScreenMode =
   | "welcome"
@@ -63,10 +55,10 @@ export function AuthFlowContent({
             type="button"
             onClick={() => onGo("login")}
           >
-            <ArrowLeft size={16} /> Войти
+             Войти
           </button>
           <div className="email-pending-icon" aria-hidden="true">
-            <Mail size={24} />
+            <Icon name="auth-email-confirmation" size={24} />
           </div>
           <h1>Проверьте почту</h1>
           <p className="auth-form-hint">
@@ -84,7 +76,7 @@ export function AuthFlowContent({
             onClick={onResendVerification}
           >
             {resendBusy ? "Отправляем…" : "Отправить письмо ещё раз"}
-            <ArrowRight size={18} />
+
           </button>
           {resendMessage && (
             <p className="email-resend-message" role="status">
@@ -99,7 +91,7 @@ export function AuthFlowContent({
             type="button"
             onClick={() => onGo("login")}
           >
-            <ArrowLeft size={16} /> Войти
+             Войти
           </button>
           <h1>Восстановление пароля</h1>
           <p className="auth-form-hint">
@@ -110,7 +102,7 @@ export function AuthFlowContent({
             <label>
               Электронная почта
               <div className="auth-input">
-                <Mail size={17} />
+                <Icon name="auth-reset-email" size={17} />
                 <input
                   name="email"
                   type="email"
@@ -160,7 +152,7 @@ export function AuthFlowContent({
             type="button"
             onClick={() => onGo("choice")}
           >
-            <ArrowLeft size={16} />
+
             Назад
           </button>
           <h1>
@@ -174,7 +166,7 @@ export function AuthFlowContent({
           <label>
             Электронная почта
             <div className="auth-input">
-              <Mail size={17} />
+              <Icon name="auth-email" size={17} />
               <input
                 name="email"
                 type="email"
@@ -190,7 +182,7 @@ export function AuthFlowContent({
               <label>
                 Имя
                 <div className="auth-input">
-                  <UserRound size={17} />
+                  <Icon name="auth-first-name" size={17} />
                   <input
                     name="first_name"
                     autoComplete="given-name"
@@ -203,7 +195,7 @@ export function AuthFlowContent({
               <label>
                 Фамилия
                 <div className="auth-input">
-                  <UserRound size={17} />
+                  <Icon name="auth-last-name" size={17} />
                   <input
                     name="last_name"
                     autoComplete="family-name"
@@ -218,7 +210,7 @@ export function AuthFlowContent({
           <label>
             Пароль
             <div className="auth-input">
-              <LockKeyhole size={17} />
+              <Icon name="auth-password" size={17} />
               <input
                 name="password"
                 type={showPassword ? "text" : "password"}
@@ -239,7 +231,7 @@ export function AuthFlowContent({
                 aria-label={showPassword ? "Скрыть пароль" : "Показать пароль"}
                 onClick={() => onShowPassword(!showPassword)}
               >
-                {showPassword ? <EyeOff size={17} /> : <Eye size={17} />}
+                <Icon name={showPassword ? "auth-hide-password" : "auth-show-password"} size={17} />
               </button>
             </div>
           </label>
@@ -272,7 +264,7 @@ export function AuthFlowContent({
               : screen === "register"
                 ? "Зарегистрироваться"
                 : "Войти"}
-            <ArrowRight size={18} />
+
           </button>
           <p className="auth-switch">
             {screen === "register" ? "Уже есть аккаунт?" : "Ещё нет аккаунта?"}{" "}

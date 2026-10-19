@@ -1,0 +1,106 @@
+/* Useful context stays quieter than headings and primary actions. */
+.demo-preview-label,
+.demo-content .demo-step-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  width: fit-content;
+  padding: 6px 10px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface-soft);
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.4;
+  letter-spacing: 0;
+  text-transform: none;
+  font-variant-numeric: tabular-nums;
+}
+
+.demo-preview-label .icon {
+  width: 13px;
+  height: 13px;
+  color: var(--accent-text);
+}
+
+.page .catalog-note {
+  gap: 8px;
+  margin-block: 18px 22px;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--muted);
+}
+
+.catalog-note .icon {
+  flex-shrink: 0;
+  width: 14px;
+  height: 14px;
+}
+
+.page .form-footer.form-footer-end,
+.profile-page.profile-refined .security-footer,
+.spatial-home .space-story-footer {
+  justify-content: flex-end;
+}
+
+.generation-passport > summary {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.generation-passport[open] > summary,
+.generation-passport > summary:hover {
+  color: var(--ink);
+}
+
+.template-details > .badge {
+  align-self: flex-start;
+  width: fit-content;
+}
+
+.wizard-flow .heading .workflow-link {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.wizard-flow .heading .workflow-link:hover {
+  color: var(--accent-text);
+}
+
+@media (max-width: 600px) {
+  .demo-content .demo-templates {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 20px;
+  }
+
+  .demo-templates > div {
+    min-width: 0;
+  }
+
+  .demo-templates > div > p {
+    margin: 8px 0 0;
+    font-size: 12px;
+    overflow-wrap: anywhere;
+  }
+
+  .wizard-modern.wizard-flow .template-selection {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .wizard-modern.wizard-flow .template-selection > .slide {
+    grid-row: auto;
+    min-height: 0;
+  }
+
+  .wizard-modern.wizard-flow .template-selection > .slide h3 {
+    font-size: clamp(14px, 7cqw, 20px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spatial-home .space-scroll-hint {
+    display: none;
+  }
+}

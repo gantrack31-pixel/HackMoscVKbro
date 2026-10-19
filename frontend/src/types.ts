@@ -13,6 +13,20 @@ export type Route =
   | "requirements"
   | "finish";
 export type Variant = "a" | "b" | "c";
+export type AnalyticalChartType = "table" | "line" | "bar" | "histogram" | "pie" | "scatter" | "grouped" | "stacked" | "kpi";
+export interface AnalyticalSeries { name: string; values: (number | null)[]; unit: string }
+export interface CalculationRecord {
+  id: string; operation: string; fields: string[]; result: number | null; unit: string;
+  baseline: number | null; comparison: number | null; rows_used: number; rows_excluded: number; description: string;
+}
+export interface AnalyticalVisual {
+  chart_type: AnalyticalChartType; labels: string[]; series: AnalyticalSeries[]; x_values: (number | null)[];
+  columns: string[]; rows: string[][];
+  kpis: { label: string; value: number; unit: string; aggregation: string; period: string; display: string }[];
+  x_label: string; y_label: string; source: string; question: string; takeaway: string; why: string;
+  calculations: CalculationRecord[]; warnings: string[]; dataset_id: string; dataset_fingerprint: string;
+  selection_fingerprint: string; source_fingerprint: string; metadata: Record<string, unknown>;
+}
 export interface Template {
   preview_url?: string;
   id: string;
@@ -28,6 +42,9 @@ export interface Template {
     category: string;
     cover_title: string;
     source: "pptx" | "starter";
+    bundled_pack?: boolean;
+    master_only?: boolean;
+    cover_slide?: number;
     colors: Record<string, string>;
     fonts?: string[];
     layouts: unknown[];
@@ -43,9 +60,10 @@ export interface Template {
 export interface Slide {
   title: string;
   body: string;
-  kind: "title" | "text" | "chart" | "table" | "steps" | "diagram" | "icons" | "image";
+  kind: "title" | "text" | "chart" | "table" | "steps" | "diagram" | "icons" | "image" | "analysis";
   bullets: string[];
   chart: { labels: string[]; values: number[]; unit: string; chart_type?: "bar" | "column" | "line" } | null;
+  analytics?: AnalyticalVisual | null;
   table: string[][];
   source_quote: string;
   notes: string;
@@ -75,6 +93,8 @@ export interface Slide {
   designs?: Partial<Record<Variant, NonNullable<Slide["design"]>>>;
 }
 export interface DeckContent {
+  brand_style_id?: string | null;
+  brand_prefer_template?: boolean;
   title: string;
   slides: Slide[];
   audience?: string;
@@ -98,7 +118,10 @@ export interface MaterialResource {
 }
 export interface SceneObject {
   id: string;
-  type: "rect" | "text" | "chart" | "table" | "ellipse" | "hexagon" | "line" | "image";
+  type: "rect" | "text" | "chart" | "table" | "ellipse" | "hexagon" | "line" | "image" | "polygon";
+  points?: [number, number][];
+  font_family?: string;
+  parent_id?: string;
   x1?: number; y1?: number; x2?: number; y2?: number;
   stroke?: string; stroke_width?: number; src?: string;
   x: number;
@@ -125,6 +148,7 @@ export interface Scene {
   render_objects?: SceneObject[];
   template_layout: string;
   preview_note: string;
+  font_warnings?: string[];
 }
 export interface DiskStatus {
   configured: boolean;
@@ -189,7 +213,13 @@ export interface Health {
   yandex_enabled: boolean;
 }
 
+export interface AssistantProposal {
+  id: string; content: DeckContent; base_updated_at: string; draft_fingerprint: string;
+  source_fingerprint: string; expires_at: string; state: "pending" | "applied" | "rejected";
+  changes: { slide: number; field: string; before: unknown; after: unknown }[];
+}
 export interface AssistantResult {
+  proposal?: AssistantProposal | null;
   project: Project | null;
   summary: string;
   changed_slides: number[];

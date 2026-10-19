@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { api } from "../api";
 import { CloudLibrary } from "../components/CloudLibrary";
 import { Icon } from "../components/Icon";
+import { LibraryEmptyState } from "../components/LibraryEmptyState";
 import { TemplateCover } from "../components/TemplateCover";
 import type { Project, ProjectSummary, Template } from "../types";
 
@@ -29,10 +30,9 @@ export function Projects({
       <div className="heading between">
         <div>
           <h1>Мои презентации</h1>
-          <p>Ваши истории продолжаются здесь.</p>
         </div>
         <a className="btn primary" href="#create">
-          <Icon name="plus" />
+          <Icon name="library-new-project" />
           Создать презентацию
         </a>
       </div>
@@ -71,7 +71,6 @@ export function Projects({
                     }
                   >
                     Открыть
-                    <Icon name="arrow" />
                   </button>
                   {remove === p.id ? (
                     <div className="row">
@@ -93,7 +92,7 @@ export function Projects({
                         aria-label="Отмена удаления"
                         onClick={() => setRemove(null)}
                       >
-                        <Icon name="close" />
+                        Отмена
                       </button>
                     </div>
                   ) : (
@@ -102,7 +101,7 @@ export function Projects({
                       aria-label={`Удалить ${p.title}`}
                       onClick={() => setRemove(p.id)}
                     >
-                      <Icon name="trash" />
+                      Удалить
                     </button>
                   )}
                 </div>
@@ -115,14 +114,15 @@ export function Projects({
         <p>Загружаем презентации…</p>
       ) : (
         !projects.length && (
-          <section className="empty panel">
-            <Icon name="folder" />
-            <h2>Первая история впереди</h2>
-            <p>Выберите шаблон и создайте презентацию по своему материалу.</p>
+          <LibraryEmptyState
+            kind="projects"
+            title="Первая история впереди"
+            description="Выберите шаблон и создайте презентацию по своему материалу."
+          >
             <a className="btn primary" href="#templates">
               Выбрать шаблон
             </a>
-          </section>
+          </LibraryEmptyState>
         )
       )}
       <CloudLibrary onOpen={onOpen} />

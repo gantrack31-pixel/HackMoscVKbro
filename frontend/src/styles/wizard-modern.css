@@ -6,44 +6,174 @@
   font-family: Manrope, Arial, sans-serif;
 }
 .wizard-modern.wizard-flow .stepper {
-  max-width: 920px;
-  gap: 6px;
+  --stepper-inset: 8px;
+  --stepper-gap: 8px;
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  max-width: 1040px;
+  gap: var(--stepper-gap);
   margin: 24px 0 32px;
-  padding: 5px;
-  border-radius: 16px;
+  padding: var(--stepper-inset);
+  border-radius: 22px;
   background: var(--surface);
-  border-color: var(--line);
+  border: 1px solid var(--line);
+  box-shadow: 0 4px 18px #05245004;
+  list-style: none;
+}
+.wizard-modern.wizard-flow .stepper::before {
+  content: "";
+  box-sizing: border-box;
+  position: absolute;
+  z-index: 0;
+  inset-block: var(--stepper-inset);
+  left: var(--stepper-inset);
+  width: calc((100% - var(--stepper-inset) * 2 - var(--stepper-gap) * 3) / 4);
+  border: 1px solid color-mix(in srgb, #0077ff 28%, var(--line));
+  border-radius: 15px;
+  background: linear-gradient(
+    120deg,
+    color-mix(in srgb, #0077ff 11%, var(--surface)),
+    color-mix(in srgb, #0077ff 4%, var(--surface))
+  );
+  box-shadow:
+    0 3px 12px #0077ff0a,
+    inset 0 1px 0 #ffffff0a;
+  transform: translateX(
+    calc(var(--current-step, 0) * (100% + var(--stepper-gap)))
+  );
+  transition: transform 420ms cubic-bezier(0.22, 1, 0.36, 1);
+  pointer-events: none;
 }
 .wizard-modern.wizard-flow .stepper li {
-  gap: 10px;
-  padding: 12px 15px;
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 13px;
+  min-width: 0;
+  padding: 15px;
   border: 0;
-  border-radius: 11px;
-  font-size: 12px;
+  border-radius: 15px;
+  background: transparent;
+  color: var(--muted);
+  box-shadow: none;
+  transition: color 220ms ease;
+}
+.wizard-modern.wizard-flow .stepper .wizard-step-icon {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  border: 1px solid var(--line);
+  border-radius: 13px;
+  background: var(--surface-soft);
   color: var(--muted);
   transition:
-    background-color 0.3s,
-    color 0.3s;
+    background 240ms ease,
+    color 240ms ease,
+    border-color 240ms ease,
+    box-shadow 240ms ease;
 }
-.wizard-modern.wizard-flow .stepper li > span {
-  width: 27px;
-  height: 27px;
-  flex-shrink: 0;
-  background: var(--surface-soft);
-  color: var(--muted);
+.wizard-modern.wizard-flow .stepper .wizard-step-icon > .icon {
+  width: 19px;
+  height: 19px;
+}
+.wizard-step-copy {
+  display: grid;
+  min-width: 0;
+  gap: 5px;
+}
+.wizard-step-copy small {
+  font-size: 10px;
+  line-height: 1;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.08em;
+  opacity: 0.8;
+}
+.wizard-step-copy strong {
+  font-size: 12px;
+  line-height: 1.3;
+  font-weight: 650;
 }
 .wizard-modern.wizard-flow .stepper li.active {
-  background: var(--state-tint, #0077ff10);
+  background: transparent;
   color: var(--accent-text, #0077ff);
+  box-shadow: none;
 }
-.wizard-modern.wizard-flow .stepper li.active > span {
+.wizard-modern.wizard-flow .stepper li.active .wizard-step-icon {
   color: #fff;
-  background: var(--blue);
-  box-shadow: 0 3px 8px #0077ff25;
+  background: linear-gradient(145deg, #298dff, #0077ff);
+  border-color: #0077ff;
+  box-shadow:
+    0 4px 10px #0077ff25,
+    inset 0 1px 0 #ffffff38;
 }
-.wizard-modern.wizard-flow .stepper li.done > span {
-  background: var(--surface-soft);
+.wizard-modern.wizard-flow .stepper li.done {
+  color: var(--ink);
+}
+.wizard-modern.wizard-flow .stepper li.done .wizard-step-icon {
+  background: color-mix(in srgb, #0077ff 6%, var(--surface));
+  border-color: color-mix(in srgb, #0077ff 16%, var(--line));
   color: var(--accent-text, #0077ff);
+}
+.wizard-step-check {
+  position: absolute;
+  right: -4px;
+  bottom: -4px;
+  display: grid;
+  place-items: center;
+  width: 17px;
+  height: 17px;
+  border: 2px solid var(--surface);
+  border-radius: 50%;
+  color: #fff;
+  background: #0077ff;
+  animation: wizard-step-complete 240ms ease-out both;
+}
+.wizard-modern.wizard-flow .stepper .wizard-step-check .icon {
+  width: 10px;
+  height: 10px;
+  stroke-width: 2.5;
+}
+@keyframes wizard-step-complete {
+  from {
+    opacity: 0;
+    transform: scale(0.7);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+@media (max-width: 900px) and (min-width: 561px) {
+  .wizard-modern.wizard-flow .stepper li {
+    padding: 13px 10px;
+    gap: 9px;
+  }
+  .wizard-modern.wizard-flow .stepper .wizard-step-icon {
+    width: 34px;
+    height: 34px;
+    border-radius: 11px;
+  }
+  .wizard-step-copy strong {
+    font-size: 11px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .wizard-modern.wizard-flow .stepper::before,
+  .wizard-modern.wizard-flow .stepper li,
+  .wizard-modern.wizard-flow .stepper .wizard-step-icon {
+    transition: none;
+  }
+  .wizard-step-check {
+    animation: none;
+  }
 }
 .wizard-modern.wizard-flow :is(.wizard-grid, .outline-layout, .wizard-results) {
   animation: wizard-view-in 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
@@ -156,9 +286,19 @@
   color: var(--muted);
   font-size: 10px;
 }
-.wizard-modern.wizard-flow .material-resource .icon { width: 14px; height: 14px; flex: 0 0 auto; }
-.wizard-modern.wizard-flow .material-resource:not(.material-document) { color: var(--accent-text, #0077ff); }
-.wizard-modern.wizard-flow .material-resource { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.wizard-modern.wizard-flow .material-resource .icon {
+  width: 14px;
+  height: 14px;
+  flex: 0 0 auto;
+}
+.wizard-modern.wizard-flow .material-resource:not(.material-document) {
+  color: var(--accent-text, #0077ff);
+}
+.wizard-modern.wizard-flow .material-resource {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 .wizard-modern.wizard-flow .material-resource-remove {
   display: inline-grid;
   place-items: center;
@@ -494,17 +634,43 @@
   padding: 22px;
   border-radius: 16px;
 }
-.wizard-modern.wizard-flow .outline-summary > * { min-width: 0; max-width: 100%; }
-.wizard-modern.wizard-flow .outline-summary > .slide { width: 100%; box-sizing: border-box; }
-.wizard-modern.wizard-flow .outline-summary .slide-brand { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.wizard-modern.wizard-flow .outline-summary .slide h3 {
-  margin: 0; max-width: 72%; font-size: clamp(9px, 6.8cqw, 18px);
-  display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;
-  overflow: hidden; flex-shrink: 0; line-height: 1.14; letter-spacing: -.025em;
+.wizard-modern.wizard-flow .outline-summary > * {
+  min-width: 0;
+  max-width: 100%;
 }
-.wizard-modern.wizard-flow .outline-summary .slide-brand { font-size: clamp(7px, 3cqw, 11px); flex-shrink: 0; }
-.wizard-modern.wizard-flow .outline-summary .slide-meta { font-size: clamp(6px, 2.5cqw, 9px); flex-shrink: 0; }
-.wizard-modern.wizard-flow .outline-summary .slide-rule { height: 2px; flex-shrink: 0; }
+.wizard-modern.wizard-flow .outline-summary > .slide {
+  width: 100%;
+  box-sizing: border-box;
+}
+.wizard-modern.wizard-flow .outline-summary .slide-brand {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.wizard-modern.wizard-flow .outline-summary .slide h3 {
+  margin: 0;
+  max-width: 72%;
+  font-size: clamp(9px, 6.8cqw, 18px);
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  flex-shrink: 0;
+  line-height: 1.14;
+  letter-spacing: -0.025em;
+}
+.wizard-modern.wizard-flow .outline-summary .slide-brand {
+  font-size: clamp(7px, 3cqw, 11px);
+  flex-shrink: 0;
+}
+.wizard-modern.wizard-flow .outline-summary .slide-meta {
+  font-size: clamp(6px, 2.5cqw, 9px);
+  flex-shrink: 0;
+}
+.wizard-modern.wizard-flow .outline-summary .slide-rule {
+  height: 2px;
+  flex-shrink: 0;
+}
 .wizard-modern.wizard-flow .outline-summary .spec-row {
   align-items: start;
   gap: 20px;
@@ -910,21 +1076,42 @@
 }
 @media (max-width: 560px) {
   .wizard-modern.wizard-flow .stepper {
-    gap: 2px;
-    padding: 4px;
-    border-radius: 12px;
+    --stepper-inset: 5px;
+    --stepper-gap: 3px;
+    border-radius: 17px;
     margin: 20px 0 24px;
+  }
+  .wizard-modern.wizard-flow .stepper::before {
+    border-radius: 12px;
   }
   .wizard-modern.wizard-flow .stepper li {
     flex-direction: column;
     justify-content: center;
-    gap: 6px;
-    padding: 9px 3px;
-    font-size: 9px;
+    gap: 9px;
+    padding: 12px 0;
   }
-  .wizard-modern.wizard-flow .stepper li > span {
-    width: 25px;
-    height: 25px;
+  .wizard-modern.wizard-flow .stepper .wizard-step-icon {
+    width: 30px;
+    height: 30px;
+    border-radius: 10px;
+  }
+  .wizard-modern.wizard-flow .stepper .wizard-step-icon > .icon {
+    width: 16px;
+    height: 16px;
+  }
+  .wizard-step-copy {
+    text-align: center;
+  }
+  .wizard-step-copy small {
+    display: none;
+  }
+  .wizard-step-copy strong {
+    font-size: 9px;
+    letter-spacing: -0.03em;
+  }
+  .wizard-step-check {
+    width: 15px;
+    height: 15px;
   }
   .wizard-modern.wizard-flow .wizard-grid > .panel {
     padding: 20px;
@@ -965,8 +1152,15 @@
     padding: 14px;
   }
   .wizard-modern.wizard-flow .outline-item {
+    display: grid;
+    grid-template-columns: 27px minmax(0, 1fr);
     padding: 15px;
     gap: 9px;
+  }
+  .wizard-modern.wizard-flow .outline-actions {
+    grid-column: 2;
+    flex-direction: row;
+    flex-wrap: wrap;
   }
   .wizard-modern.wizard-flow .outline-number {
     min-width: 27px;

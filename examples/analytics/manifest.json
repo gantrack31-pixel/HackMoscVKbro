@@ -1,0 +1,162 @@
+{
+  "synthetic": true,
+  "description": "Все данные искусственные. Не являются исследованием или данными реальной компании.",
+  "examples": [
+    {
+      "id": "01",
+      "condition": "time series / format invariance",
+      "files": [
+        "01_synthetic_trend.csv",
+        "01_synthetic_trend.tsv",
+        "01_synthetic_trend.json",
+        "01_synthetic_trend.xlsx"
+      ],
+      "rows": 12,
+      "intent": "show growth",
+      "visuals": [
+        "line",
+        "bar",
+        "kpi"
+      ],
+      "expected": {
+        "baseline": 100,
+        "last": 123,
+        "relative_change_percent": 23,
+        "period": [
+          "2025-01-01",
+          "2025-12-01"
+        ],
+        "unit": "₽"
+      },
+      "warnings": []
+    },
+    {
+      "id": "02",
+      "condition": "category comparison / paired series",
+      "files": [
+        "02_synthetic_comparison.csv"
+      ],
+      "rows": 3,
+      "intent": "compare regions",
+      "visuals": [
+        "bar",
+        "grouped",
+        "stacked",
+        "scatter"
+      ],
+      "expected": {
+        "revenue_total": 300,
+        "cost_total": 172,
+        "largest": "Юг"
+      },
+      "warnings": []
+    },
+    {
+      "id": "03",
+      "condition": "shares",
+      "files": [
+        "03_synthetic_shares.csv"
+      ],
+      "rows": 3,
+      "intent": "show shares",
+      "visuals": [
+        "pie",
+        "bar"
+      ],
+      "expected": {
+        "denominator": 100,
+        "largest_share_percent": 50
+      },
+      "warnings": []
+    },
+    {
+      "id": "04",
+      "condition": "distribution / tiny values / outlier",
+      "files": [
+        "04_synthetic_distribution.csv"
+      ],
+      "rows": 15,
+      "intent": "distribution",
+      "visuals": [
+        "histogram",
+        "table"
+      ],
+      "expected": {
+        "observations": 15,
+        "smallest": 0.0001,
+        "largest": 0.001,
+        "unit": "с",
+        "all_bins_distinct": true
+      },
+      "warnings": [
+        "Tukey IQR выброс остаётся в данных."
+      ]
+    },
+    {
+      "id": "05",
+      "condition": "reference >=200 / IDs",
+      "files": [
+        "05_synthetic_reference_200.csv"
+      ],
+      "rows": 200,
+      "intent": "reference lookup",
+      "visuals": [
+        "table",
+        "kpi"
+      ],
+      "expected": {
+        "reference_slides_at12rows": 17,
+        "reference_cells": 800,
+        "Revenue sum": 20100,
+        "first_identifier": "00001",
+        "identifier_not_additive": true
+      },
+      "warnings": [
+        "Все страницы сохраняют все строки."
+      ]
+    },
+    {
+      "id": "06",
+      "condition": "missing values",
+      "files": [
+        "06_synthetic_missing.csv"
+      ],
+      "rows": 4,
+      "intent": "show trend",
+      "visuals": [
+        "line",
+        "scatter",
+        "table"
+      ],
+      "expected": {
+        "revenue_missing": 1,
+        "costs_missing": 1,
+        "complete_pairs": 2,
+        "Revenue sum": 363
+      },
+      "warnings": [
+        "Пропуски не равны нулю."
+      ]
+    },
+    {
+      "id": "07",
+      "condition": "embedded Markdown with context",
+      "files": [
+        "07_synthetic_embedded.md"
+      ],
+      "rows": 2,
+      "intent": "show growth",
+      "visuals": [
+        "line",
+        "bar"
+      ],
+      "expected": {
+        "relative_change_percent": 23,
+        "context_retained": true
+      },
+      "warnings": [
+        "Причины изменения неизвестны."
+      ]
+    }
+  ]
+}

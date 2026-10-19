@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { api } from "../api";
+import { downloadBlob } from "../api/client";
 import { Modal } from "./Modal";
 import { Icon } from "./Icon";
 import type { Project } from "../types";
@@ -15,22 +16,12 @@ export function ExportPanel({
   const [busy, setBusy] = useState(""),
     [done, setDone] = useState(""),
     [error, setError] = useState("");
-  async function download(format: string) {
+  async function download(format: "pptx" | "pdf" | "html") {
     setBusy(format);
     setError("");
     setDone("");
     try {
-      const response = await fetch(
-        api.exportUrl(project.id, format, project.variant),
-        { credentials: "same-origin" },
-      );
-      if (!response.ok) {
-        const data = await response.json().catch(() => ({
-          detail: "Не удалось подготовить файл. Повторите попытку.",
-        }));
-        throw new Error(data.detail);
-      }
-      const blob = await response.blob(),
+      const blob = await downloadBlob(api.exportUrl(project.id, format, project.variant, project.updated_at), format),
         url = URL.createObjectURL(blob),
         anchor = document.createElement("a");
       anchor.href = url;
@@ -53,7 +44,7 @@ export function ExportPanel({
         {project.variant.toUpperCase()}
       </p>
       <div className="export-options">
-        {[
+        {([
           [
             "pptx",
             "PowerPoint",
@@ -61,7 +52,7 @@ export function ExportPanel({
           ],
           ["pdf", "PDF", "Для просмотра, отправки и печати"],
           ["html", "HTML", "Автономная презентация в браузере"],
-        ].map(([format, title, detail]) => (
+        ] as const).map(([format, title, detail]) => (
           <button
             className={`export-option ${done === format ? "downloaded" : ""}`}
             key={format}
@@ -84,7 +75,7 @@ export function ExportPanel({
             {busy === format ? (
               <i className="spinner" />
             ) : (
-              <Icon name={done === format ? "check" : "download"} />
+              <Icon name={done === format ? "export-complete" : format === "pptx" ? "export-powerpoint" : format === "pdf" ? "export-pdf" : "export-html"} />
             )}
           </button>
         ))}
@@ -95,10 +86,10 @@ export function ExportPanel({
         </p>
       )}
       <div className="export-hint">
-        <Icon name="file" />
+        <Icon name="export-note" />
         <p>
-          PPTX сохраняет ресурсы исходного мастера. PDF и HTML используют схему
-          размещения без графики мастеров.
+          PPTX сохраняет графику исходного шаблона. В PDF и HTML часть фоновых
+          элементов может отсутствовать.
         </p>
       </div>
     </>

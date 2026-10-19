@@ -144,7 +144,6 @@ export function Profile({
   return (
     <div className="profile-page profile-refined">
       <div className="heading">
-        <span className="eyebrow">ЛИЧНОЕ ПРОСТРАНСТВО</span>
         <h1>Мой профиль</h1>
         <p>Всё, что делает Deckly вашим.</p>
       </div>
@@ -168,7 +167,7 @@ export function Profile({
                 large
               />
               <span className="profile-avatar-badge">
-                <Icon name="edit" />
+                <Icon name="account-avatar" />
               </span>
             </button>
             <button
@@ -202,7 +201,6 @@ export function Profile({
             />
           </div>
           <div>
-            <span className="profile-hero-label">ВАШ АККАУНТ DECKLY</span>
             <h2>
               {user.first_name} {user.last_name}
             </h2>
@@ -217,17 +215,23 @@ export function Profile({
             </small>
           </div>
         </div>
-        <span className="profile-privacy">
-          <Icon name="shield" />
-          Личная библиотека
-        </span>
       </section>
       <div className="profile-stats">
         {(
           [
-            ["projects", "folder", "Презентации", "#projects"],
-            ["favorites", "star", "В избранном", "#favorites"],
-            ["templates", "grid", "Свои шаблоны", "#templates"],
+            ["projects", "account-project-count", "Презентации", "#projects"],
+            [
+              "favorites",
+              "account-favorite-count",
+              "В избранном",
+              "#favorites",
+            ],
+            [
+              "templates",
+              "account-template-count",
+              "Свои шаблоны",
+              "#templates",
+            ],
           ] as const
         ).map(([key, icon, label, href]) => (
           <a href={href} key={key}>
@@ -238,7 +242,6 @@ export function Profile({
               <strong>{stats ? stats[key] : "…"}</strong>
               <small>{label}</small>
             </span>
-            <Icon name="arrow" />
           </a>
         ))}
       </div>
@@ -281,19 +284,28 @@ export function Profile({
               document.getElementById(`profile-tab-${next}`)?.focus();
             }}
           >
-            {t}
+            <span className="profile-tab-icon" aria-hidden="true">
+              <Icon
+                name={
+                  index === 0
+                    ? "account-personal-tab"
+                    : index === 1
+                      ? "account-security-tab"
+                      : "account-library-tab"
+                }
+              />
+            </span>
+            <span className="profile-tab-label">{t}</span>
           </button>
         ))}
       </div>
       {error && (
         <div className="error-banner" role="alert">
-          <Icon name="alert" />
           {error}
         </div>
       )}
       {message && (
         <div className="profile-success" role="status">
-          <Icon name="check" />
           {message}
         </div>
       )}

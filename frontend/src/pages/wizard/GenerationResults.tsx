@@ -51,7 +51,7 @@ export function GenerationResults({
       <div className="wizard-results-heading">
         <div>
           <span className="wizard-ready">
-            <Icon name="check" />
+            <Icon name="flow-ready" />
             Презентация готова
           </span>
           <h2>Одна история. Три способа рассказать.</h2>
@@ -93,7 +93,7 @@ export function GenerationResults({
             >
               <SlidePreview scene={result.variants[v][0]} />
               <span className="wizard-variant-mark" aria-hidden="true">
-                {variant === v ? <Icon name="check" /> : v.toUpperCase()}
+                {v.toUpperCase()}
               </span>
             </button>
             <div className="variant-mini">
@@ -104,14 +104,11 @@ export function GenerationResults({
             <div className="variant-body">
               <div className="between">
                 <h3>{variantNames[v]}</h3>
-                <span className="badge">
-                  {variant === v ? "Ваш выбор" : `${v.toUpperCase()} / 03`}
-                </span>
               </div>
               <p>
                 {
                   {
-                    a: "Размещение на основе полей шаблона.",
+                    a: "Классическая композиция вашего шаблона.",
                     b: "Цветовой акцент и компактная текстовая зона.",
                     c: "Больше воздуха и спокойная композиция.",
                   }[v]
@@ -123,14 +120,7 @@ export function GenerationResults({
                 disabled={busy}
                 aria-pressed={v === variant}
               >
-                {v === variant ? (
-                  <>
-                    <Icon name="check" />
-                    Выбран
-                  </>
-                ) : (
-                  "Выбрать вариант"
-                )}
+                {v === variant ? "Выбран" : "Выбрать вариант"}
               </button>
             </div>
           </article>
@@ -139,7 +129,7 @@ export function GenerationResults({
       <div className="wizard-regenerate panel">
         <div className="wizard-regenerate-copy">
           <span className="wizard-heading-icon">
-            <Icon name="spark" />
+            <Icon name="flow-redesign" />
           </span>
           <div>
             <h3>Попробуем другое оформление?</h3>
@@ -151,10 +141,7 @@ export function GenerationResults({
           </div>
         </div>
         <label className="field">
-          <span>
-            Пожелания к оформлению{" "}
-            <small className="muted">· укажите перед новой композицией</small>
-          </span>
+          <span>Пожелания к оформлению</span>
           <textarea
             rows={2}
             maxLength={1000}
@@ -186,7 +173,7 @@ export function GenerationResults({
             {operation === "regenerate" ? (
               <i className="spinner" />
             ) : (
-              <Icon name="spark" />
+              <Icon name="flow-regenerate" />
             )}
             {operation === "regenerate"
               ? "Готовим варианты…"
@@ -202,7 +189,7 @@ export function GenerationResults({
         </span>
         <button className="btn primary" disabled={busy} onClick={onOpen}>
           {operation === "open" ? "Открываем…" : "Открыть презентацию"}
-          <Icon name="arrow" />
+          <Icon name="flow-open" />
         </button>
       </div>
     </section>

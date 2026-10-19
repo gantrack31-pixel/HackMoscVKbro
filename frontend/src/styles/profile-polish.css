@@ -60,22 +60,72 @@
   isolation: isolate;
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  width: min(580px, 100%);
-  padding: 4px;
+  width: min(700px, 100%);
+  margin: 32px auto;
+  padding: 6px;
   gap: 0;
   border: 1px solid var(--line);
-  background: var(--surface-soft);
+  border-radius: 22px;
+  background:
+    linear-gradient(120deg, #0077ff06, transparent 70%), var(--surface);
+  box-shadow:
+    inset 0 1px 0 #ffffff12,
+    0 6px 20px #0f172a06;
   overflow: visible;
 }
 .profile-page.profile-refined .profile-tabs button {
   position: relative;
   z-index: 1;
   min-width: 0;
-  padding: 12px 16px;
+  min-height: 52px;
+  padding: 10px 14px;
+  gap: 10px;
+  justify-content: center;
+  border-radius: 16px;
+  font-size: 13px;
+  font-weight: 700;
   color: var(--muted);
   background: transparent;
   box-shadow: none;
-  transition: color 0.2s ease;
+  transition:
+    color 0.2s ease,
+    background-color 0.2s ease;
+}
+.profile-page.profile-refined .profile-tabs button:hover:not(.active) {
+  color: var(--ink);
+  background: #0077ff0a;
+}
+.profile-page.profile-refined .profile-tabs button:focus-visible {
+  outline: 2px solid var(--accent-text, #0077ff);
+  outline-offset: 3px;
+}
+.profile-page.profile-refined .profile-tab-icon {
+  display: grid;
+  place-items: center;
+  flex: 0 0 28px;
+  width: 28px;
+  height: 28px;
+  border-radius: 9px;
+  background: #0077ff0c;
+  color: var(--accent-text, #0077ff);
+  transition:
+    background-color 0.2s,
+    color 0.2s,
+    transform 0.25s;
+}
+.profile-page.profile-refined .profile-tab-icon .icon {
+  width: 17px;
+  height: 17px;
+}
+.profile-page.profile-refined .profile-tabs button.active .profile-tab-icon {
+  color: #fff;
+  background: #ffffff20;
+  box-shadow: inset 0 1px 0 #ffffff20;
+}
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .profile-page.profile-refined .profile-tabs button:hover .profile-tab-icon {
+    transform: translateY(-1px);
+  }
 }
 .profile-page.profile-refined .profile-tabs button.active {
   background: transparent;
@@ -85,12 +135,41 @@
 .profile-page.profile-refined .profile-tab-indicator {
   position: absolute;
   z-index: 0;
-  inset: 4px auto 4px 4px;
-  width: calc((100% - 8px) / 3);
-  border-radius: 9px;
-  background: var(--blue);
-  transition: transform 0.52s cubic-bezier(0.22, 1.08, 0.36, 1);
+  inset: 6px auto 6px 6px;
+  width: calc((100% - 12px) / 3);
+  border-radius: 16px;
+  background: linear-gradient(145deg, #268bff, #0077ff 70%);
+  border: 1px solid #ffffff26;
+  box-shadow:
+    0 4px 12px #0077ff29,
+    inset 0 1px 0 #ffffff25;
+  transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
   pointer-events: none;
+}
+@media (max-width: 700px) {
+  .profile-page.profile-refined .profile-tabs {
+    margin: 24px auto;
+    border-radius: 20px;
+  }
+  .profile-page.profile-refined .profile-tabs button {
+    flex-direction: column;
+    justify-content: center;
+    min-height: 78px;
+    padding: 8px 5px;
+    gap: 6px;
+    white-space: normal;
+    line-height: 1.35;
+    text-align: center;
+  }
+  .profile-page.profile-refined .profile-tab-label {
+    text-wrap: balance;
+    font-size: 10px;
+  }
+  .profile-page.profile-refined .profile-tab-icon {
+    flex-basis: 26px;
+    width: 26px;
+    height: 26px;
+  }
 }
 .profile-page.profile-refined .profile-tab-content {
   animation: profile-content-arrive 0.36s cubic-bezier(0.22, 1, 0.36, 1) both;

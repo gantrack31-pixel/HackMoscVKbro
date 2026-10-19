@@ -93,7 +93,7 @@ export function SpatialGallery({
       aria-roledescription="карусель"
     >
       <div className="gallery-topline">
-        <span className="eyebrow">НАЙДИТЕ СВОЙ РАКУРС</span>
+        <span className="eyebrow">Предпросмотр</span>
         <span className="small muted">
           {String(activeIndex + 1).padStart(2, "0")} /{" "}
           {String(templates.length).padStart(2, "0")}
@@ -164,7 +164,7 @@ export function SpatialGallery({
         >
           <h3>{active.name}</h3>
           <p>
-            {active.metadata.category} · {active.metadata.count} слайдов
+            {active.metadata.category} · {active.metadata.master_only ? "Тема и макеты" : `Слайдов: ${active.metadata.count}`}
           </p>
         </div>
         <div className="gallery-actions">
@@ -179,11 +179,10 @@ export function SpatialGallery({
                 : "Добавить в избранное"
             }
           >
-            <Icon name="star" />
+            <Icon name="library-favorite" />
           </button>
           <button className="btn primary sm" onClick={() => select(active)}>
             Создать с этим шаблоном
-            <Icon name="arrow" />
           </button>
         </div>
         <div className="gallery-navigation">
@@ -193,7 +192,7 @@ export function SpatialGallery({
             onClick={() => move(-1)}
             aria-label="Предыдущий шаблон"
           >
-            <Icon name="back" />
+            <Icon name="library-previous-template" />
           </button>
           <button
             className="btn icon-only"
@@ -201,7 +200,7 @@ export function SpatialGallery({
             onClick={() => move(1)}
             aria-label="Следующий шаблон"
           >
-            <Icon name="arrow" />
+            <Icon name="library-next-template" />
           </button>
         </div>
       </div>

@@ -1,4 +1,3 @@
-import { Icon } from "../../components/Icon";
 import { ThinkingSkeleton } from "../../components/ThinkingSkeleton";
 import { generationStages } from "./content";
 import type { FailedGenerationJob } from "./types";
@@ -59,7 +58,9 @@ export function GenerationProgress({
                   className={id === stage ? "active" : completed ? "done" : ""}
                   aria-current={id === stage ? "step" : undefined}
                 >
-                  <span>{completed ? <Icon name="check" /> : i + 1}</span>
+                  <span aria-hidden="true">
+                    {String(i + 1).padStart(2, "0")}
+                  </span>
                   <div>
                     <strong>{title}</strong>
                     <small>{subtitle}</small>

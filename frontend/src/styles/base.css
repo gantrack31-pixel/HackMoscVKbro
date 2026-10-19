@@ -135,8 +135,8 @@ select:focus {
   transform: translateY(-1px);
 }
 .btn.primary {
-  background: #0077ff;
-  border-color: #0077ff;
+  background: #006de6;
+  border-color: #006de6;
   color: #fff;
   box-shadow: 0 4px 12px #0077ff1a;
 }

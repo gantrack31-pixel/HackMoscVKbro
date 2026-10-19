@@ -3,6 +3,11 @@
 html { scrollbar-gutter: stable; }
 :root[data-theme="dark"] { --accent-text: #85beff; --ambient: #539aff09; --elevation: 0 2px 8px #0002, 0 20px 48px #0003; }
 :is(button, a, input, textarea, select):focus-visible { outline: 2px solid #509eff; outline-offset: 4px; }
+/* Search focus belongs to the rounded field, not the rectangular text input. */
+:is(.search-box, .global-search) input:is(:focus, :focus-visible) { outline: none; box-shadow: none; }
+@media (forced-colors: active) {
+  :is(.search-box, .global-search):focus-within { outline: 2px solid Highlight; outline-offset: 2px; }
+}
 .workspace-layer { min-width: 0; position: relative; isolation: isolate; }
 .workspace-layer > .system-activity { position: fixed; inset: auto -120px 0 auto; width: min(640px, 50vw); height: 75vh; z-index: -1; opacity: .055; }
 .workspace-layer::before { content: ""; position: fixed; inset: 0 0 0 80px; z-index: -1; pointer-events: none; background: radial-gradient(ellipse at 92% 15%, var(--ambient), transparent 52%), radial-gradient(var(--line) .7px, transparent .7px); background-size: auto, 32px 32px; mask-image: linear-gradient(#0009, #0002); }
@@ -80,6 +85,7 @@ html { scrollbar-gutter: stable; }
 .auth-template .slide.education { color: #243d12; }
 
 /* Поверхности и контраст во всех разделах. */
+[data-theme="dark"] .template-selection :is(.label, .swatches > span) { color: var(--muted); }
 :is(.panel, .template, .modal, .profile-side-card, .recent-card) { box-shadow: var(--elevation); }
 dialog { color: var(--ink); background: var(--surface); border-color: var(--line); }
 [data-theme="dark"] :is(.demo-visual, .demo-prompt, .demo-outline > div, .format-preview > div, .compare-option, .layout-choices button, .upload-zone, .export-hint, .profile-field, .profile-meta, .login-method, .new-thumb, .outline-summary, .profile-security-row, .profile-preferences) { background: var(--surface-soft); color: var(--ink); border-color: var(--line); }

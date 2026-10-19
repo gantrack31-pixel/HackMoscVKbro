@@ -7,6 +7,10 @@ const smooth = (start: number, end: number, value: number) => {
   return t * t * (3 - 2 * t);
 };
 
+const boardBounds = new THREE.Box3();
+const cardBounds = new THREE.Box3();
+const parentScale = new THREE.Vector3();
+
 function updateModules(
   model: OrbitModel,
   progress: number,
@@ -15,6 +19,8 @@ function updateModules(
   const assembly =
     smooth(0.27, 0.52, progress) * (1 - smooth(0.69, 0.94, progress));
   const glide = 1 - assembly * 0.82;
+  boardBounds.setFromObject(model.board);
+  model.board.parent!.getWorldScale(parentScale);
   model.modules.forEach(({ mesh, orbit, target, phase }, index) => {
     const angle = progress * Math.PI * 2 + phase;
     const orbitX = orbit.x + Math.sin(angle) * 0.28 * glide;
@@ -36,6 +42,10 @@ function updateModules(
       Math.cos(angle + index) * 0.16 * (1 - assembly) + pointer.x * 0.025,
       Math.sin(angle + index * 0.6) * 0.07 * (1 - assembly),
     );
+    // Keep even the tilted back corners in front of the moving board.
+    cardBounds.setFromObject(mesh);
+    const clearance = boardBounds.max.z + 0.025 * parentScale.z - cardBounds.min.z;
+    if (clearance > 0) mesh.position.z += clearance / parentScale.z;
   });
 }
 

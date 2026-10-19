@@ -10,6 +10,7 @@ from .theme_catalog import THEMES, theme_metadata
 from .template_context import extract_examples
 from .template_package import inspect_package
 from .template_parser import parse_manifest, NORMALIZATION_VERSION
+from .bundled_templates import PACK_BY_ID, seed_pack
 
 NS = {'a':'http://schemas.openxmlformats.org/drawingml/2006/main'}
 PARSER = etree.XMLParser(resolve_entities=False, no_network=True)
@@ -134,7 +135,7 @@ BUILTINS=[
     ('report','Квартал в цифрах','Отчёты','#3479BD',10),('portfolio','Портфолио','Креативные','#B95644',10),
     ('minimal','Чистый лист','Минимализм','#54636F',10),('startup','Продуктовый запуск','Стартапы','#29745F',12),
     ('research','Исследование','Образование','#7754C4',12)]
-BUILTIN_IDS={item[0] for item in BUILTINS} | {item[0] for item in THEMES}
+BUILTIN_IDS={item[0] for item in BUILTINS} | {item[0] for item in THEMES} | set(PACK_BY_ID)
 
 def seed_templates(storage: Path):
     folder=storage/'templates';folder.mkdir(parents=True,exist_ok=True)
@@ -152,3 +153,4 @@ def seed_templates(storage: Path):
     for theme in THEMES:
         if not db.template_get(theme[0]):
             db.template_save(theme[0],theme[1],None,theme_metadata(theme))
+    seed_pack()

@@ -22,14 +22,14 @@ export const projectsApi = {
   projects: () => request<ProjectSummary[]>("/projects"),
   project: (id: string, signal?: AbortSignal) =>
     request<Project>(`/projects/${id}`, { signal }),
-  update: (id: string, content: DeckContent, variant: Variant) =>
-    request<Project>(`/projects/${id}`, json("PUT", { content, variant })),
+  update: (id: string, content: DeckContent, variant: Variant, base_updated_at: string) =>
+    request<Project>(`/projects/${id}`, json("PUT", { content, variant, base_updated_at })),
   remove: (id: string) =>
     request<void>(`/projects/${id}`, { method: "DELETE" }),
-  undo: (id: string) =>
-    request<Project>(`/projects/${id}/undo`, { method: "POST" }),
-  redo: (id: string) =>
-    request<Project>(`/projects/${id}/redo`, { method: "POST" }),
+  undo: (id: string, base_updated_at: string) =>
+    request<Project>(`/projects/${id}/undo`, json("POST", { base_updated_at })),
+  redo: (id: string, base_updated_at: string) =>
+    request<Project>(`/projects/${id}/redo`, json("POST", { base_updated_at })),
   audit: (id: string, variant: Variant) =>
     request<{ issues: Issue[]; context_status: string }>(
       `/projects/${id}/audit?variant=${variant}`,
@@ -40,11 +40,11 @@ export const projectsApi = {
       { method: "POST" },
       ai,
     ),
-  fix: (id: string, issue_ids: string[], variant: Variant) =>
+  fix: (id: string, issue_ids: string[], variant: Variant, base_updated_at: string) =>
     request<Project>(
       `/projects/${id}/fix`,
-      json("POST", { issue_ids, variant }),
+      json("POST", { issue_ids, variant, base_updated_at }),
     ),
-  exportUrl: (id: string, format: string, variant: Variant) =>
-    `/api/projects/${id}/export/${format}?variant=${variant}`,
+  exportUrl: (id: string, format: string, variant: Variant, version: string) =>
+    `/api/projects/${id}/export/${format}?variant=${variant}&version=${encodeURIComponent(version)}`,
 };

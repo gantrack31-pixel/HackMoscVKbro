@@ -1,6 +1,6 @@
 import { useEffect, useId, useRef, useState, type CSSProperties } from "react";
 import { useSlideMotion } from "../motion/animation";
-import { Maximize2, Minimize2 } from "lucide-react";
+
 import type { Scene } from "../types";
 import { Icon } from "./Icon";
 import { SlidePreview } from "./SlidePreview";
@@ -112,9 +112,9 @@ export function PresentationViewer({
               }
             >
               {fullscreen ? (
-                <Minimize2 size={20} aria-hidden="true" />
+                <Icon name="viewer-reduce" size={20} />
               ) : (
-                <Maximize2 size={20} aria-hidden="true" />
+                <Icon name="viewer-fullscreen" size={20} />
               )}
             </button>
           )}
@@ -124,7 +124,7 @@ export function PresentationViewer({
             autoFocus
             aria-label="Закрыть просмотр"
           >
-            <Icon name="close" />
+            <Icon name="viewer-close" />
           </button>
         </div>
       </header>
@@ -160,7 +160,7 @@ export function PresentationViewer({
             disabled={!scene || current === 0}
             aria-label="Предыдущий слайд"
           >
-            <Icon name="back" />
+            <Icon name="viewer-previous" />
           </button>
           <span role="status" aria-live="polite">
             {scene ? current + 1 : 0} <span>/ {scenes.length}</span>
@@ -171,7 +171,7 @@ export function PresentationViewer({
             disabled={!scene || current >= scenes.length - 1}
             aria-label="Следующий слайд"
           >
-            <Icon name="arrow" />
+            <Icon name="viewer-next" />
           </button>
         </nav>
         {notice && (

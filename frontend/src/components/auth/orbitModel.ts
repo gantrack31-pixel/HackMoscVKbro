@@ -56,7 +56,7 @@ export function createOrbitModel(renderer: THREE.WebGLRenderer, tablet: boolean,
 
   const shadowMap = createTexture(512, 320, paintShadow);
   maps.push(shadowMap);
-  const shadowMaterial = new THREE.MeshBasicMaterial({ map: shadowMap, transparent: true, depthWrite: false });
+  const shadowMaterial = new THREE.MeshBasicMaterial({ map: shadowMap, transparent: true, depthWrite: false, toneMapped: false });
   materials.push(shadowMaterial);
   const shadow = new THREE.Mesh(plane, shadowMaterial);
   shadow.scale.set(6.6, 4.05, 1);

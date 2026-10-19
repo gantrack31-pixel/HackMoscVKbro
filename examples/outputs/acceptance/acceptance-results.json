@@ -1,0 +1,22 @@
+{
+  "transport": "Real FastAPI ASGI TestClient, temporary SQLite; browser static assets from the configured local address. No simulated API payloads and no external model calls.",
+  "checks": [
+    "Uploaded a new PPTX template through actual authenticated API",
+    "Uploaded real brand package; effective style and conflicts shown",
+    "Uploaded 3 dataset types and reviewed real deterministic previews",
+    "Real job created all 3 presentation variants",
+    "Actual editor and audit received generated analytical content",
+    "Actual version-bound PPTX/PDF/HTML exports downloaded"
+  ],
+  "errors": [],
+  "durations": {
+    "exports": {
+      "pptx": 0.221,
+      "pdf": 0.095,
+      "html": 0.096
+    },
+    "generationSeconds": 0.424
+  },
+  "elapsedSeconds": 65.168,
+  "projectId": "8916f6d2-6f9c-4a3b-b442-a773602569a1"
+}

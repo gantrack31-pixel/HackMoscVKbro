@@ -32,8 +32,8 @@ export function TemplatePreviewDialog({
         </span>
         <p>
           {preview.metadata.source === "pptx"
-            ? `${preview.metadata.count} исходных слайдов · ${preview.metadata.layouts.length} макетов`
-            : "Авторская тема · 3 варианта композиции"}{" "}
+            ? `${preview.metadata.master_only ? "Тема без готовых слайдов" : `${preview.metadata.count} исходных слайдов`} · ${preview.metadata.layouts.length} макетов`
+            : "3 варианта композиции"}{" "}
           · {preview.metadata.font}
         </p>
         <div className="swatches">
@@ -43,13 +43,19 @@ export function TemplatePreviewDialog({
               <i key={i} style={{ background: c }} />
             ))}
         </div>
-        <p className="small muted">
-          Для PPTX показан первый слайд исходного файла. Точность шрифтов
-          зависит от их установки на сервере; исходные ресурсы сохраняются в
-          PPTX.
-        </p>
+        {preview.metadata.source === "pptx" && (
+          <p className="small muted">
+            {preview.metadata.master_only
+              ? "Пример титульного макета. Исходник содержит тему и макеты для новых презентаций."
+              : preview.metadata.cover_slide && preview.metadata.cover_slide > 1
+                ? `Слайд ${preview.metadata.cover_slide} исходного файла. Для обложки выбран пример оформления.`
+              : preview.preview_url
+              ? "Первый слайд исходного файла. Предпросмотр может отличаться при замене отсутствующих шрифтов."
+              : "Точный предпросмотр этого файла недоступен. Палитра и макеты прочитаны; исходный PPTX можно скачать ниже."}
+          </p>
+        )}
         <details className="template-passport">
-          <summary>Правила и токены шаблона</summary>
+          <summary>Об оформлении</summary>
           <dl>
             <dt>Пропорции</dt>
             <dd>{preview.metadata.ratio.toFixed(3)}:1</dd>
@@ -113,7 +119,7 @@ export function TemplatePreviewDialog({
             </a>
           )}
           <details>
-            <summary>Нормализованные зоны макетов</summary>
+            <summary>Технические сведения о макетах</summary>
             <pre
               style={{
                 whiteSpace: "pre-wrap",
@@ -138,7 +144,7 @@ export function TemplatePreviewDialog({
           }}
         >
           Выбрать вариант
-          <Icon name="arrow" />
+          <Icon name="library-choose-variant" />
         </button>
       </div>
     </Modal>

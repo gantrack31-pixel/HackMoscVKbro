@@ -5,6 +5,7 @@ import { useAiOperation, AiOperationStatus } from "./useAiOperation";
 import { SlideDataFields } from "./SlideDataFields";
 
 export const slideKinds = {
+  analysis: "Аналитика",
   title: "Титульный",
   text: "Текст",
   chart: "Диаграмма",
@@ -154,10 +155,10 @@ export function SlideFields({
           Тип слайда
           <select
             value={slide.kind}
-            disabled={imageBusy}
+            disabled={imageBusy || Boolean(slide.analytics)}
             onChange={(e) => kind(e.target.value as Slide["kind"])}
           >
-            {Object.entries(slideKinds).map(([key, name]) => (
+            {Object.entries(slideKinds).filter(([key]) => key !== "analysis" || Boolean(slide.analytics)).map(([key, name]) => (
               <option key={key} value={key}>
                 {name}
               </option>

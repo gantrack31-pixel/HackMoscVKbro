@@ -21,6 +21,10 @@ export function EditorSlideRail({
 }) {
   return (
     <aside className="slide-rail" aria-label="Слайды">
+      <div className="slide-rail-heading">
+        <span>Слайды</span>
+        <b>{slides.length}</b>
+      </div>
       {slides.map((s, i) => (
         <button
           className={`thumbnail ${i === index ? "active" : ""}`}
@@ -30,12 +34,15 @@ export function EditorSlideRail({
           aria-label={`Слайд ${i + 1}: ${s.title}`}
           aria-current={i === index ? "true" : undefined}
         >
-          <span>{String(i + 1).padStart(2, "0")}</span>
+          <span className="thumbnail-number">
+            {String(i + 1).padStart(2, "0")}
+          </span>
           {scenes[i] ? (
             <SlidePreview scene={scenes[i]} />
           ) : (
             <div className="new-thumb">Новый слайд</div>
           )}
+          <span className="thumbnail-title">{s.title || "Новый слайд"}</span>
         </button>
       ))}
       <button
@@ -43,7 +50,7 @@ export function EditorSlideRail({
         disabled={busy || hasDataErrors || slides.length >= 30}
         onClick={onAddSlide}
       >
-        <Icon name="plus" />
+        <Icon name="editor-add-slide" />
         Слайд
       </button>
     </aside>

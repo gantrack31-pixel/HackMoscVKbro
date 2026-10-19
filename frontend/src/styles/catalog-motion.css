@@ -1,0 +1,327 @@
+/* Catalog controls stay in place; each category owns its selection feedback. */
+.page .catalog-page .catalog-controls {
+  gap: 20px;
+  margin: 28px 0 20px;
+}
+.page .catalog-page .catalog-search {
+  position: relative;
+  width: min(480px, 100%);
+  min-height: 56px;
+  gap: 12px;
+  padding: 8px 12px;
+  border-radius: 16px;
+  background:
+    linear-gradient(115deg, #0077ff04, transparent 60%), var(--surface);
+  border: 1px solid var(--line);
+  box-shadow:
+    inset 0 1px 0 #ffffff08,
+    0 3px 10px #0f172a03;
+  transition:
+    border-color 0.22s,
+    box-shadow 0.22s,
+    background-color 0.22s;
+}
+.page .catalog-page .catalog-search:hover {
+  border-color: #0077ff55;
+}
+.page .catalog-page .catalog-search:focus-within {
+  border-color: #0077ffb3;
+  box-shadow:
+    0 0 0 4px #0077ff12,
+    0 8px 24px #0077ff0b;
+}
+.catalog-search .catalog-search-icon {
+  display: grid;
+  place-items: center;
+  flex: 0 0 34px;
+  height: 34px;
+  border: 1px solid transparent;
+  border-radius: 11px;
+  color: var(--muted);
+  background: var(--surface-soft);
+  transition:
+    color 0.22s,
+    background-color 0.22s,
+    border-color 0.22s;
+}
+.catalog-search .catalog-search-icon .icon {
+  width: 18px;
+  height: 18px;
+  transition: transform 0.28s ease;
+}
+.catalog-search:focus-within .catalog-search-icon {
+  color: var(--accent-text, #0077ff);
+  background: #0077ff15;
+  border-color: #0077ff20;
+}
+.catalog-search:focus-within .catalog-search-icon .icon {
+  transform: rotate(-10deg) scale(1.06);
+}
+.page .catalog-page .catalog-search input {
+  flex: 1;
+  width: 0;
+  min-width: 0;
+  padding: 0;
+  color: var(--ink);
+  font-size: 13px;
+  line-height: 24px;
+}
+.catalog-search input::placeholder {
+  color: var(--muted);
+  opacity: 0.85;
+}
+.catalog-search .catalog-search-clear {
+  display: grid;
+  place-items: center;
+  flex: 0 0 28px;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: var(--surface-soft);
+  color: var(--muted);
+  font: inherit;
+  font-size: 12px;
+}
+.catalog-search .catalog-search-clear {
+  transition:
+    color 0.18s,
+    background-color 0.18s,
+    transform 0.18s;
+}
+.catalog-search-clear .icon {
+  width: 15px;
+  height: 15px;
+}
+.catalog-search .catalog-search-clear:hover {
+  color: var(--ink);
+  background: #0077ff18;
+  transform: scale(1.06);
+}
+.catalog-search .catalog-search-clear:focus-visible {
+  outline: 2px solid var(--accent-text, #0077ff);
+  outline-offset: 3px;
+}
+.catalog-result-count {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+.catalog-result-count strong {
+  display: grid;
+  place-items: center;
+  min-width: 34px;
+  height: 28px;
+  padding: 0 8px;
+  border-radius: 9px;
+  border: 1px solid #0077ff24;
+  background: #0077ff0d;
+  color: var(--accent-text, #0077ff);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+.page .catalog-page .catalog-filters {
+  position: relative;
+  isolation: isolate;
+  gap: 8px;
+  padding: 2px;
+  overflow: visible;
+}
+.page .catalog-page .catalog-filters .filter {
+  position: relative;
+  isolation: isolate;
+  min-height: 40px;
+  padding: 10px 16px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--muted);
+  line-height: 18px;
+  font-size: 12px;
+  font-weight: 700;
+  transition:
+    color 0.2s ease,
+    border-color 0.2s ease,
+    background-color 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.16s ease;
+}
+.page .catalog-page .catalog-filters .filter::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  border-radius: inherit;
+  background: linear-gradient(145deg, #ffffff20, #ffffff00 70%);
+  box-shadow: inset 0 1px 0 #ffffff20;
+  opacity: 0;
+  transform: scale(0.94);
+  pointer-events: none;
+  transition:
+    opacity 0.2s ease,
+    transform 0.24s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.catalog-filters .catalog-filter-label {
+  position: relative;
+  z-index: 1;
+}
+.page .catalog-page .catalog-filters .filter:hover:not(.active) {
+  color: var(--ink);
+  border-color: #0077ff55;
+  background: #0077ff0b;
+}
+.page .catalog-page .catalog-filters .filter.active {
+  background: #006de6;
+  border-color: #469cff;
+  color: #ffffff;
+  box-shadow: 0 3px 9px #0077ff20;
+}
+.page .catalog-page .catalog-filters .filter.active::before {
+  opacity: 1;
+  transform: scale(1);
+}
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .page .catalog-page .catalog-filters .filter:hover {
+    transform: translateY(-1px);
+  }
+}
+.page .catalog-page .catalog-filters .filter:active {
+  transform: scale(0.97);
+}
+.page .catalog-page .catalog-filters .filter:focus-visible {
+  outline: 2px solid var(--accent-text, #0077ff);
+  outline-offset: 3px;
+}
+.catalog-page .catalog-note {
+  opacity: 0.85;
+}
+.catalog-page .catalog-results {
+  min-width: 0;
+}
+.page .catalog-page .catalog-collection {
+  position: relative;
+  isolation: isolate;
+  background:
+    radial-gradient(ellipse at 85% 90%, #0077ff0c, transparent 70%),
+    var(--surface);
+  box-shadow: inset 0 1px 0 #ffffff12;
+}
+.catalog-collection::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  background: radial-gradient(ellipse at 82% 65%, #0077ff12, transparent 55%);
+  pointer-events: none;
+}
+.catalog-collection .collection-samples {
+  perspective: 900px;
+}
+.catalog-collection .collection-samples .slide {
+  box-shadow: 0 12px 32px #0f172a24;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .catalog-search-clear {
+    animation: catalog-control-in 0.18s ease-out both;
+  }
+  .catalog-result-count strong {
+    animation: catalog-count-in 0.22s ease-out both;
+  }
+  .catalog-collection .collection-samples .slide {
+    animation: catalog-sample-arrive 0.75s cubic-bezier(0.22, 1, 0.36, 1)
+      backwards;
+    transition:
+      translate 0.6s cubic-bezier(0.22, 1, 0.36, 1),
+      box-shadow 0.6s;
+  }
+  .catalog-collection .collection-samples .slide:nth-child(2) {
+    animation-delay: 0.08s;
+  }
+  .catalog-collection .collection-samples .slide:nth-child(3) {
+    animation-delay: 0.16s;
+  }
+}
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .catalog-collection:hover .collection-samples .slide:first-child {
+    translate: -6px -5px;
+  }
+  .catalog-collection:hover .collection-samples .slide:nth-child(2) {
+    translate: 0 -12px;
+  }
+  .catalog-collection:hover .collection-samples .slide:nth-child(3) {
+    translate: 6px -7px;
+  }
+}
+@media (max-width: 700px) {
+  .page .catalog-page .catalog-controls {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .page .catalog-page .catalog-search {
+    width: 100%;
+  }
+  .page .catalog-page .catalog-filters {
+    flex-wrap: wrap;
+    gap: 7px;
+  }
+  .page .catalog-page .catalog-filters .filter {
+    padding: 8px 12px;
+    min-height: 38px;
+    font-size: 11px;
+  }
+  .catalog-result-count {
+    margin-left: auto;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .page .catalog-page .catalog-filters .filter,
+  .page .catalog-page .catalog-filters .filter::before,
+  .page .catalog-page .catalog-search,
+  .catalog-page .catalog-search *,
+  .catalog-page .catalog-result-count strong,
+  .catalog-page .collection-samples .slide {
+    transition: none;
+    animation: none;
+  }
+  .page .catalog-page .catalog-filters .filter:active,
+  .page .catalog-page .catalog-filters .filter::before {
+    transform: none;
+  }
+  .catalog-page .catalog-search:focus-within .catalog-search-icon .icon {
+    transform: none;
+  }
+}
+@keyframes catalog-control-in {
+  from {
+    opacity: 0;
+    scale: 0.8;
+  }
+  to {
+    opacity: 1;
+    scale: 1;
+  }
+}
+@keyframes catalog-count-in {
+  from {
+    opacity: 0.45;
+    translate: 0 4px;
+  }
+  to {
+    opacity: 1;
+    translate: 0 0;
+  }
+}
+@keyframes catalog-sample-arrive {
+  from {
+    opacity: 0;
+    translate: 0 20px;
+  }
+  to {
+    opacity: 1;
+    translate: 0 0;
+  }
+}

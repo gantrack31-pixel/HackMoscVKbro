@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Cloud } from "lucide-react";
+import { Icon } from "./Icon";
 import { api } from "../api";
 import type { DiskReceipt, Project } from "../types";
 
@@ -26,9 +26,9 @@ export function CloudLibrary({ refresh = 0 }: {
   }, [refresh, attempt]);
   if (!ready && !error) return null;
   return <section className="cloud-library panel">
-    <div className="between"><h2><Cloud size={24} /> Яндекс.Диск</h2>
+    <div className="between"><h2><Icon name="export-cloud-library" size={24} /> Яндекс.Диск</h2>
       <button className="btn sm" onClick={() => setAttempt(v => v + 1)}>Обновить</button></div>
-    <p className="small muted">Последние 100 PPTX в папке приложения Deckly. История правок проекта хранится отдельно, на сервере.</p>
+    <p className="small muted">Последние 100 презентаций на Диске. История изменений остаётся в Deckly.</p>
     {error && <p className="error-banner" role="alert">{error}</p>}
     {ready && !copies.length && <p className="small muted">Сохраните первую презентацию на финальном шаге.</p>}
     {copies.map(copy => <div className="cloud-copy" key={copy.name}>

@@ -3,6 +3,7 @@ from zipfile import ZipFile
 from PIL import Image
 from pptx import Presentation
 from pptx.util import Inches
+import pytest
 from app.config import settings
 from app.services import template_preview as preview
 
@@ -15,7 +16,7 @@ def test_embedded_real_preview_is_cached_and_content_hash_invalidates(tmp_path,m
     monkeypatch.setattr(settings,'storage',tmp_path/'storage')
     monkeypatch.setattr(preview.shutil,'which',lambda _:None)
     path=tmp_path/'template.pptx';Presentation().save(path)
-    image=BytesIO();Image.new('RGB',(1024,1024),'red').save(image,format='PNG')
+    image=BytesIO();Image.new('RGB',(1200,900),'red').save(image,format='PNG')
     with ZipFile(path,'a') as archive: archive.writestr('docProps/thumbnail.png',image.getvalue())
     first=preview.thumbnail(path)
     assert Image.open(first).getpixel((20,20))==(255,0,0)
@@ -25,13 +26,13 @@ def test_embedded_real_preview_is_cached_and_content_hash_invalidates(tmp_path,m
     assert preview.thumbnail(path)==first
     monkeypatch.setattr(preview,'render_first_slide',original)
     Presentation().save(path)
-    image=BytesIO();Image.new('RGB',(1024,1024),'blue').save(image,format='PNG')
+    image=BytesIO();Image.new('RGB',(1200,900),'blue').save(image,format='PNG')
     with ZipFile(path,'a') as archive: archive.writestr('docProps/thumbnail.png',image.getvalue())
     second=preview.thumbnail(path)
     assert second!=first and Image.open(second).getpixel((20,20))==(0,0,255)
 
 def test_preview_cache_version_tracks_higher_resolution_assets():
-    assert preview.PREVIEW_VERSION=='first-slide-3'
+    assert preview.PREVIEW_VERSION=='first-slide-4-faithful'
 
 def test_clean_preview_keeps_large_slides_sharp_and_bounds_oversized_images():
     large=BytesIO();Image.new('RGB',(2560,1440),'navy').save(large,format='PNG')
@@ -58,6 +59,7 @@ def test_high_resolution_full_slide_image_is_used_when_renderer_is_missing(tmp_p
     monkeypatch.setattr(preview.shutil,'which',lambda _:None)
     path=tmp_path/'full-slide-image.pptx'
     prs=Presentation();slide=prs.slides.add_slide(prs.slide_layouts[6])
+    prs.slide_width=Inches(13.333333);prs.slide_height=Inches(7.5)
     image_path=tmp_path/'full-slide.png';Image.new('RGB',(1920,1080),'navy').save(image_path,format='PNG')
     slide.shapes.add_picture(str(image_path),0,0,width=prs.slide_width,height=prs.slide_height)
     prs.save(path)
@@ -65,15 +67,71 @@ def test_high_resolution_full_slide_image_is_used_when_renderer_is_missing(tmp_p
     assert result is not None
     assert Image.open(BytesIO(result)).size==(1920,1080)
 
-def test_large_slide_background_art_is_found_in_opc_media_without_picture_shape(tmp_path,monkeypatch):
+def test_unreferenced_package_media_is_never_presented_as_the_slide(tmp_path,monkeypatch):
     monkeypatch.setattr(preview.shutil,'which',lambda _:None)
     path=tmp_path/'slide-background.pptx'
     prs=Presentation();prs.slides.add_slide(prs.slide_layouts[6]);prs.save(path)
     image=BytesIO();Image.new('RGB',(2048,1152),'darkblue').save(image,format='PNG')
     with ZipFile(path,'a') as archive: archive.writestr('ppt/media/full-slide-background.png',image.getvalue())
     result=preview.render_first_slide(path)
-    assert result is not None
-    assert Image.open(BytesIO(result)).size==(2048,1152)
+    assert result is None
+
+
+def picture_fixture(path, image_path, *, overlay=False):
+    prs=Presentation();prs.slide_width=Inches(12);prs.slide_height=Inches(6.75)
+    slide=prs.slides.add_slide(prs.slide_layouts[6])
+    picture=slide.shapes.add_picture(str(image_path),0,0,width=prs.slide_width,height=prs.slide_height)
+    if overlay:
+        slide.shapes.add_textbox(Inches(1),Inches(1),Inches(8),Inches(1)).text='Заголовок поверх фона'
+    return prs,picture
+
+
+@pytest.mark.parametrize('change',['overlay','crop','rotate','partial','transparent','border','rounded'])
+def test_incomplete_picture_fallback_never_claims_to_render_full_slide(tmp_path,monkeypatch,change):
+    from pptx.enum.shapes import MSO_AUTO_SHAPE_TYPE
+    monkeypatch.setattr(preview,'office_preview',lambda _:None)
+    path=tmp_path/'overlay.pptx';image_path=tmp_path/'image.png'
+    Image.new('RGBA',(1920,1080),(30,60,90,128 if change=='transparent' else 255)).save(image_path)
+    prs,picture=picture_fixture(path,image_path,overlay=change=='overlay')
+    if change=='crop': picture.crop_left=.1
+    if change=='rotate': picture.rotation=15
+    if change=='partial': picture.left=Inches(.5)
+    if change=='border': picture.line.width=Inches(.03)
+    if change=='rounded': picture.auto_shape_type=MSO_AUTO_SHAPE_TYPE.ROUNDED_RECTANGLE
+    prs.save(path)
+    assert preview.render_first_slide(path) is None
+
+
+def test_stretched_raster_fallback_matches_slide_ratio_without_upscaling(tmp_path,monkeypatch):
+    monkeypatch.setattr(preview,'office_preview',lambda _:None)
+    path=tmp_path/'stretch.pptx';image_path=tmp_path/'image.png'
+    Image.new('RGB',(1920,1080),'navy').save(image_path)
+    prs,picture=picture_fixture(path,image_path)
+    prs.slide_width=Inches(10);prs.slide_height=Inches(7.5)
+    picture.width=prs.slide_width;picture.height=prs.slide_height
+    prs.save(path)
+    result=Image.open(BytesIO(preview.render_first_slide(path)))
+    assert result.size==(1440,1080)
+
+
+def test_renderer_failure_uses_faithful_embedded_cover(tmp_path,monkeypatch):
+    def unavailable(_): raise OSError('Renderer unavailable')
+    monkeypatch.setattr(preview,'office_preview',unavailable)
+    path=tmp_path/'embedded.pptx';image_path=tmp_path/'image.png'
+    Image.new('RGB',(1920,1080),'navy').save(image_path)
+    prs,_=picture_fixture(path,image_path,overlay=True);prs.save(path)
+    thumbnail=BytesIO();Image.new('RGB',(1600,900),'orange').save(thumbnail,format='PNG')
+    with ZipFile(path,'a') as archive: archive.writestr('docProps/thumbnail.png',thumbnail.getvalue())
+    result=Image.open(BytesIO(preview.render_first_slide(path)))
+    assert result.size==(1600,900) and result.getpixel((1,1))==(255,165,0)
+
+
+def test_wrong_ratio_embedded_thumbnail_is_not_a_slide_cover(tmp_path,monkeypatch):
+    monkeypatch.setattr(preview,'office_preview',lambda _:None)
+    path=tmp_path/'square-thumbnail.pptx';Presentation().save(path)
+    image=BytesIO();Image.new('RGB',(1200,1200),'blue').save(image,format='PNG')
+    with ZipFile(path,'a') as archive: archive.writestr('docProps/thumbnail.png',image.getvalue())
+    assert preview.render_first_slide(path) is None
 
 def test_libreoffice_conversion_uses_first_page_isolated_profile_and_no_external_links(tmp_path,monkeypatch):
     monkeypatch.setattr(preview.shutil,'which',lambda cmd:cmd)

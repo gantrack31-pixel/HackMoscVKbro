@@ -38,33 +38,23 @@ export function createTexture(width: number, height: number, paint: Paint) {
 }
 
 export const paintBoard: Paint = (ctx, w, h) => {
-  rounded(ctx, 0, 0, w, h, 18, "#fbfcff");
-  rounded(ctx, 42, 42, 1196, 636, 12, "#ffffff");
-  rounded(ctx, 70, 73, 8, 8, 4, blue);
-  ctx.fillStyle = "#7d8ba4";
-  ctx.font = "700 19px Manrope, sans-serif";
-  ctx.fillText("DECKLY.AI", 94, 91);
-  ctx.textAlign = "right";
-  ctx.fillText("ПРЕЗЕНТАЦИЯ / 01", 1194, 91);
-  ctx.textAlign = "left";
-  ctx.strokeStyle = "#e8edf6";
-  ctx.lineWidth = 2;
-  ctx.beginPath(); ctx.moveTo(72, 121); ctx.lineTo(1208, 121); ctx.stroke();
-  ctx.beginPath(); ctx.moveTo(72, 643); ctx.lineTo(1208, 643); ctx.stroke();
-  ctx.fillStyle = "#c6cfdd";
-  ctx.font = "600 17px Manrope, sans-serif";
-  ctx.fillText("ОТ ИДЕИ К ЯСНОЙ ИСТОРИИ", 78, 674);
-  ctx.textAlign = "right";
-  ctx.fillText("16:9", 1205, 674);
-  ctx.textAlign = "left";
+  rounded(ctx, 0, 0, w, h, 18, "#ffffff");
 };
 
 export const paintShadow: Paint = (ctx, w, h) => {
-  const gradient = ctx.createRadialGradient(w / 2, h / 2, 20, w / 2, h / 2, w / 2);
+  // Fit the entire fade inside both texture dimensions, leaving transparent edges.
+  ctx.save();
+  ctx.translate(w / 2, h / 2);
+  ctx.scale(w / 2, h / 2);
+  const gradient = ctx.createRadialGradient(0, 0, 0, 0, 0, 0.96);
   gradient.addColorStop(0, "#17234724");
+  gradient.addColorStop(0.4, "#1723471b");
+  gradient.addColorStop(0.7, "#1723470a");
+  gradient.addColorStop(0.9, "#17234702");
   gradient.addColorStop(1, "#17234700");
   ctx.fillStyle = gradient;
-  ctx.fillRect(0, 0, w, h);
+  ctx.fillRect(-1, -1, 2, 2);
+  ctx.restore();
 };
 
 const paintConcept: Paint = (ctx, w, h) => {
@@ -135,5 +125,5 @@ export const moduleSpecs: readonly OrbitModuleSpec[] = [
   { width: 2.17, height: 0.92, orbit: [-1.77, -1.59, 0.48], target: [-1.18, -0.37, 0.14], phase: 2.5, paint: paintChart },
   { width: 2.03, height: 1.63, orbit: [1.88, 0.35, 0.75], target: [1.22, -0.06, 0.14], phase: 3.8, paint: paintIllustration },
   { width: 0.51, height: 0.51, orbit: [1.82, 1.8, 0.88], target: [1.95, 1.08, 0.14], phase: 5.1, paint: paintIcon },
-  { width: 1.62, height: 0.27, orbit: [1.63, -1.7, -0.55], target: [-1.44, -1.09, 0.14], phase: 6.1, paint: paintCredit, desktopOnly: true },
+  { width: 1.62, height: 0.27, orbit: [1.63, -1.7, 0.55], target: [-1.44, -1.09, 0.14], phase: 6.1, paint: paintCredit, desktopOnly: true },
 ];

@@ -100,13 +100,6 @@ export function PresentationSpace({
           </Suspense>
         </SceneBoundary>
       )}
-      <div className="space-caption">
-        <span>
-          DECKLY.AI /{" "}
-          {mode === "hero" ? "ПРОСТРАНСТВО ИДЕЙ" : "ОТ МАТЕРИАЛА К ИСТОРИИ"}
-        </span>
-        <span>01 — 03</span>
-      </div>
     </div>
   );
 }

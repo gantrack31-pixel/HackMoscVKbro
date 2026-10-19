@@ -1,0 +1,92 @@
+{
+  "a": [
+    {
+      "id": "0:brand_unresolved_rules:title",
+      "slide": 0,
+      "code": "brand_unresolved_rules",
+      "title": "Часть правил требует ручной проверки",
+      "detail": "В руководстве осталось 6 правил, которые нельзя надёжно применить автоматически. Они сохранены в настройках стиля.",
+      "category": "template",
+      "severity": "info",
+      "fixable": false,
+      "deterministic": true,
+      "object_id": "title",
+      "source_bindings": [],
+      "grounding": "not_applicable"
+    },
+    {
+      "id": "5:analysis_data_warning_0:analysis-chart",
+      "slide": 5,
+      "code": "analysis_data_warning_0",
+      "title": "Ограничение исходных данных",
+      "detail": "Связь не доказывает причинность; наблюдений только пять.",
+      "category": "content",
+      "severity": "warning",
+      "fixable": false,
+      "deterministic": true,
+      "object_id": "analysis-chart",
+      "source_bindings": [],
+      "grounding": "not_applicable"
+    }
+  ],
+  "b": [
+    {
+      "id": "0:brand_unresolved_rules:title",
+      "slide": 0,
+      "code": "brand_unresolved_rules",
+      "title": "Часть правил требует ручной проверки",
+      "detail": "В руководстве осталось 6 правил, которые нельзя надёжно применить автоматически. Они сохранены в настройках стиля.",
+      "category": "template",
+      "severity": "info",
+      "fixable": false,
+      "deterministic": true,
+      "object_id": "title",
+      "source_bindings": [],
+      "grounding": "not_applicable"
+    },
+    {
+      "id": "5:analysis_data_warning_0:analysis-chart",
+      "slide": 5,
+      "code": "analysis_data_warning_0",
+      "title": "Ограничение исходных данных",
+      "detail": "Связь не доказывает причинность; наблюдений только пять.",
+      "category": "content",
+      "severity": "warning",
+      "fixable": false,
+      "deterministic": true,
+      "object_id": "analysis-chart",
+      "source_bindings": [],
+      "grounding": "not_applicable"
+    }
+  ],
+  "c": [
+    {
+      "id": "0:brand_unresolved_rules:title",
+      "slide": 0,
+      "code": "brand_unresolved_rules",
+      "title": "Часть правил требует ручной проверки",
+      "detail": "В руководстве осталось 6 правил, которые нельзя надёжно применить автоматически. Они сохранены в настройках стиля.",
+      "category": "template",
+      "severity": "info",
+      "fixable": false,
+      "deterministic": true,
+      "object_id": "title",
+      "source_bindings": [],
+      "grounding": "not_applicable"
+    },
+    {
+      "id": "5:analysis_data_warning_0:analysis-chart",
+      "slide": 5,
+      "code": "analysis_data_warning_0",
+      "title": "Ограничение исходных данных",
+      "detail": "Связь не доказывает причинность; наблюдений только пять.",
+      "category": "content",
+      "severity": "warning",
+      "fixable": false,
+      "deterministic": true,
+      "object_id": "analysis-chart",
+      "source_bindings": [],
+      "grounding": "not_applicable"
+    }
+  ]
+}

@@ -118,7 +118,7 @@ def test_packet_normalizes_multiple_formats_and_keeps_sources(client):
 
 def test_deadline_rejects_partial_result_and_keeps_retry(client,monkeypatch):
     monkeypatch.setattr(workflow,'BUDGET_SECONDS',.04)
-    async def slow(*args):
+    async def slow(*args, resources=()):
         await asyncio.sleep(2)
     monkeypatch.setattr('app.main.create_design_variants',slow)
     response=client.post('/api/generate',json={'template_id':'tech','content':{'title':'Deadline','slides':[{'title':'T'}]}})

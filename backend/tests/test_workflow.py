@@ -107,12 +107,12 @@ def test_outline_audit_selected_fix_undo(client, monkeypatch):
     issues=client.get(f'/api/projects/{pid}/audit').json()['issues']
     fixable=[i['id'] for i in issues if i['fixable']]
     assert fixable
-    assert client.post(f'/api/projects/{pid}/fix',json={'issue_ids':['forged'],'variant':'a'}).status_code==422
-    fixed=client.post(f'/api/projects/{pid}/fix',json={'issue_ids':[fixable[0]],'variant':'a'})
+    assert client.post(f'/api/projects/{pid}/fix',json={'issue_ids':['forged'],'variant':'a','base_updated_at':project['updated_at']}).status_code==422
+    fixed=client.post(f'/api/projects/{pid}/fix',json={'issue_ids':[fixable[0]],'variant':'a','base_updated_at':project['updated_at']})
     assert fixed.status_code==200 and fixed.json()['can_undo']
     after=client.get(f'/api/projects/{pid}/audit').json()['issues']
     assert fixable[0] not in [i['id'] for i in after]
-    assert client.post(f'/api/projects/{pid}/undo').json()['content']==project['content']
+    assert client.post(f'/api/projects/{pid}/undo',json={'base_updated_at':fixed.json()['updated_at']}).json()['content']==project['content']
     assert client.post(f'/api/projects/{pid}/audit/content').status_code==409
 
 def test_unseen_template_ratio_private_and_bad_file(client):

@@ -1,9 +1,9 @@
 import { gsap, useGSAP } from "../motion/animation";
 import { useRef } from "react";
 import { TemplateCover } from "./TemplateCover";
+import { Icon } from "./Icon";
 import "../motion/scroll";
 import type { Template } from "../types";
-import { Icon } from "./Icon";
 export function TemplateCard({
   template,
   favorite,
@@ -44,12 +44,14 @@ export function TemplateCard({
   return (
     <article ref={card} className="template spatial-card">
       <button
+        type="button"
         className={`favorite ${favorite ? "on" : ""}`}
         onClick={onFavorite}
         aria-label={`${favorite ? "Убрать из избранного" : "Добавить в избранное"}: ${template.name}`}
         aria-pressed={favorite}
+        title={favorite ? "Убрать из избранного" : "Добавить в избранное"}
       >
-        <Icon name="star" />
+        <Icon name="library-favorite" />
       </button>
       <button
         className="template-cover"
@@ -83,7 +85,6 @@ export function TemplateCard({
           </span>
           <button className="btn sm ghost" onClick={onSelect}>
             Выбрать вариант
-            <Icon name="arrow" />
           </button>
         </div>
       </div>

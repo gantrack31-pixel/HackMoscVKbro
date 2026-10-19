@@ -1,0 +1,37 @@
+{
+  "name": "North — синтетический пример",
+  "colors": {
+    "accent": "#006AD8",
+    "background": "#FFFFFF",
+    "text": "#142A45"
+  },
+  "typography": {
+    "heading": "Manrope",
+    "body": "Manrope",
+    "heading_pt": 34,
+    "body_pt": 18
+  },
+  "spacing": {
+    "slide_margin": 64,
+    "grid_gap": 24,
+    "logo_clear_space": 16
+  },
+  "chart": {
+    "series_palette": [
+      "#006AD8",
+      "#09876D",
+      "#7C58AD"
+    ],
+    "grid": "major"
+  },
+  "logo": {
+    "placement": "bottom-right",
+    "clear_space": 16,
+    "max_width": 100,
+    "max_height": 24
+  },
+  "rules": [
+    "В примерах используются только синтетические данные.",
+    "Не менять исходные цвета и пропорции логотипа."
+  ]
+}

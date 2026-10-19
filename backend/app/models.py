@@ -2,6 +2,8 @@
 from typing import Literal
 from pydantic import BaseModel, Field, ConfigDict, field_validator, model_validator
 from .icon_catalog import IconName
+from .assistant_contract import ConversationTurn, LockedField
+from .analytics_models import AnalyticalVisual
 
 Variant = Literal['a', 'b', 'c']
 DiagramType = Literal['process', 'vertical', 'cycle', 'hierarchy', 'matrix', 'pyramid', 'honeycomb', 'comparison', 'kpi']
@@ -77,9 +79,10 @@ class Slide(BaseModel):
     model_config = ConfigDict(extra='forbid')
     title: str = Field(min_length=1, max_length=180)
     body: str = Field(default='', max_length=2400)
-    kind: Literal['title', 'text', 'chart', 'table', 'steps', 'diagram', 'icons', 'image'] = 'text'
+    kind: Literal['title', 'text', 'chart', 'table', 'steps', 'diagram', 'icons', 'image', 'analysis'] = 'text'
     bullets: list[str] = Field(default_factory=list, max_length=10)
     chart: ChartData | None = None
+    analytics: AnalyticalVisual | None = None
     table: list[list[str]] = Field(default_factory=list, max_length=9)
     source_quote: str = Field(default='', max_length=1500)
     notes: str = Field(default='', max_length=3000)
@@ -115,6 +118,7 @@ class Slide(BaseModel):
     def required_visual_data(self):
         if self.kind=='chart' and self.chart is None:raise ValueError('Добавьте данные диаграммы')
         if self.kind=='table' and not self.table:raise ValueError('Добавьте данные таблицы')
+        if self.kind=='analysis' and self.analytics is None:raise ValueError('Добавьте проверенные аналитические данные')
         return self
     @field_validator('title')
     @classmethod
@@ -130,8 +134,10 @@ class Slide(BaseModel):
         return value
 
 class DeckContent(BaseModel):
+    brand_style_id: str | None = Field(default=None, max_length=80)
+    brand_prefer_template: bool = False
     title: str = Field(min_length=1, max_length=180)
-    slides: list[Slide] = Field(min_length=1, max_length=30)
+    slides: list[Slide] = Field(min_length=1, max_length=200)
     audience: str = Field(default='Команда и коллеги', max_length=100)
     resource_ids: list[str] = Field(default_factory=list, max_length=100)
 
@@ -160,12 +166,12 @@ class RegenerateRequest(BaseModel):
 
 class SlideDesignChoice(BaseModel):
     model_config = ConfigDict(extra='forbid')
-    slide: int = Field(ge=0, le=29)
+    slide: int = Field(ge=0, le=199)
     design: SlideDesign
 
 class DesignPlan(BaseModel):
     model_config = ConfigDict(extra='forbid')
-    slides: list[SlideDesignChoice] = Field(min_length=1, max_length=30)
+    slides: list[SlideDesignChoice] = Field(min_length=1, max_length=200)
 
 class ThreeDesignPlans(BaseModel):
     model_config = ConfigDict(extra='forbid')
@@ -176,10 +182,13 @@ class ThreeDesignPlans(BaseModel):
 class ProjectUpdate(BaseModel):
     content: DeckContent
     variant: Variant = 'a'
+    # Preview uses the same content schema; only mutating routes require a version.
+    base_updated_at: str | None = Field(default=None, min_length=1, max_length=80)
 
 class FixRequest(BaseModel):
     issue_ids: list[str] = Field(min_length=1, max_length=200)
     variant: Variant = 'a'
+    base_updated_at: str | None = Field(default=None, min_length=1, max_length=80)
 
 class AssistantRequest(BaseModel):
     content: DeckContent
@@ -187,19 +196,31 @@ class AssistantRequest(BaseModel):
     base_updated_at: str = Field(min_length=1, max_length=80)
     instruction: str = Field(default='', max_length=3000)
     action: Literal['edit', 'repair'] = 'edit'
-    slide: int | None = Field(default=None, ge=0, le=29)
+    slide: int | None = Field(default=None, ge=0, le=199)
     material: str = Field(default='', max_length=15000)
+    pinned_brief: str = Field(default='', max_length=4000)
+    conversation: list['ConversationTurn'] = Field(default_factory=list, max_length=10)
+    locked_facts: list[str] = Field(default_factory=list, max_length=30)
+    locked_fields: list['LockedField'] = Field(default_factory=list, max_length=60)
+
+    @field_validator('locked_facts')
+    @classmethod
+    def bounded_locked_facts(cls, values):
+        if any(not value.strip() or len(value) > 500 for value in values):
+            raise ValueError('Закреплённый факт должен содержать от 1 до 500 символов.')
+        return values
 
 class SlidePatch(BaseModel):
     model_config = ConfigDict(extra='forbid')
-    slide: int = Field(ge=0, le=29)
+    slide: int = Field(ge=0, le=199)
     title: str | None = Field(default=None, min_length=1, max_length=180)
     body: str | None = Field(default=None, max_length=2400)
     bullets: list[str] | None = Field(default=None, max_length=10)
     notes: str | None = Field(default=None, max_length=3000)
     source_quote: str | None = Field(default=None, max_length=1500)
-    kind: Literal['title','text','chart','table','steps','diagram','icons','image'] | None = None
+    kind: Literal['title','text','chart','table','steps','diagram','icons','image','analysis'] | None = None
     chart: ChartData | None = None
+    analytics: AnalyticalVisual | None = None
     table: list[list[str]] | None = None
     diagram_type: DiagramType | None = None
     icon_names: list[IconName | Literal['auto']] | None = Field(default=None, max_length=6)
@@ -211,7 +232,7 @@ class SlidePatch(BaseModel):
 class AssistantPlan(BaseModel):
     model_config = ConfigDict(extra='forbid')
     summary: str = Field(min_length=1, max_length=1200)
-    changes: list[SlidePatch] = Field(default_factory=list, max_length=30)
+    changes: list[SlidePatch] = Field(default_factory=list, max_length=200)
 
 class Issue(BaseModel):
     id: str

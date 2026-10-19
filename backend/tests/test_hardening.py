@@ -85,15 +85,16 @@ def test_undo_redo_branch_and_noop(client):
     assert not initial['can_undo'] and not initial['can_redo']
     assert client.post(url+'/redo').status_code==409
     content=initial['content']; content['title']='Правка'
-    saved=client.put(url,json={'content':content,'variant':'b'}).json()
-    restored=client.post(url+'/undo').json()
+    saved=client.put(url,json={'content':content,'variant':'b','base_updated_at':initial['updated_at']}).json()
+    restored=client.post(url+'/undo',json={'base_updated_at':saved['updated_at']}).json()
     assert restored['can_redo'] and not restored['can_undo']
-    client.put(url,json={'content':restored['content'],'variant':restored['variant']})
+    client.put(url,json={'content':restored['content'],'variant':restored['variant'],'base_updated_at':restored['updated_at']})
     assert client.get(url).json()['can_redo']  # no-op must not erase future
-    assert client.post(url+'/redo').json()['content']==saved['content']
-    client.post(url+'/undo')
+    redone=client.post(url+'/redo',json={'base_updated_at':restored['updated_at']}).json()
+    assert redone['content']==saved['content']
+    undone=client.post(url+'/undo',json={'base_updated_at':redone['updated_at']}).json()
     content['title']='Другая ветка'
-    assert not client.put(url,json={'content':content,'variant':'a'}).json()['can_redo']
+    assert not client.put(url,json={'content':content,'variant':'a','base_updated_at':undone['updated_at']}).json()['can_redo']
     assert client.post(url+'/redo').status_code==409
     assert client.post(url+'/undo',headers={'X-CSRF-Token':'wrong'}).status_code==403
     assert 'future' not in client.get(url).json()

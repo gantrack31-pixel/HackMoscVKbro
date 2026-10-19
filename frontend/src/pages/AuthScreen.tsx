@@ -1,6 +1,6 @@
 import { useSurfaceMotion } from "../motion/animation";
 import { useEffect, useRef, useState, type FormEvent } from "react";
-import { ArrowRight, ArrowLeft } from "lucide-react";
+import { Icon } from "../components/Icon";
 import { ThemeToggle } from "../components/ThemeToggle";
 import { api } from "../api";
 import { WordmarkTitle } from "../components/Brand";
@@ -246,7 +246,7 @@ export function AuthScreen({
             aria-controls="auth-panel"
             aria-label={opened ? "Скрыть панель входа" : "Открыть панель входа"}
           >
-            {opened ? <ArrowLeft size={20} /> : <ArrowRight size={20} />}
+            <Icon name={opened ? "auth-return" : "auth-enter"} size={20} />
           </button>
         </div>
         <div className="auth-brand-block">
@@ -293,7 +293,7 @@ export function AuthScreen({
               onClick={() => go("choice")}
             >
               Начать работу
-              <ArrowRight size={20} />
+
             </button>
           </div>
           <div
@@ -329,7 +329,7 @@ export function AuthScreen({
           </div>
         </div>
         <footer className="auth-footer">
-          <span>Ваши идеи. Ваш стиль. © 2026</span>
+          <span>© 2026 Deckly</span>
         </footer>
       </section>
       <section

@@ -1,4 +1,4 @@
-import { Maximize2 } from "lucide-react";
+import { Icon } from "./Icon";
 import { SlidePreview } from "./SlidePreview";
 import type { Project } from "../types";
 
@@ -18,7 +18,7 @@ export function FinishPreview({
       <div className="between">
         <h2>{project.title}</h2>
         <button type="button" className="btn sm" onClick={() => onPresent()}>
-          <Maximize2 size={16} /> Смотреть
+          <Icon name="export-preview" size={16} /> Смотреть
         </button>
       </div>
       <SlidePreview

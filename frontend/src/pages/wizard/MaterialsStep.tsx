@@ -8,6 +8,7 @@ export function MaterialsStep({
   prompt,
   mode,
   purpose,
+  hasAdditionalMaterial,
   packetFiles,
   resources,
   count,
@@ -28,6 +29,7 @@ export function MaterialsStep({
   prompt: string;
   mode: "description" | "text";
   purpose: PresentationPurpose;
+  hasAdditionalMaterial?: boolean;
   packetFiles: string[];
   resources: MaterialResource[];
   count: number;
@@ -50,10 +52,9 @@ export function MaterialsStep({
       <section className="panel">
         <div className="wizard-section-heading">
           <span className="wizard-heading-icon">
-            <Icon name="file" />
+            <Icon name="flow-idea" />
           </span>
           <div>
-            <span className="label">01 / Исходные материалы</span>
             <h2>О чём ваша презентация?</h2>
           </div>
         </div>
@@ -74,8 +75,7 @@ export function MaterialsStep({
           />
           <span className="wizard-material-meta">
             <span className="field-helper" id="wizard-material-helper">
-              Для привязки тезисов к источнику добавьте факты и исходные
-              формулировки.
+              Добавьте исходный текст, чтобы проверять тезисы по цитатам.
             </span>
             <span className="wizard-character-count">
               {prompt.length.toLocaleString("ru-RU")} / 50 000
@@ -115,15 +115,6 @@ export function MaterialsStep({
                 key={resource.id}
                 title={resource.name}
               >
-                <Icon
-                  name={
-                    resource.kind === "palette"
-                      ? "palette"
-                      : resource.kind === "font"
-                        ? "code"
-                        : "file"
-                  }
-                />
                 {resource.name.replace(/\.[^.]+$/, "")}
                 <button
                   type="button"
@@ -144,14 +135,12 @@ export function MaterialsStep({
             disabled={busy}
             onClick={() => void onOutline(sampleMaterial)}
           >
-            <Icon name="spark" />
-            Пример Deckly.Ai
+            <Icon name="flow-example" />
+            Попробовать пример
           </button>
           <label className="btn sm file-label">
-            <Icon name="upload" />
-            {operation === "import"
-              ? "Читаем пакет…"
-              : "Добавить пакет материалов"}
+            <Icon name="flow-import" />
+            {operation === "import" ? "Читаем файлы…" : "Добавить файлы"}
             <input
               hidden
               type="file"
@@ -200,10 +189,12 @@ export function MaterialsStep({
                     <Icon
                       name={
                         name === "Инвесторы"
-                          ? "spark"
+                          ? "flow-investors"
                           : name === "Студенты"
-                            ? "file"
-                            : "user"
+                            ? "flow-students"
+                            : name === "Клиенты и партнёры"
+                              ? "flow-clients"
+                              : "flow-team"
                       }
                     />
                     {name}
@@ -213,15 +204,14 @@ export function MaterialsStep({
             </div>
           </fieldset>
         </div>
-        <div className="form-footer">
-          <span className="tiny muted">Сначала проверим структуру</span>
+        <div className="form-footer form-footer-end">
           <button
             className="btn primary"
-            disabled={busy || !prompt.trim()}
+            disabled={busy || (!prompt.trim() && !hasAdditionalMaterial)}
             onClick={() => void onOutline()}
           >
             {busy ? "Готовим структуру…" : "Создать структуру"}
-            <Icon name="arrow" />
+            <Icon name="flow-build-outline" />
           </button>
         </div>
       </section>
@@ -232,13 +222,9 @@ export function MaterialsStep({
           <details className="wizard-template-picker">
             <summary>
               <span>
-                <small>Выбранный шаблон</small>
                 <strong>{template.name}</strong>
               </span>
-              <span className="wizard-picker-action">
-                Изменить
-                <Icon name="down" />
-              </span>
+              <span className="wizard-picker-action">Изменить</span>
             </summary>
             <fieldset disabled={busy}>
               <legend className="wizard-sr-only">
@@ -264,7 +250,6 @@ export function MaterialsStep({
                         : t.metadata.category}
                     </small>
                   </span>
-                  {t.id === template.id && <Icon name="check" />}
                 </label>
               ))}
             </fieldset>
@@ -272,7 +257,7 @@ export function MaterialsStep({
           <p className="small muted">
             {template.metadata.source === "pptx"
               ? `${template.metadata.layouts.length} макетов · ${template.metadata.font} · исходный PPTX`
-              : "Авторская стартовая тема"}
+              : "Шаблон Deckly"}
           </p>
           <div className="swatches">
             {Object.values(template.metadata.colors)
@@ -284,13 +269,10 @@ export function MaterialsStep({
           </div>
         </section>
         <section className="tip-card">
-          <Icon name="link" />
+          <Icon name="flow-sources" />
           <div>
-            <h3>Не теряйте связь с фактами</h3>
-            <p>
-              В редакторе можно открыть цитату рядом с тезисом и проверить её в
-              исходном материале.
-            </p>
+            <h3>Источники под рукой</h3>
+            <p>Цитаты из материалов будут доступны в редакторе.</p>
           </div>
         </section>
       </aside>
