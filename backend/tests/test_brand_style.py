@@ -100,7 +100,7 @@ def test_bad_signatures_encryption_scale_and_fig_are_actionable():
 
 
 def test_worker_does_not_inherit_provider_secrets_or_ambient_import_paths(monkeypatch):
-    monkeypatch.setenv('OPENROUTER_API_KEY','sentinel-not-real-secret')
+    monkeypatch.setenv('LLM_API_KEY','sentinel-not-real-secret')
     monkeypatch.setenv('PYTHONPATH','untrusted-path')
     original=subprocess.run;captured={}
     def invoke(*args,**kwargs):
@@ -109,7 +109,7 @@ def test_worker_does_not_inherit_provider_secrets_or_ambient_import_paths(monkey
     monkeypatch.setattr(subprocess,'run',invoke)
     result=parse_isolated(tokens(),'brand.json')
     assert result['kind']=='tokens-json'
-    assert 'OPENROUTER_API_KEY' not in captured['env'] and 'PYTHONPATH' not in captured['env']
+    assert 'LLM_API_KEY' not in captured['env'] and 'PYTHONPATH' not in captured['env']
     assert captured['timeout']==12
     def timeout(*args,**kwargs):raise subprocess.TimeoutExpired('worker',12)
     monkeypatch.setattr(subprocess,'run',timeout)

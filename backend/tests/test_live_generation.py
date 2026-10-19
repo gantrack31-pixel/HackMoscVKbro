@@ -62,14 +62,14 @@ def test_provider_failure_does_not_create_fake_variants(client,monkeypatch):
     assert job['state']=='failed' and job['error']=='Provider unavailable'
     assert client.get('/api/projects').json()==[]
 
-def test_openrouter_headers_and_reasoning(monkeypatch):
-    monkeypatch.setattr(settings,'base_url','https://openrouter.ai/api/v1')
+def test_inference_api_headers_and_reasoning(monkeypatch):
+    monkeypatch.setattr(settings,'base_url','https://ai-demo.platformpreview.ru/api/inference-providers-router/00000000-0000-0000-0000-000000000001/v1')
     monkeypatch.setattr(settings,'api_key','private-test-key')
-    monkeypatch.setattr(settings,'model','qwen/qwen-2.5-72b-instruct')
+    monkeypatch.setattr(settings,'project_id','test-project-id')
+    monkeypatch.setattr(settings,'model','qwen38-27b-fp8')
     def respond(request):
         assert request.headers['Authorization']=='Bearer private-test-key'
-        assert request.headers['HTTP-Referer']==settings.openrouter_referer
-        assert request.headers['X-Title']=='Deckly.Ai'
+        assert request.headers['Project-ID']=='test-project-id'
         assert json.loads(request.content)['model']==settings.model
         return httpx.Response(200,json={'choices':[{'message':{'content':'<think>reasoning</think>```json\n{"ok":true}\n```'}}]})
     async def run():
@@ -79,9 +79,9 @@ def test_openrouter_headers_and_reasoning(monkeypatch):
 
 
 def test_provider_output_limit_is_reported_as_truncated_json(monkeypatch):
-    monkeypatch.setattr(settings,'base_url','https://openrouter.ai/api/v1')
+    monkeypatch.setattr(settings,'base_url','https://ai-demo.platformpreview.ru/api/inference-providers-router/00000000-0000-0000-0000-000000000001/v1')
     monkeypatch.setattr(settings,'api_key','private-test-key')
-    monkeypatch.setattr(settings,'model','qwen/qwen3.8-27b')
+    monkeypatch.setattr(settings,'model','qwen38-27b-fp8')
     def respond(request):
         body=json.loads(request.content)
         assert body['max_tokens']==settings.outline_max_tokens

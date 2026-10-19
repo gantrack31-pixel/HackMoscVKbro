@@ -135,10 +135,8 @@ def test_direct_deadline_includes_queue_and_releases_job(client, monkeypatch):
 def test_reasoning_defaults_and_explicit_provider_overrides(monkeypatch):
     monkeypatch.setattr(settings, 'reasoning_enabled', False)
     monkeypatch.setattr(settings, 'extra_body', {})
-    monkeypatch.setattr(settings, 'base_url', 'https://openrouter.ai/api/v1')
-    assert llm.inference_options() == {'reasoning': {'enabled': False}}
-    monkeypatch.setattr(settings, 'extra_body', {'reasoning': {'enabled': True}})
-    assert llm.inference_options() == settings.extra_body
+    monkeypatch.setattr(settings, 'base_url', 'https://ai-demo.platformpreview.ru/api/inference-providers-router/00000000-0000-0000-0000-000000000001/v1')
+    assert llm.inference_options() == {}
     monkeypatch.setattr(settings, 'base_url', 'http://127.0.0.1:8001/v1')
     monkeypatch.setattr(settings, 'model', 'Qwen/Qwen3.8-27B')
     monkeypatch.setattr(settings, 'extra_body', {})

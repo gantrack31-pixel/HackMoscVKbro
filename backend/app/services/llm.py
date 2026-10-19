@@ -30,10 +30,7 @@ def inference_options():
     if settings.reasoning_enabled:
         return extra
     host = urlparse(settings.base_url).hostname
-    if host == 'openrouter.ai':
-        if not any(key in extra for key in ('reasoning', 'reasoning_effort', 'thinking')):
-            extra['reasoning'] = {'enabled': False}
-    elif host in {'localhost', '127.0.0.1', '::1'} and 'qwen3' in settings.model.lower():
+    if host in {'localhost', '127.0.0.1', '::1'} and 'qwen3' in settings.model.lower():
         if not any(key in extra for key in ('reasoning', 'reasoning_effort', 'thinking')):
             extra['chat_template_kwargs'] = {'enable_thinking': False, **extra.get('chat_template_kwargs', {})}
     return extra
@@ -131,15 +128,17 @@ def configured() -> bool:
 
 async def complete_json(system: str, payload: dict, client: httpx.AsyncClient | None = None,
                         images: list[str] | None = None, max_tokens: int | None = None) -> dict:
-    if not configured(): raise LLMError('Заполните OPENROUTER_API_KEY и OPENROUTER_MODEL в backend/.env.')
+    if not configured(): raise LLMError('Заполните LLM_API_KEY и LLM_MODEL в backend/.env.')
     parsed=urlparse(settings.base_url)
     if parsed.scheme not in {'http','https'} or not parsed.hostname or parsed.username or parsed.password or parsed.query or parsed.fragment:
-        raise LLMError('OPENROUTER_BASE_URL должен быть HTTP(S)-адресом API без ключей в URL.')
+        raise LLMError('LLM_BASE_URL должен быть HTTP(S)-адресом API без ключей в URL.')
     if parsed.scheme=='http' and parsed.hostname not in {'localhost','127.0.0.1','::1'}:
         raise LLMError('Для внешнего сервера модели требуется HTTPS, чтобы защитить ключ и материалы.')
-    headers={'Content-Type':'application/json', 'HTTP-Referer':settings.openrouter_referer, 'X-Title':'Deckly.Ai'}
+    headers={'Content-Type':'application/json'}
     if settings.api_key:
         headers['Authorization']='Bearer '+settings.api_key
+    if settings.project_id:
+        headers['Project-ID']=settings.project_id
     task=payload.get('schema',{}).get('title')
     tokens={'DeckContent':settings.outline_max_tokens,'ThreeDesignPlans':settings.design_max_tokens,
             'DesignPlan':settings.design_max_tokens,'AssistantPlan':settings.assistant_max_tokens}.get(task,
@@ -151,7 +150,9 @@ async def complete_json(system: str, payload: dict, client: httpx.AsyncClient | 
     if images and settings.vision:
         body['messages'][-1]['content'] = [{'type':'text','text':body['messages'][-1]['content']},
             *[{'type':'image_url','image_url':{'url':data}} for data in images[:4]]]
-    if settings.json_mode: body['response_format']={'type':'json_object'}
+    # Only add response_format if explicitly enabled and supported by provider
+    if settings.json_mode and 'platformpreview' not in settings.base_url:
+        body['response_format']={'type':'json_object'}
     client=client or provider_http.get()
     owned=client is None
     client=client or httpx.AsyncClient(timeout=httpx.Timeout(settings.timeout,connect=15),follow_redirects=False)

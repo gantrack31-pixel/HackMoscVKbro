@@ -82,7 +82,7 @@ def test_authenticated_analysis_real_jobs_variants_exports_and_owner_validation(
         assert len(PdfReader(io.BytesIO(pdf.content)).pages)==3
         html=client.get(f'/api/projects/{pid}/export/html?variant=c')
         assert html.status_code==200 and '23%' in html.text and '2025-01-01' in html.text
-        assert 'OPENROUTER_API_KEY' not in html.text and 'file:///' not in html.text
+        assert 'LLM_API_KEY' not in html.text and 'file:///' not in html.text
         assert client.get(f'/api/analysis/{id}/rows?limit=1').json()['next_offset']==1
         assert client.get(f'/api/analysis/{id}').json()['selection']['chart_type']=='line'
         register(client,'another-analyst@example.test')

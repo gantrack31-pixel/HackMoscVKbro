@@ -116,27 +116,25 @@ def test_fuzzy_bindings_are_suggestions_and_numbers_must_match():
     assert all(i.severity=='info' for i in issues if i.category=='source')
 
 
-def test_openrouter_configuration_never_uses_legacy_credentials(monkeypatch):
-    monkeypatch.delenv('LLM_BASE_URL',raising=False)
-    monkeypatch.delenv('OPENROUTER_BASE_URL',raising=False)
-    monkeypatch.delenv('OPENROUTER_MODEL',raising=False)
-    monkeypatch.setenv('OPENROUTER_API_KEY','router-test-key')
-    monkeypatch.setenv('LLM_API_KEY','legacy-key')
-    monkeypatch.setenv('LLM_MODEL','gpt://legacy/model')
+def test_inference_api_configuration(monkeypatch):
+    monkeypatch.setenv('LLM_BASE_URL','https://ai-demo.platformpreview.ru/api/inference-providers-router/00000000-0000-0000-0000-000000000001/v1')
+    monkeypatch.setenv('LLM_API_KEY','test-api-key')
+    monkeypatch.setenv('LLM_MODEL','qwen38-27b-fp8')
+    monkeypatch.setenv('LLM_PROJECT_ID','test-project-id')
     config=Settings()
-    assert config.base_url=='https://openrouter.ai/api/v1'
-    assert config.model=='qwen/qwen3.8-27b' and config.api_key=='router-test-key'
+    assert 'platformpreview.ru' in config.base_url
+    assert config.model=='qwen38-27b-fp8' and config.api_key=='test-api-key'
+    assert config.project_id=='test-project-id'
     assert config.api_key not in repr(config)
 
 
-def test_explicit_custom_provider_does_not_inherit_openrouter_key(monkeypatch):
+def test_custom_provider_uses_llm_env_vars(monkeypatch):
     monkeypatch.setenv('LLM_BASE_URL','http://127.0.0.1:8001/v1')
     monkeypatch.setenv('LLM_MODEL','Qwen/Qwen3.8-27B')
-    monkeypatch.delenv('LLM_API_KEY',raising=False)
-    monkeypatch.setenv('OPENROUTER_API_KEY','router-key')
+    monkeypatch.setenv('LLM_API_KEY','local-key')
     config=Settings()
     assert config.base_url=='http://127.0.0.1:8001/v1' and config.model=='Qwen/Qwen3.8-27B'
-    assert config.api_key==''
+    assert config.api_key=='local-key'
 
 
 @pytest.mark.parametrize('status',[401,429,400])
