@@ -1,0 +1,682 @@
+@keyframes mascotWaveBob {
+  0%,
+  100% {
+    transform: translateY(0px) rotate(-1.5deg);
+  }
+  50% {
+    transform: translateY(-10px) rotate(1.5deg);
+  }
+}
+@keyframes mascotWaveRightArm {
+  0%,
+  100% {
+    transform: translate(2px, -18px) rotate(-58deg);
+  }
+  50% {
+    transform: translate(6px, -24px) rotate(-12deg);
+  }
+}
+@keyframes mascotWaveLeftArm {
+  0%,
+  100% {
+    transform: rotate(26deg);
+  }
+  50% {
+    transform: rotate(38deg);
+  }
+}
+@keyframes mascotWaveShadow {
+  0%,
+  100% {
+    transform: scaleX(1);
+    opacity: 0.35;
+  }
+  50% {
+    transform: scaleX(0.86);
+    opacity: 0.22;
+  }
+}
+
+@keyframes mascotWalkMoveX {
+  0% {
+    transform: translateX(0px);
+  }
+  25% {
+    transform: translateX(65px);
+  }
+  50% {
+    transform: translateX(0px);
+  }
+  75% {
+    transform: translateX(-65px);
+  }
+  100% {
+    transform: translateX(0px);
+  }
+}
+@keyframes mascotWalkStepBounce {
+  0%,
+  100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  25% {
+    transform: translateY(-11px) rotate(2.8deg);
+  }
+  50% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  75% {
+    transform: translateY(-11px) rotate(-2.8deg);
+  }
+}
+@keyframes mascotWalkFaceShift {
+  0%,
+  50%,
+  100% {
+    transform: translateX(0px);
+  }
+  25% {
+    transform: translateX(11px);
+  }
+  75% {
+    transform: translateX(-11px);
+  }
+}
+@keyframes mascotWalkLegLeft {
+  0%,
+  100% {
+    transform: rotate(0deg) translateY(0px);
+  }
+  25% {
+    transform: rotate(28deg) translateY(-6px);
+  }
+  50% {
+    transform: rotate(0deg) translateY(0px);
+  }
+  75% {
+    transform: rotate(-28deg) translateY(-2px);
+  }
+}
+@keyframes mascotWalkLegRight {
+  0%,
+  100% {
+    transform: rotate(0deg) translateY(0px);
+  }
+  25% {
+    transform: rotate(-28deg) translateY(-2px);
+  }
+  50% {
+    transform: rotate(0deg) translateY(0px);
+  }
+  75% {
+    transform: rotate(28deg) translateY(-6px);
+  }
+}
+@keyframes mascotWalkArmLeft {
+  0%,
+  100% {
+    transform: rotate(24deg);
+  }
+  25% {
+    transform: rotate(-16deg);
+  }
+  50% {
+    transform: rotate(24deg);
+  }
+  75% {
+    transform: rotate(48deg);
+  }
+}
+@keyframes mascotWalkArmRight {
+  0%,
+  100% {
+    transform: rotate(-24deg);
+  }
+  25% {
+    transform: rotate(-48deg);
+  }
+  50% {
+    transform: rotate(-24deg);
+  }
+  75% {
+    transform: rotate(16deg);
+  }
+}
+
+@keyframes mascotThinkBreathe {
+  0%,
+  100% {
+    transform: translateY(0px) rotate(-2.5deg);
+  }
+  50% {
+    transform: translateY(-5px) rotate(-4.5deg);
+  }
+}
+@keyframes mascotThinkChinTap {
+  0%,
+  100% {
+    transform: translate(-14px, 18px) rotate(-48deg);
+  }
+  50% {
+    transform: translate(-16px, 12px) rotate(-36deg);
+  }
+}
+@keyframes mascotBubbleFloat1 {
+  0%,
+  100% {
+    transform: translateY(0px) scale(1);
+    opacity: 0.85;
+  }
+  50% {
+    transform: translateY(-5px) scale(1.08);
+    opacity: 1;
+  }
+}
+@keyframes mascotBubbleFloat2 {
+  0%,
+  100% {
+    transform: translateY(0px) scale(1);
+    opacity: 0.9;
+  }
+  50% {
+    transform: translateY(-8px) scale(1.06);
+    opacity: 1;
+  }
+}
+@keyframes mascotBubbleFloat3 {
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+@keyframes mascotIdeaPulse {
+  0%,
+  100% {
+    transform: scale(1) rotate(-2deg);
+  }
+  50% {
+    transform: scale(1.05) rotate(2deg);
+  }
+}
+
+@keyframes mascotLaptopSitBob {
+  0%,
+  100% {
+    transform: translateY(22px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(25px) rotate(0.7deg);
+  }
+}
+@keyframes mascotLaptopTypeLeft {
+  0%,
+  100% {
+    transform: translate(48px, 64px) rotate(24deg);
+  }
+  50% {
+    transform: translate(52px, 50px) rotate(8deg);
+  }
+}
+@keyframes mascotLaptopTypeRight {
+  0%,
+  100% {
+    transform: translate(-52px, 50px) rotate(-8deg);
+  }
+  50% {
+    transform: translate(-48px, 64px) rotate(-24deg);
+  }
+}
+@keyframes mascotLaptopBounce {
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-2.5px);
+  }
+}
+@keyframes mascotEyesScan {
+  0%,
+  100% {
+    transform: translate(-5px, -5px);
+  }
+  50% {
+    transform: translate(5px, -5px);
+  }
+}
+
+@keyframes mascotErrorFallBody {
+  0% {
+    transform: translateY(-26px) rotate(6deg) scale(0.96, 1.04);
+  }
+  14% {
+    transform: translateY(30px) rotate(-6deg) scale(1.09, 0.9);
+  }
+  24% {
+    transform: translateY(18px) rotate(3deg) scale(0.97, 1.03);
+  }
+  34% {
+    transform: translateY(26px) rotate(-3deg) scale(1.03, 0.97);
+  }
+  50%,
+  100% {
+    transform: translateY(25px) rotate(-2.5deg) scale(1, 1);
+  }
+}
+@keyframes mascotErrorArmLeft {
+  0% {
+    transform: translate(0px, -25px) rotate(75deg);
+  }
+  14% {
+    transform: translate(8px, 52px) rotate(-42deg);
+  }
+  28% {
+    transform: translate(6px, 44px) rotate(-28deg);
+  }
+  45%,
+  100% {
+    transform: translate(8px, 48px) rotate(-34deg);
+  }
+}
+@keyframes mascotErrorArmRight {
+  0% {
+    transform: translate(0px, -25px) rotate(-75deg);
+  }
+  14% {
+    transform: translate(-8px, 52px) rotate(42deg);
+  }
+  28% {
+    transform: translate(-6px, 44px) rotate(28deg);
+  }
+  45%,
+  100% {
+    transform: translate(-8px, 48px) rotate(34deg);
+  }
+}
+@keyframes mascotErrorShadow {
+  0% {
+    transform: scaleX(0.75);
+    opacity: 0.18;
+  }
+  14% {
+    transform: scaleX(1.38);
+    opacity: 0.48;
+  }
+  24% {
+    transform: scaleX(1.22);
+    opacity: 0.38;
+  }
+  34%,
+  100% {
+    transform: scaleX(1.3);
+    opacity: 0.42;
+  }
+}
+@keyframes mascotHurtBracketsPulse {
+  0%,
+  12% {
+    opacity: 0;
+    transform: translateY(10px) scale(0.6);
+  }
+  20% {
+    opacity: 1;
+    transform: translateY(-4px) scale(1.12) rotate(-3deg);
+  }
+  35% {
+    opacity: 1;
+    transform: translateY(0px) scale(0.96) rotate(3deg);
+  }
+  50% {
+    opacity: 1;
+    transform: translateY(-3px) scale(1.05) rotate(-2deg);
+  }
+  65% {
+    opacity: 1;
+    transform: translateY(0px) scale(0.98) rotate(2deg);
+  }
+  80% {
+    opacity: 1;
+    transform: translateY(-3px) scale(1.04) rotate(-2deg);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0px) scale(1) rotate(0deg);
+  }
+}
+@keyframes mascotSadTremble {
+  0%,
+  100% {
+    transform: translateX(0px);
+  }
+  25% {
+    transform: translateX(-1.5px);
+  }
+  75% {
+    transform: translateX(1.5px);
+  }
+}
+@keyframes mascotBlink {
+  0%,
+  94%,
+  98%,
+  100% {
+    transform: scaleY(1);
+  }
+  96% {
+    transform: scaleY(0.12);
+  }
+}
+
+.deckly-mascot-svg .prop-think,
+.deckly-mascot-svg .prop-laptop,
+.deckly-mascot-svg .prop-error-brackets,
+.deckly-mascot-svg .eyes-think,
+.deckly-mascot-svg .eyes-error,
+.deckly-mascot-svg .mouth-think,
+.deckly-mascot-svg .mouth-error,
+.deckly-mascot-svg .legs-sitting {
+  display: none;
+}
+
+.deckly-mascot-svg.state-wave .mascot-body-rig {
+  animation: mascotWaveBob 1.8s ease-in-out infinite;
+  transform-origin: 200px 200px;
+}
+.deckly-mascot-svg.state-wave .arm-right {
+  animation: mascotWaveRightArm 0.52s ease-in-out infinite;
+}
+.deckly-mascot-svg.state-wave .arm-left {
+  animation: mascotWaveLeftArm 1.8s ease-in-out infinite;
+}
+.deckly-mascot-svg.state-wave .floor-shadow {
+  animation: mascotWaveShadow 1.8s ease-in-out infinite;
+  transform-origin: 200px 362px;
+}
+
+.deckly-mascot-svg.state-walk .mascot-root-mover {
+  animation: mascotWalkMoveX 3.4s linear infinite;
+}
+.deckly-mascot-svg.state-walk .mascot-body-rig {
+  animation: mascotWalkStepBounce 0.85s ease-in-out infinite;
+  transform-origin: 200px 200px;
+}
+.deckly-mascot-svg.state-walk .face-screen-wrapper,
+.deckly-mascot-svg.state-walk .body-chart-bars {
+  animation: mascotWalkFaceShift 3.4s ease-in-out infinite;
+}
+.deckly-mascot-svg.state-walk .leg-left {
+  animation: mascotWalkLegLeft 0.85s ease-in-out infinite;
+}
+.deckly-mascot-svg.state-walk .leg-right {
+  animation: mascotWalkLegRight 0.85s ease-in-out infinite;
+}
+.deckly-mascot-svg.state-walk .arm-left {
+  animation: mascotWalkArmLeft 0.85s ease-in-out infinite;
+}
+.deckly-mascot-svg.state-walk .arm-right {
+  animation: mascotWalkArmRight 0.85s ease-in-out infinite;
+}
+.deckly-mascot-svg.state-walk .floor-shadow {
+  animation: mascotWalkMoveX 3.4s linear infinite;
+}
+
+.deckly-mascot-svg.state-think .mascot-body-rig {
+  animation: mascotThinkBreathe 2.8s ease-in-out infinite;
+  transform-origin: 200px 200px;
+}
+.deckly-mascot-svg.state-think .arm-right {
+  animation: mascotThinkChinTap 1.15s ease-in-out infinite;
+}
+.deckly-mascot-svg.state-think .arm-left {
+  transform: rotate(24deg);
+}
+.deckly-mascot-svg.state-think .eyes-happy,
+.deckly-mascot-svg.state-think .mouth-smile {
+  display: none;
+}
+.deckly-mascot-svg.state-think .eyes-think,
+.deckly-mascot-svg.state-think .mouth-think,
+.deckly-mascot-svg.state-think .prop-think {
+  display: block;
+}
+.deckly-mascot-svg.state-think .bubble-1 {
+  animation: mascotBubbleFloat1 2.2s ease-in-out infinite;
+  transform-origin: 295px 104px;
+}
+.deckly-mascot-svg.state-think .bubble-2 {
+  animation: mascotBubbleFloat2 2.2s ease-in-out infinite 0.25s;
+  transform-origin: 316px 76px;
+}
+.deckly-mascot-svg.state-think .bubble-3 {
+  animation: mascotBubbleFloat3 2.5s ease-in-out infinite 0.5s;
+  transform-origin: 344px 38px;
+}
+.deckly-mascot-svg.state-think .idea-slide {
+  animation: mascotIdeaPulse 2.2s ease-in-out infinite;
+  transform-origin: 340px 40px;
+}
+
+.deckly-mascot-svg.state-laptop .mascot-body-rig {
+  animation: mascotLaptopSitBob 1.2s ease-in-out infinite;
+  transform-origin: 200px 200px;
+}
+.deckly-mascot-svg.state-laptop .legs-standing {
+  display: none;
+}
+.deckly-mascot-svg.state-laptop .legs-sitting,
+.deckly-mascot-svg.state-laptop .prop-laptop {
+  display: block;
+}
+.deckly-mascot-svg.state-laptop .arm-left {
+  animation: mascotLaptopTypeLeft 0.22s ease-in-out infinite;
+}
+.deckly-mascot-svg.state-laptop .arm-right {
+  animation: mascotLaptopTypeRight 0.22s ease-in-out infinite;
+}
+.deckly-mascot-svg.state-laptop .laptop-device {
+  animation: mascotLaptopBounce 0.22s ease-in-out infinite;
+}
+.deckly-mascot-svg.state-laptop .eyes-happy {
+  animation: mascotEyesScan 2.2s ease-in-out infinite;
+}
+.deckly-mascot-svg.state-laptop .floor-shadow {
+  transform: scaleX(1.26);
+  transform-origin: 200px 362px;
+}
+
+.deckly-mascot-svg.state-error .mascot-body-rig {
+  animation: mascotErrorFallBody 3.2s cubic-bezier(0.22, 1, 0.36, 1) infinite;
+  transform-origin: 200px 260px;
+}
+.deckly-mascot-svg.state-error .legs-standing,
+.deckly-mascot-svg.state-error .eyes-happy,
+.deckly-mascot-svg.state-error .mouth-smile {
+  display: none;
+}
+.deckly-mascot-svg.state-error .legs-sitting,
+.deckly-mascot-svg.state-error .eyes-error,
+.deckly-mascot-svg.state-error .mouth-error,
+.deckly-mascot-svg.state-error .prop-error-brackets {
+  display: block;
+}
+.deckly-mascot-svg.state-error .arm-left {
+  animation: mascotErrorArmLeft 3.2s cubic-bezier(0.22, 1, 0.36, 1) infinite;
+}
+.deckly-mascot-svg.state-error .arm-right {
+  animation: mascotErrorArmRight 3.2s cubic-bezier(0.22, 1, 0.36, 1) infinite;
+}
+.deckly-mascot-svg.state-error .prop-error-brackets {
+  animation: mascotHurtBracketsPulse 3.2s ease-in-out infinite;
+  transform-origin: 310px 84px;
+}
+.deckly-mascot-svg.state-error .eyes-error,
+.deckly-mascot-svg.state-error .mouth-error {
+  animation: mascotSadTremble 0.35s ease-in-out infinite;
+}
+.deckly-mascot-svg.state-error .floor-shadow {
+  animation: mascotErrorShadow 3.2s cubic-bezier(0.22, 1, 0.36, 1) infinite;
+  transform-origin: 200px 362px;
+}
+
+.deckly-mascot-svg .eyelid-blink {
+  animation: mascotBlink 4.2s infinite;
+  transform-origin: 200px 175px;
+}
+.deckly-mascot {
+  width: var(--mascot-size, 180px);
+  max-width: 100%;
+  aspect-ratio: 1;
+  flex: 0 0 auto;
+  display: inline-grid;
+  vertical-align: middle;
+  pointer-events: none;
+  isolation: isolate;
+}
+.deckly-mascot-svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  shape-rendering: geometricPrecision;
+}
+
+/* Decorative greetings finish within five seconds; only active work loops. */
+.deckly-mascot .deckly-mascot-svg[class] * {
+  animation-iteration-count: 1;
+  animation-fill-mode: both;
+}
+.deckly-mascot .state-wave .arm-right {
+  animation-duration: 0.9s;
+  animation-iteration-count: 4;
+}
+.deckly-mascot .state-wave .mascot-body-rig,
+.deckly-mascot .state-wave .arm-left,
+.deckly-mascot .state-wave .floor-shadow {
+  animation-duration: 3.6s;
+}
+.deckly-mascot .state-laptop .arm-left,
+.deckly-mascot .state-laptop .arm-right,
+.deckly-mascot .state-laptop .laptop-device {
+  animation-duration: 0.65s;
+}
+.deckly-mascot .state-error .eyes-error,
+.deckly-mascot .state-error .mouth-error {
+  animation: none;
+}
+.deckly-mascot[data-working="true"] .deckly-mascot-svg * {
+  animation-iteration-count: infinite;
+}
+.deckly-mascot[data-active="false"] .deckly-mascot-svg * {
+  animation-play-state: paused;
+}
+.support-mascot {
+  display: grid;
+  place-items: center;
+  flex: 0 0 180px;
+  margin-block: -20px;
+  border-radius: 50%;
+  background: radial-gradient(ellipse, #0077ff10, transparent 70%);
+}
+.library-empty-mascot {
+  width: 170px;
+  height: 160px;
+  position: relative;
+  flex: 0 0 auto;
+  margin-block: -12px -4px;
+}
+.library-mascot-badge {
+  position: absolute;
+  right: 0;
+  bottom: 18px;
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  color: var(--accent-text);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  box-shadow: 0 5px 18px #06122414;
+  transform: rotate(8deg);
+}
+.library-mascot-badge .icon {
+  width: 21px;
+  height: 21px;
+}
+.generation-mascot,
+.generation-mascot-error {
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+}
+.generation-mascot > .deckly-mascot {
+  margin-block: -20px -12px;
+}
+.generation-mascot-label {
+  color: var(--accent-text);
+  font-size: 13px;
+  font-weight: 650;
+}
+.generation-mascot-error .error-banner {
+  width: 100%;
+  text-align: left;
+}
+@media (max-width: 820px) {
+  .support-mascot {
+    flex-basis: 130px;
+  }
+  .support-mascot .deckly-mascot {
+    width: 130px;
+  }
+}
+@media (max-width: 560px) {
+  .support-mascot {
+    width: 110px;
+    margin: 12px auto -12px;
+  }
+  .support-mascot .deckly-mascot {
+    width: 110px;
+  }
+  .generation-mascot > .deckly-mascot {
+    width: 150px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .deckly-mascot .deckly-mascot-svg * {
+    animation: none !important;
+    transition: none !important;
+  }
+  .deckly-mascot-svg .arm-left {
+    transform: rotate(26deg);
+  }
+  .deckly-mascot-svg .arm-right {
+    transform: rotate(-26deg);
+  }
+  .deckly-mascot-svg.state-wave .arm-right {
+    transform: translate(2px, -18px) rotate(-58deg);
+  }
+  .deckly-mascot-svg.state-think .arm-right {
+    transform: translate(-14px, 18px) rotate(-48deg);
+  }
+  .deckly-mascot-svg:is(.state-laptop, .state-error) .mascot-body-rig {
+    transform: translateY(22px);
+  }
+  .deckly-mascot-svg.state-laptop .arm-left {
+    transform: translate(48px, 64px) rotate(24deg);
+  }
+  .deckly-mascot-svg.state-laptop .arm-right {
+    transform: translate(-48px, 64px) rotate(-24deg);
+  }
+  .deckly-mascot-svg.state-laptop .eyes-happy {
+    transform: translateY(-5px);
+  }
+  .deckly-mascot-svg.state-error .arm-left {
+    transform: translate(8px, 48px) rotate(-34deg);
+  }
+  .deckly-mascot-svg.state-error .arm-right {
+    transform: translate(-8px, 48px) rotate(34deg);
+  }
+}

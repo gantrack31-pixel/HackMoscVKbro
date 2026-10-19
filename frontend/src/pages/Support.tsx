@@ -1,6 +1,7 @@
 import { useId, useState, type FormEvent } from "react";
 import { api } from "../api";
 import { Icon, type IconName } from "../components/Icon";
+import { DecklyMascot } from "../components/DecklyMascot";
 
 const supportQuestions = [
   {
@@ -102,14 +103,8 @@ export function Support() {
           <h1>Мы рядом, если нужна помощь</h1>
           <p>Найдите ответ или напишите нам — поможем разобраться.</p>
         </div>
-        <div className="support-emblem" aria-hidden="true">
-          <span className="support-emblem-ring" />
-          <span className="support-emblem-tile">
-            <Icon name="info-support" />
-          </span>
-          <span className="support-emblem-spark">
-            <Icon name="info-support-conversation" />
-          </span>
+        <div className="support-mascot">
+          <DecklyMascot animation="wave" size={180} />
         </div>
       </header>
       <div className="support-layout">
