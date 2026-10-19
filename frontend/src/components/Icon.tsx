@@ -1,88 +1,24 @@
-import {
-  Home,
-  LayoutGrid,
-  Folder,
-  Star,
-  Play,
-  LifeBuoy,
-  Plus,
-  ArrowRight,
-  ArrowLeft,
-  Upload,
-  Download,
-  Check,
-  X,
-  Search,
-  Sparkles,
-  FileText,
-  ShieldCheck,
-  ChevronDown,
-  Copy,
-  Trash2,
-  Pencil,
-  Undo2,
-  Redo2,
-  GripVertical,
-  ExternalLink,
-  Send,
-  Mail,
-  Link2,
-  Code2,
-  Palette,
-  AlertCircle,
-  UserRound,
-  LogOut,
-} from "lucide-react";
-const icons = {
-  home: Home,
-  grid: LayoutGrid,
-  folder: Folder,
-  star: Star,
-  play: Play,
-  help: LifeBuoy,
-  plus: Plus,
-  arrow: ArrowRight,
-  back: ArrowLeft,
-  upload: Upload,
-  download: Download,
-  check: Check,
-  close: X,
-  search: Search,
-  spark: Sparkles,
-  file: FileText,
-  shield: ShieldCheck,
-  down: ChevronDown,
-  copy: Copy,
-  trash: Trash2,
-  edit: Pencil,
-  undo: Undo2,
-  redo: Redo2,
-  grip: GripVertical,
-  external: ExternalLink,
-  telegram: Send,
-  send: Send,
-  mail: Mail,
-  link: Link2,
-  code: Code2,
-  palette: Palette,
-  alert: AlertCircle,
-  user: UserRound,
-  logout: LogOut,
-};
+import { icons } from "./iconRegistry";
+
 export type IconName = keyof typeof icons;
 export function Icon({
   name,
   className = "",
+  size,
 }: {
   name: IconName;
   className?: string;
+  size?: number;
 }) {
   const Component = icons[name];
   return (
     <Component
       className={`icon ${className}`}
+      data-icon={name}
       aria-hidden="true"
       strokeWidth={1.7}
+      size={size}
+      style={size ? { width: size, height: size } : undefined}
     />
   );
 }

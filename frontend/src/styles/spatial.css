@@ -407,10 +407,12 @@ dialog.modern-dialog.motion-dialog.is-closing {
   }
   .spatial-hero .hero-copy {
     padding: 28px 24px 0;
+    min-width: 0;
   }
   .spatial-hero .hero-copy h2 {
     font-size: clamp(32px, 8vw, 43px);
     margin: 22px 0 16px;
+    overflow-wrap: anywhere;
   }
   .spatial-hero .hero-copy p {
     font-size: 13px;
@@ -471,6 +473,19 @@ dialog.modern-dialog.motion-dialog.is-closing {
   }
   .assembly-copy h2 {
     font-size: 36px;
+  }
+}
+@media (max-width: 380px) {
+  .spatial-home .section-head {
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  .spatial-hero .hero-copy {
+    padding-inline: 18px;
+  }
+  .spatial-hero .hero-copy h2 {
+    font-size: 28px;
   }
 }
 @media (prefers-reduced-motion: reduce) {

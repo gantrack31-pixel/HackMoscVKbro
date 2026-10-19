@@ -1,0 +1,691 @@
+{
+  "brand_style_id": null,
+  "brand_prefer_template": false,
+  "title": "North — девять видов аналитики",
+  "slides": [
+    {
+      "title": "Выручка выросла со 120 до 168 млн руб.",
+      "body": "",
+      "kind": "analysis",
+      "bullets": [],
+      "chart": null,
+      "analytics": {
+        "chart_type": "table",
+        "labels": [],
+        "series": [],
+        "x_values": [],
+        "columns": [
+          "Месяц",
+          "Выручка, млн руб."
+        ],
+        "rows": [
+          [
+            "Январь",
+            "120"
+          ],
+          [
+            "Февраль",
+            "138"
+          ],
+          [
+            "Март",
+            "150"
+          ],
+          [
+            "Апрель",
+            "168"
+          ]
+        ],
+        "kpis": [],
+        "x_label": "",
+        "y_label": "",
+        "source": "Синтетический набор North, 2026",
+        "question": "Выручка выросла со 120 до 168 млн руб.",
+        "takeaway": "Выручка выросла со 120 до 168 млн руб.",
+        "why": "Представление выбрано по структуре и смыслу данного синтетического набора.",
+        "calculations": [
+          {
+            "id": "revenue_growth",
+            "operation": "relative_change",
+            "fields": [
+              "Выручка"
+            ],
+            "result": 40.0,
+            "unit": "%",
+            "baseline": 120.0,
+            "comparison": 168.0,
+            "rows_used": 4,
+            "rows_excluded": 0,
+            "description": "(168 − 120) / 120 × 100"
+          }
+        ],
+        "warnings": [],
+        "dataset_id": "",
+        "dataset_fingerprint": "5eb94fa4973cce1861d3351047546e6bba8469aa8f12e7cbd7678937f0e3b265",
+        "selection_fingerprint": "",
+        "source_fingerprint": "5eb94fa4973cce1861d3351047546e6bba8469aa8f12e7cbd7678937f0e3b265",
+        "metadata": {
+          "verified_visual_fingerprint": "b1cbf2c83b606fe603909bb4a37b506e9eea34bb281f9c3f54480ec3332e7d12"
+        }
+      },
+      "table": [],
+      "source_quote": "",
+      "notes": "",
+      "layout": null,
+      "design": null,
+      "designs": {},
+      "fixed": [],
+      "diagram_type": "process",
+      "icon_names": [],
+      "image_prompt": "",
+      "template_asset_id": "",
+      "resource_id": "",
+      "resource_icon_ids": [],
+      "resource_icon_data": [],
+      "image_data": ""
+    },
+    {
+      "title": "Выручка выросла на 40% с января по апрель",
+      "body": "",
+      "kind": "analysis",
+      "bullets": [],
+      "chart": null,
+      "analytics": {
+        "chart_type": "line",
+        "labels": [
+          "Январь",
+          "Февраль",
+          "Март",
+          "Апрель"
+        ],
+        "series": [
+          {
+            "name": "Выручка",
+            "values": [
+              120.0,
+              138.0,
+              150.0,
+              168.0
+            ],
+            "unit": "млн руб."
+          }
+        ],
+        "x_values": [],
+        "columns": [],
+        "rows": [],
+        "kpis": [],
+        "x_label": "Месяц",
+        "y_label": "Выручка",
+        "source": "Синтетический набор North, 2026",
+        "question": "Выручка выросла на 40% с января по апрель",
+        "takeaway": "Выручка выросла на 40% с января по апрель",
+        "why": "Представление выбрано по структуре и смыслу данного синтетического набора.",
+        "calculations": [
+          {
+            "id": "revenue_growth",
+            "operation": "relative_change",
+            "fields": [
+              "Выручка"
+            ],
+            "result": 40.0,
+            "unit": "%",
+            "baseline": 120.0,
+            "comparison": 168.0,
+            "rows_used": 4,
+            "rows_excluded": 0,
+            "description": "(168 − 120) / 120 × 100"
+          }
+        ],
+        "warnings": [],
+        "dataset_id": "",
+        "dataset_fingerprint": "cefc9935512c688a0688a75d47b49139b5478160e8a21bfa3dacf894ac11d256",
+        "selection_fingerprint": "",
+        "source_fingerprint": "cefc9935512c688a0688a75d47b49139b5478160e8a21bfa3dacf894ac11d256",
+        "metadata": {
+          "verified_visual_fingerprint": "689c087d7626592cc78169a26667740f14553f50a7541f4713dbe2f32472bd36"
+        }
+      },
+      "table": [],
+      "source_quote": "",
+      "notes": "",
+      "layout": null,
+      "design": null,
+      "designs": {},
+      "fixed": [],
+      "diagram_type": "process",
+      "icon_names": [],
+      "image_prompt": "",
+      "template_asset_id": "",
+      "resource_id": "",
+      "resource_icon_ids": [],
+      "resource_icon_data": [],
+      "image_data": ""
+    },
+    {
+      "title": "Продукт A: 120 продаж — больше других категорий",
+      "body": "",
+      "kind": "analysis",
+      "bullets": [],
+      "chart": null,
+      "analytics": {
+        "chart_type": "bar",
+        "labels": [
+          "Продукт A",
+          "Продукт B",
+          "Продукт C"
+        ],
+        "series": [
+          {
+            "name": "Продажи",
+            "values": [
+              120.0,
+              90.0,
+              60.0
+            ],
+            "unit": "шт."
+          }
+        ],
+        "x_values": [],
+        "columns": [],
+        "rows": [],
+        "kpis": [],
+        "x_label": "Продукт",
+        "y_label": "Продажи",
+        "source": "Синтетический набор North, 2026",
+        "question": "Продукт A: 120 продаж — больше других категорий",
+        "takeaway": "Продукт A: 120 продаж — больше других категорий",
+        "why": "Представление выбрано по структуре и смыслу данного синтетического набора.",
+        "calculations": [],
+        "warnings": [],
+        "dataset_id": "",
+        "dataset_fingerprint": "9e3dff5a7fbb71a2e3bd944335470ca5f26d5d4ec735ba0cf77355dbcca5c749",
+        "selection_fingerprint": "",
+        "source_fingerprint": "9e3dff5a7fbb71a2e3bd944335470ca5f26d5d4ec735ba0cf77355dbcca5c749",
+        "metadata": {
+          "verified_visual_fingerprint": "5b513066e6176a172085060986652b1b0c49b9c9426c4fc079ea535c5a0508ba"
+        }
+      },
+      "table": [],
+      "source_quote": "",
+      "notes": "",
+      "layout": null,
+      "design": null,
+      "designs": {},
+      "fixed": [],
+      "diagram_type": "process",
+      "icon_names": [],
+      "image_prompt": "",
+      "template_asset_id": "",
+      "resource_id": "",
+      "resource_icon_ids": [],
+      "resource_icon_data": [],
+      "image_data": ""
+    },
+    {
+      "title": "Чаще всего встречаются значения от 10 до 20",
+      "body": "",
+      "kind": "analysis",
+      "bullets": [],
+      "chart": null,
+      "analytics": {
+        "chart_type": "histogram",
+        "labels": [
+          "[0; 10)",
+          "[10; 20)",
+          "[20; 30)",
+          "[30; 40]"
+        ],
+        "series": [
+          {
+            "name": "Частота",
+            "values": [
+              6.0,
+              14.0,
+              9.0,
+              3.0
+            ],
+            "unit": "наблюдений"
+          }
+        ],
+        "x_values": [],
+        "columns": [],
+        "rows": [],
+        "kpis": [],
+        "x_label": "Интервал значения",
+        "y_label": "Частота",
+        "source": "Синтетический набор North, 2026",
+        "question": "Чаще всего встречаются значения от 10 до 20",
+        "takeaway": "Чаще всего встречаются значения от 10 до 20",
+        "why": "Представление выбрано по структуре и смыслу данного синтетического набора.",
+        "calculations": [],
+        "warnings": [],
+        "dataset_id": "",
+        "dataset_fingerprint": "28ff3e52e894b8f1f6f757db441467606f577cd3c8ba3a6ddb477d4ad9c8cc1b",
+        "selection_fingerprint": "",
+        "source_fingerprint": "28ff3e52e894b8f1f6f757db441467606f577cd3c8ba3a6ddb477d4ad9c8cc1b",
+        "metadata": {
+          "bin_boundaries": [
+            0,
+            10,
+            20,
+            30,
+            40
+          ],
+          "verified_visual_fingerprint": "e661dc215c9bb2071109bcc30c0ace107df78323d1a341135a6f3b011bb2f1a9"
+        }
+      },
+      "table": [],
+      "source_quote": "",
+      "notes": "",
+      "layout": null,
+      "design": null,
+      "designs": {},
+      "fixed": [],
+      "diagram_type": "process",
+      "icon_names": [],
+      "image_prompt": "",
+      "template_asset_id": "",
+      "resource_id": "",
+      "resource_icon_ids": [],
+      "resource_icon_data": [],
+      "image_data": ""
+    },
+    {
+      "title": "Прямые продажи дают половину объёма",
+      "body": "",
+      "kind": "analysis",
+      "bullets": [],
+      "chart": null,
+      "analytics": {
+        "chart_type": "pie",
+        "labels": [
+          "Прямые",
+          "Партнёры",
+          "Маркетплейсы"
+        ],
+        "series": [
+          {
+            "name": "Доля",
+            "values": [
+              50.0,
+              30.0,
+              20.0
+            ],
+            "unit": "продаж"
+          }
+        ],
+        "x_values": [],
+        "columns": [],
+        "rows": [],
+        "kpis": [],
+        "x_label": "",
+        "y_label": "",
+        "source": "Синтетический набор North, 2026",
+        "question": "Прямые продажи дают половину объёма",
+        "takeaway": "Прямые продажи дают половину объёма",
+        "why": "Представление выбрано по структуре и смыслу данного синтетического набора.",
+        "calculations": [
+          {
+            "id": "direct_share",
+            "operation": "share",
+            "fields": [],
+            "result": 50.0,
+            "unit": "%",
+            "baseline": 100.0,
+            "comparison": 50.0,
+            "rows_used": 3,
+            "rows_excluded": 0,
+            "description": ""
+          }
+        ],
+        "warnings": [],
+        "dataset_id": "",
+        "dataset_fingerprint": "41dda806d26977f4eaa22bc0bb4bcfaf633dd84e4f32ece4b9bc2022625ee563",
+        "selection_fingerprint": "",
+        "source_fingerprint": "41dda806d26977f4eaa22bc0bb4bcfaf633dd84e4f32ece4b9bc2022625ee563",
+        "metadata": {
+          "verified_visual_fingerprint": "a5e55c3015ba94a49afdd0995c024f5d1b30a7ce6be260d8362b2b1a5e1e946a"
+        }
+      },
+      "table": [],
+      "source_quote": "",
+      "notes": "",
+      "layout": null,
+      "design": null,
+      "designs": {},
+      "fixed": [],
+      "diagram_type": "process",
+      "icon_names": [],
+      "image_prompt": "",
+      "template_asset_id": "",
+      "resource_id": "",
+      "resource_icon_ids": [],
+      "resource_icon_data": [],
+      "image_data": ""
+    },
+    {
+      "title": "Больше вложений связано с большим числом заявок",
+      "body": "",
+      "kind": "analysis",
+      "bullets": [],
+      "chart": null,
+      "analytics": {
+        "chart_type": "scatter",
+        "labels": [
+          "1",
+          "2",
+          "3",
+          "4",
+          "5"
+        ],
+        "series": [
+          {
+            "name": "Заявки",
+            "values": [
+              3.0,
+              3.0,
+              5.0,
+              6.0,
+              8.0
+            ],
+            "unit": "тыс."
+          }
+        ],
+        "x_values": [
+          1.0,
+          2.0,
+          3.0,
+          4.0,
+          5.0
+        ],
+        "columns": [],
+        "rows": [],
+        "kpis": [],
+        "x_label": "Вложения, млн руб.",
+        "y_label": "Заявки",
+        "source": "Синтетический набор North, 2026",
+        "question": "Больше вложений связано с большим числом заявок",
+        "takeaway": "Больше вложений связано с большим числом заявок",
+        "why": "Представление выбрано по структуре и смыслу данного синтетического набора.",
+        "calculations": [
+          {
+            "id": "correlation",
+            "operation": "pearson_correlation",
+            "fields": [],
+            "result": 0.9689627902499088,
+            "unit": "",
+            "baseline": null,
+            "comparison": null,
+            "rows_used": 5,
+            "rows_excluded": 0,
+            "description": "Корреляция полных пар X и Y"
+          }
+        ],
+        "warnings": [
+          "Связь не доказывает причинность; наблюдений только пять."
+        ],
+        "dataset_id": "",
+        "dataset_fingerprint": "72112de61228a646bdd6a7ce6aa11a5cb3f4d841eb22bd23ff39f397a7132bb0",
+        "selection_fingerprint": "",
+        "source_fingerprint": "72112de61228a646bdd6a7ce6aa11a5cb3f4d841eb22bd23ff39f397a7132bb0",
+        "metadata": {
+          "verified_visual_fingerprint": "5d0c082d58b85e42ecf2e7e9e5138c6bc8648165aac562a0359f1cfc07b19966"
+        }
+      },
+      "table": [],
+      "source_quote": "",
+      "notes": "",
+      "layout": null,
+      "design": null,
+      "designs": {},
+      "fixed": [],
+      "diagram_type": "process",
+      "icon_names": [],
+      "image_prompt": "",
+      "template_asset_id": "",
+      "resource_id": "",
+      "resource_icon_ids": [],
+      "resource_icon_data": [],
+      "image_data": ""
+    },
+    {
+      "title": "В III квартале факт выше плана на 10 млн руб.",
+      "body": "",
+      "kind": "analysis",
+      "bullets": [],
+      "chart": null,
+      "analytics": {
+        "chart_type": "grouped",
+        "labels": [
+          "I квартал",
+          "II квартал",
+          "III квартал"
+        ],
+        "series": [
+          {
+            "name": "Факт",
+            "values": [
+              90.0,
+              110.0,
+              130.0
+            ],
+            "unit": "млн руб."
+          },
+          {
+            "name": "План",
+            "values": [
+              100.0,
+              100.0,
+              120.0
+            ],
+            "unit": "млн руб."
+          }
+        ],
+        "x_values": [],
+        "columns": [],
+        "rows": [],
+        "kpis": [],
+        "x_label": "Квартал",
+        "y_label": "Выручка",
+        "source": "Синтетический набор North, 2026",
+        "question": "В III квартале факт выше плана на 10 млн руб.",
+        "takeaway": "В III квартале факт выше плана на 10 млн руб.",
+        "why": "Представление выбрано по структуре и смыслу данного синтетического набора.",
+        "calculations": [
+          {
+            "id": "gap",
+            "operation": "absolute_change",
+            "fields": [],
+            "result": 10.0,
+            "unit": "млн руб.",
+            "baseline": 120.0,
+            "comparison": 130.0,
+            "rows_used": 2,
+            "rows_excluded": 0,
+            "description": ""
+          }
+        ],
+        "warnings": [],
+        "dataset_id": "",
+        "dataset_fingerprint": "a22e913e48fce6f784473c7d84469ca5bdcc3448ce7a7904f381c7425e2d541f",
+        "selection_fingerprint": "",
+        "source_fingerprint": "a22e913e48fce6f784473c7d84469ca5bdcc3448ce7a7904f381c7425e2d541f",
+        "metadata": {
+          "verified_visual_fingerprint": "1afb27dd8c03bb8ba8ed464cd04d676411edc15a14b26dc25625a683a3e6ec09"
+        }
+      },
+      "table": [],
+      "source_quote": "",
+      "notes": "",
+      "layout": null,
+      "design": null,
+      "designs": {},
+      "fixed": [],
+      "diagram_type": "process",
+      "icon_names": [],
+      "image_prompt": "",
+      "template_asset_id": "",
+      "resource_id": "",
+      "resource_icon_ids": [],
+      "resource_icon_data": [],
+      "image_data": ""
+    },
+    {
+      "title": "Повторные заказы: 50 из 80 в марте",
+      "body": "",
+      "kind": "analysis",
+      "bullets": [],
+      "chart": null,
+      "analytics": {
+        "chart_type": "stacked",
+        "labels": [
+          "Январь",
+          "Февраль",
+          "Март"
+        ],
+        "series": [
+          {
+            "name": "Новые",
+            "values": [
+              20.0,
+              25.0,
+              30.0
+            ],
+            "unit": "шт."
+          },
+          {
+            "name": "Повторные",
+            "values": [
+              30.0,
+              35.0,
+              50.0
+            ],
+            "unit": "шт."
+          }
+        ],
+        "x_values": [],
+        "columns": [],
+        "rows": [],
+        "kpis": [],
+        "x_label": "Месяц",
+        "y_label": "Заказы",
+        "source": "Синтетический набор North, 2026",
+        "question": "Повторные заказы: 50 из 80 в марте",
+        "takeaway": "Повторные заказы: 50 из 80 в марте",
+        "why": "Представление выбрано по структуре и смыслу данного синтетического набора.",
+        "calculations": [],
+        "warnings": [],
+        "dataset_id": "",
+        "dataset_fingerprint": "c9d7569696a546a319911db6f5cac6f61d62281f088c92ddac724424765a5bb8",
+        "selection_fingerprint": "",
+        "source_fingerprint": "c9d7569696a546a319911db6f5cac6f61d62281f088c92ddac724424765a5bb8",
+        "metadata": {
+          "verified_visual_fingerprint": "284984c5573746fa60d3a1c4ec923e82a1b3d25bb76493530e8ea8d348a306cb"
+        }
+      },
+      "table": [],
+      "source_quote": "",
+      "notes": "",
+      "layout": null,
+      "design": null,
+      "designs": {},
+      "fixed": [],
+      "diagram_type": "process",
+      "icon_names": [],
+      "image_prompt": "",
+      "template_asset_id": "",
+      "resource_id": "",
+      "resource_icon_ids": [],
+      "resource_icon_data": [],
+      "image_data": ""
+    },
+    {
+      "title": "За четыре месяца получено 576 млн руб. выручки",
+      "body": "",
+      "kind": "analysis",
+      "bullets": [],
+      "chart": null,
+      "analytics": {
+        "chart_type": "kpi",
+        "labels": [],
+        "series": [],
+        "x_values": [],
+        "columns": [],
+        "rows": [],
+        "kpis": [
+          {
+            "label": "Выручка",
+            "value": 576.0,
+            "unit": "млн руб.",
+            "aggregation": "Сумма",
+            "period": "Январь–апрель 2026",
+            "display": ""
+          },
+          {
+            "label": "Среднее за месяц",
+            "value": 144.0,
+            "unit": "млн руб.",
+            "aggregation": "Среднее",
+            "period": "Январь–апрель 2026",
+            "display": ""
+          },
+          {
+            "label": "Изменение",
+            "value": 40.0,
+            "unit": "%",
+            "aggregation": "Относительное изменение",
+            "period": "Апрель к январю 2026",
+            "display": ""
+          }
+        ],
+        "x_label": "",
+        "y_label": "",
+        "source": "Синтетический набор North, 2026",
+        "question": "За четыре месяца получено 576 млн руб. выручки",
+        "takeaway": "За четыре месяца получено 576 млн руб. выручки",
+        "why": "Представление выбрано по структуре и смыслу данного синтетического набора.",
+        "calculations": [
+          {
+            "id": "revenue_growth",
+            "operation": "relative_change",
+            "fields": [
+              "Выручка"
+            ],
+            "result": 40.0,
+            "unit": "%",
+            "baseline": 120.0,
+            "comparison": 168.0,
+            "rows_used": 4,
+            "rows_excluded": 0,
+            "description": "(168 − 120) / 120 × 100"
+          }
+        ],
+        "warnings": [],
+        "dataset_id": "",
+        "dataset_fingerprint": "0c0bcaa65628111b9214dc8a5a79c75dfe368af2c107e318a4a5c864d9864dd8",
+        "selection_fingerprint": "",
+        "source_fingerprint": "0c0bcaa65628111b9214dc8a5a79c75dfe368af2c107e318a4a5c864d9864dd8",
+        "metadata": {
+          "verified_visual_fingerprint": "ff45391c1a7d66d4011f304fd963a3f767eff41c8521d5ab1703dd735c91696b"
+        }
+      },
+      "table": [],
+      "source_quote": "",
+      "notes": "",
+      "layout": null,
+      "design": null,
+      "designs": {},
+      "fixed": [],
+      "diagram_type": "process",
+      "icon_names": [],
+      "image_prompt": "",
+      "template_asset_id": "",
+      "resource_id": "",
+      "resource_icon_ids": [],
+      "resource_icon_data": [],
+      "image_data": ""
+    }
+  ],
+  "audience": "Команда и коллеги",
+  "resource_ids": []
+}

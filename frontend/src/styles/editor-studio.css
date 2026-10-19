@@ -1,0 +1,848 @@
+/* Editor surfaces and shared assistant chrome; slide artwork stays untouched. */
+.page .editor-page .editor-document-header {
+  border: 1px solid var(--line);
+  border-radius: 22px;
+  background:
+    radial-gradient(ellipse at 100% 0, var(--state-tint), transparent 65%),
+    var(--surface);
+  box-shadow: 0 5px 24px #071b3807;
+  overflow: hidden;
+}
+.page .editor-page .editor-heading {
+  align-items: center;
+  gap: 24px;
+  margin: 0;
+  padding: 22px 24px 18px;
+}
+.editor-eyebrow {
+  display: block;
+  margin: 0 0 4px 9px;
+  font-size: 10px;
+  font-weight: 750;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.page .editor-page .editor-title-field .project-title {
+  height: 46px;
+  padding: 2px 38px 2px 8px;
+  border-color: transparent;
+  background: transparent;
+  font-size: clamp(23px, 2.2vw, 30px);
+  letter-spacing: -0.9px;
+  text-overflow: ellipsis;
+}
+.page .editor-page .editor-title-field:hover .project-title {
+  border-color: var(--line);
+}
+.page .editor-page .editor-title-field .project-title:focus {
+  background: var(--surface);
+  outline: none;
+  box-shadow: 0 0 0 3px var(--state-tint);
+}
+.page .editor-page .editor-title-field > .icon {
+  opacity: 0.65;
+  width: 16px;
+}
+.page .editor-page .editor-document-meta {
+  margin: 7px 0 0;
+  padding-left: 9px;
+  font-size: 11px;
+  gap: 8px 16px;
+}
+.page .editor-page .editor-save-status {
+  min-height: 25px;
+  padding: 3px 8px;
+  border-radius: 7px;
+  background: var(--state-tint);
+  color: var(--accent-text);
+}
+.page .editor-page .editor-save-status.is-dirty {
+  background: var(--surface-soft);
+  color: var(--ink);
+}
+.page .editor-page .presentation-actions {
+  gap: 8px;
+  flex-shrink: 0;
+}
+.page .editor-page .presentation-actions > .btn {
+  min-width: 128px;
+  height: 44px;
+  border-radius: 12px;
+  font-size: 12px;
+}
+.page .editor-page .editor-toolbar {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: 12px 24px;
+  border: 0;
+  border-top: 1px solid var(--line);
+  border-radius: 0;
+  background: color-mix(in srgb, var(--surface) 65%, var(--surface-soft));
+  justify-content: space-between;
+  gap: 12px;
+  box-shadow: none;
+}
+.page .editor-page .editor-toolbar-controls {
+  justify-content: flex-start;
+  gap: 20px;
+}
+.page .editor-page .history-controls {
+  margin: 0;
+  gap: 5px;
+}
+.page .editor-page .history-controls .btn {
+  width: 38px;
+  height: 38px;
+  min-height: 38px;
+  padding: 0;
+  border-radius: 10px;
+}
+.page .editor-page .history-controls .btn span {
+  display: none;
+}
+.page .editor-page .history-controls .btn .icon {
+  width: 17px;
+  height: 17px;
+}
+.page .editor-page .history-controls .btn:disabled {
+  opacity: 0.48;
+}
+.page .editor-page .editor-style-options {
+  border: 0;
+  padding: 3px;
+  background: var(--surface-soft);
+  border-radius: 12px;
+  gap: 3px;
+}
+.page .editor-page .editor-style-option span {
+  padding: 9px 14px;
+  font-size: 11px;
+  border-radius: 9px;
+}
+.page .editor-page .editor-style-option input:checked + span {
+  background: var(--surface);
+  box-shadow:
+    0 2px 6px #071b3810,
+    inset 0 0 0 1px var(--line);
+}
+.page .editor-page .editor-save-button {
+  width: auto;
+  min-width: 145px;
+  height: 38px;
+  border-radius: 10px;
+}
+.page .editor-page .editor-save-button:disabled {
+  background: transparent;
+  border-color: transparent;
+  color: var(--muted);
+}
+.page .editor-page > .generation-passport {
+  margin: 8px 0 12px;
+  padding: 0 12px;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  background: transparent;
+  font-size: 11px;
+}
+.page .editor-page > .generation-passport > summary {
+  padding-block: 7px;
+}
+.page .editor-page > .generation-passport[open] {
+  padding: 10px 16px 16px;
+  border-color: var(--line);
+  background: var(--surface);
+}
+.page .editor-page .editor-layout {
+  grid-template-columns: 136px minmax(0, 1fr) 292px;
+  gap: 16px;
+  margin-top: 20px;
+}
+.page .editor-page .slide-rail {
+  min-width: 0;
+  padding: 12px 8px 10px;
+  gap: 10px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: var(--surface);
+  max-height: calc(100dvh - 48px);
+  position: sticky;
+  top: 24px;
+  scrollbar-gutter: auto;
+}
+.slide-rail-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  padding: 0 4px 4px;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 700;
+}
+.slide-rail-heading b {
+  display: grid;
+  place-items: center;
+  min-width: 23px;
+  height: 23px;
+  border-radius: 7px;
+  background: var(--surface-soft);
+  color: var(--ink);
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+}
+.page .editor-page .thumbnail {
+  position: relative;
+  min-width: 0;
+  padding: 8px;
+  border: 1px solid transparent;
+  border-radius: 11px;
+  background: var(--surface-soft);
+  gap: 6px;
+}
+.page .editor-page .thumbnail .deck-slide {
+  border-radius: 4px;
+  box-shadow: 0 2px 4px #071b3810;
+}
+.page .editor-page .thumbnail > .thumbnail-number {
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.3;
+  font-variant-numeric: tabular-nums;
+}
+.page .editor-page .thumbnail > .thumbnail-title {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  font-size: 10px;
+  line-height: 1.5;
+  font-weight: 550;
+  color: var(--muted);
+}
+.page .editor-page .thumbnail.active {
+  border-color: #0077ff;
+  background: var(--state-tint);
+  box-shadow: 0 3px 10px #0077ff10;
+}
+.page .editor-page .thumbnail.active > span {
+  color: var(--accent-text);
+}
+.page .editor-page .thumbnail:hover:not(:disabled) {
+  border-color: var(--accent-text);
+}
+.page .editor-page .slide-rail > .btn {
+  min-height: 38px;
+  padding: 8px 6px;
+  border-style: dashed;
+  background: transparent;
+  font-size: 11px;
+  color: var(--accent-text);
+}
+.page .editor-page .canvas-workspace {
+  padding: 20px;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background:
+    radial-gradient(
+        circle,
+        color-mix(in srgb, var(--muted) 15%, transparent) 0.7px,
+        transparent 0.8px
+      )
+      0 0 / 18px 18px,
+    linear-gradient(145deg, var(--state-tint), transparent 70%),
+    var(--surface-soft);
+}
+.page .editor-page .canvas-top {
+  gap: 12px;
+  margin-bottom: 20px;
+}
+.canvas-slide-context {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  min-width: 0;
+}
+.canvas-slide-number {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 38px;
+  height: 38px;
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  background: var(--surface);
+  font-size: 12px;
+  font-weight: 750;
+  color: var(--accent-text);
+  font-variant-numeric: tabular-nums;
+}
+.page .editor-page .canvas-slide-context .label {
+  display: block;
+  font-size: 11px;
+  color: var(--ink);
+  font-weight: 750;
+  letter-spacing: 0;
+  text-transform: none;
+}
+.canvas-slide-kind {
+  display: block;
+  margin-top: 2px;
+  font-size: 10px;
+  color: var(--muted);
+}
+.page .editor-page .canvas-top .editor-preview-button {
+  min-height: 36px;
+  padding: 7px 12px;
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--ink);
+}
+.page .editor-page .slide-canvas {
+  border-radius: 9px;
+  border-color: color-mix(in srgb, var(--line) 80%, transparent);
+  box-shadow:
+    0 6px 12px #071b3808,
+    0 22px 48px #071b3812;
+}
+.page .editor-page .slide-canvas .deck-slide {
+  box-shadow: none;
+}
+.page .editor-page .overflow-warning {
+  margin: 14px 0 0;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--muted);
+  font-size: 11px;
+}
+.page .editor-page .source-card {
+  margin-top: 20px;
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  box-shadow: none;
+  background: var(--surface);
+}
+.page .editor-page .source-card h3 {
+  font-size: 12px;
+  gap: 8px;
+}
+.page .editor-page .source-card .badge {
+  padding: 4px 7px;
+  font-size: 10px;
+}
+.page .editor-page .source-card blockquote {
+  margin: 14px 0 12px;
+  padding: 10px 0 10px 14px;
+  font-size: 12px;
+  line-height: 1.8;
+  border-left: 2px solid var(--accent-text);
+}
+.page .editor-page .source-card p,
+.page .editor-page .source-card summary {
+  font-size: 10px;
+}
+.page .editor-page .inspector {
+  min-width: 0;
+  padding: 18px;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 18px;
+  border-radius: 18px;
+  border-color: var(--line);
+  background: var(--surface);
+  box-shadow: 0 5px 24px #071b3805;
+}
+.inspector-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--line);
+  grid-column: 1 / -1;
+}
+.page .editor-page .inspector-heading h2 {
+  font-size: 14px;
+  font-weight: 750;
+  letter-spacing: -0.3px;
+  color: var(--ink);
+}
+.inspector-heading > div > span {
+  display: block;
+  margin-top: 4px;
+  font-size: 10px;
+  color: var(--muted);
+}
+.inspector-slide-number {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 9px;
+  color: var(--accent-text);
+  background: var(--state-tint);
+  font-size: 11px;
+  font-weight: 750;
+  font-variant-numeric: tabular-nums;
+}
+.page .editor-page .inspector .slide-field-tabs {
+  padding: 4px;
+  border-radius: 11px;
+}
+.page .editor-page .inspector .slide-field-tabs > button {
+  padding-block: 8px;
+}
+.page .editor-page .inspector .field {
+  gap: 7px;
+  font-size: 11px;
+  font-weight: 650;
+}
+.page .editor-page .inspector :is(input, textarea, select) {
+  border-radius: 10px;
+  border-color: var(--line);
+  background: var(--surface-soft);
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 450;
+  box-shadow: none;
+}
+.page .editor-page .inspector :is(input, select) {
+  min-height: 42px;
+  padding: 10px 11px;
+}
+.page .editor-page .inspector textarea {
+  padding: 11px;
+  line-height: 1.75;
+}
+.page .editor-page .inspector :is(input, textarea, select):focus {
+  outline: none;
+  background: var(--surface);
+  box-shadow: 0 0 0 3px var(--state-tint);
+}
+.page .editor-page .inspector .editor-delete-slide {
+  padding: 9px;
+  background: transparent;
+  color: var(--muted);
+  border: 1px dashed var(--line);
+  border-radius: 10px;
+  font-size: 11px;
+}
+.page .editor-page .inspector .editor-delete-slide:hover:not(:disabled) {
+  color: var(--ink);
+  background: var(--surface-soft);
+}
+
+/* A compact, expandable assistant on both editing and review pages. */
+.page :is(.editor-page, .audit-page) .presentation-assistant {
+  margin: 12px 0 20px;
+  padding: 16px 18px;
+  border: 1px solid var(--line);
+  border-radius: 17px;
+  background:
+    linear-gradient(110deg, var(--state-tint), transparent 56%), var(--surface);
+  box-shadow: 0 3px 12px #071b3804;
+}
+.page :is(.editor-page, .audit-page) .assistant-heading {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 12px;
+  align-items: center;
+}
+.assistant-heading-icon {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border: 1px solid color-mix(in srgb, var(--accent-text) 16%, var(--line));
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--accent-text);
+}
+.assistant-heading-copy {
+  flex: 1;
+  min-width: 0;
+}
+.page :is(.editor-page, .audit-page) .assistant-heading-copy h2 {
+  font-size: 14px;
+  letter-spacing: -0.25px;
+  color: var(--ink);
+}
+.assistant-heading-copy p {
+  margin-top: 4px;
+  font-size: 11px;
+  line-height: 1.6;
+  color: var(--muted);
+}
+.assistant-disclosure {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  gap: 8px;
+  min-height: 36px;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 650;
+  transition:
+    color 0.2s,
+    background 0.2s;
+}
+.assistant-disclosure:hover:not(:disabled) {
+  background: var(--surface-soft);
+  color: var(--accent-text);
+}
+.assistant-disclosure .icon {
+  width: 15px;
+  height: 15px;
+  transform: rotate(90deg);
+  transition: transform 0.25s;
+}
+.assistant-disclosure[aria-expanded="true"] .icon {
+  transform: rotate(-90deg);
+}
+.assistant-body[hidden] {
+  display: none;
+}
+.assistant-body {
+  padding-top: 16px;
+  margin-top: 16px;
+  border-top: 1px solid var(--line);
+}
+.assistant-body > p {
+  margin-bottom: 14px;
+  line-height: 1.7;
+}
+.page :is(.editor-page, .audit-page) .presentation-assistant fieldset {
+  margin: 0;
+  gap: 12px;
+}
+.page
+  :is(.editor-page, .audit-page)
+  .presentation-assistant
+  .assistant-composer {
+  grid-template-columns: 170px minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 12px;
+}
+.page
+  :is(.editor-page, .audit-page)
+  .presentation-assistant
+  :is(select, textarea) {
+  border-radius: 11px;
+  padding: 11px 12px;
+  background: var(--surface);
+  font-size: 12px;
+  line-height: 1.6;
+}
+.page
+  :is(.editor-page, .audit-page)
+  .presentation-assistant
+  .assistant-prompt
+  textarea {
+  height: 48px;
+  min-height: 48px;
+}
+.page
+  :is(.editor-page, .audit-page)
+  .presentation-assistant
+  .assistant-scope
+  select,
+.page :is(.editor-page, .audit-page) .presentation-assistant .assistant-submit {
+  height: 48px;
+  border-radius: 11px;
+}
+.page
+  :is(.editor-page, .audit-page)
+  .presentation-assistant
+  .assistant-suggestions
+  .btn {
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  min-height: 32px;
+  padding: 6px 12px;
+  background: var(--surface);
+  font-size: 11px;
+}
+.page :is(.editor-page, .audit-page) .presentation-assistant .assistant-repair {
+  border: 0;
+  font-size: 11px;
+}
+.page
+  :is(.editor-page, .audit-page)
+  .presentation-assistant
+  .assistant-context {
+  border-top: 1px solid var(--line);
+  padding-top: 10px;
+}
+.page :is(.editor-page, .audit-page) .presentation-assistant .assistant-result {
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+  font-size: 12px;
+}
+@media (min-width: 1151px) {
+  .page .editor-page .inspector {
+    position: sticky;
+    top: 24px;
+    max-height: calc(100dvh - 48px);
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--line) transparent;
+  }
+}
+@media (max-width: 1150px) {
+  .page .editor-page .editor-layout {
+    grid-template-columns: 112px minmax(0, 1fr);
+  }
+  .page .editor-page .inspector {
+    grid-column: 2;
+  }
+  .page .editor-page .canvas-workspace {
+    padding: 18px;
+  }
+  .page .editor-page .editor-heading {
+    flex-wrap: nowrap;
+  }
+  .page .editor-page .editor-title-block {
+    flex-basis: auto;
+  }
+  .page .editor-page .presentation-actions > .btn {
+    min-width: 110px;
+    padding-inline: 12px;
+  }
+}
+@media (max-width: 900px) {
+  .page .editor-page .editor-heading {
+    padding: 18px;
+    gap: 14px;
+    flex-wrap: wrap;
+  }
+  .page .editor-page .editor-title-block {
+    flex-basis: 100%;
+  }
+  .page .editor-page .presentation-actions {
+    margin-left: 8px;
+  }
+  .page .editor-page .editor-toolbar {
+    padding: 12px 18px;
+  }
+  .page .editor-page .editor-toolbar-controls {
+    flex: 1;
+    gap: 12px;
+  }
+  .page .editor-page .editor-save-button {
+    margin-left: auto;
+  }
+  .page
+    :is(.editor-page, .audit-page)
+    .presentation-assistant
+    .assistant-composer {
+    grid-template-columns: 150px minmax(0, 1fr);
+  }
+}
+@media (max-width: 760px) {
+  .page .editor-page .editor-layout {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 14px;
+  }
+  .page .editor-page .slide-rail {
+    display: flex;
+    position: static;
+    max-height: none;
+    overflow-x: auto;
+    padding: 10px;
+    gap: 10px;
+    align-items: stretch;
+  }
+  .page .editor-page .slide-rail-heading {
+    display: none;
+  }
+  .page .editor-page .thumbnail {
+    min-width: 104px;
+    max-width: 104px;
+    flex-shrink: 0;
+  }
+  .page .editor-page .thumbnail > .thumbnail-title {
+    -webkit-line-clamp: 1;
+  }
+  .page .editor-page .slide-rail > .btn {
+    min-width: 88px;
+    flex-shrink: 0;
+  }
+  .page .editor-page .inspector {
+    grid-column: 1;
+  }
+  .page .editor-page .canvas-workspace {
+    padding: 16px;
+  }
+  .page .editor-page .editor-style-options {
+    flex-wrap: nowrap;
+  }
+  .page .editor-page .editor-style-option span {
+    padding: 9px 8px;
+    font-size: 10px;
+  }
+  .page .editor-page .editor-save-button {
+    min-width: 132px;
+  }
+}
+@media (max-width: 560px) {
+  .page .editor-page .editor-heading {
+    padding: 16px 12px;
+  }
+  .page .editor-page .editor-document-header {
+    border-radius: 17px;
+  }
+  .page .editor-page .editor-title-field .project-title {
+    font-size: 23px;
+  }
+  .page .editor-page .presentation-actions {
+    width: 100%;
+    margin-left: 0;
+  }
+  .page .editor-page .presentation-actions > .btn {
+    flex: 1;
+    min-width: 0;
+  }
+  .page .editor-page .editor-toolbar {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    padding: 10px;
+    gap: 8px;
+  }
+  .page .editor-page .editor-toolbar-controls {
+    display: contents;
+  }
+  .page .editor-page .history-controls {
+    grid-column: 1;
+    grid-row: 1;
+    gap: 4px;
+  }
+  .page .editor-page .history-controls .btn {
+    width: 32px;
+    height: 34px;
+    min-height: 34px;
+  }
+  .page .editor-page .editor-style-picker {
+    width: 100%;
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+  .page .editor-page .editor-save-button {
+    grid-row: 1;
+    grid-column: 2;
+    justify-self: end;
+    margin: 0;
+    width: auto;
+    max-width: 100%;
+    min-width: 0;
+    z-index: 1;
+    font-size: 11px;
+  }
+  .page .editor-page .editor-style-option span {
+    font-size: 10px;
+    white-space: normal;
+    padding: 8px 4px;
+  }
+  .page .editor-page .canvas-workspace {
+    padding: 12px;
+    border-radius: 16px;
+  }
+  .page .editor-page .canvas-top {
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+  .canvas-slide-number {
+    width: 30px;
+    height: 32px;
+    border-radius: 8px;
+  }
+  .canvas-slide-context {
+    gap: 7px;
+  }
+  .page .editor-page .canvas-top .editor-preview-button {
+    padding: 7px 9px;
+    min-height: 32px;
+    font-size: 10px;
+  }
+  .page .editor-page .source-card {
+    padding: 13px;
+    margin-top: 14px;
+  }
+  .page .editor-page .inspector {
+    padding: 16px;
+  }
+  .page :is(.editor-page, .audit-page) .presentation-assistant {
+    padding: 13px;
+    border-radius: 14px;
+  }
+  .page :is(.editor-page, .audit-page) .assistant-heading {
+    gap: 9px;
+    align-items: flex-start;
+  }
+  .assistant-heading-icon {
+    width: 32px;
+    height: 34px;
+    border-radius: 9px;
+  }
+  .assistant-heading-icon .icon {
+    width: 18px;
+    height: 18px;
+  }
+  .page :is(.editor-page, .audit-page) .assistant-heading-copy h2 {
+    font-size: 12px;
+  }
+  .assistant-heading-copy p {
+    font-size: 10px;
+  }
+  .assistant-disclosure {
+    padding: 6px;
+    min-height: 32px;
+  }
+  .assistant-disclosure > span {
+    display: none;
+  }
+  .page
+    :is(.editor-page, .audit-page)
+    .presentation-assistant
+    .assistant-composer {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .page
+    :is(.editor-page, .audit-page)
+    .presentation-assistant
+    .assistant-repair {
+    margin-left: 0;
+  }
+}
+@media (max-width: 380px) {
+  .page .editor-page .presentation-actions {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+  .page .editor-page .presentation-actions > .btn {
+    flex: none;
+  }
+  .page .editor-page .editor-style-options {
+    flex-wrap: wrap;
+  }
+  .page .editor-page .editor-style-option {
+    flex: 1 1 auto;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .page :is(.editor-page, .audit-page) .assistant-disclosure,
+  .page :is(.editor-page, .audit-page) .assistant-disclosure .icon {
+    transition: none;
+  }
+}

@@ -39,7 +39,7 @@
   inset: 5px auto 5px 5px;
   width: calc((100% - 10px) / 3);
   border-radius: 12px;
-  background: #0077ff;
+  background: #006de6;
   pointer-events: none;
   transition: transform 0.5s cubic-bezier(0.22, 1.08, 0.36, 1);
 }
@@ -61,6 +61,9 @@
     gap: 4px;
     font-size: 10px;
     padding: 9px 3px;
+    white-space: normal;
+    line-height: 1.35;
+    text-wrap: balance;
   }
 }
 @media (prefers-reduced-motion: reduce) {

@@ -53,7 +53,7 @@ test("requirements page exposes the pipeline and fits a mobile viewport", async 
   await expect(page.getByRole("heading", { name: "Как устроен Deckly", exact: true })).toBeVisible();
   await expect(page.locator(".workflow-stages > li")).toHaveCount(8);
   await expect(page.locator(".requirement-examples > article")).toHaveCount(3);
-  await expect(page.getByText("GPU-сервис не подключён", { exact: true })).toBeVisible();
+  await expect(page.getByText("Генерация изображений пока недоступна", { exact: true })).toBeVisible();
   await page.setViewportSize({ width: 390, height: 844 });
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
 });
@@ -76,7 +76,7 @@ test("support links open requirements and presentation creation", async ({ page 
   await expect(page.getByRole("heading", { name: "От идеи до последнего слайда" })).toBeVisible();
 
   await page.goto("/#support");
-  await page.getByRole("link", { name: /Возможности, требования и пайплайн/ }).click();
+  await page.getByRole("link", { name: /Возможности Deckly/ }).click();
   await expect(page).toHaveURL(/#requirements$/);
   await expect(page.getByRole("heading", { name: "Как устроен Deckly", exact: true })).toBeVisible();
 

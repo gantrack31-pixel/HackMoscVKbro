@@ -178,7 +178,7 @@ export function Modal({
           disabled={closeDisabled}
           aria-label="Закрыть"
         >
-          <Icon name="close" />
+          <Icon name="ui-modal-close" />
         </button>
       </div>
       <div className="modal-body">{children}</div>

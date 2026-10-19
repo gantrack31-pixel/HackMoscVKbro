@@ -12,7 +12,13 @@ from .palette import roles, scene_color, contrast, design_metadata, protect_fore
 
 FONTS=Path(__file__).parent
 for name,file in [('Deckly','Manrope-Regular.ttf'),('DecklyBold','Manrope-Bold.ttf')]:
-    if name not in pdfmetrics.getRegisteredFontNames(): pdfmetrics.registerFont(TTFont(name,str(FONTS/file)))
+    if name not in pdfmetrics.getRegisteredFontNames():
+        font=TTFont(name,str(FONTS/file))
+        # The bundled static files share their source PostScript name. ReportLab
+        # otherwise aliases bold to regular, causing wrong width measurements
+        # and lighter PDF headings while browser/PPTX use the bold face.
+        font.face.name=name.encode('ascii')
+        pdfmetrics.registerFont(font)
 
 def wrap(text: str, width: float, size: float, bold=False) -> list[str]:
     font='DecklyBold' if bold else 'Deckly'
@@ -57,7 +63,10 @@ def selected_layout(metadata: dict, kind='text', variant='a') -> dict | None:
 
 def geometry_nodes(obj):
     """Одна отрисовка для браузера, PDF и HTML; PPTX сохраняет нативные объекты."""
-    if obj['type'] in {'text','rect','ellipse','hexagon','line','image'}: return [obj]
+    if obj['type'] in {'text','rect','ellipse','hexagon','line','image','polygon'}: return [obj]
+    if obj.get('analytical') and obj['type']=='chart':
+        from .analytical_visuals import analytical_geometry
+        return analytical_geometry(obj)
     nodes=[]
     def rect(x,y,w,h,fill):
         nodes.append({'type':'rect','x':x,'y':y,'w':w,'h':h,'fill':fill})
@@ -136,17 +145,23 @@ def build_scene(slide: Slide, metadata: dict, variant: str, index: int) -> dict:
     if slide.design and not slide.designs:
         variant=['a','b','c'][(['a','b','c'].index(variant)+slide.design.layout_shift)%3]
     layout=selected_layout(metadata,slide.kind,variant)
-    background_info=((layout or {}).get('background_info') if layout and 'source_slide' in layout else metadata.get('background_info')) or (layout or {}).get('background_info',{})
+    background_info=metadata.get('background_info',{}) if metadata.get('brand_background_override') else (((layout or {}).get('background_info') if layout and 'source_slide' in layout else metadata.get('background_info')) or (layout or {}).get('background_info',{}))
     metadata={**metadata,'background_info':background_info}
     if background_info.get('color'): metadata['background']=background_info['color']
     original_background=roles(metadata)['background']
     metadata=design_metadata(metadata,slide.design)
+    if metadata.get('brand_background_override'):
+        metadata={**metadata,'background':original_background}
+    if slide.kind=='analysis' and slide.analytics:
+        from .analytical_visuals import analysis_scene
+        return analysis_scene(slide,metadata,variant,index,layout=layout,
+                              background_info=background_info,original_background=original_background)
     width=1280.;height=width/metadata.get('ratio',16/9)
     accent=metadata.get('accent','#0077FF')
     if len(accent)!=7: accent='#0077FF'
     theme=roles(metadata)
     accent=theme['accent']
-    margin=64.;title_box={'x':margin,'y':height*.18,'w':width-margin*2,'h':height*.22}
+    margin=max(24.,min(120.,float(metadata.get('slide_margin',64))));title_box={'x':margin,'y':height*.18,'w':width-margin*2,'h':height*.22}
     body_box={'x':margin,'y':height*.44,'w':width-margin*2,'h':height*.39}
     layout=selected_layout(metadata,slide.kind,variant)
     if layout:
@@ -178,11 +193,11 @@ def build_scene(slide: Slide, metadata: dict, variant: str, index: int) -> dict:
         title_size*=slide.design.heading_scale
         body_size*=slide.design.body_scale
     if composition=='split':
-        title_box.update(x=88,w=min(title_box['w'],width-352))
-        body_box.update(x=88,w=min(body_box['w'],width-352))
+        title_box.update(x=max(88,margin),w=min(title_box['w'],width-352))
+        body_box.update(x=max(88,margin),w=min(body_box['w'],width-352))
     elif composition=='editorial':
-        title_box.update(x=104,w=min(title_box['w'],width-208))
-        body_box.update(x=104,w=min(body_box['w'],width-208))
+        title_box.update(x=max(104,margin),w=min(title_box['w'],width-max(208,margin*2)))
+        body_box.update(x=max(104,margin),w=min(body_box['w'],width-max(208,margin*2)))
     # Данные получают полноценную площадь, титульный — отдельный масштаб и ритм.
     if slide.kind in {'chart','table','steps','diagram','icons','image'}:
         title_box.update(y=height*.13,h=height*.16)
@@ -285,9 +300,13 @@ def build_scene(slide: Slide, metadata: dict, variant: str, index: int) -> dict:
     corrections=protect_foregrounds(objects,metadata)
     rendered=[n for obj in objects for n in geometry_nodes(obj)]
     corrections+=protect_foregrounds(rendered,metadata)
-    return {'width':width,'height':height,'variant':variant,'objects':objects,
+    scene={'width':width,'height':height,'variant':variant,'objects':objects,
             'render_objects':rendered,'color_corrections':sorted(set(corrections)),
             'background_info':background_info,'template_background':original_background,
             'layout_key':{'master':layout['master'],'index':layout['index']} if layout else None,
             'template_layout':layout['name'] if layout else 'Базовая композиция',
             'preview_note':'Схема размещения. Шрифты и графику исходного мастера проверьте в PPTX.'}
+    if metadata.get('brand_logo'):
+        from .brand_style import add_brand_logo
+        scene=add_brand_logo(scene,metadata)
+    return scene

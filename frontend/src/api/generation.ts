@@ -19,6 +19,10 @@ export const generationApi = {
       action: "edit" | "repair";
       slide: number | null;
       material: string;
+      pinned_brief?: string;
+      conversation?: {role: "user" | "assistant"; content: string}[];
+      locked_facts?: string[];
+      locked_fields?: {slide: number; field: "title" | "body" | "bullets" | "source_quote" | "chart" | "table" | "notes"}[];
     },
     ai?: AiOptions,
   ) =>
@@ -27,6 +31,10 @@ export const generationApi = {
       json("POST", data),
       ai,
     ),
+  applyProposal: (id: string, proposal: string, content: DeckContent, variant: Variant, base_updated_at: string) =>
+    request<AssistantResult>(`/projects/${id}/assistant/proposals/${proposal}/apply`, json("POST", {content, variant, base_updated_at})),
+  rejectProposal: (id: string, proposal: string) =>
+    request<{state: string}>(`/projects/${id}/assistant/proposals/${proposal}/reject`, {method: "POST"}),
   workflow: () => request<WorkflowRecipe>("/workflow"),
   importMaterials: (files: File[]) => {
     const body = new FormData();
@@ -36,6 +44,8 @@ export const generationApi = {
       resource_ids: string[];
       resources: MaterialResource[];
       documents: {
+        id: string;
+        text?: string;
         name: string;
         kind: MaterialResource["kind"];
         characters: number;

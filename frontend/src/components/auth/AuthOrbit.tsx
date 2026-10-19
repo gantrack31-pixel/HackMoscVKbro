@@ -56,10 +56,6 @@ export function AuthOrbit({ templates }: {
           </Suspense>
         </OrbitBoundary>
       )}
-      <div className="auth-orbit-caption" aria-hidden="true">
-        <span>DECKLY.AI / ПРОСТРАНСТВО ИДЕЙ</span>
-        <span>ИДЕЯ → ПРЕЗЕНТАЦИЯ</span>
-      </div>
     </div>
   );
 }

@@ -7,6 +7,18 @@ import sqlite3
 from uuid import uuid4
 from .config import settings
 
+
+class ProjectConflict(Exception):
+    """A stale writer must retain its draft and reload/review the current revision."""
+    pass
+
+
+def require_project_version(row, expected_version, user_id=None):
+    if not row or (user_id is not None and row['user_id'] != user_id):
+        raise ProjectConflict('Презентация больше недоступна.')
+    if expected_version is not None and row['updated_at'] != expected_version:
+        raise ProjectConflict('Презентация изменилась в другой вкладке. Ваш черновик сохранён в редакторе; сравните его с актуальной версией.')
+
 def now() -> str:
     return datetime.now(timezone.utc).isoformat()
 
@@ -79,6 +91,17 @@ def initialize():
             UNIQUE(user_id, sha256)
         );
         CREATE INDEX IF NOT EXISTS materials_user_lookup ON materials(user_id, created_at);
+        CREATE TABLE IF NOT EXISTS assistant_proposals (
+            id TEXT PRIMARY KEY, project_id TEXT NOT NULL, user_id TEXT NOT NULL,
+            state TEXT NOT NULL DEFAULT 'pending', base_updated_at TEXT NOT NULL,
+            draft_fingerprint TEXT NOT NULL, source_fingerprint TEXT NOT NULL,
+            payload TEXT NOT NULL, created_at TEXT NOT NULL, expires_at TEXT NOT NULL
+        );
+        CREATE INDEX IF NOT EXISTS assistant_proposals_owner ON assistant_proposals(user_id,project_id,created_at);
+        CREATE TRIGGER IF NOT EXISTS assistant_proposals_user_cleanup
+        AFTER DELETE ON users BEGIN
+            DELETE FROM assistant_proposals WHERE user_id=OLD.id;
+        END;
         ''')
         for table in ['templates','projects','jobs']:
             columns={row['name'] for row in db.execute(f'PRAGMA table_info({table})')}
@@ -99,6 +122,7 @@ def initialize():
           error=CASE WHEN payload IS NULL THEN 'Сервер перезапущен. Старое задание нельзя восстановить; создайте презентацию заново.'
                      ELSE COALESCE(error, 'Сервер перезапущен. Задание можно повторить.') END,
           updated_at=? WHERE state IN ('queued','running','retrying')""", (now(),))
+        db.execute('DELETE FROM assistant_proposals WHERE expires_at<=?', (now(),))
 
 def template_save(tid: str, name: str, path: str | None, metadata: dict, user_id=None):
     with connection() as db:
@@ -160,25 +184,29 @@ def projects_list(user_id):
     with connection() as db:
         return [decode(row, ['content']) for row in db.execute('SELECT id,title,template_id,content,variant,updated_at FROM projects WHERE user_id=? ORDER BY updated_at DESC',(user_id,))]
 
-def project_update(pid: str, content: dict, variant: str):
+def project_update(pid: str, content: dict, variant: str, *, expected_version=None, user_id=None):
+    """Internal new-project writers may omit version; public mutations must supply it."""
     with connection() as db:
         db.execute('BEGIN IMMEDIATE')
-        existing = decode(db.execute('SELECT * FROM projects WHERE id=?',(pid,)).fetchone(), ['content','revisions'])
+        row = db.execute('SELECT * FROM projects WHERE id=?',(pid,)).fetchone()
+        require_project_version(row, expected_version, user_id)
+        existing = decode(row, ['content','revisions'])
         if content == existing['content'] and variant == existing['variant']: return
         revisions = (existing['revisions'] + [{'content': existing['content'], 'variant': existing['variant']}])[-12:]
         db.execute("UPDATE projects SET title=?, content=?, variant=?, revisions=?, future='[]', updated_at=? WHERE id=?",
                    (content['title'], json.dumps(content, ensure_ascii=False), variant, json.dumps(revisions, ensure_ascii=False), now(), pid))
 
-def project_undo(pid: str):
-    return project_history(pid, 'undo')
+def project_undo(pid: str, *, expected_version=None, user_id=None):
+    return project_history(pid, 'undo', expected_version=expected_version, user_id=user_id)
 
 
-def project_history(pid: str, direction: str):
+def project_history(pid: str, direction: str, *, expected_version=None, user_id=None):
     if direction not in {'undo','redo'}: raise ValueError('Invalid history direction')
     with connection() as db:
         db.execute('BEGIN IMMEDIATE')
         row = db.execute('SELECT * FROM projects WHERE id=?',(pid,)).fetchone()
         if not row: return False
+        require_project_version(row, expected_version, user_id)
         project = decode(row, ['content','revisions','future'])
         past, future = project['revisions'], project['future']
         take, put = (past, future) if direction == 'undo' else (future, past)
@@ -213,7 +241,9 @@ def project_ai_update(pid, user_id, expected_version, draft, content, variant, o
     return True
 
 def project_delete(pid: str):
-    with connection() as db: db.execute('DELETE FROM projects WHERE id=?', (pid,))
+    with connection() as db:
+        db.execute('DELETE FROM assistant_proposals WHERE project_id=?', (pid,))
+        db.execute('DELETE FROM projects WHERE id=?', (pid,))
 
 def job_create(jid: str, user_id: str, task_type: str, payload: dict, retry_of=None):
     with connection() as db:

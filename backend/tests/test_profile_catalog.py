@@ -108,7 +108,9 @@ def test_yandex_cannot_link_another_users_identity(client,monkeypatch):
 def test_new_theme_is_real_editable_export(client,tid):
     register(client)
     catalog=client.get('/api/templates').json()
-    assert len(catalog)==18
+    from app.services.templates import BUILTIN_IDS
+    assert {item['id'] for item in catalog} == BUILTIN_IDS
+    assert len(catalog) == len(BUILTIN_IDS)
     public=next(t for t in catalog if t['id']==tid)
     assert public['metadata']['source']=='starter' and 'path' not in public
     template=db.template_get(tid)

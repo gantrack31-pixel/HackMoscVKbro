@@ -4,7 +4,7 @@
   --surface: #fff;
   --surface-soft: #f1f5f9;
   --ink: #0f172a;
-  --muted: #64748b;
+  --muted: #5b6b82;
   --line: #e2e8f0;
   --motion: cubic-bezier(0.22, 1, 0.36, 1);
   color-scheme: light;
@@ -678,6 +678,12 @@ body {
   color: #0077ff;
   font-weight: 750;
 }
+.finish-step-number {
+  font-size: 10px;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  opacity: .7;
+}
 .finish-grid {
   display: grid;
   grid-template-columns: minmax(0, 1.4fr) minmax(340px, 1fr);
@@ -1045,7 +1051,7 @@ body {
   color: var(--muted);
 }
 [data-theme="dark"] :is(.home-tabs button.active, .profile-tabs button.active) {
-  background: #0077ff;
+  background: #006de6;
   color: white;
 }
 [data-theme="dark"] .home-tabs button.active .icon {

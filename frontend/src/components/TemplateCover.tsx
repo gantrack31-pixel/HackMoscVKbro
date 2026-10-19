@@ -1,6 +1,5 @@
 import { memo, useState, type CSSProperties } from "react";
 import type { Template } from "../types";
-import { Icon } from "./Icon";
 
 export const TemplateCover = memo(function TemplateCover({
   template,
@@ -23,7 +22,7 @@ export const TemplateCover = memo(function TemplateCover({
         src={template.preview_url}
         loading={loading}
         decoding="async"
-        alt={decorative ? "" : `Первый слайд: ${template.name}`}
+        alt={decorative ? "" : `${meta.master_only ? "Титульный макет" : meta.cover_slide ? `Слайд ${meta.cover_slide}` : "Первый слайд"}: ${template.name}`}
         style={{
           width: "100%",
           display: "block",
@@ -50,10 +49,12 @@ export const TemplateCover = memo(function TemplateCover({
           borderRadius: 12,
         }}
       >
-        <Icon name="file" />
-        <strong>Новый шаблон</strong>
+        <span className="badge blue" style={{ justifySelf: "center" }}>
+          PPTX
+        </span>
+        <strong>{template.name}</strong>
         <span className="muted" style={{ overflowWrap: "anywhere" }}>
-          {template.name}
+          Предпросмотр недоступен
         </span>
       </div>
     );

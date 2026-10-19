@@ -1,0 +1,58 @@
+{
+  "name": "Synthetic Figma style example",
+  "document": {
+    "type": "DOCUMENT",
+    "children": [
+      {
+        "type": "CANVAS",
+        "name": "Styles",
+        "children": [
+          {
+            "type": "FRAME",
+            "name": "Primary",
+            "fills": [
+              {
+                "type": "SOLID",
+                "color": {
+                  "r": 0,
+                  "g": 0.41568627450980394,
+                  "b": 0.8470588235294118
+                }
+              }
+            ]
+          },
+          {
+            "type": "FRAME",
+            "name": "Background",
+            "fills": [
+              {
+                "type": "SOLID",
+                "color": {
+                  "r": 1,
+                  "g": 1,
+                  "b": 1
+                }
+              }
+            ]
+          },
+          {
+            "type": "TEXT",
+            "name": "Heading",
+            "style": {
+              "fontFamily": "Manrope",
+              "fontSize": 34
+            }
+          },
+          {
+            "type": "TEXT",
+            "name": "Body",
+            "style": {
+              "fontFamily": "Manrope",
+              "fontSize": 18
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

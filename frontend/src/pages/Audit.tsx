@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { api } from "../api";
+import { readAccount, writeAccount } from "../state/accountStorage";
+import { backupDraftAndReadLatest, isVersionConflict } from "../state/draftRecovery";
 import { Icon } from "../components/Icon";
 import { AuditCanvas } from "../components/AuditCanvas";
 import { PresentationViewer } from "../components/PresentationViewer";
@@ -10,31 +12,40 @@ import { useLivePreview } from "../components/useLivePreview";
 import type { Health, Issue, Project, Slide } from "../types";
 
 export function Audit({
+  accountId,
   project,
   health,
   onUpdate,
   onError,
   onDirty,
 }: {
+  accountId: string;
   project: Project;
   health: Health | null;
   onUpdate: (p: Project) => void;
   onError: (message: string) => void;
   onDirty: (dirty: boolean) => void;
 }) {
+  const [recovered] = useState(() => readAccount<{draft: Slide; index: number; baseVersion: string; focus?: string}>(accountId, `audit-draft:${project.id}`));
+  const [baseVersion, setBaseVersion] = useState(recovered?.baseVersion || project.updated_at);
   const [issues, setIssues] = useState<Issue[]>([]);
-  const [index, setIndex] = useState(0),
-    [focus, setFocus] = useState("");
-  const [draft, setDraft] = useState<Slide | null>(null);
-  const [dirty, setDirty] = useState(false),
+  const [index, setIndex] = useState(Math.min(recovered?.index || 0, project.content.slides.length - 1)),
+    [focus, setFocus] = useState(recovered?.focus || "");
+  const [draft, setDraft] = useState<Slide | null>(recovered?.draft || null);
+  const [dirty, setDirty] = useState(Boolean(recovered)),
     [valid, setValid] = useState(true);
   const [actionBusy, setBusy] = useState(false),
     [loading, setLoading] = useState(true);
   const [imageBusy, setImageBusy] = useState(false);
   const busy = actionBusy || imageBusy;
+  const [conflict, setConflict] = useState(false);
+  const stale = conflict || (dirty && baseVersion !== project.updated_at);
   const [loadError, setLoadError] = useState(""),
     [revision, setRevision] = useState(0);
   const [notice, setNotice] = useState("");
+  useEffect(() => {
+    if (!writeAccount(accountId, `audit-draft:${project.id}`, dirty ? {draft, index, baseVersion, focus} : null)) setNotice("Не удалось сохранить черновик в браузере. Сохраните изменения перед закрытием.");
+  }, [accountId, project.id, draft, dirty, index, baseVersion, focus]);
   const [selected, setSelected] = useState<string[]>([]);
   const [viewing, setViewing] = useState(false);
   useEffect(() => {
@@ -86,7 +97,19 @@ export function Audit({
   const scene = preview.scenes[index];
   const visible = issues.filter((i) => i.slide === index);
   const displayed = visible.filter((i) => i.severity !== "info");
-  const locked = busy || dirty;
+  const actionable = issues.filter((issue) => issue.severity !== "info");
+  const errors = actionable.filter(
+    (issue) => issue.severity === "error",
+  ).length;
+  const warnings = actionable.filter(
+    (issue) => issue.severity === "warning",
+  ).length;
+  const fixable = actionable.filter((issue) => issue.fixable).length;
+  const slideIssueCounts = project.content.slides.map(
+    (_, slide) => actionable.filter((issue) => issue.slide === slide).length,
+  );
+  const auditReady = !loading && !loadError;
+  const locked = busy || dirty || stale;
   function inspect(issue: Issue) {
     if (busy || (dirty && focus !== issue.id)) return;
     setIndex(issue.slide);
@@ -115,33 +138,38 @@ export function Audit({
     setBusy(true);
     setNotice("");
     try {
-      const result = await api.fix(project.id, ids, project.variant);
+      const result = await api.fix(project.id, ids, project.variant, project.updated_at);
       setDraft(null);
       setFocus("");
       onUpdate(result);
+      setBaseVersion(result.updated_at);
       setNotice("Исправления сохранены. Проверяем результат заново.");
     } catch (e) {
-      onError((e as Error).message);
+      if (isVersionConflict(e)) setConflict(true);
+      else onError((e as Error).message);
     } finally {
       setBusy(false);
     }
   }
   async function save() {
-    if (!valid || !draft?.title.trim()) return;
+    if (!valid || !draft?.title.trim() || stale) return;
     setBusy(true);
     setNotice("");
     try {
-      const result = await api.update(project.id, content, project.variant);
+      const result = await api.update(project.id, content, project.variant, baseVersion);
       setDirty(false);
       onDirty(false);
       setDraft(null);
       setFocus("");
       onUpdate(result);
+      setBaseVersion(result.updated_at);
+      setConflict(false);
       setNotice(
         "Изменения сохранены. Список замечаний обновляется по новым данным.",
       );
     } catch (e) {
-      onError((e as Error).message);
+      if (isVersionConflict(e)) setConflict(true);
+      else onError((e as Error).message);
     } finally {
       setBusy(false);
     }
@@ -149,34 +177,85 @@ export function Audit({
   async function moveHistory(direction: "undo" | "redo") {
     setBusy(true);
     try {
-      const result = await api[direction](project.id);
+      const result = await api[direction](project.id, project.updated_at);
       setDraft(null);
       setFocus("");
       setIndex((i) => Math.min(i, result.content.slides.length - 1));
       onUpdate(result);
+      setBaseVersion(result.updated_at);
       setNotice(
         direction === "undo" ? "Изменение отменено." : "Изменение повторено.",
       );
     } catch (e) {
-      onError((e as Error).message);
+      if (isVersionConflict(e)) setConflict(true);
+      else onError((e as Error).message);
     } finally {
       setBusy(false);
     }
   }
+  function cancelDraft() {
+    setDraft(null);
+    setFocus("");
+    setDirty(false);
+    setValid(true);
+    setBaseVersion(project.updated_at);
+    onDirty(false);
+  }
+  async function recoverLatest() {
+    setBusy(true);
+    try {
+      const latest = await backupDraftAndReadLatest(project, content, baseVersion, "audit", index);
+      onUpdate(latest);
+      setBaseVersion(latest.updated_at);
+      setIndex(i => Math.min(i, latest.content.slides.length - 1));
+      setDraft(null);
+      setFocus("");
+      setDirty(false);
+      setValid(true);
+      setConflict(false);
+      setNotice("Копия черновика скачана. Открыта актуальная версия.");
+    } catch (e) { onError((e as Error).message); }
+    finally { setBusy(false); }
+  }
+  function draftEditor() {
+    if (!draft) return null;
+    return <>
+      <fieldset disabled={actionBusy}>
+        <SlideFields
+          onImageBusy={setImageBusy}
+          sectioned
+          imageGenerationAvailable={health?.image_generation}
+          templateAssets={project.template.metadata.assets}
+          key={`${focus || "recovered"}-${baseVersion}`}
+          slide={draft}
+          onChange={patch => { setDraft(prev => prev ? {...prev, ...patch} : prev); setDirty(true); }}
+          onValidity={value => { setValid(value); setDirty(true); }}
+        />
+      </fieldset>
+      <div className="issue-editor-actions">
+        <button className="btn primary" disabled={!dirty || !valid || busy || stale || !draft.title.trim()} onClick={save}>{busy ? "Сохраняем…" : "Сохранить и проверить"}</button>
+        <button className="btn" disabled={busy} onClick={cancelDraft}>Отменить</button>
+      </div>
+    </>;
+  }
   return (
     <section className="audit-page" aria-label="Проверка презентации">
-      <div className="heading between">
+      {stale && <div className="error-banner wrap" role="alert"><p>Презентация изменилась в другой вкладке. Сохраните копию вашего черновика и продолжите с актуальной версией.</p><button className="btn sm" style={{whiteSpace:"normal",maxWidth:"100%"}} disabled={busy} onClick={recoverLatest}>Скачать черновик и открыть актуальную версию</button></div>}
+      <div className="heading between audit-heading">
         <div>
-          <h1>{project.title}</h1>
-          <p>Проверка презентации · исправления сохраняются новой версией.</p>
+          <span className="audit-eyebrow">
+            <Icon name="editor-audit" /> Проверка презентации
+          </span>
+          <h1 title={project.title}>{project.title}</h1>
+          <p>Замечания на слайдах и исправления в одном месте.</p>
         </div>
         <div className="row presentation-actions">
           <a className="btn" href="#editor">
-            <Icon name="back" />В редактор
+            <Icon name="editor-dirty" />В редактор
           </a>
           <a className="btn primary" href="#finish">
+            <Icon name="editor-finish" />
             Завершить
-            <Icon name="arrow" />
           </a>
         </div>
       </div>
@@ -185,13 +264,62 @@ export function Audit({
           {notice}
         </p>
       )}
+      <div
+        className={`audit-overview ${loading ? "is-loading" : ""}`}
+        aria-busy={loading}
+      >
+        <div className="audit-overview-intro" role="status">
+          <span className="audit-overview-icon" aria-hidden="true">
+            {loading ? (
+              <span className="audit-check-spinner" />
+            ) : (
+              <Icon name="editor-audit" />
+            )}
+          </span>
+          <div>
+            <strong>
+              {loading
+                ? "Проверяем презентацию"
+                : loadError
+                  ? "Проверка не завершена"
+                  : actionable.length
+                    ? "Есть что улучшить"
+                    : "Замечаний не найдено"}
+            </strong>
+            <p>
+              {loading
+                ? "Ищем замечания в оформлении и содержании."
+                : loadError
+                  ? "Повторите проверку, чтобы увидеть результат."
+                  : actionable.length
+                    ? "Выберите слайд и откройте замечание для исправления."
+                    : "По доступным правилам. Финальный взгляд всегда за вами."}
+            </p>
+          </div>
+        </div>
+        <dl className="audit-overview-counts">
+          <div className="audit-count-error">
+            <dt>Важные</dt>
+            <dd>{auditReady ? errors : "—"}</dd>
+          </div>
+          <div>
+            <dt>Рекомендации</dt>
+            <dd>{auditReady ? warnings : "—"}</dd>
+          </div>
+          <div>
+            <dt>Автоисправление</dt>
+            <dd>{auditReady ? fixable : "—"}</dd>
+          </div>
+        </dl>
+      </div>
       <PresentationAssistant
+          accountId={accountId}
         audit
         project={project}
         content={content}
         index={index}
         health={health}
-        disabled={!valid}
+        disabled={!valid || stale}
         busy={busy}
         onBusy={setBusy}
         onResult={(result) => {
@@ -201,12 +329,13 @@ export function Audit({
             setDirty(false);
             setValid(true);
             onUpdate(result.project);
+                setBaseVersion(result.project.updated_at);
           }
         }}
       />
       <HistoryControls
         project={project}
-        disabled={busy || dirty}
+        disabled={busy || dirty || stale}
         onMove={moveHistory}
       />
       {loadError && (
@@ -223,6 +352,7 @@ export function Audit({
           index={index}
           scene={scene}
           displayed={displayed}
+          slideIssueCounts={slideIssueCounts}
           loading={loading}
           loadError={loadError}
           focus={focus}
@@ -236,32 +366,82 @@ export function Audit({
           onInspect={inspect}
         />
         <aside className="audit-checklist panel">
-          <div className="between">
-            <h2>Что улучшить</h2>
-            <span className="badge">{displayed.length}</span>
+          <div className="between audit-checklist-heading">
+            <div>
+              <span className="audit-section-label">
+                Слайд {String(index + 1).padStart(2, "0")}
+              </span>
+              <h2>Что улучшить</h2>
+            </div>
+            <span
+              className="audit-issue-count"
+              aria-label={
+                auditReady
+                  ? `Замечаний: ${displayed.length}`
+                  : "Результат пока недоступен"
+              }
+            >
+              {loading ? "…" : loadError ? "—" : displayed.length}
+            </span>
           </div>
           {loading && (
-            <p className="tiny muted" role="status">
-              Проверяем слайды…
-            </p>
+            <div className="audit-check-state" role="status">
+              <span className="audit-check-spinner" aria-hidden="true" />
+              <strong>Проверяем слайды…</strong>
+              <p>Замечания появятся здесь.</p>
+              <div className="audit-loading-lines" aria-hidden="true">
+                <span />
+                <span />
+                <span />
+              </div>
+            </div>
+          )}
+          {!loading && loadError && (
+            <div className="audit-check-state">
+              <Icon name="editor-audit" />
+              <strong>Результат пока недоступен</strong>
+              <p>Повторите проверку с помощью кнопки выше.</p>
+            </div>
           )}
           <div className="audit-items">
-            {!loadError &&
+            {dirty && draft && (loading || Boolean(loadError) || !displayed.some(issue => issue.id === focus)) && (
+              <section className="audit-issue focused" aria-label="Восстановленный черновик">
+                <h3>Ваши несохранённые изменения</h3>
+                <p>Можно продолжить редактирование, сохранить правки или отменить их.</p>
+                <div className="issue-editor">{draftEditor()}</div>
+              </section>
+            )}
+            {!loading &&
+              !loadError &&
               displayed.map((issue, n) => (
                 <article
                   key={issue.id}
                   id={`issue-${issue.id}`}
-                  className={`audit-issue ${focus === issue.id ? "focused" : ""} ${issue.severity === "info" ? "info" : ""}`}
+                  className={`audit-issue ${focus === issue.id ? "focused" : ""} severity-${issue.severity}`}
                 >
+                  <div className="audit-issue-meta">
+                    <span className={`audit-severity ${issue.severity}`}>
+                      {issue.severity === "error"
+                        ? "Важно исправить"
+                        : "Рекомендация"}
+                    </span>
+                    {issue.fixable && (
+                      <span className="audit-fixable-label">
+                        Можно исправить автоматически
+                      </span>
+                    )}
+                  </div>
                   <button
                     className="issue-heading"
                     disabled={busy || (dirty && focus !== issue.id)}
                     onClick={() => inspect(issue)}
                     aria-expanded={focus === issue.id}
                   >
-                    <span className="badge coral">{n + 1}</span>
+                    <span className="audit-issue-number">{n + 1}</span>
                     <strong>{issue.title}</strong>
-                    <Icon name="down" />
+                    <span className="tiny muted">
+                      {focus === issue.id ? "Открыто" : "Подробнее"}
+                    </span>
                   </button>
                   <p>{issue.detail}</p>
                   {issue.source_bindings?.map((ref) => (
@@ -273,7 +453,7 @@ export function Audit({
                     </blockquote>
                   ))}
                   {issue.fixable && (
-                    <label className="row small">
+                    <label className="row small audit-autofix">
                       <input
                         type="checkbox"
                         disabled={locked || loading}
@@ -309,72 +489,41 @@ export function Audit({
                           Применить исправление
                         </button>
                       )}
-                      <fieldset disabled={actionBusy}>
-                        <SlideFields
-                          onImageBusy={setImageBusy}
-                          sectioned
-                          imageGenerationAvailable={health?.image_generation}
-                          templateAssets={project.template.metadata.assets}
-                          key={`${issue.id}-${project.updated_at}`}
-                          slide={draft}
-                          onChange={(patch) => {
-                            setDraft((prev) =>
-                              prev ? { ...prev, ...patch } : prev,
-                            );
-                            setDirty(true);
-                          }}
-                          onValidity={(v) => {
-                            setValid(v);
-                            setDirty(true);
-                          }}
-                        />
-                      </fieldset>
-                      <div className="issue-editor-actions">
-                        <button
-                          className="btn primary"
-                          disabled={
-                            !dirty || !valid || busy || !draft.title.trim()
-                          }
-                          onClick={save}
-                        >
-                          {busy ? "Сохраняем…" : "Сохранить и проверить"}
-                        </button>
-                        <button
-                          className="btn"
-                          disabled={busy}
-                          onClick={() => {
-                            setDraft(null);
-                            setFocus("");
-                            setDirty(false);
-                            setValid(true);
-                            onDirty(false);
-                          }}
-                        >
-                          Отменить
-                        </button>
-                      </div>
+                      {draftEditor()}
                     </div>
                   )}
                 </article>
               ))}
             {!loading && !loadError && !displayed.length && (
-              <div className="empty">
-                <Icon name="check" />
-                <p>По доступным правилам замечаний нет.</p>
+              <div className="audit-clear-state">
+                <Icon name="editor-audit-clear" />
+                <strong>Всё выглядит аккуратно</strong>
+                <p>По доступным правилам на этом слайде замечаний нет.</p>
+                <span>
+                  Слайд {String(index + 1).padStart(2, "0")} из{" "}
+                  {project.content.slides.length}
+                </span>
               </div>
             )}
           </div>
           {selected.length > 0 && (
-            <button
-              className="btn primary"
-              disabled={locked || loading}
-              onClick={() => fix(selected)}
-            >
-              Исправить выбранное ({selected.length})
-            </button>
+            <div className="audit-selection-bar">
+              <span>
+                Выбрано замечаний: <strong>{selected.length}</strong>
+              </span>
+              <button
+                className="btn primary"
+                disabled={locked || loading}
+                onClick={() => fix(selected)}
+              >
+                <Icon name="editor-repair" />
+                Исправить выбранное ({selected.length})
+              </button>
+            </div>
           )}
-          <p className="tiny muted">
-            Каждое сохранение создаёт версию. Её можно отменить в редакторе.
+          <p className="tiny muted audit-version-note">
+            <Icon name="info-feature-history" />
+            Каждое сохранение создаёт версию. Изменения можно отменить.
           </p>
         </aside>
       </div>

@@ -16,7 +16,7 @@ from ..config import settings
 from .pptx_security import validate_pptx_archive
 from .template_parser import NORMALIZATION_VERSION
 
-PREVIEW_VERSION='first-slide-3'
+PREVIEW_VERSION='first-slide-4-faithful'
 _render_lock=Lock()
 _failed={}
 
@@ -33,7 +33,7 @@ def clean_png(data):
         out=BytesIO();image.convert('RGB').save(out,format='PNG',optimize=True)
         return out.getvalue()
 
-def render_first_slide(path):
+def office_preview(path):
     soffice=shutil.which('libreoffice') or shutil.which('soffice')
     if not soffice and os.name=='nt':
         candidate=Path(os.environ.get('PROGRAMFILES','C:/Program Files'))/'LibreOffice/program/soffice.exe'
@@ -63,65 +63,97 @@ def render_first_slide(path):
             subprocess.run([poppler,'-f','1','-singlefile','-scale-to','2560','-png',str(work/'source.pdf'),str(work/'slide')],
                            check=True,timeout=20,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
             return clean_png((work/'slide.png').read_bytes())
-    # If server rendering is unavailable, use high-resolution slide artwork rather
-    # than enlarging PowerPoint's often tiny 256px docProps/thumbnail preview.
+    return None
+
+
+def read_xml(archive, part):
+    return etree.fromstring(archive.read(part), etree.XMLParser(resolve_entities=False,no_network=True,load_dtd=False))
+
+
+def related_parts(archive, part):
+    rel_path=posixpath.join(posixpath.dirname(part),'_rels',posixpath.basename(part)+'.rels')
+    if rel_path not in archive.namelist(): return {}
+    result={}
+    for item in read_xml(archive,rel_path):
+        if item.get('TargetMode')=='External': continue
+        target=posixpath.normpath(posixpath.join(posixpath.dirname(part),item.get('Target',''))).lstrip('/')
+        if not target.startswith('../') and target in archive.namelist(): result[item.get('Id')]=target
+    return result
+
+
+def picture_only_cover(archive, slide_path, slide_width, slide_height):
+    """A background image is not a rendering of text/shapes placed over it."""
+    slide=read_xml(archive,slide_path)
+    trees=slide.xpath('./*[local-name()="cSld"]/*[local-name()="spTree"]')
+    if not trees: return None
+    shapes=[node for node in trees[0] if etree.QName(node).localname not in {'nvGrpSpPr','grpSpPr','extLst'}]
+    if len(shapes)!=1 or etree.QName(shapes[0]).localname!='pic': return None
+    picture=shapes[0]
+    transforms=picture.xpath('./*[local-name()="spPr"]/*[local-name()="xfrm"]')
+    if len(transforms)!=1: return None
+    transform=transforms[0]
+    if any(transform.get(key,'0') not in {'0','false'} for key in ('rot','flipH','flipV')): return None
+    offsets=transform.xpath('./*[local-name()="off"]')
+    extents=transform.xpath('./*[local-name()="ext"]')
+    if len(offsets)!=1 or len(extents)!=1: return None
+    geometry=(int(offsets[0].get('x','0')),int(offsets[0].get('y','0')),
+              int(extents[0].get('cx','0')),int(extents[0].get('cy','0')))
+    if geometry!=(0,0,slide_width,slide_height): return None
+    # Cropping, effects, tiling, borders and nonrectangular clips need a renderer.
+    for node in picture.iter():
+        name=etree.QName(node).localname
+        if node.get('hidden','0') not in {'0','false'}: return None
+        if name in {'srcRect','fillRect'} and any(int(v)!=0 for v in node.attrib.values()): return None
+        if name in {'tile','custGeom','ln','effectDag'}: return None
+        if name=='effectLst' and len(node): return None
+        if name=='prstGeom' and node.get('prst')!='rect': return None
+        if name=='blip' and any(etree.QName(child).localname!='extLst' for child in node): return None
+    embeds=picture.xpath('.//*[local-name()="blip"]/@*[local-name()="embed"]')
+    target=related_parts(archive,slide_path).get(embeds[0]) if len(embeds)==1 else None
+    if not target: return None
+    with Image.open(BytesIO(archive.read(target))) as image:
+        if image.width<1000 or image.height<560 or image.width*image.height>25_000_000: return None
+        image.load()
+        rgba=image.convert('RGBA')
+        if rgba.getchannel('A').getextrema()[0]!=255: return None
+        # An opaque exact-cover picture obscures inherited master artwork. Match
+        # PowerPoint's actual stretch while never enlarging the source pixels.
+        ratio=slide_width/slide_height
+        width=max(1,min(image.width,2560,round(min(image.height,2560)*ratio)))
+        height=max(1,min(image.height,2560,round(width/ratio)))
+        output=BytesIO()
+        image.convert('RGB').resize((width,height),Image.Resampling.LANCZOS).save(output,format='PNG',optimize=True)
+        return output.getvalue()
+
+
+def fallback_cover(path):
+    """Use a genuine embedded thumbnail or a provably complete raster slide."""
     with ZipFile(path) as archive:
         names=set(archive.namelist())
-        presentation=etree.fromstring(archive.read('ppt/presentation.xml'),
-                                      etree.XMLParser(resolve_entities=False,no_network=True,load_dtd=False))
+        presentation=read_xml(archive,'ppt/presentation.xml')
         size=presentation.xpath('//*[local-name()="sldSz"]')
-        if size:
-            slide_width=int(size[0].get('cx','0'));slide_height=int(size[0].get('cy','0'))
-            presentation_rels='ppt/_rels/presentation.xml.rels'
-            if presentation_rels in names and slide_width>0 and slide_height>0:
-                relationships=etree.fromstring(archive.read(presentation_rels),
-                                               etree.XMLParser(resolve_entities=False,no_network=True,load_dtd=False))
-                # Presentation relationship ids use the OOXML relationships namespace.
-                relationship_ids=presentation.xpath('//*[local-name()="sldId"]/@r:id',
-                    namespaces={'r':'http://schemas.openxmlformats.org/officeDocument/2006/relationships'})
-                rel_map={item.get('Id'):item.get('Target') for item in relationships
-                         if item.get('TargetMode')!='External'}
-                slide_target=rel_map.get(relationship_ids[0]) if relationship_ids else None
-                slide_path=posixpath.normpath(posixpath.join('ppt',slide_target or ''))
-                rel_path=posixpath.join('ppt/slides/_rels',posixpath.basename(slide_path)+'.rels')
-            else:
-                slide_path=rel_path=''
-            if slide_path in names and rel_path in names and slide_width>0 and slide_height>0:
-                relationships=etree.fromstring(archive.read(rel_path),
-                                               etree.XMLParser(resolve_entities=False,no_network=True,load_dtd=False))
-                targets={item.get('Id'):item.get('Target') for item in relationships
-                         if item.get('TargetMode')!='External'}
-                slide=etree.fromstring(archive.read(slide_path),
-                                       etree.XMLParser(resolve_entities=False,no_network=True,load_dtd=False))
-                candidates=[]
-                for picture in slide.xpath('//*[local-name()="pic"]'):
-                    embeds=picture.xpath('.//*[local-name()="blip"]/@*[local-name()="embed"]')
-                    transforms=picture.xpath('./*[local-name()="spPr"]/*[local-name()="xfrm"] | ./*[local-name()="spPr"]/*[local-name()="custGeom"]/*[local-name()="avLst"]/..')
-                    if not embeds or not transforms or embeds[0] not in targets: continue
-                    offsets=transforms[0].xpath('./*[local-name()="off"]')
-                    extents=transforms[0].xpath('./*[local-name()="ext"]')
-                    if not offsets or not extents: continue
-                    x,y=int(offsets[0].get('x','0')),int(offsets[0].get('y','0'))
-                    width,height=int(extents[0].get('cx','0')),int(extents[0].get('cy','0'))
-                    coverage=max(0,min(slide_width,x+width)-max(0,x))*max(0,min(slide_height,y+height)-max(0,y))/(slide_width*slide_height)
-                    if coverage<0.8 or abs(width/height-slide_width/slide_height)>0.08: continue
-                    target=posixpath.normpath(posixpath.join('ppt/slides',targets[embeds[0]]))
-                    if target.startswith('../') or target not in names: continue
-                    try:
-                        with Image.open(BytesIO(archive.read(target))) as image:
-                            if image.width>=1000 and image.height>=560 and image.width*image.height<=25_000_000:
-                                candidates.append((coverage,image.width*image.height,archive.read(target)))
-                    except (OSError,ValueError,Image.DecompressionBombError):
-                        continue
-                if candidates:
-                    return clean_png(max(candidates,key=lambda item:(item[0],item[1]))[2])
+        if not size: return None
+        slide_width=int(size[0].get('cx','0'));slide_height=int(size[0].get('cy','0'))
+        if slide_width<=0 or slide_height<=0: return None
         # Never upscale a small embedded thumbnail; it has no recoverable detail.
         for name in ('docProps/thumbnail.png','docProps/thumbnail.jpeg','docProps/thumbnail.jpg'):
-            if name in archive.namelist() and archive.getinfo(name).file_size<4_000_000:
+            if name in names and archive.getinfo(name).file_size<4_000_000:
                 with Image.open(BytesIO(archive.read(name))) as image:
-                    if max(image.size)>=960:
+                    if max(image.size)>=960 and abs(image.width/image.height-slide_width/slide_height)<0.025:
                         return clean_png(archive.read(name))
+        relationship_ids=presentation.xpath('//*[local-name()="sldId"]/@r:id',
+            namespaces={'r':'http://schemas.openxmlformats.org/officeDocument/2006/relationships'})
+        parts=related_parts(archive,'ppt/presentation.xml')
+        slide_path=parts.get(relationship_ids[0]) if relationship_ids else None
+        if slide_path:
+            return picture_only_cover(archive,slide_path,slide_width,slide_height)
     return None
+
+
+def render_first_slide(path):
+    try: rendered=office_preview(path)
+    except (OSError,ValueError,subprocess.SubprocessError,Image.DecompressionBombError,etree.XMLSyntaxError): rendered=None
+    return rendered if rendered else fallback_cover(path)
 
 def thumbnail(path):
     try: key=cache_key(path)

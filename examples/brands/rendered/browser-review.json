@@ -1,0 +1,23 @@
+{
+  "checked_at": "2026-10-19T01:17:59.321Z",
+  "offline": true,
+  "renderer": "Chromium HTML/SVG (not PowerPoint)",
+  "reports": [
+    {
+      "variant": "a",
+      "slides": 9,
+      "overflows": []
+    },
+    {
+      "variant": "b",
+      "slides": 9,
+      "overflows": []
+    },
+    {
+      "variant": "c",
+      "slides": 9,
+      "overflows": []
+    }
+  ],
+  "errors": []
+}

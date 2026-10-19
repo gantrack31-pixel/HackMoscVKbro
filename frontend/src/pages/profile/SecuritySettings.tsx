@@ -29,14 +29,11 @@ export function SecuritySettings({
               ? "Подключён к вашему аккаунту"
               : health?.yandex_enabled
                 ? "Входите без ввода пароля Deckly"
-                : "Ожидает настройки владельцем сайта"}
+                : "Вход через Яндекс пока недоступен"}
           </p>
         </div>
         {user.yandex_connected ? (
-          <span className="badge green">
-            <Icon name="check" />
-            Подключён
-          </span>
+          <span className="badge green">Подключён</span>
         ) : (
           <button
             className="btn"
@@ -44,13 +41,13 @@ export function SecuritySettings({
             onClick={onConnect}
           >
             Подключить Яндекс ID
-            <Icon name="external" />
+            <Icon name="account-connect" />
           </button>
         )}
       </div>
       <div className="login-method">
         <span className="login-method-icon">
-          <Icon name="shield" />
+          <Icon name="account-password" />
         </span>
         <div>
           <h3>Электронная почта и пароль</h3>
@@ -65,12 +62,8 @@ export function SecuritySettings({
         </span>
       </div>
       <div className="security-footer">
-        <p>
-          <Icon name="shield" />
-          Данные профиля и презентации доступны после входа.
-        </p>
         <button className="btn ghost" onClick={onLogout}>
-          <Icon name="logout" />
+          <Icon name="account-signout" />
           Выйти из аккаунта
         </button>
       </div>

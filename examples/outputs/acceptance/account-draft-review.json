@@ -1,0 +1,8 @@
+{
+  "transport": "Real authenticated ASGI sessions in one temporary database, same browser storage, no mocked responses.",
+  "twoDistinctUsers": true,
+  "switchDoesNotLeakDraft": true,
+  "reloadPreservesBothDrafts": true,
+  "originalOwnerRecoversOriginalDraft": true,
+  "errors": []
+}

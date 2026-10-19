@@ -8,7 +8,7 @@ const stages = [
   [
     "Шаблон",
     "Стиль уже задан",
-    "Загрузите PPTX или выберите VK Tech, VK WorkSpace, VK Education. Deckly извлечёт палитру, шрифты, пропорции и поля макетов.",
+    "Выберите готовый шаблон или загрузите PPTX со своими цветами, шрифтами и макетами.",
   ],
   [
     "Материалы",
@@ -33,7 +33,7 @@ const stages = [
   [
     "Экспорт",
     "Готово к следующему шагу",
-    "Скачайте редактируемый PPTX, PDF или автономный HTML. Исходная графика мастеров сохраняется в PPTX.",
+    "Скачайте PPTX для редактирования, PDF для показа или HTML для просмотра в браузере.",
   ],
 ];
 export function Demo({
@@ -56,21 +56,20 @@ export function Demo({
         aria-label="Визуальная демонстрация сборки презентации"
       >
         <div className="assembly-copy">
-          <span className="eyebrow">ИЗ МАТЕРИАЛОВ — В ЦЕЛОЕ</span>
+          <span className="demo-preview-label">
+            <Icon name="demo-assembly" /> Пример сборки
+          </span>
           <h2>
             Каждая деталь
             <br />
             на своём месте.
           </h2>
           <p>Текст, изображения и данные собираются в единую историю.</p>
-          <span className="assembly-disclaimer">
-            Визуальная демонстрация · не статус генерации
-          </span>
           <button
             className="btn sm"
             onClick={() => setReplay((value) => value + 1)}
           >
-            <Icon name="play" />
+            <Icon name="demo-replay" />
             Повторить сборку
           </button>
         </div>
@@ -90,12 +89,11 @@ export function Demo({
             >
               <span>{String(i + 1).padStart(2, "0")}</span>
               <strong>{name}</strong>
-              <Icon name="arrow" />
             </button>
           ))}
         </nav>
         <section className="demo-content panel">
-          <span className="label">{step + 1} / 6 · Как это работает</span>
+          <span className="label demo-step-label">Шаг {step + 1} из 6</span>
           <h2>{stages[step][1]}</h2>
           <p className="muted">{stages[step][2]}</p>
           <div className="demo-visual" key={step}>
@@ -138,15 +136,15 @@ export function Demo({
             ) : step === 4 ? (
               <div className="demo-checks">
                 <p>
-                  <Icon name="check" />
+                  <Icon name="demo-source-quote" />
                   Цитата найдена в материале
                 </p>
                 <p>
-                  <Icon name="alert" />
+                  <Icon name="demo-contrast" />
                   Заголовку не хватает контраста
                 </p>
                 <p>
-                  <Icon name="shield" />
+                  <Icon name="demo-user-control" />
                   Вы решаете, что исправить
                 </p>
               </div>
@@ -154,7 +152,15 @@ export function Demo({
               <div className="format-preview">
                 {["PPTX", "PDF", "HTML"].map((x) => (
                   <div key={x}>
-                    <Icon name="file" />
+                    <Icon
+                      name={
+                        x === "PPTX"
+                          ? "demo-format-pptx"
+                          : x === "PDF"
+                            ? "demo-format-pdf"
+                            : "demo-format-html"
+                      }
+                    />
                     <strong>{x}</strong>
                     <span>
                       {x === "PPTX" ? "Редактировать" : "Показывать и делиться"}
@@ -170,18 +176,16 @@ export function Demo({
               disabled={!step}
               onClick={() => setStep(step - 1)}
             >
-              <Icon name="back" />
               Назад
             </button>
             {step < 5 ? (
               <button className="btn primary" onClick={() => setStep(step + 1)}>
                 Следующий шаг
-                <Icon name="arrow" />
               </button>
             ) : (
               <button className="btn primary" onClick={start}>
                 Попробовать пример
-                <Icon name="spark" />
+                <Icon name="demo-try-example" />
               </button>
             )}
           </div>

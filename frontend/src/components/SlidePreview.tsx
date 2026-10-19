@@ -29,6 +29,8 @@ function ObjectView({ object: o }: { object: SceneObject }) {
         fill={o.fill}
       />
     );
+  if (o.type === "polygon")
+    return <polygon points={o.points?.map(([x, y]) => `${x},${y}`).join(" ")} fill={o.fill} />;
   if (o.type === "line")
     return (
       <line
@@ -45,7 +47,7 @@ function ObjectView({ object: o }: { object: SceneObject }) {
   if (o.type === "text")
     return (
       <text
-        fontFamily="Manrope, Arial"
+        fontFamily={o.font_family || "Manrope, Arial"}
         fontSize={o.font_size}
         fontWeight={o.bold ? 750 : 400}
         fill={o.color}

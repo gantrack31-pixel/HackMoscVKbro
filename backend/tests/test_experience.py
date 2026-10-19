@@ -48,10 +48,10 @@ def test_manual_audit_edit_rechecks_and_undo_restores_issue(client):
     original=client.get('/api/projects/experience').json()
     assert any(i['code']=='placeholder' for i in client.get('/api/projects/experience/audit').json()['issues'])
     original['content']['slides'][0]['title']='Результаты исследования'
-    response=client.put('/api/projects/experience',json={'content':original['content'],'variant':'a'})
+    response=client.put('/api/projects/experience',json={'content':original['content'],'variant':'a','base_updated_at':original['updated_at']})
     assert response.status_code==200
     assert not any(i['code']=='placeholder' for i in client.get('/api/projects/experience/audit').json()['issues'])
-    assert client.post('/api/projects/experience/undo').status_code==200
+    assert client.post('/api/projects/experience/undo',json={'base_updated_at':response.json()['updated_at']}).status_code==200
     assert any(i['code']=='placeholder' for i in client.get('/api/projects/experience/audit').json()['issues'])
 
 

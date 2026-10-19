@@ -10,7 +10,6 @@ import "./styles/slide-fields.css";
 import "./styles/presentation-assistant.css";
 import "./styles/requirements.css";
 import "./styles/editor-polish.css";
-import "./styles/support-modern.css";
 import "./styles/profile-polish.css";
 import "./styles/yandex-polish.css";
 import "./styles/base.css";
@@ -29,6 +28,15 @@ import "./styles/finishing.css";
 import "./styles/nav-motion.css";
 import "./styles/spatial.css";
 import "./styles/interface-motion.css";
+import "./styles/home-actions.css";
+import "./styles/catalog-motion.css";
+import "./styles/library-empty-state.css";
+import "./styles/copy-polish.css";
+import "./styles/support-modern.css";
+import "./styles/requirements-page.css";
+import "./styles/editor-studio.css";
+import "./styles/audit-studio.css";
+import "./styles/analysis-studio.css";
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <ThemeProvider>
     <App />

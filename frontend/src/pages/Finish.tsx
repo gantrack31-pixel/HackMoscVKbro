@@ -1,13 +1,6 @@
 import { useSurfaceMotion } from "../motion/animation";
 import { useEffect, useState } from "react";
-import {
-  Cloud,
-  CircleCheck as CloudCheck,
-  Download,
-  ArrowLeft,
-  Check,
-  Layers,
-} from "lucide-react";
+import { Icon } from "../components/Icon";
 import { api } from "../api";
 import { FinishPreview } from "../components/FinishPreview";
 import { PresentationViewer } from "../components/PresentationViewer";
@@ -82,19 +75,18 @@ export function Finish({
     <>
       <div className="heading between">
         <div>
-          <span className="label">Финальный шаг</span>
           <h1>Ваша история готова к выходу</h1>
           <p>Сохраните её там, где вам удобно продолжить.</p>
         </div>
         <a className="btn" href="#editor">
-          <ArrowLeft size={18} />В редактор
+          В редактор
         </a>
       </div>
       <ol className="finish-path" aria-label="Этапы подготовки">
         {["Материалы", "Оформление", "Редактирование", "Сохранение"].map(
           (step, i) => (
             <li key={step} className={i === 3 ? "active" : ""}>
-              {i < 3 ? <Check size={16} /> : <Cloud size={16} />}
+              <span className="finish-step-number" aria-hidden="true">{String(i + 1).padStart(2, "0")}</span>
               {step}
             </li>
           ),
@@ -119,7 +111,7 @@ export function Finish({
               aria-pressed={method === "cloud"}
               onClick={() => setMethod("cloud")}
             >
-              <Cloud size={24} />
+              <Icon name="export-cloud-method" size={24} />
               <strong>Яндекс.Диск</strong>
               <small>Редактируемый PPTX в вашем Диске</small>
             </button>
@@ -128,7 +120,7 @@ export function Finish({
               aria-pressed={method === "download"}
               onClick={() => setMethod("download")}
             >
-              <Download size={24} />
+              <Icon name="export-device-method" size={24} />
               <strong>На устройство</strong>
               <small>PPTX, PDF или HTML</small>
             </button>
@@ -138,8 +130,8 @@ export function Finish({
           ) : (
             <div className="cloud-save-content">
               <div className="cloud-illustration">
-                <CloudCheck size={48} />
-                <Layers size={28} />
+                <Icon name="export-cloud-art" size={48} />
+                <Icon name="export-layers-art" size={28} />
               </div>
               <h3>Готовый PPTX — на вашем Яндекс.Диске</h3>
               <p className="small muted">
@@ -148,15 +140,11 @@ export function Finish({
               </p>
               <ul className="save-benefits">
                 <li>
-                  <Check size={16} />
-                  Редактируемая копия слайдов
+                  <Icon name="export-editable" size={16} />
+                  Редактируемые таблицы, диаграммы и текст
                 </li>
                 <li>
-                  <Check size={16} />
-                  Нативные таблицы, диаграммы и текст
-                </li>
-                <li>
-                  <Check size={16} />
+                  <Icon name="export-copy" size={16} />
                   Новая копия при каждом сохранении
                 </li>
               </ul>
@@ -170,7 +158,7 @@ export function Finish({
                   <p>
                     {status?.configured
                       ? "Разрешите доступ к папке приложения в вашем Яндекс.Диске."
-                      : "Администратору нужно настроить OAuth Яндекса и ключ шифрования. Презентацию можно скачать на устройство."}
+                      : "Сохранение на Яндекс.Диск пока недоступно. Скачайте презентацию на устройство."}
                   </p>
                 </div>
               ) : null}
@@ -184,7 +172,7 @@ export function Finish({
                 disabled={!status?.ready || busy || checking}
                 onClick={save}
               >
-                <Cloud size={20} />
+
                 {busy
                   ? "Сохраняем на Яндекс.Диск…"
                   : receipt
@@ -220,7 +208,7 @@ export function Finish({
               )}
               {receipt && (
                 <div className="save-feedback" role="status">
-                  <CloudCheck size={24} />
+                  <Icon name="export-cloud-receipt" size={24} />
                   <div>
                     <strong>Сохранено на Яндекс.Диске</strong>
                     <p>

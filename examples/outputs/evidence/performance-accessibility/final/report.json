@@ -1,0 +1,362 @@
+{
+  "errors": [],
+  "layouts": [
+    {
+      "route": "home",
+      "width": 320,
+      "theme": "dark",
+      "viewport": 320,
+      "scrollWidth": 305,
+      "overflowElements": [],
+      "homeButtons": [
+        {
+          "text": "Обзор",
+          "client": 66,
+          "scroll": 66
+        },
+        {
+          "text": "Быстрый старт",
+          "client": 66,
+          "scroll": 66
+        },
+        {
+          "text": "Вдохновение",
+          "client": 66,
+          "scroll": 66
+        }
+      ],
+      "heroTitle": {
+        "client": 171,
+        "scroll": 171
+      },
+      "editorActions": [],
+      "styleChoices": null
+    },
+    {
+      "route": "home",
+      "width": 390,
+      "theme": "light",
+      "viewport": 390,
+      "scrollWidth": 375,
+      "overflowElements": [],
+      "homeButtons": [
+        {
+          "text": "Обзор",
+          "client": 89,
+          "scroll": 89
+        },
+        {
+          "text": "Быстрый старт",
+          "client": 89,
+          "scroll": 89
+        },
+        {
+          "text": "Вдохновение",
+          "client": 89,
+          "scroll": 89
+        }
+      ],
+      "heroTitle": {
+        "client": 229,
+        "scroll": 229
+      },
+      "editorActions": [],
+      "styleChoices": null
+    },
+    {
+      "route": "editor",
+      "width": 320,
+      "theme": "dark",
+      "viewport": 320,
+      "scrollWidth": 305,
+      "overflowElements": [],
+      "homeButtons": [],
+      "heroTitle": null,
+      "editorActions": [
+        {
+          "text": "Проверить",
+          "client": 181,
+          "scroll": 181
+        },
+        {
+          "text": "Завершить",
+          "client": 181,
+          "scroll": 181
+        }
+      ],
+      "styleChoices": {
+        "client": 187,
+        "scroll": 187
+      }
+    },
+    {
+      "route": "editor",
+      "width": 390,
+      "theme": "light",
+      "viewport": 390,
+      "scrollWidth": 375,
+      "overflowElements": [],
+      "homeButtons": [],
+      "heroTitle": null,
+      "editorActions": [
+        {
+          "text": "Проверить",
+          "client": 121,
+          "scroll": 121
+        },
+        {
+          "text": "Завершить",
+          "client": 121,
+          "scroll": 121
+        }
+      ],
+      "styleChoices": {
+        "client": 257,
+        "scroll": 257
+      }
+    },
+    {
+      "route": "create",
+      "width": 1440,
+      "theme": "dark",
+      "viewport": 1440,
+      "scrollWidth": 1425,
+      "overflowElements": [],
+      "homeButtons": [],
+      "heroTitle": null,
+      "editorActions": [],
+      "styleChoices": null
+    },
+    {
+      "route": "editor",
+      "width": 1440,
+      "theme": "light",
+      "viewport": 1440,
+      "scrollWidth": 1425,
+      "overflowElements": [],
+      "homeButtons": [],
+      "heroTitle": null,
+      "editorActions": [
+        {
+          "text": "Проверить",
+          "client": 129,
+          "scroll": 129
+        },
+        {
+          "text": "Завершить",
+          "client": 130,
+          "scroll": 130
+        }
+      ],
+      "styleChoices": {
+        "client": 339,
+        "scroll": 339
+      }
+    },
+    {
+      "route": "home",
+      "width": 1440,
+      "theme": "light",
+      "viewport": 1440,
+      "scrollWidth": 1425,
+      "overflowElements": [],
+      "homeButtons": [
+        {
+          "text": "Обзор",
+          "client": 176,
+          "scroll": 176
+        },
+        {
+          "text": "Быстрый старт",
+          "client": 176,
+          "scroll": 176
+        },
+        {
+          "text": "Вдохновение",
+          "client": 176,
+          "scroll": 176
+        }
+      ],
+      "heroTitle": {
+        "client": 471,
+        "scroll": 471
+      },
+      "editorActions": [],
+      "styleChoices": null
+    },
+    {
+      "route": "templates",
+      "width": 390,
+      "theme": "light",
+      "viewport": 390,
+      "scrollWidth": 375,
+      "overflowElements": [],
+      "homeButtons": [],
+      "heroTitle": null,
+      "editorActions": [],
+      "styleChoices": null
+    },
+    {
+      "route": "home",
+      "width": 720,
+      "theme": "dark",
+      "viewport": 720,
+      "scrollWidth": 705,
+      "overflowElements": [],
+      "homeButtons": [
+        {
+          "text": "Обзор",
+          "client": 176,
+          "scroll": 176
+        },
+        {
+          "text": "Быстрый старт",
+          "client": 176,
+          "scroll": 176
+        },
+        {
+          "text": "Вдохновение",
+          "client": 176,
+          "scroll": 176
+        }
+      ],
+      "heroTitle": {
+        "client": 252,
+        "scroll": 252
+      },
+      "editorActions": [],
+      "styleChoices": null
+    },
+    {
+      "route": "editor",
+      "width": 720,
+      "theme": "dark",
+      "viewport": 720,
+      "scrollWidth": 705,
+      "overflowElements": [],
+      "homeButtons": [],
+      "heroTitle": null,
+      "editorActions": [
+        {
+          "text": "Проверить",
+          "client": 117,
+          "scroll": 117
+        },
+        {
+          "text": "Завершить",
+          "client": 118,
+          "scroll": 118
+        }
+      ],
+      "styleChoices": {
+        "client": 281,
+        "scroll": 281
+      }
+    }
+  ],
+  "contrast": [
+    {
+      "theme": "light",
+      "name": "primary",
+      "color": "rgb(255, 255, 255)",
+      "background": [
+        0,
+        109,
+        230
+      ],
+      "ratio": 4.85
+    },
+    {
+      "theme": "light",
+      "name": "inactiveHomeTab",
+      "color": "rgb(91, 107, 130)",
+      "background": [
+        241,
+        245,
+        249
+      ],
+      "ratio": 4.95
+    },
+    {
+      "theme": "light",
+      "name": "activeHomeTab",
+      "color": "rgb(255, 255, 255)",
+      "background": [
+        0,
+        109,
+        230
+      ],
+      "ratio": 4.85
+    },
+    {
+      "theme": "dark",
+      "name": "primary",
+      "color": "rgb(255, 255, 255)",
+      "background": [
+        0,
+        109,
+        230
+      ],
+      "ratio": 4.85
+    },
+    {
+      "theme": "dark",
+      "name": "inactiveHomeTab",
+      "color": "rgb(161, 177, 201)",
+      "background": [
+        19,
+        30,
+        49
+      ],
+      "ratio": 7.67
+    },
+    {
+      "theme": "dark",
+      "name": "activeHomeTab",
+      "color": "rgb(255, 255, 255)",
+      "background": [
+        0,
+        109,
+        230
+      ],
+      "ratio": 4.85
+    }
+  ],
+  "checks": [
+    {
+      "check": "Home 320 text stays within tab and hero bounds",
+      "passed": true
+    },
+    {
+      "check": "Editor 320 actions and every style label fit",
+      "passed": true
+    },
+    {
+      "check": "Opaque UI action/tab text contrast >= 4.5:1",
+      "passed": true
+    }
+  ],
+  "screens": [
+    "home-dark-320.png",
+    "home-light-390.png",
+    "editor-dark-320.png",
+    "editor-light-390.png",
+    "create-dark-1440.png",
+    "editor-light-1440.png",
+    "home-light-1440.png",
+    "templates-light-390.png",
+    "home-dark-720.png",
+    "editor-dark-720.png",
+    "home-no-webgl.png"
+  ],
+  "assets": [
+    "http://127.0.0.1:8183/assets/index-CZkXY0oA.js",
+    "http://127.0.0.1:8183/assets/index-CpSLG9Hc.css"
+  ],
+  "webglRenderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+  "webglUnavailable": {
+    "fallbackVisible": true,
+    "canvasCount": 0,
+    "errors": []
+  }
+}

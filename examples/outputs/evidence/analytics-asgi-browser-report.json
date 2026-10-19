@@ -1,0 +1,28 @@
+{
+  "server": 8183,
+  "network": "Actual current ASGI handlers through local stdio bridge; existing8183 serves static only. Temporary QA database, demo model; no fabricated endpoint responses.",
+  "charts": [
+    "line",
+    "bar",
+    "grouped",
+    "stacked",
+    "pie",
+    "kpi",
+    "scatter",
+    "histogram",
+    "table"
+  ],
+  "preview": true,
+  "navigationDraft": true,
+  "reloadDraft": true,
+  "largeProfileThenCompact": true,
+  "viewports": [
+    1440,
+    768,
+    390,
+    320
+  ],
+  "download": true,
+  "reducedMotion": true,
+  "consoleErrors": []
+}

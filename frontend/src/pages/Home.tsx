@@ -48,33 +48,33 @@ export function Home(
         [
           [
             "description",
-            "spark",
+            "home-idea",
             "Создать по описанию",
             "Начните с одной идеи",
           ],
           [
             "text",
-            "file",
+            "home-text",
             "Вставить готовый текст",
             "Соберите материал в историю",
           ],
           [
             "upload",
-            "upload",
+            "home-upload",
             "Загрузить свой шаблон",
             "Сохраните фирменный стиль",
           ],
         ] as const
       ).map(([id, icon, title, subtitle]) => (
         <button
-          className="quick"
+          className={`quick quick-action quick-action--${id}`}
           key={id}
           onClick={() => (id === "upload" ? props.upload() : props.start(id))}
         >
           <span className="quick-icon">
             <Icon name={icon} />
           </span>
-          <span>
+          <span className="quick-copy">
             <strong>{title}</strong>
             <small>{subtitle}</small>
           </span>
@@ -95,7 +95,7 @@ export function Home(
           className="btn primary"
           onClick={() => props.start("description")}
         >
-          <Icon name="plus" />
+          <Icon name="home-create" />
           Создать презентацию
         </button>
       </div>
@@ -141,7 +141,13 @@ export function Home(
             }}
           >
             <Icon
-              name={index === 0 ? "grid" : index === 1 ? "spark" : "palette"}
+              name={
+                index === 0
+                  ? "home-overview"
+                  : index === 1
+                    ? "home-quick-start"
+                    : "home-inspiration"
+              }
             />
             {name}
           </button>
@@ -161,10 +167,6 @@ export function Home(
           <section className="spatial-story">
             <div className="hero spatial-hero">
               <div className="hero-copy">
-                <span className="badge blue">
-                  <Icon name="spark" />
-                  От идеи — к готовой истории
-                </span>
                 <h2>
                   Содержание — ваше.
                   <br />
@@ -180,10 +182,9 @@ export function Home(
                     onClick={() => props.start("description")}
                   >
                     Начать работу
-                    <Icon name="arrow" />
                   </button>
                   <a className="btn" href="#demo">
-                    <Icon name="play" />
+                    <Icon name="home-how-it-works" />
                     Как это работает
                   </a>
                 </div>
@@ -192,14 +193,7 @@ export function Home(
                 <PresentationSpace templates={props.templates} />
               </div>
               <div className="space-story-footer">
-                <span>
-                  <Icon name="check" />
-                  Один стиль. На каждом слайде.
-                </span>
-                <span className="space-scroll-hint">
-                  Листайте — меняйте перспективу
-                  <Icon name="arrow" />
-                </span>
+                <span className="space-scroll-hint">Листайте дальше</span>
               </div>
               <div className="space-progress" aria-hidden="true">
                 <i />
@@ -214,7 +208,6 @@ export function Home(
               <h2>Продолжите с того же места</h2>
               <a className="btn sm ghost" href="#projects">
                 Все презентации
-                <Icon name="arrow" />
               </a>
             </div>
             <div className="recent-grid">
@@ -226,7 +219,14 @@ export function Home(
                   onClick={() => openProject(p.id)}
                 >
                   <span className="recent-preview">
-                    <Icon name="file" />
+                    <i
+                      style={{
+                        height: 15,
+                        width: "70%",
+                        borderRadius: 2,
+                        marginBottom: 5,
+                      }}
+                    />
                     <i />
                     <i />
                   </span>
@@ -237,11 +237,7 @@ export function Home(
                       {new Date(p.updated_at).toLocaleDateString("ru-RU")}
                     </small>
                   </span>
-                  {opening === p.id ? (
-                    <i className="spinner" />
-                  ) : (
-                    <Icon name="arrow" />
-                  )}
+                  {opening === p.id && <i className="spinner" />}
                 </button>
               ))}
             </div>
@@ -251,11 +247,11 @@ export function Home(
           <div className="panel stack">
             <h2>Начните с готового примера</h2>
             <p className="muted">
-              Презентация Deckly.Ai показывает весь путь. После подключения LLM
-              здесь же можно работать со своей темой.
+              Пройдите все шаги на примере Deckly.Ai — от материалов до
+              экспорта.
             </p>
             <button className="btn primary" onClick={() => props.start("text")}>
-              <Icon name="play" />
+              <Icon name="home-open-example" />
               Открыть пример
             </button>
           </div>
@@ -269,7 +265,6 @@ export function Home(
               </h2>
               <a className="btn sm ghost" href="#templates">
                 Все шаблоны
-                <Icon name="arrow" />
               </a>
             </div>
             <div className="cards">
@@ -289,13 +284,6 @@ export function Home(
             </div>
           </>
         )}
-        <div className="welcome-tip">
-          <Icon name="link" />
-          <span>
-            <strong>Слайды с опорой на материалы.</strong> Проверяйте цитату
-            рядом с тезисом — прямо в редакторе.
-          </span>
-        </div>
       </div>
     </div>
   );

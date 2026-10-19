@@ -37,9 +37,6 @@ export function PersonalDetails({
     <div className="profile-columns">
       <form className="panel profile-form" onSubmit={onSave}>
         <h2>Личные данные</h2>
-        <p className="muted small">
-          Так вы будете отображаться в своём пространстве.
-        </p>
         <fieldset disabled={busy}>
           <div className="profile-name-fields">
             <label>
@@ -73,9 +70,8 @@ export function PersonalDetails({
           </label>
           <div className="avatar-editor">
             <p className="field-helper">
-              Нажмите на аватар сверху, чтобы загрузить фото: JPG, PNG или WebP
-              до 5 МБ, до 4096 × 4096 px. Кадр обрезается по центру и
-              сохраняется сразу.
+              Фото: JPG, PNG или WebP · до 5 МБ · до 4096 × 4096 px. Обрезается
+              по центру и сохраняется сразу.
             </p>
             <span>Цвет аватара</span>
             <div>
@@ -91,7 +87,7 @@ export function PersonalDetails({
                     onColorChange(c);
                   }}
                 >
-                  {color === c && <Icon name="check" />}
+                  {color === c && <Icon name="account-avatar-selected" />}
                 </button>
               ))}
             </div>
@@ -99,21 +95,20 @@ export function PersonalDetails({
         </fieldset>
         <div className="profile-save">
           <span className={dirty ? "has-changes" : ""}>
-            <Icon name={dirty ? "edit" : "check"} />
             {dirty ? "Есть несохранённые изменения" : "Все изменения сохранены"}
           </span>
           <button
             className="btn primary"
             disabled={busy || !dirty || !first.trim()}
           >
-            {busy ? <i className="spinner" /> : <Icon name="check" />}
+            {busy ? <i className="spinner" /> : <Icon name="account-save" />}
             Сохранить изменения
           </button>
         </div>
       </form>
       <aside className="profile-side-card">
         <span className="profile-side-icon">
-          <Icon name="spark" />
+          <Icon name="account-next-project" />
         </span>
         <h2>Ваша следующая история</h2>
         <p>
@@ -122,7 +117,6 @@ export function PersonalDetails({
         </p>
         <a className="btn" href="#templates">
           К шаблонам
-          <Icon name="arrow" />
         </a>
         <div className="profile-deck-preview" aria-hidden="true">
           <span className="profile-preview-back" />
@@ -141,9 +135,6 @@ export function PersonalDetails({
             </span>
             <span className="profile-preview-number">01</span>
           </div>
-          <span className="profile-preview-caption">
-            От первого слайда — к целой истории
-          </span>
         </div>
       </aside>
     </div>

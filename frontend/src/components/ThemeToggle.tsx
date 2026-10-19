@@ -1,5 +1,12 @@
-import { createContext, useContext, useEffect, useLayoutEffect, useState, type ReactNode } from "react";
-import { Moon, Sun } from "lucide-react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useLayoutEffect,
+  useState,
+  type ReactNode,
+} from "react";
+import { Icon } from "./Icon";
 
 type Theme = "light" | "dark";
 const ThemeContext = createContext({
@@ -47,18 +54,28 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 }
 export function ThemeToggle() {
   const { theme, toggle } = useContext(ThemeContext);
+  const [revision, setRevision] = useState(0);
   return (
     <button
       type="button"
       className="theme-toggle"
+      data-nav="theme"
       data-target-theme={theme === "light" ? "dark" : "light"}
-      onClick={toggle}
+      onClick={() => {
+        setRevision((value) => value + 1);
+        toggle();
+      }}
       aria-label={
         theme === "light" ? "Включить тёмную тему" : "Включить светлую тему"
       }
       title={theme === "light" ? "Тёмная тема" : "Светлая тема"}
     >
-      {theme === "light" ? <Moon size={20} /> : <Sun size={20} />}
+      <Icon
+        name={theme === "light" ? "ui-dark-theme" : "ui-light-theme"}
+        size={20}
+        key={revision}
+        className={revision ? "nav-motion" : ""}
+      />
     </button>
   );
 }

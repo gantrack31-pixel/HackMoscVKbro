@@ -83,6 +83,7 @@ export function OutlineStep({
                 <span className="wizard-slide-kind">
                   {
                     {
+                      analysis: "Проверенные данные",
                       title: "Титульный слайд",
                       text: "Основная мысль",
                       chart: "Данные и диаграмма",
@@ -108,10 +109,7 @@ export function OutlineStep({
                   onChange={(e) => onEdit(i, "body", e.target.value)}
                 />
                 {s.source_quote && (
-                  <span className="badge green">
-                    <Icon name="link" />
-                    Есть цитата
-                  </span>
+                  <span className="badge green">Есть цитата</span>
                 )}
               </div>
               <div className="outline-actions">
@@ -121,7 +119,7 @@ export function OutlineStep({
                   onClick={() => onMove(i, -1)}
                   aria-label={`Слайд ${i + 1} выше`}
                 >
-                  <Icon name="arrow" />
+                  Выше
                 </button>
                 <button
                   className="btn ghost sm wizard-move-down"
@@ -129,7 +127,7 @@ export function OutlineStep({
                   onClick={() => onMove(i, 1)}
                   aria-label={`Слайд ${i + 1} ниже`}
                 >
-                  <Icon name="arrow" />
+                  Ниже
                 </button>
                 <button
                   className="btn ghost sm"
@@ -137,7 +135,7 @@ export function OutlineStep({
                   onClick={() => onRemoveSlide(i)}
                   aria-label={`Удалить слайд ${i + 1}`}
                 >
-                  <Icon name="trash" />
+                  Удалить
                 </button>
               </div>
             </article>
@@ -148,12 +146,11 @@ export function OutlineStep({
           onClick={onAddSlide}
           disabled={content.slides.length >= 30}
         >
-          <Icon name="plus" />
+          <Icon name="flow-add-slide" />
           Добавить слайд
         </button>
         <div className="form-footer sticky-footer">
           <button className="btn" onClick={onBack}>
-            <Icon name="back" />
             Материалы
           </button>
           <button
@@ -162,7 +159,7 @@ export function OutlineStep({
             onClick={onGenerate}
           >
             Создать презентацию
-            <Icon name="spark" />
+            <Icon name="flow-generate" />
           </button>
         </div>
       </section>
@@ -179,9 +176,8 @@ export function OutlineStep({
           <strong>{audience}</strong>
         </div>
         <p className="wizard-summary-note">
-          <Icon name="edit" />
-          Заголовки и порядок можно изменить сейчас. Оформление выберем на
-          последнем шаге.
+          <Icon name="flow-style-note" />
+          Оформление выберем на последнем шаге.
         </p>
       </aside>
     </div>

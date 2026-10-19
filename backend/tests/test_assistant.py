@@ -53,11 +53,16 @@ def test_edit_sees_unsaved_text_and_undo_restores_it(client,monkeypatch):
     monkeypatch.setattr(llm,'complete_json',respond)
     response=client.post('/api/projects/ai-test/assistant',json=body)
     assert response.status_code==200,response.text
-    p=response.json()['project']
+    proposal=response.json()['proposal']
+    assert response.json()['project'] is None
+    assert client.get('/api/projects/ai-test').json()['content'] != body['content']
+    applied=client.post(f'/api/projects/ai-test/assistant/proposals/{proposal["id"]}/apply',json=body)
+    assert applied.status_code==200,applied.text
+    p=applied.json()['project']
     assert p['content']['slides'][0]['body']=='30 участников.'
     assert p['content']['slides'][1]==body['content']['slides'][1]
     assert p['can_undo'] and response.json()['changed_slides']==[0]
-    restored=client.post('/api/projects/ai-test/undo').json()
+    restored=client.post('/api/projects/ai-test/undo',json={'base_updated_at':p['updated_at']}).json()
     assert restored['content']==body['content']
 
 

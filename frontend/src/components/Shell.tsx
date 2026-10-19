@@ -8,11 +8,11 @@ import type { Route } from "../types";
 import { prefetchPage } from "../navigation/pageLoaders";
 
 const nav: [Route, IconName, string][] = [
-  ["home", "home", "Главная"],
-  ["templates", "grid", "Шаблоны"],
-  ["projects", "folder", "Мои презентации"],
-  ["favorites", "star", "Избранное"],
-  ["demo", "play", "Как это работает"],
+  ["home", "nav-home", "Главная"],
+  ["templates", "nav-templates", "Шаблоны"],
+  ["projects", "nav-projects", "Мои презентации"],
+  ["favorites", "nav-favorites", "Избранное"],
+  ["demo", "nav-demo", "Как это работает"],
 ];
 export function Shell({
   route,
@@ -28,9 +28,14 @@ export function Shell({
   favoriteCount: number;
 }) {
   const [collapsed, setCollapsed] = useState(true);
-  const [iconMotion, setIconMotion] = useState({ id: "", revision: 0 });
-  function animateIcon(id: Route) {
-    setIconMotion((previous) => ({ id, revision: previous.revision + 1 }));
+  const [iconMotion, setIconMotion] = useState<
+    Partial<Record<Route | "logout", number>>
+  >({});
+  function animateIcon(id: Route | "logout") {
+    setIconMotion((previous) => ({
+      ...previous,
+      [id]: (previous[id] || 0) + 1,
+    }));
   }
   const sidebarRef = useRef<HTMLElement>(null);
   const sidebarTrigger = useRef<HTMLButtonElement>(null);
@@ -113,8 +118,8 @@ export function Shell({
               >
                 <Icon
                   name={icon}
-                  key={iconMotion.id === id ? iconMotion.revision : 0}
-                  className={iconMotion.id === id ? "nav-motion" : ""}
+                  key={iconMotion[id] || 0}
+                  className={iconMotion[id] ? "nav-motion" : ""}
                 />
                 <span>{name}</span>
                 {id === "favorites" && favoriteCount > 0 && (
@@ -128,14 +133,20 @@ export function Shell({
             onPointerEnter={() => prefetchPage("create")}
             onFocus={() => prefetchPage("create")}
             className="sidebar-create"
+            data-nav="create"
             aria-label="Новая презентация"
             title="Новая презентация"
             onClick={(event) => {
               event.preventDefault();
+              animateIcon("create");
               onNewPresentation();
             }}
           >
-            <Icon name="plus" />
+            <Icon
+              name="nav-create"
+              key={iconMotion.create || 0}
+              className={iconMotion.create ? "nav-motion" : ""}
+            />
             <span>Новая презентация</span>
           </a>
         </div>
@@ -155,8 +166,8 @@ export function Shell({
             />
             {(
               [
-                ["support", "help", "Поддержка"],
-                ["profile", "user", "Мой профиль"],
+                ["support", "nav-support", "Поддержка"],
+                ["profile", "nav-profile", "Мой профиль"],
               ] as [Route, IconName, string][]
             ).map(([id, icon, name]) => (
               <a
@@ -173,8 +184,8 @@ export function Shell({
               >
                 <Icon
                   name={icon}
-                  key={iconMotion.id === id ? iconMotion.revision : 0}
-                  className={iconMotion.id === id ? "nav-motion" : ""}
+                  key={iconMotion[id] || 0}
+                  className={iconMotion[id] ? "nav-motion" : ""}
                 />
                 <span>{name}</span>
               </a>
@@ -182,14 +193,20 @@ export function Shell({
             <button
               type="button"
               className="sidebar-logout"
+              data-nav="logout"
               onClick={() => {
+                animateIcon("logout");
                 setCollapsed(true);
                 onLogout();
               }}
               title="Выйти из аккаунта"
               aria-label="Выйти из аккаунта"
             >
-              <Icon name="logout" />
+              <Icon
+                name="nav-logout"
+                key={iconMotion.logout || 0}
+                className={iconMotion.logout ? "nav-motion" : ""}
+              />
               <span>Выйти из аккаунта</span>
             </button>
           </nav>

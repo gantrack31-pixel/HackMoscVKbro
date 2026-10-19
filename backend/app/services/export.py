@@ -29,18 +29,22 @@ def scene_svg(scene):
             elif n['type']=='hexagon':
                 points=' '.join(f'{x},{y}' for x,y in hexagon_points(n))
                 parts.append(f'<polygon points="{points}" fill="{n["fill"]}"/>')
+            elif n['type']=='polygon':
+                points=' '.join(f'{x},{y}' for x,y in n['points'])
+                parts.append(f'<polygon points="{points}" fill="{n["fill"]}"/>')
             elif n['type']=='line': parts.append(f'<line x1="{n["x1"]}" y1="{n["y1"]}" x2="{n["x2"]}" y2="{n["y2"]}" stroke="{n["stroke"]}" stroke-width="{n["stroke_width"]}"/>')
             elif n['type']=='image': parts.append(f'<image x="{n["x"]}" y="{n["y"]}" width="{n["w"]}" height="{n["h"]}" href="{escape(n["src"],quote=True)}"/>')
             else:
                 spans=''.join(f'<tspan x="{n["x"]}" y="{n["y"]+n["font_size"]+i*n["font_size"]*n.get("line_spacing",1.28)}">{escape(line)}</tspan>' for i,line in enumerate(n['lines']))
-                parts.append(f'<text font-family="Manrope, Arial" font-size="{n["font_size"]}" font-weight="{750 if n["bold"] else 400}" fill="{n["color"]}">{spans}</text>')
+                parts.append(f'<text font-family="{escape(n.get("font_family","Manrope, Arial"),quote=True)}" font-size="{n["font_size"]}" font-weight="{750 if n["bold"] else 400}" fill="{n["color"]}">{spans}</text>')
     return f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {scene["width"]} {scene["height"]}" role="img">'+''.join(parts)+'</svg>'
 
 def export_html(content,template,variant):
     font=base64.b64encode((FONTS/'Manrope-Regular.ttf').read_bytes()).decode()
+    bold_font=base64.b64encode((FONTS/'Manrope-Bold.ttf').read_bytes()).decode()
     slides=''.join('<section>'+scene_svg(build_scene(slide,template['metadata'],variant,i))+'</section>' for i,slide in enumerate(content.slides))
     attribution=f'<footer>{escape(ATTRIBUTION)}</footer>' if any(s.kind=='icons' for s in content.slides) else ''
-    html=f'<!doctype html><html lang="ru"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>{escape(content.title)}</title><style>@font-face{{font-family:Manrope;src:url(data:font/ttf;base64,{font})}}body{{background:#e2e8f0;margin:0;padding:24px}}section{{max-width:1280px;margin:0 auto 24px;break-after:page}}svg{{display:block;width:100%;background:white}}@media print{{body{{padding:0}}section{{margin:0}}@page{{size:landscape;margin:0}}}}</style>{slides}{attribution}</html>'
+    html=f'<!doctype html><html lang="ru"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>{escape(content.title)}</title><style>@font-face{{font-family:Manrope;src:url(data:font/ttf;base64,{font});font-weight:400}}@font-face{{font-family:Manrope;src:url(data:font/ttf;base64,{bold_font});font-weight:700 900}}body{{background:#e2e8f0;margin:0;padding:24px}}section{{max-width:1280px;margin:0 auto 24px;break-after:page}}svg{{display:block;width:100%;background:white}}@media print{{body{{padding:0}}section{{margin:0}}@page{{size:landscape;margin:0}}}}</style>{slides}{attribution}</html>'
     return html.encode('utf-8')
 
 def export_pdf(content,template,variant):
@@ -55,8 +59,8 @@ def export_pdf(content,template,variant):
                     pdf.setFillColor(HexColor(n['fill']));pdf.rect(n['x'],height-n['y']-n['h'],n['w'],n['h'],fill=1,stroke=0)
                 elif n['type']=='ellipse':
                     pdf.setFillColor(HexColor(n['fill']));pdf.ellipse(n['x'],height-n['y']-n['h'],n['x']+n['w'],height-n['y'],fill=1,stroke=0)
-                elif n['type']=='hexagon':
-                    points=hexagon_points(n); path=pdf.beginPath();path.moveTo(points[0][0],height-points[0][1])
+                elif n['type'] in {'hexagon','polygon'}:
+                    points=hexagon_points(n) if n['type']=='hexagon' else n['points']; path=pdf.beginPath();path.moveTo(points[0][0],height-points[0][1])
                     for x,y in points[1:]:path.lineTo(x,height-y)
                     path.close();pdf.setFillColor(HexColor(n['fill']));pdf.drawPath(path,fill=1,stroke=0)
                 elif n['type']=='line':
@@ -130,12 +134,19 @@ def export_pptx(content: DeckContent, template: dict, variant: str, *, scenes=No
                 shape=slide.shapes.add_textbox(x,y,w,h);frame=shape.text_frame;frame.clear()
                 frame.margin_left=frame.margin_right=frame.margin_top=frame.margin_bottom=0
                 frame.word_wrap=True
-                for j,line in enumerate(obj['lines']):
+                # Layout lines are visual wraps, not semantic paragraph breaks.
+                # Keep the source text editable/searchable and let Office wrap it
+                # inside the same measured box; preserve only explicit newlines.
+                for j,line in enumerate(obj.get('text','\n'.join(obj['lines'])).split('\n')):
                     paragraph=frame.paragraphs[0] if j==0 else frame.add_paragraph()
                     paragraph.text=line;paragraph.font.name=obj.get('font_family',metadata.get('font','Manrope'))
                     paragraph.font.size=Pt(obj['font_size']*point_scale);paragraph.font.bold=obj['bold']
                     paragraph.font.color.rgb=rgb(obj['color']);paragraph.space_after=Pt(0);paragraph.line_spacing=obj.get('line_spacing',1.28)
             elif obj['type']=='chart':
+                if obj.get('analytical'):
+                    from .analytical_pptx import add_analytical_chart
+                    add_analytical_chart(slide,obj,scale,point_scale)
+                    continue
                 data=CategoryChartData();data.categories=obj['labels'];data.add_series(obj['unit'] or 'Значение',obj['values'])
                 chart_type={'bar':XL_CHART_TYPE.BAR_CLUSTERED,'column':XL_CHART_TYPE.COLUMN_CLUSTERED,'line':XL_CHART_TYPE.LINE_MARKERS}[obj.get('chart_type','bar')]
                 chart=slide.shapes.add_chart(chart_type,x,y,w,h,data).chart
@@ -158,9 +169,15 @@ def export_pptx(content: DeckContent, template: dict, variant: str, *, scenes=No
                     for ci,value in enumerate(row):
                         cell=table.cell(ri,ci);cell.text=value
                         for paragraph in cell.text_frame.paragraphs:
-                            paragraph.font.size=Pt(obj['font_size']*point_scale);paragraph.font.name=metadata.get('font','Manrope')
+                            paragraph.font.size=Pt(obj['font_size']*point_scale);paragraph.font.name=obj.get('font_family',metadata.get('font','Manrope'))
                             paragraph.font.bold=ri==0;paragraph.font.color.rgb=rgb(obj['header_color'] if ri==0 else obj['theme']['text'])
                         cell.fill.solid();cell.fill.fore_color.rgb=rgb(obj['fill'] if ri==0 else obj['theme']['surface'] if ri%2==0 else obj['theme']['background'])
         slide.notes_slide.notes_text_frame.text=slide_content.notes+('\nИсточник: '+slide_content.source_quote if slide_content.source_quote else '')
+        if slide_content.analytics:
+            import json
+            analytical=slide_content.analytics
+            slide.notes_slide.notes_text_frame.text+='\nИсточник данных: '+analytical.source+'\nВопрос: '+analytical.question+'\nПочему эта диаграмма: '+analytical.why
+            slide.notes_slide.notes_text_frame.text+='\nРасчёты: '+json.dumps([r.model_dump() for r in analytical.calculations],ensure_ascii=False)
+            if analytical.warnings:slide.notes_slide.notes_text_frame.text+='\nОграничения: '+'; '.join(analytical.warnings)
         if slide_content.kind=='icons': slide.notes_slide.notes_text_frame.text+='\n'+ATTRIBUTION
     stream=BytesIO();prs.save(stream);return stream.getvalue()

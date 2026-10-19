@@ -1,0 +1,16 @@
+{
+  "transport": "Real ASGI handlers, isolated temporary account/storage, injected 503, 401 and malformed 200 polls only",
+  "snapshotPreserved": true,
+  "reloadRecovery": true,
+  "completedJob": "07ad0bfb-1488-4daa-a621-5be830332a57",
+  "generationRequests": 1,
+  "retryRequests": 0,
+  "serverProjects": 1,
+  "pollIds": [
+    "07ad0bfb-1488-4daa-a621-5be830332a57",
+    "07ad0bfb-1488-4daa-a621-5be830332a57",
+    "07ad0bfb-1488-4daa-a621-5be830332a57",
+    "07ad0bfb-1488-4daa-a621-5be830332a57"
+  ],
+  "errors": []
+}
