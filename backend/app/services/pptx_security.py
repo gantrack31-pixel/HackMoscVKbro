@@ -74,7 +74,11 @@ def _validate_relationships(archive: ZipFile, names: set[str]) -> None:
             parsed = urlsplit(target)
             if parsed.scheme or parsed.netloc or not target or '\\' in target or '\x00' in target:
                 raise ValueError('PPTX содержит недопустимую внутреннюю ссылку OOXML.')
-            resolved = normpath(join(dirname(source), parsed.path))
+            # OPC relationship targets may be relative to their source part or
+            # absolute package-part URIs rooted at /. A leading slash is not a
+            # filesystem path: it refers to the root of this ZIP package.
+            resolved = (normpath(parsed.path.lstrip('/')) if parsed.path.startswith('/')
+                        else normpath(join(dirname(source), parsed.path)))
             if (not resolved or resolved == '..' or resolved.startswith('../')
                     or any(part == '..' for part in resolved.split('/'))):
                 raise ValueError('PPTX содержит ссылку за пределы пакета OOXML.')

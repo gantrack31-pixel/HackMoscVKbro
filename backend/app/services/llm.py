@@ -16,6 +16,7 @@ from .narrative import brief_from_request, validate_narrative_slide
 
 class LLMError(RuntimeError): pass
 class LLMFormatError(LLMError): pass
+class LLMTruncatedError(LLMFormatError): pass
 
 def compact_schema(model):
     """Keep validation constraints; omit presentation metadata and legacy geometry."""
@@ -86,7 +87,8 @@ def configured() -> bool:
     host=urlparse(settings.base_url).hostname
     return bool(settings.base_url and settings.model and (settings.api_key or host in {'localhost','127.0.0.1','::1'}))
 
-async def complete_json(system: str, payload: dict, client: httpx.AsyncClient | None = None, images: list[str] | None = None) -> dict:
+async def complete_json(system: str, payload: dict, client: httpx.AsyncClient | None = None,
+                        images: list[str] | None = None, max_tokens: int | None = None) -> dict:
     if not configured(): raise LLMError('Заполните OPENROUTER_API_KEY и OPENROUTER_MODEL в backend/.env.')
     parsed=urlparse(settings.base_url)
     if parsed.scheme not in {'http','https'} or not parsed.hostname or parsed.username or parsed.password or parsed.query or parsed.fragment:
@@ -100,6 +102,8 @@ async def complete_json(system: str, payload: dict, client: httpx.AsyncClient | 
     tokens={'DeckContent':settings.outline_max_tokens,'ThreeDesignPlans':settings.design_max_tokens,
             'DesignPlan':settings.design_max_tokens,'AssistantPlan':settings.assistant_max_tokens}.get(task,
             settings.audit_max_tokens if 'source_chunks' in payload else settings.max_tokens)
+    if max_tokens is not None:
+        tokens=max(tokens,max_tokens)
     body={**settings.extra_body,'model':settings.model,'temperature':settings.temperature,'max_tokens':tokens,
           'messages':[{'role':'system','content':system},{'role':'user','content':json.dumps(payload,ensure_ascii=False)}]}
     if images and settings.vision:
@@ -126,19 +130,25 @@ async def complete_json(system: str, payload: dict, client: httpx.AsyncClient | 
             suffix = f' Причина провайдера: {detail}.' if detail else ''
             raise LLMError(f'Провайдер вернул HTTP {response.status_code}.{suffix} Проверьте model URI, URL и LLM_JSON_MODE.')
         data=response.json()
-        text=data['choices'][0]['message']['content']
+        choice=data['choices'][0]
+        if choice.get('finish_reason') in {'length','max_tokens'}:
+            raise LLMTruncatedError('Ответ провайдера обрезан лимитом токенов вывода.')
+        text=choice['message']['content']
         if not isinstance(text,str): raise ValueError('Нет текстового ответа')
         return extract_json(text)
+    except LLMTruncatedError:
+        raise
     except httpx.TimeoutException as exc: raise LLMError('Соединение с моделью не передавало данные в пределах сетевого таймаута. Повторите запрос.') from exc
     except httpx.HTTPError as exc: raise LLMError('Не удалось подключиться к LLM. Проверьте адрес сервера модели.') from exc
     except (ValueError,KeyError,IndexError,TypeError) as exc: raise LLMFormatError('Ответ модели не соответствует формату JSON. Проверьте поддержку JSON у провайдера.') from exc
     finally:
         if owned: await client.aclose()
 
-async def complete_with_template(system, payload, template):
+async def complete_with_template(system, payload, template, max_tokens: int | None = None):
+    token_budget={'max_tokens':max_tokens} if max_tokens is not None else {}
     if settings.vision:
-        return await complete_json(system, payload, images=template_images(template))
-    return await complete_json(system, payload)
+        return await complete_json(system, payload, images=template_images(template),**token_budget)
+    return await complete_json(system, payload,**token_budget)
 
 DEMO=[
     ('Deckly.Ai','Цифровой дизайнер презентаций'),
@@ -183,10 +193,14 @@ async def make_outline(request: OutlineRequest, template: dict, resources: list[
              'icon_library':model_icons(),
              'resource_catalog':[compact_resource(item) for item in (resources or [])][:80],
              'image_generation_available':bool(settings.image_base_url),'schema':compact_schema(DeckContent)}
-    # Одна попытка + одно исправление формата. Общий лимит ограничен отдельно.
-    for attempt in range(2):
+    # Retry malformed/truncated output with correction and a larger bounded token budget.
+    for attempt in range(3):
         try:
-            raw=await complete_with_template(system,payload,template)
+            retry_tokens=min(settings.outline_max_tokens*(2**attempt),48_000)
+            if attempt:
+                raw=await complete_with_template(system,payload,template,max_tokens=retry_tokens)
+            else:
+                raw=await complete_with_template(system,payload,template)
             result=DeckContent.model_validate(normalize_model_icons(raw,'slides'))
             assets={a['id'] for a in metadata.get('assets',[])}
             if any(s.template_asset_id and s.template_asset_id not in assets for s in result.slides):
@@ -211,7 +225,10 @@ async def make_outline(request: OutlineRequest, template: dict, resources: list[
             result.resource_ids=list(request.resource_ids)
             return result
         except (ValidationError,ValueError,LLMFormatError) as exc:
-            if attempt: raise LLMError('Модель дважды вернула некорректную структуру. Повторите с более коротким материалом.') from exc
+            if attempt==2:
+                if isinstance(exc,LLMTruncatedError):
+                    raise LLMError('Ответ модели обрезан лимитом вывода даже после двух повторов. Уменьшите объём текста или количество слайдов.') from exc
+                raise LLMError('Не удалось собрать структуру после трёх попыток. Это не означает, что текст превышает лимит: до 50 000 символов принимаются. Попробуйте сократить описание, оставить цель, аудиторию и ключевые факты, а количество слайдов уменьшить; если ошибка повторится, проверьте ответ модели и ограничения провайдера.') from exc
             payload['format_correction']=str(exc)[:1600]
     raise LLMError('Не удалось создать структуру.')
 

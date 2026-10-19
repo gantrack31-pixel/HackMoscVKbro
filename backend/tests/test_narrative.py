@@ -45,7 +45,7 @@ def test_outline_passes_brief_and_retries_unsupported_numbers(monkeypatch):
         Slide(title='Май выше апреля',body='В мае: 123.',source_quote='В мае: 123.'),
         Slide(title='Уточнить причины',body='Причина изменения не указана.',notes='Нужно уточнить ожидаемое решение.')])
     calls=[]
-    async def respond(system,payload,template):
+    async def respond(system,payload,template,**kwargs):
         calls.append(deepcopy(payload))
         assert payload['narrative_brief']['key_question']=='Как изменилось значение?'
         assert payload['narrative_brief']['audience']=='Руководство'

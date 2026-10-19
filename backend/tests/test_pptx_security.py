@@ -136,6 +136,19 @@ def test_rejects_relationship_target_to_missing_package_part(tmp_path):
         validate_pptx_archive(path)
 
 
+def test_accepts_absolute_package_relationship_target(tmp_path):
+    path = tmp_path / 'absolute-package-target.pptx'
+    path.write_bytes(minimal_pptx([
+        ('ppt/slides/slide1.xml', b'<slide/>'),
+        ('ppt/slides/_rels/slide1.xml.rels', b'''<?xml version="1.0"?>
+            <Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+              <Relationship Id="rId1" Type="slide" Target="/ppt/slides/slide1.xml"/>
+            </Relationships>'''),
+    ]))
+
+    validate_pptx_archive(path)
+
+
 def test_rejects_xml_doctype_and_entities(tmp_path):
     path = tmp_path / 'xml-entity.pptx'
     path.write_bytes(minimal_pptx([

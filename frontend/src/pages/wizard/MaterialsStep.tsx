@@ -18,6 +18,7 @@ export function MaterialsStep({
   template,
   templates,
   onPromptChange,
+  onError,
   onPurposeChange,
   onCountChange,
   onAudienceChange,
@@ -39,6 +40,7 @@ export function MaterialsStep({
   template: Template;
   templates: Template[];
   onPromptChange: (value: string) => void;
+  onError: (message: string) => void;
   onPurposeChange: (value: PresentationPurpose) => void;
   onCountChange: (value: number) => void;
   onAudienceChange: (value: string) => void;
@@ -62,9 +64,15 @@ export function MaterialsStep({
           Опишите идею и добавьте материалы
           <textarea
             value={prompt}
-            onChange={(e) => onPromptChange(e.target.value)}
+            onChange={(e) => {
+              const value = e.target.value;
+              if (value.length > 50000) {
+                onError(`Вставлено ${value.length.toLocaleString("ru-RU")} символов; лимит — 50 000. Текст не был обрезан и не сохранён. Сократите материал и повторите.`);
+                return;
+              }
+              onPromptChange(value);
+            }}
             rows={8}
-            maxLength={50000}
             disabled={busy}
             placeholder={
               mode === "description"
@@ -75,7 +83,7 @@ export function MaterialsStep({
           />
           <span className="wizard-material-meta">
             <span className="field-helper" id="wizard-material-helper">
-              Добавьте исходный текст, чтобы проверять тезисы по цитатам.
+              Добавьте исходный текст, чтобы проверять тезисы по цитатам. Лимит — 50 000 символов (это не лимит слов).
             </span>
             <span className="wizard-character-count">
               {prompt.length.toLocaleString("ru-RU")} / 50 000

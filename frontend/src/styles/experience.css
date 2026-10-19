@@ -403,18 +403,49 @@ body {
   overflow: hidden;
   width: 100%;
 }
-.thinking-label {
+.thinking-intro {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 12px;
-  color: #0077ff;
-  font-weight: 700;
-  font-size: 14px;
-  margin-bottom: 24px;
+  gap: clamp(16px, 4vw, 40px);
+  min-height: 156px;
+  margin: -8px 0 20px;
 }
-.thinking-label svg {
+.thinking-intro > .thinking-mascot {
+  flex: 0 0 auto;
+  width: 148px;
+  filter: drop-shadow(0 14px 24px #0077ff18);
+}
+.thinking-copy {
+  display: grid;
+  justify-items: start;
+  gap: 8px;
+  max-width: 360px;
+}
+.thinking-kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--accent-text);
+  font-size: 10px;
+  font-weight: 750;
+  letter-spacing: .14em;
+}
+.thinking-kicker .icon {
   animation: ai-breathe 2s ease-in-out infinite;
+}
+.thinking-label {
+  display: flex;
+  align-items: center;
+  color: var(--ink);
+  font-weight: 720;
+  font-size: clamp(18px, 2.3vw, 24px);
+  line-height: 1.2;
+}
+.thinking-caption {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.5;
 }
 .thinking-slides {
   display: grid;
@@ -1189,6 +1220,23 @@ body {
   }
   .thinking {
     padding: 16px;
+  }
+  .thinking-intro {
+    gap: 12px;
+    min-height: 120px;
+    margin: 0 0 16px;
+  }
+  .thinking-intro > .thinking-mascot {
+    width: 112px;
+  }
+  .thinking-copy {
+    gap: 6px;
+  }
+  .thinking-label {
+    font-size: 18px;
+  }
+  .thinking-caption {
+    font-size: 12px;
   }
   .thinking-slides {
     gap: 8px;

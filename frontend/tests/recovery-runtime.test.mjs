@@ -144,6 +144,15 @@ test("removing a source drops its distinctive text and retains authored text plu
   assert.ok(combined.includes(authored) && combined.includes("RETAINED-FACT-91"));
 });
 
+test("large pasted material is rejected explicitly instead of silently truncated at the input limit", () => {
+  const text = "слово ".repeat(17_000);
+  const error = drafts.materialLengthError(text);
+  assert.ok(error.includes("Материал содержит"));
+  assert.ok(error.includes("при лимите"));
+  assert.ok(error.includes("Текст не был обрезан и не отправлен"));
+  assert.equal(drafts.materialLengthError("Короткий материал"), null);
+});
+
 test("corrupt JSON and unrecognized wizard records are recoverable instead of used as draft state", () => {
   install();
   localStorage.setItem(storage.accountKey("A", "wizard-draft"), "broken{");

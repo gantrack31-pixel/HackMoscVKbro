@@ -35,7 +35,7 @@ import type {
   PresentationPurpose,
 } from "./wizard/types";
 import { readPendingJob as readJob, writePendingJob as writeJob, checkedJob, checkedProject, isTerminalJobFailure, type PendingJob, type JobPollingFailure } from "./wizard/pendingJob";
-import { readWizardDraft, combinedMaterial, type SourceBlock, type WizardDraft } from "./wizard/draft";
+import { readWizardDraft, combinedMaterial, materialLengthError, type SourceBlock, type WizardDraft } from "./wizard/draft";
 import { readAccount, writeAccount } from "../state/accountStorage";
 export { sampleMaterial } from "./wizard/content";
 export { clearPendingGenerationJob } from "./wizard/pendingJob";
@@ -302,7 +302,8 @@ export function Wizard({
       setSlideKeys(analyticalSlides.map(newSlideKey)); setStep(2); return;
     }
     const material = example ?? sourceText;
-    if (material.length > 50000) { onError("Материалы превышают 50 000 символов. Уберите часть файлов или сократите текст."); return; }
+    const lengthError = materialLengthError(material);
+    if (lengthError) { onError(lengthError); return; }
     if (!material.trim()) {
       onError("Добавьте описание или материал.");
       return;
@@ -505,8 +506,8 @@ export function Wizard({
       const packet = await api.importMaterials(files);
       if (!isCurrent(id)) return;
       const added = [...new Map(packet.documents.filter(d => d.kind === "document").map(d => [d.id, { id: d.id, name: d.name, text: d.text || "", characters: d.characters }] as const)).values()].filter(block => !sourceBlocks.some(item => item.id === block.id));
-      if (combinedMaterial(prompt, [...sourceBlocks, ...added]).length > 50000)
-        throw new Error("Вместе с текстом пакет превышает 50 000 символов. Уберите часть материалов.");
+      const lengthError = materialLengthError(combinedMaterial(prompt, [...sourceBlocks, ...added]));
+      if (lengthError) throw new Error(lengthError);
       setSourceBlocks(previous => [...previous, ...added.filter(block => !previous.some(item => item.id === block.id))]);
       setMode(packet.text ? "text" : mode);
       setResources((previous) => [
@@ -603,6 +604,7 @@ export function Wizard({
           template={template}
           templates={templates}
           onPromptChange={setPrompt}
+          onError={onError}
           onPurposeChange={setPurpose}
           onCountChange={setCount}
           onAudienceChange={setAudience}

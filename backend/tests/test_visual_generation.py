@@ -102,7 +102,7 @@ def test_outline_autonomously_selects_native_visuals_and_retries_bad_values(clie
     from app.models import OutlineRequest
     monkeypatch.setattr(settings,'mode','live')
     calls=[]
-    async def respond(system,payload):
+    async def respond(system,payload,**kwargs):
         calls.append(payload)
         return DeckContent(title='Данные',slides=[chart(values=[999,20] if len(calls)==1 else [10,20]),
             Slide(title='Таблица',kind='table',table=[['Команда','Доля %'],['Команда А','10'],['Команда Б','20']]),
@@ -111,6 +111,36 @@ def test_outline_autonomously_selects_native_visuals_and_retries_bad_values(clie
     result=asyncio.run(llm.make_outline(OutlineRequest(template_id='tech',count=3,prompt='Команда А: 10%; Команда Б: 20%\nПодготовить, запустить.'),db.template_get('tech')))
     assert [s.kind for s in result.slides]==['chart','table','diagram'] and len(calls)==2
     assert result.slides[0].chart.values==[10,20] and 'format_correction' in calls[-1]
+
+
+def test_outline_retries_truncated_output_with_larger_completion_budget(client,monkeypatch):
+    from app import database as db
+    from app.models import OutlineRequest
+    monkeypatch.setattr(settings,'mode','live')
+    calls=[]
+    async def respond(system,payload,template,**kwargs):
+        calls.append({'payload':payload.copy(),'kwargs':kwargs})
+        if len(calls)==1: raise llm.LLMTruncatedError('provider stopped at output limit')
+        return DeckContent(title='Обзор',slides=[
+            Slide(title='Обзор',kind='title'),Slide(title='Контекст'),Slide(title='Действия')]).model_dump()
+    monkeypatch.setattr(llm,'complete_with_template',respond)
+    request=OutlineRequest(template_id='tech',count=3,prompt='Создай краткую структуру по большому материалу.')
+    result=asyncio.run(llm.make_outline(request,db.template_get('tech')))
+    assert len(result.slides)==3
+    assert len(calls)==2 and calls[1]['kwargs']['max_tokens']>settings.outline_max_tokens
+    assert 'format_correction' in calls[1]['payload']
+
+
+def test_outline_failure_for_large_material_has_actionable_size_guidance(client,monkeypatch):
+    from app.models import OutlineRequest
+    monkeypatch.setattr(settings,'mode','live')
+    async def malformed(system,payload,template,**kwargs): return {}
+    monkeypatch.setattr(llm,'complete_with_template',malformed)
+    request=OutlineRequest(template_id='tech',count=3,prompt='Крупный материал без пригодной структуры.')
+    with pytest.raises(llm.LLMError,match='Не удалось собрать структуру') as error:
+        asyncio.run(llm.make_outline(request,{'id':'tech','name':'Test','metadata':{'ratio':16/9}}))
+    assert '17 тысяч слов' not in str(error.value)
+    assert '50 000 символов' in str(error.value)
 
 @pytest.mark.parametrize('kind',['chart','table','diagram','icons','text'])
 def test_assistant_converts_without_new_numbers(client,monkeypatch,kind):

@@ -95,7 +95,7 @@ def test_outline_model_can_select_library_icons(monkeypatch):
     from app.services import llm
     from app.config import settings
     monkeypatch.setattr(settings,'mode','live')
-    async def model(system,payload,template):
+    async def model(system,payload,template,**kwargs):
         assert payload['icon_library']['icons']['heart']
         assert 'icon_names' in system
         return DeckContent(title='Здоровье',slides=[

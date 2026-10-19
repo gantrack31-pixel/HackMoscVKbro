@@ -1,10 +1,26 @@
 import { Icon } from "./Icon";
+import { DecklyMascot } from "./DecklyMascot";
+
 export function ThinkingSkeleton({ label }: { label: string }) {
   return (
     <div className="thinking" role="status" aria-live="polite" aria-busy="true">
-      <div className="thinking-label">
-        <Icon name="ui-thinking" size={20} />
-        <span>{label}…</span>
+      <div className="thinking-intro">
+        <DecklyMascot
+          animation="think"
+          size={148}
+          working
+          className="thinking-mascot"
+        />
+        <div className="thinking-copy">
+          <span className="thinking-kicker">
+            <Icon name="ui-thinking" size={16} />
+            DECKLY · СТРУКТУРА
+          </span>
+          <strong className="thinking-label">{label}…</strong>
+          <span className="thinking-caption">
+            Выделяем главное и собираем план слайдов
+          </span>
+        </div>
       </div>
       <div className="thinking-slides" aria-hidden="true">
         {[0, 1, 2].map((i) => (

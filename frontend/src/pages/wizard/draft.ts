@@ -51,3 +51,8 @@ export function combinedMaterial(prompt: string, blocks: SourceBlock[]): string 
   return [prompt.trim(), ...blocks.filter(b => b.text).map(b => `Источник: ${b.name}\n${b.text}`)]
     .filter(Boolean).join("\n\n");
 }
+
+export function materialLengthError(text: string, limit = 50_000): string | null {
+  if (text.length <= limit) return null;
+  return `Материал содержит ${text.length.toLocaleString("ru-RU")} символов при лимите ${limit.toLocaleString("ru-RU")}. Текст не был обрезан и не отправлен. Сократите его до ключевых разделов и повторите.`;
+}

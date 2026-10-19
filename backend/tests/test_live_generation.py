@@ -76,3 +76,18 @@ def test_openrouter_headers_and_reasoning(monkeypatch):
         async with httpx.AsyncClient(transport=httpx.MockTransport(respond)) as transport:
             assert await llm.complete_json('JSON',{},transport)=={'ok':True}
     asyncio.run(run())
+
+
+def test_provider_output_limit_is_reported_as_truncated_json(monkeypatch):
+    monkeypatch.setattr(settings,'base_url','https://openrouter.ai/api/v1')
+    monkeypatch.setattr(settings,'api_key','private-test-key')
+    monkeypatch.setattr(settings,'model','qwen/qwen3.8-27b')
+    def respond(request):
+        body=json.loads(request.content)
+        assert body['max_tokens']==settings.outline_max_tokens
+        return httpx.Response(200,json={'choices':[{'finish_reason':'length','message':{'content':'{"slides":['}}]})
+    async def run():
+        async with httpx.AsyncClient(transport=httpx.MockTransport(respond)) as transport:
+            with pytest.raises(llm.LLMTruncatedError):
+                await llm.complete_json('JSON',{'schema':{'title':'DeckContent'}},transport)
+    asyncio.run(run())
