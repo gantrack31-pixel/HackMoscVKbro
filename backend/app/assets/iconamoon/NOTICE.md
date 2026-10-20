@@ -1,6 +1,6 @@
 # IconaMoon Regular
 
-24 selected icons by **Dariush Habibpour**, from the official
+67 selected icons by **Dariush Habibpour**, from the official
 [IconaMoon repository](https://github.com/dariushhpg1/IconaMoon), revision
 `b568f9845ca633fa30918b31d166a4de9fe7edb2`.
 

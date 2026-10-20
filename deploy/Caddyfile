@@ -1,0 +1,22 @@
+{$DOMAIN} {
+	# Caddy obtains and renews the Let's Encrypt certificate automatically.
+	# Cache-Control for static bundles is set by the app (http_assets.py).
+	encode zstd gzip
+
+	request_body {
+		max_size 60MB
+	}
+
+	reverse_proxy deckly:8000 {
+		# Generation responses can take minutes; never cut them off at the proxy.
+		transport http {
+			read_timeout 600s
+			write_timeout 600s
+		}
+	}
+
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		-Server
+	}
+}
