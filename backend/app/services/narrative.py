@@ -52,3 +52,23 @@ def validate_narrative_slide(slide, source):
     if unsupported:
         raise ValueError('В тексте есть числа, которых нет в источнике: '+', '.join(str(v) for v in sorted(unsupported))+
                          '. Не выдумывай показатели, цели, сроки или проценты; неизвестное обозначь словами.')
+
+
+# Words that only say "make a presentation"; they carry no topic. Short exact forms
+# avoid swallowing real topics ("температура", "любовь", "проектирование").
+GENERIC_STEMS=('презентац','слайд','сдела','созда','подготов','presentation','slide')
+GENERIC_WORDS={'тема','тему','темы','теме','нужна','нужно','нужен','нужны','мне','пожалуйста','какую','нибудь',
+               'любую','любой','любая','просто','простую','простая','хорошую','хорошая','красивую','красивая',
+               'проект','проекта','проекту','проектом','проекте','тест','тестовая','тестовую','для','про',
+               'deck','make','create','about','please','test','project','something','any','the',
+               # Two-letter function words; two-letter abbreviations (ИИ, AI, HR) still count as a topic.
+               'на','за','от','до','об','во','из','ко','со','не','мы','вы','ты','он','an','of','on','to','in','my','me','is','it','at','by','or'}
+VAGUE_PROMPT=('Уточните тему: о чём презентация, для кого она и что должна решить аудитория. '
+              'Например: «Переход отдела продаж на CRM: сроки, затраты и риски — для руководства». '
+              'Можно также приложить материал.')
+
+
+def is_vague_prompt(prompt: str) -> bool:
+    """True when the request names no topic at all, e.g. «Презентация» or «сделай слайды»."""
+    words=re.findall(r'[^\W\d_]{2,}',prompt.casefold().replace('ё','е'))
+    return not any(word not in GENERIC_WORDS and not word.startswith(GENERIC_STEMS) for word in words)

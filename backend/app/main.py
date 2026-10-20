@@ -31,6 +31,7 @@ from .services.template_parser import NORMALIZATION_VERSION, fingerprint
 from .services.pptx_security import validate_pptx_archive
 from .services.llm import make_outline, review_content, create_design_variants, configured, LLMError
 from .services.visual_grounding import normalize_model_icons
+from .services.narrative import is_vague_prompt, VAGUE_PROMPT
 from .services.layout import build_scene
 from .services.audit import audit_deck
 from .services.sources import slide_binding
@@ -441,6 +442,9 @@ async def outline(request: OutlineRequest,http_request:Request,user=Depends(curr
     resources=db.materials_get(request.resource_ids,user['id'])
     if len(resources)!=len(set(request.resource_ids)):
         raise HTTPException(404,'Один из материалов больше недоступен.')
+    # Without a topic the model can only invent a generic deck; ask before spending a request.
+    if not resources and is_vague_prompt(request.prompt):
+        raise HTTPException(422,{'code':'PROMPT_TOO_VAGUE','message':VAGUE_PROMPT})
     try:
         async with generation_slots:
             result=await make_outline(request,template,resources)
