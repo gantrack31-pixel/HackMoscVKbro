@@ -24,6 +24,7 @@ def client(tmp_path, monkeypatch):
     monkeypatch.setattr(settings, 'storage', tmp_path/'data')
     monkeypatch.setattr(settings, 'mode', 'live')
     monkeypatch.setattr(settings, 'base_url', 'http://127.0.0.1:8001/v1')
+    monkeypatch.setattr(settings, 'model', 'test-only-model')
     monkeypatch.setattr(settings, 'email_verification_required', False)
     with TestClient(app) as c:
         auth = c.post('/api/auth/register', json={'email':'assistant@example.test', 'password':'Assistant-Test-2037!',

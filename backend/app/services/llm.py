@@ -167,6 +167,15 @@ async def complete_json(system: str, payload: dict, client: httpx.AsyncClient | 
     # Only add response_format if explicitly enabled and supported by provider
     if settings.json_mode and 'platformpreview' not in settings.base_url:
         body['response_format']={'type':'json_object'}
+        if task == 'AssistantPlan' and parsed.hostname == 'openrouter.ai' and settings.assistant_json_schema:
+            # JSON mode alone permits arbitrary keys and flat slide objects.
+            # Keep optional patch fields optional: null is an intentional clear.
+            body['response_format'] = {
+                'type': 'json_schema',
+                'json_schema': {'name': 'AssistantPlan', 'strict': True, 'schema': payload['schema']},
+            }
+            # Do not route to endpoints that silently ignore the requested schema.
+            body['provider'] = {**body.get('provider', {}), 'require_parameters': True}
     client=client or provider_http.get()
     owned=client is None
     client=client or httpx.AsyncClient(timeout=httpx.Timeout(settings.timeout,connect=15),follow_redirects=False)

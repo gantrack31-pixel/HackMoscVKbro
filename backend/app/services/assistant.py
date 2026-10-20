@@ -1,6 +1,7 @@
 """Bounded AI proposals. Rendering, evidence and atomic publication remain server-owned."""
 import asyncio
 import json
+import logging
 import re
 from decimal import Decimal
 from pydantic import ValidationError
@@ -235,8 +236,14 @@ async def edit_presentation(request, template, source, resources=None):
                'review_issues': [item.model_dump() for item in request.review_issues if item.slide in allowed],
                'icon_library': model_icons(), 'audit_issues': [i.model_dump() for i in issues[request.variant] if i.slide in allowed][:100],
                'geometry': [{'slide': i, **scene_context(scenes[request.variant][i])} for i in allowed],
-               'schema': schema, 'pass': 1}
+               'schema': schema,
+               'response_example': {
+                   'summary': 'Краткое описание предложенных правок.',
+                   'changes': [{'slide': allowed[0], 'body': 'Новый текст этого слайда.'}],
+               },
+               'pass': 1}
     for attempt in range(2):
+        raw = None
         try:
             if settings.vision:
                 from .scene_snapshot import scene_image
@@ -339,9 +346,30 @@ async def edit_presentation(request, template, source, resources=None):
                 raise ValueError('Правки создают новые ошибки вёрстки: ' + details)
             break
         except (ValidationError, ValueError, llm.LLMFormatError) as exc:
+            logging.getLogger(__name__).warning(
+                'Assistant validation failed: attempt=%s type=%s', attempt + 1, type(exc).__name__)
             if attempt:
+                if isinstance(exc, (ValidationError, llm.LLMFormatError)):
+                    raise llm.LLMError(
+                        'AI вернул правки в неподходящем формате. '
+                        'Попробуйте отправить запрос ещё раз — черновик не изменён.'
+                    ) from exc
                 raise llm.LLMError('Правки не прошли проверку; черновик не изменён. ' + str(exc)[:600]) from exc
-            payload['format_correction'] = str(exc)[:1600]
+            if isinstance(exc, ValidationError):
+                feedback = [
+                    f"{'.'.join(str(part) for part in error['loc'])}: {error['msg']}"
+                    for error in exc.errors(include_input=False, include_url=False)[:20]
+                ]
+            elif isinstance(exc, llm.LLMFormatError):
+                feedback = ['Ответ должен быть одним завершённым JSON-объектом AssistantPlan.']
+            else:
+                feedback = [str(exc)[:1600]]
+            payload['format_correction'] = '\n'.join(feedback)[:8000]
+            # Re-send the rejected proposal so the correction can preserve valid
+            # edits. Never infer the target slide or accept a flat patch ourselves.
+            if raw is not None and len(json.dumps(raw, ensure_ascii=False)) <= 160_000:
+                payload['previous_draft'] = raw
+            payload['pass'] = attempt + 2
     current, issues = candidate, after
     return current, {'summary': plan.summary,
                      'slide_order': order,

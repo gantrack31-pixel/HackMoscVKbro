@@ -62,6 +62,7 @@ class Settings:
     image_concurrency: int = field(default_factory=lambda: max(1,min(8,int(os.getenv('IMAGE_CONCURRENCY','2')))))
     temperature: float = field(default_factory=lambda: float(os.getenv('LLM_TEMPERATURE', '0.3')))
     json_mode: bool = field(default_factory=lambda: os.getenv('LLM_JSON_MODE', 'true').lower() == 'true')
+    assistant_json_schema: bool = field(default_factory=lambda: os.getenv('LLM_ASSISTANT_JSON_SCHEMA', 'true').lower() == 'true')
     vision: bool = field(default_factory=lambda: os.getenv('LLM_VISION_ENABLED', 'false').lower() == 'true')
     context_audit: bool = field(default_factory=lambda: os.getenv('LLM_CONTEXT_AUDIT', 'true').lower() == 'true')
     extra_body: dict = field(default_factory=lambda: json.loads(os.getenv('LLM_EXTRA_BODY', '{}')))

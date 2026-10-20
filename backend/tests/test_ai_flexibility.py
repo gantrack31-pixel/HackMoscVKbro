@@ -100,6 +100,7 @@ def test_repair_uses_one_call_even_with_remaining_old_errors(client, monkeypatch
 
 
 def test_absolute_inference_timeout_closes_request(monkeypatch):
+    monkeypatch.setattr(settings, 'model', 'test-only-model')
     monkeypatch.setattr(settings, 'base_url', 'http://127.0.0.1:8001/v1')
     monkeypatch.setattr(settings, 'timeout', .02)
     stopped = []
