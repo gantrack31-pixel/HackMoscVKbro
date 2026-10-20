@@ -105,7 +105,7 @@ def test_invalid_model_plan_fails_without_partial_save(client, monkeypatch):
     attempts = []
 
     async def model(system, payload):
-        attempts.append(True)
+        attempts.append(payload['variant'])
         return {'slides': [
             {'slide': 0, 'design': {'composition': 'grid'}},
             {'slide': 0, 'design': {'composition': 'grid'}},
@@ -116,7 +116,8 @@ def test_invalid_model_plan_fails_without_partial_save(client, monkeypatch):
     monkeypatch.setattr(llm, 'complete_json', model)
     job = regenerate(client, original['id'])
     assert job['state'] == 'failed' and job['project_id'] is None
-    assert len(attempts) == 2
+    # Variants are planned in parallel; each gets one correction, then the job fails as a whole.
+    assert attempts and all(attempts.count(v) <= 2 for v in 'abc') and 2 in {attempts.count(v) for v in 'abc'}
     assert len(client.get('/api/projects').json()) == 1
     assert client.get('/api/projects/' + original['id']).json() == original
 

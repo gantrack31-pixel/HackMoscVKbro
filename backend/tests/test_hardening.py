@@ -46,7 +46,9 @@ def test_redesign_retries_format_and_lossless_shorthand(client, monkeypatch):
     request=client.post('/api/projects/ai-test/regenerate',json={'instruction':'Обнови оформление'})
     job=client.get('/api/jobs/'+request.json()['job_id']).json()
     assert job['state']=='complete', job
-    assert len(calls)==2 and 'format_correction' in calls[1]
+    # Three parallel variant plans; only the one that failed is retried, with the format correction.
+    retried=[c for c in calls if 'format_correction' in c]
+    assert len(calls)==4 and len(retried)==1 and retried[0]['variant']==calls[0]['variant']
     after=client.get('/api/projects/'+job['project_id']).json()['content']
     for before, current in zip(original['slides'],after['slides']):
         assert before['body']==current['body'] and before['source_quote']==current['source_quote']

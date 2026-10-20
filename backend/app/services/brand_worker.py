@@ -7,10 +7,15 @@ import sys
 sys.path.insert(0,str(Path(__file__).resolve().parent))
 try:
     import resource
-    resource.setrlimit(resource.RLIMIT_AS,(512*1024*1024,512*1024*1024))
-    resource.setrlimit(resource.RLIMIT_CPU,(10,10))
 except ImportError:
-    pass  # Windows uses wall timeout + strict byte/node/page bounds.
+    resource=None  # Windows uses wall timeout + strict byte/node/page bounds.
+if resource:
+    for limit,value in ((resource.RLIMIT_AS,512*1024*1024),(resource.RLIMIT_CPU,10)):
+        try:
+            resource.setrlimit(limit,(value,value))
+        except (ValueError,OSError):
+            # macOS rejects address-space limits; the wall timeout and parser bounds still apply.
+            pass
 
 from brand_parser import parse_brand,BrandError
 

@@ -3,6 +3,7 @@ from __future__ import annotations
 from copy import deepcopy
 from hashlib import sha256
 import json
+import logging
 import os
 from pathlib import Path
 import subprocess
@@ -41,10 +42,13 @@ def parse_isolated(data,name):
         try:
             process=subprocess.run([sys.executable,'-I',str(worker),str(source),filename,str(output)],
                                    cwd=temp,env=environment,stdin=subprocess.DEVNULL,stdout=subprocess.DEVNULL,
-                                   stderr=subprocess.DEVNULL,timeout=12,check=False,
+                                   stderr=subprocess.PIPE,timeout=12,check=False,
                                    creationflags=getattr(subprocess,'CREATE_NO_WINDOW',0))
         except subprocess.TimeoutExpired:raise BrandError('Разбор стиля занял больше 12 секунд. Уменьшите файл или экспортируйте только JSON-токены.') from None
         if process.returncode or not output.is_file() or output.stat().st_size>6*1024*1024:
+            # The user sees a safe generic message; the operator needs the parser's own reason.
+            logging.getLogger(__name__).warning('brand worker failed code=%s stderr=%s',process.returncode,
+                                                process.stderr.decode('utf-8','replace')[-2000:].strip() or '<empty>')
             raise BrandError('Не удалось безопасно разобрать стиль. Загрузите компактный JSON или раздел PDF со стилем.')
         result=json.loads(output.read_text(encoding='utf-8'))
         if result.get('error'):raise BrandError(result['error'])

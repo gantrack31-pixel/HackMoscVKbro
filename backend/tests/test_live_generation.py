@@ -42,7 +42,9 @@ def test_live_outline_then_generation_keeps_approved_content_and_audience(client
     job=client.get('/api/jobs/'+response.json()['job_id']).json()
     assert job['state']=='complete',job
     project=client.get('/api/projects/'+job['project_id']).json()
-    assert len(calls)==2 and calls[0]['task']['audience']==calls[1]['audience']=='Клиенты и партнёры'
+    # One outline call, then one independent design call per variant (a, b, c).
+    assert len(calls)==4 and calls[0]['task']['audience']=='Клиенты и партнёры'
+    assert sorted(c['variant'] for c in calls[1:])==['a','b','c'] and all(c['audience']=='Клиенты и партнёры' for c in calls[1:])
     assert project['content']['slides'][1]['body']=='User edited this text'
     assert all(set(s['designs'])=={'a','b','c'} for s in project['content']['slides'])
     assert project['variants']['a']!=project['variants']['b']!=project['variants']['c']
@@ -50,7 +52,7 @@ def test_live_outline_then_generation_keeps_approved_content_and_audience(client
     for instruction in ('','   '):
         response=client.post('/api/projects/'+project['id']+'/regenerate',json={'instruction':instruction})
         assert response.status_code==422
-    assert len(calls)==2
+    assert len(calls)==4  # a rejected empty instruction never reaches the model
     for extension in ('pptx','pdf','html'):
         assert client.get('/api/projects/'+project['id']+'/export/'+extension).status_code==200
 

@@ -4,7 +4,9 @@ import os
 # Set before test collection imports app.config / load_dotenv (override=False).
 os.environ.update({
     'PYTHON_DOTENV_DISABLED': '1',
-    'LLM_BASE_URL': '', 'LLM_API_KEY': '', 'LLM_MODEL': '',
+    # configured() needs a URL and a model; blank values made every live-path test stop at
+    # "not connected". The local URL is never reached: tests stub or mock the provider.
+    'LLM_BASE_URL': 'http://127.0.0.1:8001/v1', 'LLM_API_KEY': '', 'LLM_MODEL': 'test-model',
     'IMAGE_BASE_URL': '', 'IMAGE_API_KEY': '',
     'AI_OPERATION_TIMEOUT_SECONDS': '240', 'LLM_TIMEOUT_SECONDS': '180',
     'APP_ENV': 'development', 'LLM_MODE': 'demo', 'ALLOW_DEMO_IN_PRODUCTION': 'false',
