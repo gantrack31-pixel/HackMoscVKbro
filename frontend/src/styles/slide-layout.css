@@ -1,0 +1,67 @@
+.slide-layout-editor {
+  width: 100%;
+  min-width: 0;
+}
+.slide-layout-surface {
+  position: relative;
+  width: 100%;
+}
+.slide-layout-surface > .deck-slide {
+  display: block;
+  width: 100%;
+}
+.slide-layout-overlay {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+  user-select: none;
+}
+.slide-layout-hit {
+  cursor: move;
+  outline: none;
+}
+.slide-layout-hit:hover,
+.slide-layout-hit:focus-visible {
+  stroke: #0077ff;
+  stroke-width: 1;
+  stroke-dasharray: 5 4;
+  vector-effect: non-scaling-stroke;
+}
+.slide-layout-outline {
+  fill: none;
+  stroke: #0077ff;
+  stroke-width: 1.5;
+  pointer-events: none;
+}
+.slide-layout-handle {
+  fill: #fff;
+  stroke: #0077ff;
+  stroke-width: 1.5;
+}
+.slide-layout-handle:focus-visible {
+  fill: #b9ddff;
+  outline: none;
+  stroke-width: 3;
+}
+.slide-layout-overlay[aria-disabled="true"] .slide-layout-hit,
+.slide-layout-overlay[aria-disabled="true"] .slide-layout-handle {
+  cursor: default !important;
+}
+.slide-layout-hint {
+  margin: 10px 0 0;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.6;
+}
+.page .editor-page .slide-canvas:has(.slide-layout-editor) {
+  overflow: visible;
+}
+.slide-canvas .slide-layout-hint {
+  margin: 0;
+  padding: 10px;
+  background: var(--surface);
+  border-top: 1px solid var(--line);
+  border-radius: 0 0 8px 8px;
+}

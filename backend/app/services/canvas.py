@@ -71,6 +71,11 @@ def apply_canvas(scene, slide, metadata):
                         key = axis + endpoint
                         fraction = (obj[key]-old[axis])/old[size] if old[size] else (endpoint == '2')
                         obj[key] = obj[axis]+fraction*obj[size]
+            if obj['type'] == 'polygon':
+                obj['points'] = [
+                    [obj['x']+(x-old['x'])*obj['w']/old['w'] if old['w'] else obj['x'],
+                     obj['y']+(y-old['y'])*obj['h']/old['h'] if old['h'] else obj['y']]
+                    for x, y in obj.get('points', [])]
         if obj['type'] == 'text':
             if design and (design.heading_color if obj['id'] == 'title' else design.text_color):
                 obj['color'] = design.heading_color if obj['id'] == 'title' else design.text_color

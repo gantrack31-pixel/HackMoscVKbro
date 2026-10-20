@@ -9,6 +9,7 @@ import { SlideFields } from "../components/SlideFields";
 import { PresentationAssistant } from "../components/PresentationAssistant";
 import { HistoryControls } from "../components/HistoryControls";
 import { useLivePreview } from "../components/useLivePreview";
+import { updateSlideLayout } from "../components/slideLayout";
 import type { Health, Issue, Project, Slide } from "../types";
 
 export function Audit({
@@ -369,6 +370,14 @@ export function Audit({
           onView={() => setViewing(true)}
           onSlideTo={slideTo}
           onInspect={inspect}
+          layoutDisabled={busy || stale || !valid || preview.pending || Boolean(preview.error)}
+          onLayoutChange={(id, style) => {
+            setDraft(current => {
+              const slide = current || project.content.slides[index];
+              return {...slide, ...updateSlideLayout(slide, project.variant, id, style, project.template.metadata.composition)};
+            });
+            setDirty(true);
+          }}
         />
         <aside className="audit-checklist panel">
           <div className="between audit-checklist-heading">

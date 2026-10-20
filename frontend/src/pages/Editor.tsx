@@ -10,7 +10,8 @@ import { GenerationPassport } from "../components/GenerationPassport";
 import { PresentationAssistant } from "../components/PresentationAssistant";
 import { HistoryControls } from "../components/HistoryControls";
 import { Icon } from "../components/Icon";
-import { SlidePreview } from "../components/SlidePreview";
+import { SlideLayoutEditor } from "../components/SlideLayoutEditor";
+import { updateSlideLayout } from "../components/slideLayout";
 import { PresentationViewer } from "../components/PresentationViewer";
 import { EditorSlideRail } from "../components/EditorSlideRail";
 import { SlideSourceCard } from "../components/SlideSourceCard";
@@ -56,7 +57,7 @@ export function Editor({
   const stale = conflict || (dirty && baseVersion !== project.updated_at);
   const [hasDataErrors, setHasDataErrors] = useState(false);
   const [viewing, setViewing] = useState(false);
-  const motionScope = useSlideMotion(index, ".slide-canvas > .deck-slide");
+  const motionScope = useSlideMotion(index, ".slide-layout-surface");
   const preview = useLivePreview(project, content, dirty && !hasDataErrors);
   useEffect(() => {
     const key = `editor-draft:${project.id}`;
@@ -324,7 +325,11 @@ export function Editor({
           </div>
           <div className="slide-canvas" key={index}>
             {scene ? (
-              <SlidePreview scene={scene} />
+              <SlideLayoutEditor
+                scene={scene}
+                disabled={busy || stale || hasDataErrors || preview.pending || Boolean(preview.error)}
+                onChange={(id, style) => change(updateSlideLayout(slide, project.variant, id, style, project.template.metadata.composition))}
+              />
             ) : (
               <div className="empty">Готовим новый слайд…</div>
             )}

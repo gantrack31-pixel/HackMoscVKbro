@@ -1,6 +1,8 @@
+import { useState } from "react";
 import { Icon } from "./Icon";
 import { AuditSlide } from "./AuditSlide";
-import type { Issue, Project, Scene } from "../types";
+import { SlideLayoutEditor } from "./SlideLayoutEditor";
+import type { Issue, ObjectStyle, Project, Scene } from "../types";
 
 export function AuditCanvas({
   project,
@@ -19,6 +21,8 @@ export function AuditCanvas({
   onView,
   onSlideTo,
   onInspect,
+  layoutDisabled,
+  onLayoutChange,
 }: {
   project: Project;
   index: number;
@@ -36,7 +40,10 @@ export function AuditCanvas({
   onView: () => void;
   onSlideTo: (index: number) => void;
   onInspect: (issue: Issue) => void;
+  layoutDisabled: boolean;
+  onLayoutChange: (id: string, style: ObjectStyle) => void;
 }) {
+  const [editingLayout, setEditingLayout] = useState(false);
   return (
     <section className="audit-canvas panel">
       <div className="between audit-canvas-toolbar">
@@ -50,6 +57,10 @@ export function AuditCanvas({
           <strong>{project.content.slides[index]?.title}</strong>
         </div>
         <div className="row audit-canvas-actions">
+          <button className={`btn sm ${editingLayout ? "primary" : ""}`} aria-pressed={editingLayout}
+            disabled={busy || !scene} onClick={() => setEditingLayout(value => !value)}>
+            Править макет
+          </button>
           <button className="btn sm" onClick={() => onView()} disabled={!scene}>
             <Icon name="editor-preview" />
             Смотреть
@@ -72,7 +83,8 @@ export function AuditCanvas({
           </button>
         </div>
       </div>
-      {scene && (
+      {scene && editingLayout && <SlideLayoutEditor key={index} scene={scene} disabled={layoutDisabled} onChange={onLayoutChange} />}
+      {scene && !editingLayout && (
         <AuditSlide
           scene={scene}
           issues={loading || loadError ? [] : displayed}

@@ -38,6 +38,7 @@ import "./styles/editor-studio.css";
 import "./styles/audit-studio.css";
 import "./styles/analysis-studio.css";
 import "./styles/mascot.css";
+import "./styles/slide-layout.css";
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <ThemeProvider>
     <App />
