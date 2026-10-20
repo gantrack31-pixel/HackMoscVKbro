@@ -35,15 +35,19 @@ def brief_from_request(request):
                                'recommendations':'proportionate to evidence'}}
 
 
+NAVIGATION_NUMBERS=re.compile(
+    r'\b(?:шаг|этап|фаз|раздел|слайд|част|step|phase|stage|section|slide|part)\w*\s+\d{1,2}\b'
+    r'|^\s*\d{1,2}[.)]\s+', re.I | re.M)
+
+
 def validate_narrative_slide(slide, source):
     if slide.analytics is not None:
         raise ValueError('Аналитические расчёты создаёт модуль анализа данных; модель не может создавать их самостоятельно.')
     if slide.source_quote and not locate_quote(slide.source_quote,source):
         raise ValueError('source_quote должна дословно присутствовать в исходном материале или быть пустой.')
-    # Slide/step numbers are navigation, not quantitative claims.
+    # Slide/step numbers and list markers are navigation, not quantitative claims.
     texts=[slide.title,slide.body,*slide.bullets,slide.notes]
-    clean=[re.sub(r'^\s*(?:шаг|этап|раздел|слайд|step|section|slide)\s+\d+\s*[:.\-–]?\s*','',text,flags=re.I)
-           for text in texts]
+    clean=[NAVIGATION_NUMBERS.sub('',text) for text in texts]
     unsupported=numbers('\n'.join(clean))-numbers(source)
     if unsupported:
         raise ValueError('В тексте есть числа, которых нет в источнике: '+', '.join(str(v) for v in sorted(unsupported))+

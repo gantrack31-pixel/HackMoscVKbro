@@ -160,8 +160,18 @@ async def complete_json(system: str, payload: dict, client: httpx.AsyncClient | 
     try:
         # HTTP read timeouts reset on each chunk; this also bounds trickling responses.
         async with asyncio.timeout(settings.timeout):
-            response=await client.post(settings.base_url+'/chat/completions',headers=headers,json=body,
-                                       timeout=httpx.Timeout(settings.timeout,connect=15,pool=15))
+            for attempt in range(2):
+                try:
+                    response=await client.post(settings.base_url+'/chat/completions',headers=headers,json=body,
+                                               timeout=httpx.Timeout(settings.timeout,connect=15,pool=15))
+                    break
+                except (httpx.RemoteProtocolError,httpx.ReadError,httpx.ConnectError) as exc:
+                    # Provider gateways drop long generations without any response; one
+                    # resend within the same time budget is safe because nothing was returned.
+                    if attempt: raise
+                    logging.getLogger(__name__).warning('LLM task=%s connection dropped after %.1fs (%s); retrying once',
+                                                        task or 'audit',monotonic()-started,type(exc).__name__)
+                    await asyncio.sleep(1)
         if response.status_code in {401,403}: raise LLMError('Провайдер отклонил ключ или доступ к модели. Проверьте .env.')
         if response.status_code==429: raise LLMError('Провайдер ограничил запросы. Повторите позже.')
         if response.status_code>=400:
@@ -230,6 +240,22 @@ def demo_outline(request: OutlineRequest) -> DeckContent:
     slides[0].kind='title'
     return DeckContent(title=slides[0].title,slides=slides)
 
+def validate_outline_slide(slide: Slide, request: OutlineRequest, resources: list[dict] | None) -> None:
+    validate_narrative_slide(slide,request.prompt)
+    # Description mode develops a topic: textual table cells are new prose, numbers still need a source.
+    validate_visual(slide,request.prompt,allow_new_text=request.mode=='description')
+    if slide.kind in {'diagram','icons'} and len(slide.bullets)>6:
+        raise ValueError('Схема или пиктограммы вмещают до 6 тезисов; подробности перенеси в notes.')
+    if slide.kind=='icons' and slide.icon_names and len(slide.icon_names)!=len(slide.bullets):
+        raise ValueError('В icon_names нужен один id на каждый bullet в том же порядке.')
+    if slide.resource_id and slide.resource_id not in {item['id'] for item in (resources or [])}:
+        raise ValueError('Используйте только resource_id из каталога материалов.')
+    if slide.resource_icon_ids:
+        pack=next((item for item in (resources or []) if item['id']==slide.resource_id and item['kind']=='icon_pack'),None)
+        allowed={entry['id'] for entry in (pack or {}).get('metadata',{}).get('icons',[])}
+        if not pack or any(icon_id not in allowed for icon_id in slide.resource_icon_ids):
+            raise ValueError('Используйте только icon ID выбранного набора.')
+
 async def make_outline(request: OutlineRequest, template: dict, resources: list[dict] | None = None) -> DeckContent:
     if settings.mode=='demo':
         result=demo_outline(request)
@@ -255,22 +281,25 @@ async def make_outline(request: OutlineRequest, template: dict, resources: list[
             assets={a['id'] for a in metadata.get('assets',[])}
             if any(s.template_asset_id and s.template_asset_id not in assets for s in result.slides):
                 raise ValueError('Используй только asset_id из выбранного шаблона.')
-            if len(result.slides)!=request.count: raise ValueError(f'Нужно ровно {request.count} слайдов')
-            for slide in result.slides:
-                validate_narrative_slide(slide,request.prompt)
-                validate_visual(slide,request.prompt)
-                if slide.kind in {'diagram','icons'} and len(slide.bullets)>6:
-                    raise ValueError('Схема или пиктограммы вмещают до 6 тезисов; подробности перенеси в notes.')
-                if slide.kind=='icons' and slide.icon_names and len(slide.icon_names)!=len(slide.bullets):
-                    raise ValueError('В icon_names нужен один id на каждый bullet в том же порядке.')
-                if slide.resource_id and slide.resource_id not in {item['id'] for item in (resources or [])}:
-                    raise ValueError('Используйте только resource_id из каталога материалов.')
-                if slide.resource_icon_ids:
-                    pack=next((item for item in (resources or []) if item['id']==slide.resource_id and item['kind']=='icon_pack'),None)
-                    allowed={entry['id'] for entry in (pack or {}).get('metadata',{}).get('icons',[])}
-                    if not pack or any(icon_id not in allowed for icon_id in slide.resource_icon_ids):
-                        raise ValueError('Используйте только icon ID выбранного набора.')
-                slide.resource_icon_data=[]
+            # Report every problem at once: a single correction attempt cannot
+            # converge if it only learns about the first one.
+            problems=[]
+            difference=request.count-len(result.slides)
+            if difference:
+                # Models routinely miscount by one; the exact delta lets the retry fix it.
+                problems.append(f'Нужно ровно {request.count} слайдов, получено {len(result.slides)}. '
+                                +(f'Добавь {difference} слайд(а) с содержанием по материалу' if difference>0
+                                  else f'Убери {-difference} слайд(а) или объедини близкие по смыслу')
+                                +', сохранив остальные.')
+            for number,slide in enumerate(result.slides,1):
+                try: validate_outline_slide(slide,request,resources)
+                except ValueError as exc: problems.append(f'Слайд {number}: {exc}')
+            if problems:
+                if not difference:
+                    # Left alone, the model drops the rejected slide instead of fixing it.
+                    problems.append(f'Исправь перечисленные слайды на месте, не удаляя их: в ответе снова ровно {request.count} слайдов.')
+                raise ValueError('\n'.join(problems))
+            for slide in result.slides: slide.resource_icon_data=[]
             result.audience=request.audience
             result.resource_ids=list(request.resource_ids)
             return result
@@ -278,10 +307,12 @@ async def make_outline(request: OutlineRequest, template: dict, resources: list[
             if attempt:
                 if isinstance(exc,LLMTruncatedError):
                     raise LLMError('Ответ модели обрезан лимитом вывода после повтора. Уменьшите объём текста или количество слайдов.') from exc
-                raise LLMError('Не удалось собрать структуру после двух попыток. До 50 000 символов принимаются; эта ошибка не означает превышение лимита текста. Проверьте ответ модели и ограничения провайдера; попробуйте уменьшить количество слайдов.') from exc
+                reason=str(exc).strip().splitlines()[0][:300] if str(exc).strip() else ''
+                raise LLMError('Не удалось собрать структуру после двух попыток. До 50 000 символов принимаются; эта ошибка не означает превышение лимита текста. Проверьте ответ модели и ограничения провайдера; попробуйте уменьшить количество слайдов.'
+                               +(f' Причина: {reason}' if reason else '')) from exc
             if isinstance(exc, LLMTruncatedError):
                 retry_tokens = max(settings.outline_max_tokens, min(settings.outline_max_tokens * 2, 24000))
-            payload['format_correction']=str(exc)[:1600]
+            payload['format_correction']=str(exc)[:4000]
     raise LLMError('Не удалось создать структуру.')
 
 async def review_content(content: dict, source: str) -> list[dict]:
