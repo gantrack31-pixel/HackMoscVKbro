@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { api } from "../api";
-import { readAccount, writeAccount } from "../state/accountStorage";
+import { readAccount, writeAccount, writeAccountDeferred } from "../state/accountStorage";
 import { backupDraftAndReadLatest, isVersionConflict } from "../state/draftRecovery";
 import { Icon } from "../components/Icon";
 import { AuditCanvas } from "../components/AuditCanvas";
@@ -44,7 +44,10 @@ export function Audit({
     [revision, setRevision] = useState(0);
   const [notice, setNotice] = useState("");
   useEffect(() => {
-    if (!writeAccount(accountId, `audit-draft:${project.id}`, dirty ? {draft, index, baseVersion, focus} : null)) setNotice("Не удалось сохранить черновик в браузере. Сохраните изменения перед закрытием.");
+    const key = `audit-draft:${project.id}`;
+    const report = (saved: boolean) => { if (!saved) setNotice("Не удалось сохранить черновик в браузере. Сохраните изменения перед закрытием."); };
+    if (dirty) writeAccountDeferred(accountId, key, {draft, index, baseVersion, focus}, report);
+    else report(writeAccount(accountId, key, null));
   }, [accountId, project.id, draft, dirty, index, baseVersion, focus]);
   const [selected, setSelected] = useState<string[]>([]);
   const [viewing, setViewing] = useState(false);

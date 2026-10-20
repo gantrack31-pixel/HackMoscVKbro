@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { SlideFields, slideKinds } from "../components/SlideFields";
 import { useLivePreview } from "../components/useLivePreview";
 import { api } from "../api";
-import { readAccount, writeAccount } from "../state/accountStorage";
+import { readAccount, writeAccount, writeAccountDeferred } from "../state/accountStorage";
 import { backupDraftAndReadLatest, isVersionConflict } from "../state/draftRecovery";
 import type { DeckContent } from "../types";
 import { GenerationPassport } from "../components/GenerationPassport";
@@ -59,7 +59,9 @@ export function Editor({
   const motionScope = useSlideMotion(index, ".slide-canvas > .deck-slide");
   const preview = useLivePreview(project, content, dirty && !hasDataErrors);
   useEffect(() => {
-    setStorageError(!writeAccount(accountId, `editor-draft:${project.id}`, dirty ? { content, baseVersion } : null));
+    const key = `editor-draft:${project.id}`;
+    if (dirty) writeAccountDeferred(accountId, key, { content, baseVersion }, (saved) => setStorageError(!saved));
+    else setStorageError(!writeAccount(accountId, key, null));
   }, [accountId, project.id, content, dirty, baseVersion]);
 
   useEffect(() => {

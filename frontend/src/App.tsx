@@ -3,11 +3,27 @@ import { api } from "./api";
 import { AuthScreen } from "./pages/AuthScreen";
 import { EmailVerification, PasswordReset } from "./pages/AuthRecovery";
 import { YandexAuth } from "./pages/YandexAuth";
+import { prefetchPage } from "./navigation/pageLoaders";
+import { readRoute } from "./navigation/routes";
 import type { User } from "./types";
 
-const Workspace = lazy(() =>
-  import("./pages/Workspace").then((module) => ({ default: module.Workspace })),
-);
+const loadWorkspace = () =>
+  import("./pages/Workspace").then((module) => ({ default: module.Workspace }));
+const Workspace = lazy(loadWorkspace);
+
+// For returning users, fetch the workspace and the requested page while the
+// session check runs instead of after it. First-time visitors keep the
+// bandwidth for the sign-in scene.
+function prefetchWorkspace() {
+  try {
+    if (!Object.keys(localStorage).some((key) => key.startsWith("deckly:")))
+      return;
+  } catch {
+    return;
+  }
+  void loadWorkspace().catch(() => {});
+  prefetchPage(readRoute());
+}
 
 function recoveryTokens() {
   const params = new URLSearchParams(location.hash.slice(1));
@@ -34,6 +50,7 @@ export default function App() {
     useState(recoveryTokens);
   useEffect(() => {
     let active = true;
+    prefetchWorkspace();
     api
       .me()
       .then((r) => {

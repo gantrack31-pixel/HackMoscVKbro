@@ -21,7 +21,8 @@ export function TemplateCard({
   useGSAP(
     () => {
       const media = gsap.matchMedia();
-      media.add("(prefers-reduced-motion: no-preference)", () => {
+      // Each scrubbed tilt restyles its card on every scroll frame; touch devices skip it.
+      media.add("(prefers-reduced-motion: no-preference) and (hover: hover) and (pointer: fine)", () => {
         const element = card.current!;
         const scrollTilt = gsap.timeline({
           scrollTrigger: {

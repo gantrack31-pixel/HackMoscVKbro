@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { api } from "../api";
 import { readAccount, writeAccount } from "../state/accountStorage";
 import { Icon } from "./Icon";
@@ -71,7 +71,9 @@ export function PresentationAssistant({
     return () => clearInterval(timer);
   }, [proposal?.id]);
   const expired = Boolean(proposal && Date.parse(proposal.expires_at) <= now);
-  const proposalCurrent = !expired && proposal?.base_updated_at === project.updated_at && reviewDraft === JSON.stringify(content);
+  // The countdown re-renders every second; serialize the deck (images included) only when it changes.
+  const contentSignature = useMemo(() => (proposal ? JSON.stringify(content) : ""), [proposal, content]);
+  const proposalCurrent = !expired && proposal?.base_updated_at === project.updated_at && reviewDraft === contentSignature;
   const displayChange = (value: unknown, field: string) => {
     if (["image_data", "resource_icon_data", "element_images"].includes(field)) return value ? "Встроенные изображения" : "Нет изображений";
     if (field === "evidence_sources" && Array.isArray(value)) return `Источников: ${value.length}`;

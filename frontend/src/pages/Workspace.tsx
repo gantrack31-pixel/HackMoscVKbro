@@ -6,7 +6,7 @@ import { LeaveWorkspaceDialog } from "../components/LeaveWorkspaceDialog";
 import { Icon } from "../components/Icon";
 import { TemplatePreviewDialog } from "../components/TemplatePreviewDialog";
 import { readRoute, routes } from "../navigation/routes";
-import { pageLoaders } from "../navigation/pageLoaders";
+import { pageLoaders, prefetchPage } from "../navigation/pageLoaders";
 import type { Health, Project, Route, Template, User } from "../types";
 
 import { clearPendingGenerationJob } from "./wizard/pendingJob";
@@ -56,6 +56,16 @@ export function Workspace({
   const favoriteBusy = useRef(new Set<string>());
   const uploadInput = useRef<HTMLInputElement>(null);
   useDisclosureMotion();
+  useEffect(() => {
+    // Touch screens never hover the navigation, so warm the main working pages once idle.
+    const warm = () => (["create", "editor", "templates"] as const).forEach(prefetchPage);
+    if ("requestIdleCallback" in window) {
+      const handle = requestIdleCallback(warm, { timeout: 4000 });
+      return () => cancelIdleCallback(handle);
+    }
+    const timer = setTimeout(warm, 2000);
+    return () => clearTimeout(timer);
+  }, []);
   const previewOrigin = useRef<HTMLElement | null>(null);
   const openPreview = (template: Template, source?: HTMLElement) => {
     const cover =

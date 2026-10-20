@@ -31,8 +31,47 @@ function recoveryCopies(key: string): {key: string; copy: RecoveryCopy}[] {
   return found.sort((a,b) => b.copy.savedAt - a.copy.savedAt);
 }
 
+// Draft snapshots serialize the whole document, embedded images included, and
+// rescan every recovery copy. Typing coalesces into one write per pause; any
+// read or explicit write of the same key settles the pending one first.
+type DeferredWrite = {timer: ReturnType<typeof setTimeout>; since: number; run: () => void};
+const deferred = new Map<string, DeferredWrite>();
+const deferDelay = 400, deferMaxWait = 2000;
+function settleDeferred(key: string, run: boolean) {
+  const item = deferred.get(key);
+  if (!item) return;
+  deferred.delete(key);
+  clearTimeout(item.timer);
+  if (run) item.run();
+}
+export function flushDeferredWrites() {
+  for (const key of [...deferred.keys()]) settleDeferred(key, true);
+}
+if (typeof addEventListener === "function" && typeof document !== "undefined") {
+  addEventListener("pagehide", flushDeferredWrites);
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "hidden") flushDeferredWrites();
+  });
+}
+
+export function writeAccountDeferred(account: string, name: string, value: unknown, onResult?: (saved: boolean) => void) {
+  const key = accountKey(account, name);
+  const since = deferred.get(key)?.since ?? Date.now();
+  settleDeferred(key, false);
+  const wait = Math.max(0, Math.min(deferDelay, since + deferMaxWait - Date.now()));
+  deferred.set(key, {
+    since,
+    run: () => {
+      const saved = writeAccount(account, name, value);
+      onResult?.(saved);
+    },
+    timer: setTimeout(() => settleDeferred(key, true), wait),
+  });
+}
+
 export function readAccount<T>(account: string, name: string): T | null {
   const key = accountKey(account, name);
+  settleDeferred(key, true);
   try {
     if (!isDraft(name)) return JSON.parse(localStorage.getItem(key) || "null");
     // Each tab owns its working draft. The literal null is a deliberate clear,
@@ -54,6 +93,7 @@ export function readAccount<T>(account: string, name: string): T | null {
 export function writeAccount(account: string, name: string, value: unknown): boolean {
   try {
     const key = accountKey(account, name);
+    settleDeferred(key, false);
     if (!isDraft(name)) {
       if (value === null) localStorage.removeItem(key);
       else localStorage.setItem(key, JSON.stringify(value));

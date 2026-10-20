@@ -166,3 +166,26 @@ test("corrupt JSON and unrecognized wizard records are recoverable instead of us
   sessionStorage.setItem(storage.accountKey("A", "pending-generation"), JSON.stringify({id: 7, kind: "generate"}));
   assert.equal(pending.readPendingJob("A"), null);
 });
+
+test("deferred draft writes coalesce typing and settle before reads and explicit writes", async () => {
+  install();
+  const results = [];
+  for (const prompt of ["M", "My", "My draft"])
+    storage.writeAccountDeferred("A", "wizard-draft", {...example(), prompt}, saved => results.push(saved));
+  assert.equal(sessionStorage.getItem(storage.accountKey("A", "wizard-draft")), null);
+  // A reader, such as archiving on New presentation, sees the latest edit, not a stale snapshot.
+  assert.equal(drafts.readWizardDraft("A").prompt, "My draft");
+  assert.deepEqual(results, [true]);
+
+  storage.writeAccountDeferred("A", "wizard-draft", {...example(), prompt: "Unsaved edit"});
+  drafts.archiveWizardDraft("A");
+  await new Promise(resolve => setTimeout(resolve, 500));
+  // The archive keeps the latest edit, and the pending write cannot resurrect the cleared draft.
+  assert.equal(storage.readAccount("A", "wizard-previous").prompt, "Unsaved edit");
+  assert.equal(drafts.readWizardDraft("A"), null);
+
+  storage.writeAccountDeferred("A", "wizard-draft", {...example(), prompt: "Timed"}, saved => results.push(saved));
+  await new Promise(resolve => setTimeout(resolve, 500));
+  assert.deepEqual(results, [true, true]);
+  assert.equal(JSON.parse(sessionStorage.getItem(storage.accountKey("A", "wizard-draft"))).prompt, "Timed");
+});

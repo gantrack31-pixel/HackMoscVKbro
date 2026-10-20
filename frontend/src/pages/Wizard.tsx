@@ -36,7 +36,7 @@ import type {
 } from "./wizard/types";
 import { readPendingJob as readJob, writePendingJob as writeJob, checkedJob, checkedProject, isTerminalJobFailure, type PendingJob, type JobPollingFailure } from "./wizard/pendingJob";
 import { readWizardDraft, combinedMaterial, materialLengthError, type SourceBlock, type WizardDraft } from "./wizard/draft";
-import { readAccount, writeAccount } from "../state/accountStorage";
+import { readAccount, writeAccount, writeAccountDeferred } from "../state/accountStorage";
 export { sampleMaterial } from "./wizard/content";
 export { clearPendingGenerationJob } from "./wizard/pendingJob";
 
@@ -125,7 +125,7 @@ export function Wizard({
     const draft: WizardDraft = { version: 1, savedAt: new Date().toISOString(), step, mode, prompt, count,
       audience, purpose, resources, sourceBlocks, analytics, brandId, brandPreferTemplate, content, templateId: template.id,
       resultId: result?.id, variant, instruction };
-    setStorageError(!writeAccount(accountId, "wizard-draft", draft));
+    writeAccountDeferred(accountId, "wizard-draft", draft, (saved) => setStorageError(!saved));
   }, [accountId, step, mode, prompt, count, audience, purpose, resources, sourceBlocks, analytics, brandId, brandPreferTemplate, content, template.id, result?.id, variant, instruction]);
   useEffect(() => {
     if (saved?.resultId && saved.step === 4 && !readPendingJob()) {
