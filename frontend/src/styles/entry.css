@@ -35,8 +35,11 @@
 .auth-dark .auth-panel-content.is-leaving { opacity: 0; transform: translateX(24px); transition-delay: 0s; pointer-events: none; }
 .auth-panel-content:not(.is-leaving) > .auth-form { animation: brand-horizontal .36s var(--motion); }
 .auth-panel-content:not(.is-leaving) > .auth-welcome { animation: brand-horizontal .36s var(--motion); }
-.auth-back { min-height: 32px; transition: color .2s, transform .2s; }
-.auth-back:hover { transform: translateX(-4px); color: var(--entry-ink); }
+.auth-shell .auth-back { display: inline-flex; align-items: center; justify-content: center; align-self: flex-start; gap: 8px; min-height: 44px; max-width: 100%; padding: 10px 14px; margin-bottom: 12px; border: 1px solid var(--entry-border); border-radius: 11px; background: var(--entry-field); color: var(--entry-ink); font-size: 13px; font-weight: 700; line-height: 1.4; transition: color .2s, background-color .2s, border-color .2s; }
+.auth-shell .auth-back .icon { width: 18px; height: 18px; flex-shrink: 0; color: var(--accent-text); }
+.auth-shell .auth-back:hover { background: color-mix(in srgb, #0077ff 8%, var(--entry-surface)); border-color: color-mix(in srgb, #0077ff 40%, var(--entry-border)); color: var(--accent-text); }
+.auth-shell .auth-back:focus-visible { outline: 2px solid var(--accent-text); outline-offset: 4px; }
+@media (prefers-reduced-motion: reduce) { .auth-shell .auth-back { transition: none; } }
 
 /* Creative Orbit stays inside the original branded right panel. */
 .auth-shell .auth-orbit-panel { height: 100dvh; min-height: 0; position: sticky; top: 0; padding: 0; overflow: hidden; justify-content: center; }

@@ -55,7 +55,7 @@ export function AuthFlowContent({
             type="button"
             onClick={() => onGo("login")}
           >
-             Войти
+            <Icon name="auth-return" /><span>Ко входу</span>
           </button>
           <div className="email-pending-icon" aria-hidden="true">
             <Icon name="auth-email-confirmation" size={24} />
@@ -91,7 +91,7 @@ export function AuthFlowContent({
             type="button"
             onClick={() => onGo("login")}
           >
-             Войти
+            <Icon name="auth-return" /><span>Ко входу</span>
           </button>
           <h1>Восстановление пароля</h1>
           <p className="auth-form-hint">
@@ -152,8 +152,7 @@ export function AuthFlowContent({
             type="button"
             onClick={() => onGo("choice")}
           >
-
-            Назад
+            <Icon name="auth-return" /><span>Назад</span>
           </button>
           <h1>
             {screen === "register" ? "Создать аккаунт" : "С возвращением"}
