@@ -53,7 +53,7 @@ def test_dropped_connection_is_resent_once(failure):
 
 def test_second_drop_reports_connection_error():
     client=FlakyClient([httpx.RemoteProtocolError,httpx.RemoteProtocolError])
-    with pytest.raises(llm.LLMError,match='Не удалось подключиться к LLM'):
+    with pytest.raises(llm.LLMError,match='Сервис модели временно недоступен'):
         asyncio.run(llm.complete_json('system',{'task':'x'},client=client))
     assert client.calls==2
 
@@ -106,6 +106,6 @@ def test_stream_truncated_by_token_limit():
 
 def test_stream_error_event_is_reported_without_key():
     client=FlakyClient([],streamed({'error':{'message':'upstream failed for test-key'}}))
-    with pytest.raises(llm.LLMError,match='Провайдер прервал ответ') as error:
+    with pytest.raises(llm.LLMError,match='Сервис модели прервал ответ') as error:
         asyncio.run(llm.complete_json('system',{'task':'x'},client=client))
     assert 'test-key' not in str(error.value)

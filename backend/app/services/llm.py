@@ -140,6 +140,16 @@ def configured() -> bool:
     host=urlparse(settings.base_url).hostname
     return bool(settings.base_url and settings.model and (settings.api_key or host in {'localhost','127.0.0.1','::1'}))
 
+PROVIDER_ABORTED='Сервис модели прервал ответ. Повторите попытку.'
+PROVIDER_UNAVAILABLE='Сервис модели временно недоступен. Повторите попытку через несколько минут.'
+
+def provider_message(status: int) -> str:
+    """User-facing text for a provider HTTP error: no status codes, settings or provider internals."""
+    if status==429: return 'Сервис модели сейчас перегружен. Повторите попытку через минуту.'
+    if status>=500: return PROVIDER_UNAVAILABLE
+    # 401/403/404/400 mean a server misconfiguration the user cannot fix.
+    return 'Сервис модели сейчас недоступен. Если ошибка повторяется, напишите в поддержку.'
+
 async def read_completion(response: httpx.Response) -> dict:
     """Return a chat completion body from either plain JSON or OpenAI-style SSE chunks."""
     if not response.headers.get('content-type','').startswith('text/event-stream'):
@@ -156,7 +166,8 @@ async def read_completion(response: httpx.Response) -> dict:
             message=str((event['error'] or {}).get('message','') if isinstance(event['error'],dict) else event['error'])
             if settings.api_key: message=message.replace(settings.api_key,'[redacted]')
             detail=re.sub(r'[^\w\s.,:/-]','',message)[:180]
-            raise LLMError('Провайдер прервал ответ.'+(f' Причина провайдера: {detail}.' if detail else ''))
+            logging.getLogger(__name__).warning('LLM provider aborted stream: %s',detail or '<no message>')
+            raise LLMError(PROVIDER_ABORTED)
         usage=event.get('usage') or usage
         for choice in event.get('choices') or []:
             content=(choice.get('delta') or {}).get('content')
@@ -223,9 +234,8 @@ async def complete_json(system: str, payload: dict, client: httpx.AsyncClient | 
                     logging.getLogger(__name__).warning('LLM task=%s connection dropped after %.1fs (%s); retrying once',
                                                         task or 'audit',monotonic()-started,type(exc).__name__)
                     await asyncio.sleep(1)
-        if response.status_code in {401,403}: raise LLMError('Провайдер отклонил ключ или доступ к модели. Проверьте .env.')
-        if response.status_code==429: raise LLMError('Провайдер ограничил запросы. Повторите позже.')
         if response.status_code>=400:
+            # Status and provider text are for the operator; users get a message they can act on.
             detail = ''
             try:
                 provider_error = response.json().get('error', {}).get('message', '')
@@ -234,8 +244,9 @@ async def complete_json(system: str, payload: dict, client: httpx.AsyncClient | 
                     detail = re.sub(r'[^\w\s.,:/-]', '', provider_error)[:180]
             except (ValueError, AttributeError):
                 pass
-            suffix = f' Причина провайдера: {detail}.' if detail else ''
-            raise LLMError(f'Провайдер вернул HTTP {response.status_code}.{suffix} Проверьте model URI, URL и LLM_JSON_MODE.')
+            logging.getLogger(__name__).warning('LLM task=%s provider HTTP %s: %s (check LLM_API_KEY, model URI, LLM_BASE_URL, LLM_JSON_MODE)',
+                                                task or 'audit',response.status_code,detail or '<no message>')
+            raise LLMError(provider_message(response.status_code))
         choice=data['choices'][0]
         usage=data.get('usage') or {}
         logging.getLogger(__name__).info('LLM task=%s duration=%.3fs finish=%s prompt_tokens=%s completion_tokens=%s reasoning_tokens=%s',
@@ -249,7 +260,9 @@ async def complete_json(system: str, payload: dict, client: httpx.AsyncClient | 
     except LLMTruncatedError:
         raise
     except (TimeoutError, httpx.TimeoutException) as exc: raise LLMError('Модель не завершила ответ в пределах лимита времени. Уменьшите объём запроса или повторите позже.') from exc
-    except httpx.HTTPError as exc: raise LLMError('Не удалось подключиться к LLM. Проверьте адрес сервера модели.') from exc
+    except httpx.HTTPError as exc:
+        logging.getLogger(__name__).warning('LLM task=%s connection failed (%s); check LLM_BASE_URL and provider availability',task or 'audit',type(exc).__name__)
+        raise LLMError(PROVIDER_UNAVAILABLE) from exc
     except (ValueError,KeyError,IndexError,TypeError) as exc: raise LLMFormatError('Ответ модели не соответствует формату JSON. Проверьте поддержку JSON у провайдера.') from exc
     finally:
         if owned: await client.aclose()
