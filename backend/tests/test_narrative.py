@@ -55,7 +55,7 @@ def test_outline_passes_brief_and_retries_unsupported_numbers(monkeypatch):
         return result
     monkeypatch.setattr(llm,'complete_with_template',respond)
     result=asyncio.run(llm.make_outline(request,{'id':'tech','name':'Test','metadata':{'ratio':16/9}}))
-    assert len(calls)==2 and '23' in calls[1]['format_correction']
+    assert len(calls)==2 and '23' in calls[1]['repair']['problems']
     assert result.slides[1].body=='В мае: 123.' and result.audience=='Руководство'
 
 
@@ -80,9 +80,10 @@ def test_outline_retry_reports_every_rejected_slide_and_final_error_names_the_re
     monkeypatch.setattr(llm,'complete_with_template',respond)
     with pytest.raises(llm.LLMError,match='Причина: Слайд 1:') as error:
         asyncio.run(llm.make_outline(request,{'id':'tech','name':'Test','metadata':{'ratio':16/9}}))
-    correction=calls[1]['format_correction']
-    assert 'Слайд 1:' in correction and '23' in correction and 'Слайд 3:' in correction and '40' in correction
-    assert 'Слайд 2:' not in correction and '50 000 символов' in str(error.value)
+    repair=calls[1]['repair']
+    assert 'Слайд 1:' in repair['problems'] and '23' in repair['problems'] and 'Слайд 3:' in repair['problems'] and '40' in repair['problems']
+    assert 'Слайд 2:' not in repair['problems'] and [item['slide'] for item in repair['rejected']]==[1,3]
+    assert '50 000 символов' in str(error.value)
 
 
 def test_outline_retry_states_the_slide_count_delta(monkeypatch):
@@ -99,17 +100,47 @@ def test_outline_retry_states_the_slide_count_delta(monkeypatch):
     assert 'получено 2' in calls[1]['format_correction'] and 'Добавь 1' in calls[1]['format_correction']
 
 
-def test_outline_retry_asks_to_fix_rejected_slides_in_place(monkeypatch):
+def test_outline_retry_rewrites_only_rejected_slides_and_keeps_the_rest(monkeypatch):
     monkeypatch.setattr(settings,'mode','live')
     request=OutlineRequest(template_id='tech',count=3,prompt='В мае: 123.')
+    first=DeckContent(title='Обзор',slides=[Slide(title='Обзор',kind='title',notes='Исходная заметка'),
+                                            Slide(title='Май',body='Рост на 23%'),Slide(title='Итог')]).model_dump()
     calls=[]
     async def respond(system,payload,template,**kwargs):
         calls.append(deepcopy(payload))
-        body='Рост на 23%' if len(calls)==1 else 'В мае: 123.'
-        return DeckContent(title='Обзор',slides=[Slide(title='Обзор',kind='title'),Slide(title='Май',body=body),Slide(title='Итог')]).model_dump()
+        return first if len(calls)==1 else {'slides':[Slide(title='Май',body='В мае: 123.').model_dump()]}
+    monkeypatch.setattr(llm,'complete_with_template',respond)
+    result=asyncio.run(llm.make_outline(request,{'id':'tech','name':'Test','metadata':{'ratio':16/9}}))
+    assert [s.body for s in result.slides]==['','В мае: 123.',''] and result.slides[0].notes=='Исходная заметка'
+    assert calls[1]['schema']['title']=='SlideRepair' and 'format_correction' not in calls[1]
+    assert [item['slide'] for item in calls[1]['repair']['rejected']]==[2]
+    assert [item['title'] for item in calls[1]['repair']['outline']]==['Обзор','Май','Итог']
+
+
+def test_outline_repair_with_wrong_slide_count_fails_with_reason(monkeypatch):
+    monkeypatch.setattr(settings,'mode','live')
+    request=OutlineRequest(template_id='tech',count=3,prompt='В мае: 123.')
+    first=DeckContent(title='Обзор',slides=[Slide(title='Обзор',kind='title'),Slide(title='Май',body='Рост на 23%'),Slide(title='Итог')]).model_dump()
+    calls=[]
+    async def respond(system,payload,template,**kwargs):
+        calls.append(payload)
+        return first if len(calls)==1 else {'slides':[Slide(title='А').model_dump(),Slide(title='Б').model_dump()]}
+    monkeypatch.setattr(llm,'complete_with_template',respond)
+    with pytest.raises(llm.LLMError,match='Причина: Нужно ровно 1 исправленных слайдов, получено 2'):
+        asyncio.run(llm.make_outline(request,{'id':'tech','name':'Test','metadata':{'ratio':16/9}}))
+
+
+def test_outline_wrong_slide_count_regenerates_the_whole_deck(monkeypatch):
+    monkeypatch.setattr(settings,'mode','live')
+    request=OutlineRequest(template_id='tech',count=3,prompt='Обзор.')
+    slides=[Slide(title='Обзор',kind='title'),Slide(title='Контекст'),Slide(title='Действия')]
+    calls=[]
+    async def respond(system,payload,template,**kwargs):
+        calls.append(deepcopy(payload))
+        return DeckContent(title='Обзор',slides=slides[:2] if len(calls)==1 else slides).model_dump()
     monkeypatch.setattr(llm,'complete_with_template',respond)
     asyncio.run(llm.make_outline(request,{'id':'tech','name':'Test','metadata':{'ratio':16/9}}))
-    assert 'не удаляя их' in calls[1]['format_correction'] and 'ровно 3 слайдов' in calls[1]['format_correction']
+    assert 'repair' not in calls[1] and calls[1]['schema']['title']=='DeckContent'
 
 
 @pytest.mark.parametrize('mode,accepted',[('description',True),('text',False)])

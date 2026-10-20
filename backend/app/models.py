@@ -272,6 +272,11 @@ class DesignPlan(BaseModel):
     model_config = ConfigDict(extra='forbid')
     slides: list[SlideDesignChoice] = Field(min_length=1, max_length=200)
 
+class SlideRepair(BaseModel):
+    """Rewritten outline slides, in the order the correction request listed them."""
+    model_config = ConfigDict(extra='forbid')
+    slides: list[Slide] = Field(min_length=1, max_length=20)
+
 class ThreeDesignPlans(BaseModel):
     model_config = ConfigDict(extra='forbid')
     a: DesignPlan

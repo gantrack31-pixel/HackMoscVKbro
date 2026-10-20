@@ -110,7 +110,9 @@ def test_outline_autonomously_selects_native_visuals_and_retries_bad_values(clie
     monkeypatch.setattr(llm,'complete_json',respond)
     result=asyncio.run(llm.make_outline(OutlineRequest(template_id='tech',count=3,prompt='Команда А: 10%; Команда Б: 20%\nПодготовить, запустить.'),db.template_get('tech')))
     assert [s.kind for s in result.slides]==['chart','table','diagram'] and len(calls)==2
-    assert result.slides[0].chart.values==[10,20] and 'format_correction' in calls[-1]
+    assert result.slides[0].chart.values==[10,20]
+    # Only the rejected chart slide is sent back for rewriting.
+    assert [item['slide'] for item in calls[-1]['repair']['rejected']]==[1]
 
 
 def test_outline_retries_truncated_output_with_larger_completion_budget(client,monkeypatch):

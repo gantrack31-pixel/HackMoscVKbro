@@ -9,7 +9,7 @@ from urllib.parse import urlparse
 import httpx
 from pydantic import ValidationError
 from ..config import settings, BASE
-from ..models import DeckContent, Slide, OutlineRequest, SlideDesign, ThreeDesignPlans
+from ..models import DeckContent, Slide, OutlineRequest, SlideDesign, ThreeDesignPlans, DesignPlan, SlideRepair
 from .template_context import model_template, template_images
 from ..icon_catalog import model_icons
 from . import provider_http
@@ -22,6 +22,10 @@ from .assistant_context import presentation_context
 class LLMError(RuntimeError): pass
 class LLMFormatError(LLMError): pass
 class LLMTruncatedError(LLMFormatError): pass
+class OutlineSlidesRejected(ValueError):
+    """Correct slide count with some slides rejected: only those need rewriting."""
+    def __init__(self, message, deck, rejected):
+        super().__init__(message); self.deck=deck; self.rejected=rejected
 
 
 def inference_options():
@@ -105,6 +109,16 @@ def extract_json(text: str) -> dict:
     return result
 
 
+DESIGN_ROLES={'a':'классический','b':'акцентный','c':'минималистичный'}
+
+
+def single_design_plan(raw, variant):
+    """One variant's plan; a full three-plan answer is accepted and narrowed to that variant."""
+    if isinstance(raw,dict) and 'slides' not in raw and isinstance(raw.get(variant),(dict,list)):
+        raw=raw[variant]
+    return normalize_design_plans({variant:raw})[variant]
+
+
 def normalize_design_plans(raw):
     """Accept only lossless shorthand; Pydantic still validates every choice."""
     if not isinstance(raw, dict): return raw
@@ -140,7 +154,7 @@ async def complete_json(system: str, payload: dict, client: httpx.AsyncClient | 
     if settings.project_id:
         headers['Project-ID']=settings.project_id
     task=payload.get('schema',{}).get('title')
-    tokens={'DeckContent':settings.outline_max_tokens,'ThreeDesignPlans':settings.design_max_tokens,
+    tokens={'DeckContent':settings.outline_max_tokens,'SlideRepair':settings.outline_max_tokens,'ThreeDesignPlans':settings.design_max_tokens,
             'DesignPlan':settings.design_max_tokens,'AssistantPlan':settings.assistant_max_tokens}.get(task,
             settings.audit_max_tokens if 'source_chunks' in payload else settings.max_tokens)
     if max_tokens is not None:
@@ -269,40 +283,71 @@ async def make_outline(request: OutlineRequest, template: dict, resources: list[
              'icon_library':model_icons(),
              'resource_catalog':[compact_resource(item) for item in (resources or [])][:80],
              'image_generation_available':bool(settings.image_base_url),'schema':compact_schema(DeckContent)}
+    assets={a['id'] for a in metadata.get('assets',[])}
+
+    def accept(result):
+        if any(s.template_asset_id and s.template_asset_id not in assets for s in result.slides):
+            raise ValueError('Используй только asset_id из выбранного шаблона.')
+        # Report every problem at once: a single correction attempt cannot
+        # converge if it only learns about the first one.
+        problems,rejected=[],[]
+        difference=request.count-len(result.slides)
+        if difference:
+            # Models routinely miscount by one; the exact delta lets the retry fix it.
+            problems.append(f'Нужно ровно {request.count} слайдов, получено {len(result.slides)}. '
+                            +(f'Добавь {difference} слайд(а) с содержанием по материалу' if difference>0
+                              else f'Убери {-difference} слайд(а) или объедини близкие по смыслу')
+                            +', сохранив остальные.')
+        for index,slide in enumerate(result.slides):
+            try: validate_outline_slide(slide,request,resources)
+            except ValueError as exc:
+                problems.append(f'Слайд {index+1}: {exc}'); rejected.append(index)
+        if problems:
+            if not difference:
+                # Only the rejected slides are rewritten; the rest of the deck is kept as is.
+                raise OutlineSlidesRejected('\n'.join(problems),result,rejected)
+            raise ValueError('\n'.join(problems))
+        for slide in result.slides: slide.resource_icon_data=[]
+        result.audience=request.audience
+        result.resource_ids=list(request.resource_ids)
+        return result
+
+    async def repair(rejected: OutlineSlidesRejected):
+        # Rewriting a few slides costs seconds; regenerating the deck repeats its full output.
+        hidden={'image_data','resource_icon_data','element_images','analytics','designs','design','layout'}
+        repair_payload={key:value for key,value in payload.items() if key not in {'schema','format_correction'}}
+        repair_payload['repair']={
+            'instruction':f'Перепиши только слайды {", ".join(str(i+1) for i in rejected.rejected)}, исправив ошибки. '
+                          'Верни {"slides":[...]} — по одному слайду на каждый номер в том же порядке; остальные слайды не меняй и не возвращай.',
+            'outline':[{'slide':i+1,'title':s.title,'kind':s.kind} for i,s in enumerate(rejected.deck.slides)],
+            'rejected':[{'slide':i+1,**rejected.deck.slides[i].model_dump(exclude=hidden,exclude_defaults=True)} for i in rejected.rejected],
+            'problems':str(rejected)[:4000]}
+        repair_payload['schema']=compact_schema(SlideRepair)
+        raw=await complete_with_template(system,repair_payload,template)
+        # Only the slide list matters; a full deck-shaped answer is narrowed to it.
+        slides=raw.get('slides') if isinstance(raw,dict) else raw
+        fixed=SlideRepair.model_validate(normalize_model_icons({'slides':slides},'slides'))
+        if len(fixed.slides)==request.count!=len(rejected.rejected):
+            # The model answered with the whole deck; it is validated as such.
+            return rejected.deck.model_copy(update={'slides':fixed.slides},deep=True)
+        if len(fixed.slides)!=len(rejected.rejected):
+            raise ValueError(f'Нужно ровно {len(rejected.rejected)} исправленных слайдов, получено {len(fixed.slides)}.')
+        deck=rejected.deck.model_copy(deep=True)
+        for index,slide in zip(rejected.rejected,fixed.slides): deck.slides[index]=slide
+        return deck
+
     # At most one correction; only truncation justifies a larger output budget.
     retry_tokens = settings.outline_max_tokens
+    pending_repair=None
     for attempt in range(2):
         try:
+            if pending_repair:
+                return accept(await repair(pending_repair))
             if attempt:
                 raw=await complete_with_template(system,payload,template,max_tokens=retry_tokens)
             else:
                 raw=await complete_with_template(system,payload,template)
-            result=DeckContent.model_validate(normalize_model_icons(raw,'slides'))
-            assets={a['id'] for a in metadata.get('assets',[])}
-            if any(s.template_asset_id and s.template_asset_id not in assets for s in result.slides):
-                raise ValueError('Используй только asset_id из выбранного шаблона.')
-            # Report every problem at once: a single correction attempt cannot
-            # converge if it only learns about the first one.
-            problems=[]
-            difference=request.count-len(result.slides)
-            if difference:
-                # Models routinely miscount by one; the exact delta lets the retry fix it.
-                problems.append(f'Нужно ровно {request.count} слайдов, получено {len(result.slides)}. '
-                                +(f'Добавь {difference} слайд(а) с содержанием по материалу' if difference>0
-                                  else f'Убери {-difference} слайд(а) или объедини близкие по смыслу')
-                                +', сохранив остальные.')
-            for number,slide in enumerate(result.slides,1):
-                try: validate_outline_slide(slide,request,resources)
-                except ValueError as exc: problems.append(f'Слайд {number}: {exc}')
-            if problems:
-                if not difference:
-                    # Left alone, the model drops the rejected slide instead of fixing it.
-                    problems.append(f'Исправь перечисленные слайды на месте, не удаляя их: в ответе снова ровно {request.count} слайдов.')
-                raise ValueError('\n'.join(problems))
-            for slide in result.slides: slide.resource_icon_data=[]
-            result.audience=request.audience
-            result.resource_ids=list(request.resource_ids)
-            return result
+            return accept(DeckContent.model_validate(normalize_model_icons(raw,'slides')))
         except (ValidationError,ValueError,LLMFormatError) as exc:
             if attempt:
                 if isinstance(exc,LLMTruncatedError):
@@ -310,6 +355,9 @@ async def make_outline(request: OutlineRequest, template: dict, resources: list[
                 reason=str(exc).strip().splitlines()[0][:300] if str(exc).strip() else ''
                 raise LLMError('Не удалось собрать структуру после двух попыток. До 50 000 символов принимаются; эта ошибка не означает превышение лимита текста. Проверьте ответ модели и ограничения провайдера; попробуйте уменьшить количество слайдов.'
                                +(f' Причина: {reason}' if reason else '')) from exc
+            if isinstance(exc,OutlineSlidesRejected):
+                pending_repair=exc
+                continue
             if isinstance(exc, LLMTruncatedError):
                 retry_tokens = max(settings.outline_max_tokens, min(settings.outline_max_tokens * 2, 24000))
             payload['format_correction']=str(exc)[:4000]
@@ -365,7 +413,7 @@ async def create_design_variants(content: DeckContent, template: dict, instructi
         return _demo_redesign(content,template) if instruction else content.model_copy(deep=True)
     if settings.mode!='live': raise LLMError('LLM_MODE должен быть demo или live.')
     system=(BASE/'prompts/design.txt').read_text('utf-8')
-    payload={
+    base={
         'instruction':instruction or 'Создай три разных варианта оформления этой презентации.',
         'audience':content.audience,
         'template':model_template(template),
@@ -377,38 +425,60 @@ async def create_design_variants(content: DeckContent, template: dict, instructi
                    'chart':{'type':s.chart.chart_type,'labels':s.chart.labels,'unit':s.chart.unit} if s.chart else None,
                    'previous_designs':{k:v.model_dump() for k,v in s.designs.items()}}
                   for i,s in enumerate(content.slides)],
-        'schema':compact_schema(ThreeDesignPlans),
+        'schema':compact_schema(DesignPlan),
     }
-    for attempt in range(2):
+
+    def checked(plan):
+        choices=sorted(plan.slides,key=lambda c:c.slide)
+        if [c.slide for c in choices]!=list(range(len(content.slides))):
+            raise ValueError('В плане нужны все индексы слайдов ровно по одному разу.')
+        for choice in choices:
+            art=choice.design.smartart
+            original=content.slides[choice.slide]
+            validate_diagram_design(original,choice.design)
+            if art and (original.kind!='diagram' or sorted(n.bullet for n in art.nodes)!=list(range(len(original.bullets)))):
+                raise ValueError('SmartArt допускается только для diagram и должен включать каждый тезис ровно один раз (до 6).')
+        return [c.design for c in choices]
+
+    async def plan_variant(variant, correction=None):
+        # Variants are independent requests: the provider serves them in parallel,
+        # so the wall time is one plan's output instead of three.
+        payload={**base,'variant':variant,'variant_role':DESIGN_ROLES[variant]}
+        if correction: payload['format_correction']=correction
+        for attempt in range(2):
+            try:
+                raw=await complete_with_template(system,payload,template)
+                return checked(DesignPlan.model_validate(single_design_plan(raw,variant)))
+            except (ValidationError,ValueError,LLMFormatError) as exc:
+                if attempt: raise LLMError('Модель не смогла подготовить три корректные композиции. Повторите запрос.') from exc
+                payload['format_correction']=str(exc)[:1600]
+
+    async def plan_all(variants, correction=None):
         try:
-            raw=await complete_with_template(system,payload,template)
-            plans=ThreeDesignPlans.model_validate(normalize_design_plans(raw))
-            ordered={}
-            for variant in ('a','b','c'):
-                choices=sorted(getattr(plans,variant).slides,key=lambda c:c.slide)
-                if [c.slide for c in choices]!=list(range(len(content.slides))):
-                    raise ValueError('В каждом варианте нужны все индексы слайдов ровно по одному разу.')
-                for choice in choices:
-                    art=choice.design.smartart
-                    original=content.slides[choice.slide]
-                    validate_diagram_design(original,choice.design)
-                    if art and (original.kind!='diagram' or sorted(n.bullet for n in art.nodes)!=list(range(len(original.bullets)))):
-                        raise ValueError('SmartArt допускается только для diagram и должен включать каждый тезис ровно один раз (до 6).')
-                ordered[variant]=[c.design for c in choices]
-            if len({json.dumps([d.model_dump() for d in designs],sort_keys=True) for designs in ordered.values()})!=3:
-                raise ValueError('Три плана должны различаться композицией, плотностью или layout_shift.')
-            if instruction and all(s.designs.get(v)==ordered[v][i] for i,s in enumerate(content.slides) for v in ordered):
-                raise ValueError('Новые планы должны отличаться от предыдущих.')
-            result=content.model_copy(deep=True)
-            for i,slide in enumerate(result.slides):
-                slide.designs={v:ordered[v][i] for v in ordered}
-                slide.design=slide.designs['a']
-                slide.layout=None
-            return result
-        except (ValidationError,ValueError,LLMFormatError) as exc:
-            if attempt: raise LLMError('Модель не смогла подготовить три корректные композиции. Повторите запрос.') from exc
-            payload['format_correction']=str(exc)[:1600]
-    raise LLMError('Не удалось создать оформление.')
+            async with asyncio.TaskGroup() as group:
+                tasks={v:group.create_task(plan_variant(v,correction)) for v in variants}
+        except BaseExceptionGroup as group_error:
+            # A failed variant cancels its siblings; report the first real cause.
+            raise next((e for e in group_error.exceptions if not isinstance(e,asyncio.CancelledError)),group_error.exceptions[0]) from None
+        return {v:task.result() for v,task in tasks.items()}
+
+    signature=lambda designs: json.dumps([d.model_dump() for d in designs],sort_keys=True)
+    ordered=await plan_all('abc')
+    if instruction and all(s.designs.get(v)==ordered[v][i] for i,s in enumerate(content.slides) for v in ordered):
+        ordered=await plan_all('abc','Новые планы должны отличаться от previous_designs.')
+        if all(s.designs.get(v)==ordered[v][i] for i,s in enumerate(content.slides) for v in ordered):
+            raise LLMError('Модель не смогла подготовить три корректные композиции. Повторите запрос.')
+    for variant in ('c','b'):
+        if signature(ordered[variant]) in {signature(ordered[v]) for v in 'abc' if v!=variant}:
+            ordered.update(await plan_all(variant,'План совпал с другим вариантом; выбери другие composition, density или layout_shift в своей роли.'))
+    if len({signature(designs) for designs in ordered.values()})!=3:
+        raise LLMError('Модель не смогла подготовить три корректные композиции. Повторите запрос.')
+    result=content.model_copy(deep=True)
+    for i,slide in enumerate(result.slides):
+        slide.designs={v:ordered[v][i] for v in 'abc'}
+        slide.design=slide.designs['a']
+        slide.layout=None
+    return result
 
 
 def _demo_redesign(content: DeckContent, template: dict) -> DeckContent:
