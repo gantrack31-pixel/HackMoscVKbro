@@ -103,6 +103,10 @@ def approved_material(deck):
                              for label,value in zip(element.chart.labels,element.chart.values))
     return '\n'.join(lines)
 
+def unit_key(text):
+    """Compare units by meaning: '₽' is 'руб', abbreviation dots do not matter. Values are never normalized this way."""
+    return re.sub(r'\s+', ' ', normalized(text).replace('₽', ' руб').replace('.', ' ')).strip()
+
 def validate_visual(slide,source,previous=None,*,allow_new_text=False):
     validate_diagram_design(slide,slide.design)
     for design in slide.designs.values(): validate_diagram_design(slide,design)
@@ -118,7 +122,7 @@ def validate_visual(slide,source,previous=None,*,allow_new_text=False):
         for label,value in zip(chart.labels,chart.values):
             needle=normalized(label)
             if literal_series: break
-            matches=[r for r in records if contains(r,needle) and (not chart.unit.strip() or contains(r,chart.unit))]
+            matches=[r for r in records if contains(r,needle) and (not chart.unit.strip() or contains(unit_key(r),unit_key(chart.unit)))]
             # Restrict to the category's segment, not another category in the same line.
             def category_values(record):
                 tail=record.split(needle,1)[1]
