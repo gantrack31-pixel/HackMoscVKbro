@@ -24,11 +24,16 @@ const pending = await import(await compiled(new URL("../src/pages/wizard/pending
 
 function memoryStorage() {
   const values = new Map();
-  return {values, failWrites: false,
+  return {values, failWrites: false, maxBytes: Infinity,
     get length() { return values.size; },
     key(index) { return [...values.keys()][index] ?? null; },
     getItem(key) { return values.get(key) ?? null; },
-    setItem(key, value) { if (this.failWrites) throw new DOMException("Quota", "QuotaExceededError"); values.set(key, String(value)); },
+    setItem(key, value) {
+      const next = new Map(values).set(key, String(value));
+      const bytes = [...next].reduce((total, [key, value]) => total + 2 * (key.length + value.length), 0);
+      if (this.failWrites || bytes > this.maxBytes) throw new DOMException("Quota", "QuotaExceededError");
+      values.set(key, String(value));
+    },
     removeItem(key) { values.delete(key); },
   };
 }
@@ -73,6 +78,55 @@ test("failed archive cannot erase the only recoverable draft", () => {
   localStorage.failWrites = true;
   assert.equal(drafts.archiveWizardDraft("A"), false);
   assert.deepEqual(drafts.readWizardDraft("A"), old);
+});
+
+test("autosave updates its recovery copy when quota allows one snapshot but not two", async () => {
+  install();
+  const tab = await newDocument();
+  const original = {...example(), prompt: "Original " + "x".repeat(10_000)};
+  const edited = {...original, prompt: "Modified " + "x".repeat(10_000)};
+  assert.equal(tab.writeAccount("A", "wizard-draft", original), true);
+  localStorage.maxBytes = 30_000;
+  const results = [];
+
+  tab.writeAccountDeferred("A", "wizard-draft", edited, saved => results.push(saved));
+  tab.flushDeferredWrites();
+
+  assert.deepEqual(results, [true]);
+  globalThis.sessionStorage = memoryStorage();
+  assert.deepEqual((await newDocument()).readAccount("A", "wizard-draft"), edited);
+});
+
+test("quota failure keeps the old recovery copy if even a replacement is too large", async () => {
+  install();
+  const tab = await newDocument();
+  const original = example();
+  assert.equal(tab.writeAccount("A", "wizard-draft", original), true);
+  const before = new Map(localStorage.values);
+  localStorage.maxBytes = 2_000;
+
+  assert.equal(tab.writeAccount("A", "wizard-draft", {...original, prompt: "x".repeat(10_000)}), false);
+
+  assert.deepEqual(localStorage.values, before);
+  globalThis.sessionStorage = memoryStorage();
+  assert.deepEqual((await newDocument()).readAccount("A", "wizard-draft"), original);
+});
+
+test("quota fallback keeps a shared snapshot available to the other tab", async () => {
+  install();
+  const tabA = await newDocument(), tabB = await newDocument();
+  const original = {...example(), prompt: "x".repeat(10_000)};
+  assert.equal(tabA.writeAccount("A", "wizard-draft", original), true);
+  globalThis.sessionStorage = memoryStorage();
+  assert.equal(tabB.writeAccount("A", "wizard-draft", original), true);
+  const before = new Map(localStorage.values);
+  localStorage.maxBytes = 30_000;
+
+  assert.equal(tabB.writeAccount("A", "wizard-draft", {...original, prompt: "y".repeat(10_000)}), false);
+
+  assert.deepEqual(localStorage.values, before);
+  globalThis.sessionStorage = memoryStorage();
+  assert.deepEqual((await newDocument()).readAccount("A", "wizard-draft"), original);
 });
 
 test("duplicated tabs keep separate working and durable drafts through independent edits and clears", async () => {

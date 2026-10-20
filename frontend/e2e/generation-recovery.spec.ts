@@ -26,6 +26,8 @@ test("poll interruption survives reload and resumes the same job without duplica
   });
   const pending = () => page.evaluate(account => JSON.parse(sessionStorage.getItem(`deckly:${encodeURIComponent(account)}:pending-generation`) || "null"), auth.user.id);
   await page.goto("/#create");
+  // API registration sets cookies; reload so App reads the new session.
+  await page.reload();
   await page.getByRole("button", { name: "Создать презентацию", exact: true }).click();
   await expect(page.getByRole("button", { name: "Проверить состояние", exact: true })).toBeVisible();
   const snapshot = await pending();

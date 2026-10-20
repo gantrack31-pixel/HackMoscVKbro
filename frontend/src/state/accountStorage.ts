@@ -116,11 +116,24 @@ export function writeAccount(account: string, name: string, value: unknown): boo
     if (copies.filter(item => !(item.key === previous?.key && !previous.shared) && !identical.includes(item)).length >= maxRecoveryCopies) return false;
     // Immutable revision keys ensure another tab cannot replace a snapshot
     // between our comparison and removal of an identical older copy.
-    const own = `${key}:recovery:${documentId}:${++revision}`;
-    localStorage.setItem(own, JSON.stringify({version: 1, savedAt: Date.now(), value} satisfies RecoveryCopy));
+    let own = `${key}:recovery:${documentId}:${++revision}`;
+    const snapshot = JSON.stringify({version: 1, savedAt: Date.now(), value} satisfies RecoveryCopy);
+    try {
+      localStorage.setItem(own, snapshot);
+    } catch (error) {
+      const previousCopy = copies.find(item => item.key === previous?.key);
+      // Avoid needing twice the draft's space just to update our own snapshot.
+      // setItem replaces atomically: a failed replacement preserves the old copy.
+      // Shared snapshots and snapshots owned by other documents stay untouched.
+      if (!(error instanceof DOMException) || error.name !== "QuotaExceededError" ||
+          !previous || previous.shared || !previousCopy ||
+          localStorage.getItem(previous.key) !== JSON.stringify(previousCopy.copy)) throw error;
+      own = previous.key;
+      localStorage.setItem(own, snapshot);
+    }
     ownedCopies.set(key, {key: own, shared: identical.some(item => item.key !== previous?.key) || Boolean(previous?.shared && identical.some(item => item.key === previous.key))});
-    if (previous && !previous.shared) localStorage.removeItem(previous.key);
-    for (const item of identical) localStorage.removeItem(item.key);
+    if (previous && !previous.shared && previous.key !== own) localStorage.removeItem(previous.key);
+    for (const item of identical) if (item.key !== own) localStorage.removeItem(item.key);
     return true;
   } catch { return false; }
 }
