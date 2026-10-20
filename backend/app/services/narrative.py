@@ -54,6 +54,36 @@ def validate_narrative_slide(slide, source):
                          '. Не выдумывай показатели, цели, сроки или проценты; неизвестное обозначь словами.')
 
 
+def unsupported_numbers(text, source):
+    return numbers(NAVIGATION_NUMBERS.sub('',text))-numbers(source)
+
+
+def strip_unsupported_numbers(slide, source) -> int:
+    """Last resort after the model failed to fix them: drop sentences and bullets with unsourced numbers.
+
+    Removing a claim never invents one. The title is left alone, so a number there
+    still rejects the slide. Returns how many sentences and bullets were removed.
+    """
+    removed=0
+    def sentences(text):
+        nonlocal removed
+        parts=re.split(r'(?<=[.!?…])\s+',text)
+        kept=[part for part in parts if not unsupported_numbers(part,source)]
+        removed+=len(parts)-len(kept)
+        return ' '.join(kept)
+    slide.body=sentences(slide.body) if slide.body else slide.body
+    slide.notes=sentences(slide.notes) if slide.notes else slide.notes
+    keep=[i for i,bullet in enumerate(slide.bullets) if not unsupported_numbers(bullet,source)]
+    if len(keep)<len(slide.bullets):
+        # Icons are paired with bullets by position; drop the pair together.
+        for field in ('icon_names','resource_icon_ids'):
+            values=getattr(slide,field)
+            if values and len(values)==len(slide.bullets): setattr(slide,field,[values[i] for i in keep])
+        removed+=len(slide.bullets)-len(keep)
+        slide.bullets=[slide.bullets[i] for i in keep]
+    return removed
+
+
 # Words that only say "make a presentation"; they carry no topic. Short exact forms
 # avoid swallowing real topics ("температура", "любовь", "проектирование").
 GENERIC_STEMS=('презентац','слайд','сдела','созда','подготов','presentation','slide')

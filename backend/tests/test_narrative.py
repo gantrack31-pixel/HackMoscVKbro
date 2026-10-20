@@ -78,7 +78,8 @@ def test_outline_retry_reports_every_rejected_slide_and_final_error_names_the_re
     async def respond(system,payload,template,**kwargs):
         calls.append(deepcopy(payload)); return content
     monkeypatch.setattr(llm,'complete_with_template',respond)
-    with pytest.raises(llm.LLMError,match='Причина: Слайд 1:') as error:
+    # On the last attempt slide 1 is salvaged (its only claim is dropped); slide 3 would be left empty, so it still rejects.
+    with pytest.raises(llm.LLMError,match='Причина: Слайд 3:') as error:
         asyncio.run(llm.make_outline(request,{'id':'tech','name':'Test','metadata':{'ratio':16/9}}))
     repair=calls[1]['repair']
     assert 'Слайд 1:' in repair['problems'] and '23' in repair['problems'] and 'Слайд 3:' in repair['problems'] and '40' in repair['problems']

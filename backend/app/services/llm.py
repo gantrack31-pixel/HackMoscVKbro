@@ -16,7 +16,7 @@ from . import provider_http
 from .visual_grounding import validate_visual, validate_diagram_design, normalize_model_icons
 from .sources import source_chunks, slide_binding, validate_bindings, locate_quote
 from .materials import compact_resource
-from .narrative import brief_from_request, validate_narrative_slide
+from .narrative import brief_from_request, validate_narrative_slide, strip_unsupported_numbers
 from .assistant_context import presentation_context
 
 class LLMError(RuntimeError): pass
@@ -368,7 +368,19 @@ async def make_outline(request: OutlineRequest, template: dict, resources: list[
              'image_generation_available':bool(settings.image_base_url),'schema':compact_schema(DeckContent)}
     assets={a['id'] for a in metadata.get('assets',[])}
 
-    def accept(result):
+    def salvage(slide):
+        """Unsourced numbers left after the model's own correction: drop those claims, never the deck."""
+        candidate=slide.model_copy(deep=True)
+        removed=strip_unsupported_numbers(candidate,request.prompt)
+        if not removed: return None
+        if candidate.kind in {'text','icons','steps','diagram'} and not (candidate.body.strip() or candidate.bullets): return None
+        try: validate_outline_slide(candidate,request,resources)
+        except ValueError: return None
+        logging.getLogger(__name__).warning('Outline slide %r: removed %d sentence(s)/bullet(s) with numbers not in the material',
+                                            slide.title[:80],removed)
+        return candidate
+
+    def accept(result, last=False):
         if any(s.template_asset_id and s.template_asset_id not in assets for s in result.slides):
             raise ValueError('Используй только asset_id из выбранного шаблона.')
         # Report every problem at once: a single correction attempt cannot
@@ -384,6 +396,8 @@ async def make_outline(request: OutlineRequest, template: dict, resources: list[
         for index,slide in enumerate(result.slides):
             try: validate_outline_slide(slide,request,resources)
             except ValueError as exc:
+                if last and (fixed:=salvage(slide)) is not None:
+                    result.slides[index]=fixed; continue
                 problems.append(f'Слайд {index+1}: {exc}'); rejected.append(index)
         if problems:
             if not difference:
@@ -426,12 +440,12 @@ async def make_outline(request: OutlineRequest, template: dict, resources: list[
     for attempt in range(2):
         try:
             if pending_repair:
-                return accept(await repair(pending_repair))
+                return accept(await repair(pending_repair),last=True)
             if attempt:
                 raw=await complete_with_template(system,payload,template,max_tokens=retry_tokens)
             else:
                 raw=await complete_with_template(system,payload,template)
-            return accept(DeckContent.model_validate(normalize_model_icons(raw,'slides')))
+            return accept(DeckContent.model_validate(normalize_model_icons(raw,'slides')),last=bool(attempt))
         except (ValidationError,ValueError,LLMFormatError) as exc:
             # The correction goes back to the model; without this line nobody sees why an attempt failed.
             logging.getLogger(__name__).warning('Outline attempt %d rejected (%s): %s',attempt+1,type(exc).__name__,str(exc)[:2000])
