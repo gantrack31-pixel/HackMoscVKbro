@@ -136,6 +136,61 @@ def themed_nodes(nodes, obj):
     return result
 
 
+def card_candidate(slide) -> bool:
+    from .canvas import explicit_layout
+    return (slide.kind=='text' and 2<=len([b for b in slide.bullets if b.strip()])<=6
+            and not explicit_layout(slide))
+
+
+def bullet_cards(slide, box, body_size, variant, rect, text, objects, accent, theme) -> bool:
+    """Lay out 2–6 text bullets as cards instead of one paragraph; same words, more structure.
+
+    Returns False (caller keeps the plain text block) when the slide has user canvas
+    edits keyed to the plain layout, or when any bullet would not fit its card."""
+    if not card_candidate(slide): return False
+    bullets=[b.strip() for b in slide.bullets if b.strip()]
+    lead_h=0.
+    if slide.body.strip():
+        # Cards start right under the lead's measured lines, not under a fixed reserve.
+        lines,lead_size=fit_text(slide.body,{'w':box['w'],'h':min(84.,box['h']*.24)},22,20,False,1.2)
+        lead_h=min(84.,box['h']*.24,len(lines)*lead_size*1.2)
+    top=box['y']+(lead_h+24 if lead_h else 0)
+    columns=len(bullets) if len(bullets)<=3 else 2 if len(bullets)==4 else 3
+    rows=(len(bullets)+columns-1)//columns
+    gap=18.
+    card_w=(box['w']-gap*(columns-1))/columns
+    card_h=(box['y']+box['h']-top-gap*(rows-1))/rows
+    pad=18.
+    # a: card with an accent stripe; b: card with a numbered accent badge; c: open rows with a rule and large number.
+    header={'a':0.,'b':52.,'c':48.}[variant if variant in 'abc' else 'a']
+    inset=8. if variant=='a' else 0.
+    side=0. if variant=='c' else pad  # open rows align text with the number and rule
+    text_w=card_w-side*2-inset
+    text_h=card_h-pad*2-header
+    minimum=20
+    if card_h<90 or text_w<120 or any(len(wrap(b,text_w,minimum))*minimum*1.2>text_h for b in bullets):
+        return False
+    if lead_h: text('body',slide.body,{**box,'h':lead_h+2},22,'#475569')
+    # One size for every card: the longest bullet sets it, so the grid reads evenly.
+    heading=next((o['font_size'] for o in objects if o['id']=='title'),body_size)
+    start=min(body_size,26.,heading*.72)
+    size=min(fit_text(b,{'w':text_w,'h':text_h},start,minimum,False,1.2)[1] for b in bullets)
+    for i,bullet in enumerate(bullets):
+        x=box['x']+(i%columns)*(card_w+gap);y=top+(i//columns)*(card_h+gap)
+        if variant=='c':
+            rect(f'bullet-rule-{i}',x,y,card_w,2,'#CBD5E1')
+            text(f'bullet-number-{i}',f'{i+1:02}',{'x':x,'y':y+10,'w':80,'h':38},30,accent,True)
+        else:
+            rect(f'bullet-card-{i}',x,y,card_w,card_h,'#F1F5F9')
+            if variant=='b':
+                objects.append({'id':f'bullet-badge-{i}','type':'ellipse','x':x+pad,'y':y+pad,'w':40,'h':40,'fill':accent})
+                text(f'bullet-number-{i}',f'{i+1}',{'x':x+pad+8,'y':y+pad+8,'w':24,'h':26},20,theme['on_accent'],True)
+            else:
+                rect(f'bullet-stripe-{i}',x,y,6,card_h,accent)
+        text(f'bullet-{i}',bullet,{'x':x+side+inset,'y':y+pad+header,'w':text_w,'h':text_h},size,'#0F172A')
+    return True
+
+
 def build_scene(slide: Slide, metadata: dict, variant: str, index: int) -> dict:
     if slide.designs:
         slide=slide.model_copy(update={'design':slide.designs.get(slide.layout or variant,slide.design)})
@@ -200,7 +255,7 @@ def build_scene(slide: Slide, metadata: dict, variant: str, index: int) -> dict:
         title_box.update(x=max(104,margin),w=min(title_box['w'],width-max(208,margin*2)))
         body_box.update(x=max(104,margin),w=min(body_box['w'],width-max(208,margin*2)))
     # Данные получают полноценную площадь, титульный — отдельный масштаб и ритм.
-    if slide.kind in {'chart','table','steps','diagram','icons','image'}:
+    if slide.kind in {'chart','table','steps','diagram','icons','image'} or card_candidate(slide):
         title_box.update(y=height*.13,h=height*.16)
         title_size=min(title_size,48.)
         body_box.update(y=height*.32,h=height*.55)
@@ -244,6 +299,12 @@ def build_scene(slide: Slide, metadata: dict, variant: str, index: int) -> dict:
     else: rect('accent',margin*1.5,height*.1,width-margin*3,2,accent)
     if slide.kind=='title':
         rect('title-underline',title_box['x'],height*.55,min(160,title_box['w']),8,accent)
+        if variant!='b':
+            # A quiet accent rhythm in the free bottom-right corner; the footer sits on the left.
+            right=width-margin
+            for i,bar in enumerate((24,64,140)):
+                right-=bar+(14 if i else 0)
+                rect(f'title-accent-{i}',right,height-52,bar,8,accent)
     title_color=theme['text'] if 'contrast_title' in slide.fixed or contrast(accent,theme['background'])<3 else accent
     text('title',slide.title,title_box,title_size,title_color,True)
     content=slide.body+ ('\n'+'\n'.join('• '+b for b in slide.bullets) if slide.bullets else '')
@@ -287,7 +348,8 @@ def build_scene(slide: Slide, metadata: dict, variant: str, index: int) -> dict:
             x=body_box['x']+(i%columns)*step_w;y=body_box['y']+70+(i//columns)*step_h
             rect(f'step-card-{i}',x,y,step_w-16,step_h-12,'#F1F5F9')
             text(f'step-{i}',f'{i+1:02}  {step}',{'x':x+12,'y':y+8,'w':step_w-40,'h':step_h-28},22,'#0F172A')
-    else: text('body',content,body_box,body_size,'#475569')
+    elif not bullet_cards(slide,body_box,body_size,variant,rect,text,objects,accent,theme):
+        text('body',content,body_box,body_size,'#475569')
     text('footer',f'{index+1:02} / Deckly.Ai',{'x':margin,'y':height-44,'w':500,'h':28},16,'#64748B')
     for obj in objects:
         if obj['type'] in {'chart','table'}:

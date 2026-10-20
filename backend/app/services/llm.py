@@ -308,6 +308,9 @@ async def make_outline(request: OutlineRequest, template: dict, resources: list[
                 raise OutlineSlidesRejected('\n'.join(problems),result,rejected)
             raise ValueError('\n'.join(problems))
         for slide in result.slides: slide.resource_icon_data=[]
+        kinds=[slide.kind for slide in result.slides]
+        logging.getLogger(__name__).info('LLM outline kinds=%s text_share=%.0f%%',
+            {kind:kinds.count(kind) for kind in dict.fromkeys(kinds)},100*kinds.count('text')/len(kinds))
         result.audience=request.audience
         result.resource_ids=list(request.resource_ids)
         return result

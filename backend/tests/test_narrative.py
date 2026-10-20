@@ -65,6 +65,8 @@ def test_step_numbers_and_list_markers_are_navigation_anywhere_in_text():
                                    bullets=['1. Подготовка','2) Пилот','Переход к шагу 3 после проверки']),source)
     with pytest.raises(ValueError,match='числа'):
         validate_narrative_slide(Slide(title='План запуска',body='Этап 1 даст рост на 15%.'),source)
+    with pytest.raises(ValueError,match='числа'):
+        validate_narrative_slide(Slide(title='План запуска',bullets=['12 — новых клиентов в месяц','Охват']),source)
 
 
 def test_outline_retry_reports_every_rejected_slide_and_final_error_names_the_reason(monkeypatch):

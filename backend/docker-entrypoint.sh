@@ -10,4 +10,8 @@ for template in tech.pptx workspace.pptx education.pptx; do
     fi
 done
 
+# Create the schema and switch SQLite to WAL once, before uvicorn forks workers:
+# that PRAGMA needs an exclusive lock and fails fast if workers race on a fresh DB.
+python -c "from app import database; database.initialize()"
+
 exec python -m uvicorn app.main:app --host 0.0.0.0 --port "${PORT:-8000}" --no-access-log

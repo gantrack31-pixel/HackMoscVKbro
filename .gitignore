@@ -12,6 +12,7 @@ __pycache__/
 .env.*
 !.env.example
 !.env.docker.example
+!.env.production.example
 
 backend/data/*.sqlite3
 backend/data/*.sqlite3-*
