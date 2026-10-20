@@ -145,7 +145,7 @@ OPENROUTER_HTTP_REFERER=http://127.0.0.1:8000
 LLM_MAX_TOKENS=8000
 ```
 
-Нужен совместимый `POST /v1/chat/completions`. Вызов находится в `backend/app/services/llm.py`; промпты — в `backend/prompts/`. Ключ никогда не встраивается в React и не возвращается браузеру. После изменения `.env` перезапустите сервер. Если провайдер не поддерживает `response_format`, поставьте `LLM_JSON_MODE=false`.
+Нужен совместимый `POST /v1/chat/completions`. Вызов находится в `backend/app/services/llm.py`; промпты — в `backend/prompts/`. Ключ никогда не встраивается в React и не возвращается браузеру. После изменения `.env` перезапустите сервер. Если провайдер не поддерживает `response_format`, поставьте `LLM_JSON_MODE=false`. Ответ модели запрашивается потоком (`stream=true`): шлюзы провайдеров обрывают обычные запросы длиннее ~50 с, а поток держит соединение живым; отключается `LLM_STREAM=false`.
 
 Для собственного OpenAI-совместимого endpoint задайте `LLM_BASE_URL`, `LLM_MODEL=Qwen/Qwen3.8-27B`, `LLM_API_KEY`. Явный `LLM_BASE_URL` переключает **весь** набор параметров: ключ OpenRouter не отправится другому провайдеру. Qwen получает отдельные системные ограничения и данные пользователя. Цвета и геометрию проверяет Python, а не модель. Ограничения визуализаций — в [INTEGRATIONS.md](docs/INTEGRATIONS.md).
 

@@ -40,12 +40,19 @@ def _https_origin(value: str) -> str | None:
     except ValueError:
         return None
 
+def _llm_base_url(value: str) -> str:
+    """Accept the API root (…/v1) or the full chat endpoint; the client appends /chat/completions."""
+    value = value.strip().rstrip('/')
+    if value.endswith('/chat/completions'):
+        value = value[:-len('/chat/completions')]
+    return value
+
 @dataclass
 class Settings:
     app_env: str = field(default_factory=lambda: os.getenv('APP_ENV', 'development').strip().lower())
     allow_demo_in_production: bool = field(default_factory=lambda: os.getenv('ALLOW_DEMO_IN_PRODUCTION', 'false').strip().lower() == 'true')
     mode: str = field(default_factory=lambda: os.getenv('LLM_MODE', 'demo'))
-    base_url: str = field(default_factory=lambda: os.getenv('LLM_BASE_URL','https://ai-demo.platformpreview.ru/api/inference-providers-router/00000000-0000-0000-0000-000000000001/v1').rstrip('/'))
+    base_url: str = field(default_factory=lambda: _llm_base_url(os.getenv('LLM_BASE_URL','https://ai-demo.platformpreview.ru/api/inference-providers-router/00000000-0000-0000-0000-000000000001/v1')))
     api_key: str = field(default_factory=lambda: os.getenv('LLM_API_KEY',''), repr=False)
     project_id: str = field(default_factory=lambda: os.getenv('LLM_PROJECT_ID',''))
     image_base_url: str = field(default_factory=lambda: os.getenv('IMAGE_BASE_URL', '').rstrip('/'))
@@ -62,6 +69,8 @@ class Settings:
     image_concurrency: int = field(default_factory=lambda: max(1,min(8,int(os.getenv('IMAGE_CONCURRENCY','2')))))
     temperature: float = field(default_factory=lambda: float(os.getenv('LLM_TEMPERATURE', '0.3')))
     json_mode: bool = field(default_factory=lambda: os.getenv('LLM_JSON_MODE', 'true').lower() == 'true')
+    # Some gateways drop non-streamed completions after ~50 s; SSE keeps long answers alive.
+    stream: bool = field(default_factory=lambda: os.getenv('LLM_STREAM', 'true').lower() == 'true')
     assistant_json_schema: bool = field(default_factory=lambda: os.getenv('LLM_ASSISTANT_JSON_SCHEMA', 'true').lower() == 'true')
     vision: bool = field(default_factory=lambda: os.getenv('LLM_VISION_ENABLED', 'false').lower() == 'true')
     context_audit: bool = field(default_factory=lambda: os.getenv('LLM_CONTEXT_AUDIT', 'true').lower() == 'true')

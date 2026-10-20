@@ -140,6 +140,30 @@ def configured() -> bool:
     host=urlparse(settings.base_url).hostname
     return bool(settings.base_url and settings.model and (settings.api_key or host in {'localhost','127.0.0.1','::1'}))
 
+async def read_completion(response: httpx.Response) -> dict:
+    """Return a chat completion body from either plain JSON or OpenAI-style SSE chunks."""
+    if not response.headers.get('content-type','').startswith('text/event-stream'):
+        return json.loads(await response.aread())
+    parts,finish,usage=[],None,{}
+    async for line in response.aiter_lines():
+        if not line.startswith('data:'): continue
+        chunk=line[5:].strip()
+        if chunk=='[DONE]': break
+        if not chunk: continue
+        event=json.loads(chunk)
+        if event.get('error'):
+            # Mid-stream provider failures arrive as an event, not as an HTTP status.
+            message=str((event['error'] or {}).get('message','') if isinstance(event['error'],dict) else event['error'])
+            if settings.api_key: message=message.replace(settings.api_key,'[redacted]')
+            detail=re.sub(r'[^\w\s.,:/-]','',message)[:180]
+            raise LLMError('Провайдер прервал ответ.'+(f' Причина провайдера: {detail}.' if detail else ''))
+        usage=event.get('usage') or usage
+        for choice in event.get('choices') or []:
+            content=(choice.get('delta') or {}).get('content')
+            if isinstance(content,str): parts.append(content)
+            finish=choice.get('finish_reason') or finish
+    return {'choices':[{'message':{'content':''.join(parts)},'finish_reason':finish}],'usage':usage}
+
 async def complete_json(system: str, payload: dict, client: httpx.AsyncClient | None = None,
                         images: list[str] | None = None, max_tokens: int | None = None) -> dict:
     if not configured(): raise LLMError('Заполните LLM_API_KEY и LLM_MODEL в backend/.env.')
@@ -176,6 +200,8 @@ async def complete_json(system: str, payload: dict, client: httpx.AsyncClient | 
             }
             # Do not route to endpoints that silently ignore the requested schema.
             body['provider'] = {**body.get('provider', {}), 'require_parameters': True}
+    if settings.stream:
+        body['stream']=True
     client=client or provider_http.get()
     owned=client is None
     client=client or httpx.AsyncClient(timeout=httpx.Timeout(settings.timeout,connect=15),follow_redirects=False)
@@ -185,12 +211,14 @@ async def complete_json(system: str, payload: dict, client: httpx.AsyncClient | 
         async with asyncio.timeout(settings.timeout):
             for attempt in range(2):
                 try:
-                    response=await client.post(settings.base_url+'/chat/completions',headers=headers,json=body,
-                                               timeout=httpx.Timeout(settings.timeout,connect=15,pool=15))
+                    async with client.stream('POST',settings.base_url+'/chat/completions',headers=headers,json=body,
+                                             timeout=httpx.Timeout(settings.timeout,connect=15,pool=15)) as response:
+                        if response.status_code<400: data=await read_completion(response)
+                        else: await response.aread()
                     break
                 except (httpx.RemoteProtocolError,httpx.ReadError,httpx.ConnectError) as exc:
-                    # Provider gateways drop long generations without any response; one
-                    # resend within the same time budget is safe because nothing was returned.
+                    # Provider gateways drop long generations; one resend within the same
+                    # time budget is safe because a partial answer is never used.
                     if attempt: raise
                     logging.getLogger(__name__).warning('LLM task=%s connection dropped after %.1fs (%s); retrying once',
                                                         task or 'audit',monotonic()-started,type(exc).__name__)
@@ -208,7 +236,6 @@ async def complete_json(system: str, payload: dict, client: httpx.AsyncClient | 
                 pass
             suffix = f' Причина провайдера: {detail}.' if detail else ''
             raise LLMError(f'Провайдер вернул HTTP {response.status_code}.{suffix} Проверьте model URI, URL и LLM_JSON_MODE.')
-        data=response.json()
         choice=data['choices'][0]
         usage=data.get('usage') or {}
         logging.getLogger(__name__).info('LLM task=%s duration=%.3fs finish=%s prompt_tokens=%s completion_tokens=%s reasoning_tokens=%s',
