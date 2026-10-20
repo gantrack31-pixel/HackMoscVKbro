@@ -66,10 +66,10 @@ export function YandexAuth() {
           </span>
         </div>
         <a className="btn primary yandex-email" href="/#login">
-          <Icon name="account-auth-email" /> Войти по почте
+          <Icon name="account-auth-email" /><span>Войти по почте</span>
         </a>
         <a className="yandex-back" href="/">
-          Вернуться на главную
+          <Icon name="nav-home" /><span>Вернуться на главную</span>
         </a>
       </section>
     </main>
