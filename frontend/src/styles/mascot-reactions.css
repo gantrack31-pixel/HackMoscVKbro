@@ -1,0 +1,406 @@
+/* Small, finite reactions in the mascot's own blue and pink palette. */
+.deckly-mascot-svg
+  :is(.eyes-wink, .prop-highfive, .prop-dance, .prop-celebrate) {
+  display: none;
+  pointer-events: none;
+}
+.deckly-mascot-svg:is(.state-wink, .state-curious) .eyes-happy {
+  display: none;
+}
+.deckly-mascot-svg.state-wink .eyes-wink,
+.deckly-mascot-svg.state-curious .eyes-think,
+.deckly-mascot-svg.state-highfive .prop-highfive,
+.deckly-mascot-svg.state-dance .prop-dance,
+.deckly-mascot-svg.state-celebrate .prop-celebrate {
+  display: inline;
+}
+.deckly-mascot-svg:is(.state-dance, .state-celebrate) .mouth-smile {
+  display: none;
+}
+.deckly-mascot-svg:is(.state-dance, .state-celebrate) .mouth-laugh {
+  display: inline;
+}
+
+/* Origins use the shared SVG viewBox, including the feet during a jump. */
+.deckly-mascot-svg:is(
+    .state-wink,
+    .state-highfive,
+    .state-dance,
+    .state-celebrate,
+    .state-curious
+  )
+  .mascot-root-mover {
+  transform-origin: 200px 350px;
+}
+.deckly-mascot .state-wink .mascot-root-mover {
+  animation: mascotFriendlyWink 2.7s ease-in-out both;
+}
+.deckly-mascot .state-wink .wink-eye {
+  transform-origin: 227px 169px;
+  animation: mascotWinkSqueeze 2.7s ease-in-out both;
+}
+.deckly-mascot .state-wink .arm-right {
+  animation: mascotWinkHand 2.7s ease-in-out both;
+}
+.deckly-mascot .state-highfive .mascot-root-mover {
+  animation: mascotHighfiveLean 2.7s ease-in-out both;
+}
+.deckly-mascot .state-highfive .arm-right {
+  animation: mascotHighfiveHand 2.7s cubic-bezier(0.22, 0.8, 0.3, 1) both;
+}
+.deckly-mascot .state-highfive .highfive-ring {
+  transform-origin: 342px 134px;
+  animation: mascotHighfiveRing 2.7s ease-out both;
+}
+.deckly-mascot .state-highfive .highfive-rays {
+  animation: mascotHighfiveRays 2.7s ease-out both;
+}
+.deckly-mascot .state-dance .mascot-root-mover {
+  animation: mascotLittleDance 2.8s ease-in-out both;
+}
+.deckly-mascot .state-dance .arm-left {
+  animation: mascotDanceLeft 2.8s ease-in-out both;
+}
+.deckly-mascot .state-dance .arm-right {
+  animation: mascotDanceRight 2.8s ease-in-out both;
+}
+.deckly-mascot .state-dance .leg-left {
+  animation: mascotDanceStepLeft 2.8s ease-in-out both;
+}
+.deckly-mascot .state-dance .leg-right {
+  animation: mascotDanceStepRight 2.8s ease-in-out both;
+}
+.deckly-mascot .state-dance .music-note {
+  animation: mascotMusicFloat 2.6s ease-in-out both;
+}
+.deckly-mascot .state-dance .music-note-right {
+  animation-delay: 0.18s;
+}
+.deckly-mascot .state-celebrate .mascot-root-mover {
+  animation: mascotVictoryHop 2.7s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+.deckly-mascot .state-celebrate .arm-left {
+  animation: mascotVictoryLeft 2.7s ease-in-out both;
+}
+.deckly-mascot .state-celebrate .arm-right {
+  animation: mascotVictoryRight 2.7s ease-in-out both;
+}
+.deckly-mascot .state-celebrate .floor-shadow {
+  transform-origin: 200px 362px;
+  animation: mascotVictoryShadow 2.7s ease-in-out both;
+}
+.deckly-mascot .state-celebrate .confetti {
+  transform-origin: 200px 130px;
+  animation: mascotConfettiDrift 2.4s ease-out both;
+}
+.deckly-mascot .state-celebrate .confetti-b {
+  animation-delay: 0.12s;
+}
+.deckly-mascot .state-celebrate .confetti-c {
+  animation-delay: 0.22s;
+}
+.deckly-mascot .state-curious .mascot-root-mover {
+  animation: mascotCuriousLean 1.7s ease-in-out both;
+}
+.deckly-mascot .state-curious .face-screen-wrapper {
+  animation: mascotCuriousLook 1.7s ease-in-out both;
+}
+
+@keyframes mascotFriendlyWink {
+  0%,
+  100% {
+    transform: rotate(0);
+  }
+  22%,
+  60% {
+    transform: translateY(-4px) rotate(-6deg);
+  }
+  80% {
+    transform: rotate(2deg);
+  }
+}
+@keyframes mascotWinkSqueeze {
+  0%,
+  100% {
+    transform: scaleY(1);
+  }
+  25%,
+  48% {
+    transform: scaleY(0.38);
+  }
+  65% {
+    transform: scaleY(1.15);
+  }
+}
+@keyframes mascotWinkHand {
+  0%,
+  100% {
+    transform: rotate(-26deg);
+  }
+  25%,
+  58% {
+    transform: translate(0, -7px) rotate(-48deg);
+  }
+}
+@keyframes mascotHighfiveLean {
+  0%,
+  100% {
+    transform: rotate(0);
+  }
+  28%,
+  60% {
+    transform: translateY(-6px) rotate(-4deg);
+  }
+  70% {
+    transform: rotate(2deg);
+  }
+}
+@keyframes mascotHighfiveHand {
+  0%,
+  100% {
+    transform: rotate(-26deg);
+  }
+  27%,
+  40% {
+    transform: translate(4px, -15px) rotate(-64deg) scale(1.08);
+  }
+  48% {
+    transform: translate(7px, -24px) rotate(-52deg) scale(1.17);
+  }
+  60% {
+    transform: translate(4px, -15px) rotate(-64deg) scale(1.08);
+  }
+}
+@keyframes mascotHighfiveRing {
+  0%,
+  39% {
+    opacity: 0;
+    transform: scale(0.3);
+  }
+  45% {
+    opacity: 0.9;
+  }
+  68%,
+  100% {
+    opacity: 0;
+    transform: scale(1.45);
+  }
+}
+@keyframes mascotHighfiveRays {
+  0%,
+  40%,
+  72%,
+  100% {
+    opacity: 0;
+  }
+  48%,
+  55% {
+    opacity: 1;
+  }
+}
+@keyframes mascotLittleDance {
+  0%,
+  100% {
+    transform: translate(0, 0) rotate(0);
+  }
+  16%,
+  48% {
+    transform: translate(-9px, -5px) rotate(-7deg);
+  }
+  32%,
+  64% {
+    transform: translate(9px, -6px) rotate(7deg);
+  }
+  82% {
+    transform: translate(-3px, -3px) rotate(-3deg);
+  }
+}
+@keyframes mascotDanceLeft {
+  0%,
+  100% {
+    transform: rotate(26deg);
+  }
+  16%,
+  48% {
+    transform: translate(-2px, -8px) rotate(62deg);
+  }
+  32%,
+  64% {
+    transform: rotate(-12deg);
+  }
+}
+@keyframes mascotDanceRight {
+  0%,
+  100% {
+    transform: rotate(-26deg);
+  }
+  16%,
+  48% {
+    transform: rotate(12deg);
+  }
+  32%,
+  64% {
+    transform: translate(2px, -8px) rotate(-62deg);
+  }
+}
+@keyframes mascotDanceStepLeft {
+  0%,
+  32%,
+  64%,
+  100% {
+    transform: rotate(0);
+  }
+  16%,
+  48% {
+    transform: translateY(-5px) rotate(18deg);
+  }
+}
+@keyframes mascotDanceStepRight {
+  0%,
+  16%,
+  48%,
+  100% {
+    transform: rotate(0);
+  }
+  32%,
+  64% {
+    transform: translateY(-5px) rotate(-18deg);
+  }
+}
+@keyframes mascotMusicFloat {
+  0% {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  20%,
+  65% {
+    opacity: 0.9;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+}
+@keyframes mascotVictoryHop {
+  0%,
+  100% {
+    transform: translateY(0) scale(1);
+  }
+  12% {
+    transform: translateY(3px) scale(1.04, 0.96);
+  }
+  30% {
+    transform: translateY(-27px) scale(0.98, 1.02);
+  }
+  46% {
+    transform: translateY(0) scale(1.05, 0.95);
+  }
+  62% {
+    transform: translateY(-12px) scale(0.99, 1.01);
+  }
+  78% {
+    transform: translateY(0) scale(1.02, 0.98);
+  }
+}
+@keyframes mascotVictoryLeft {
+  0%,
+  100% {
+    transform: rotate(26deg);
+  }
+  25%,
+  65% {
+    transform: translate(-3px, -12px) rotate(68deg);
+  }
+}
+@keyframes mascotVictoryRight {
+  0%,
+  100% {
+    transform: rotate(-26deg);
+  }
+  25%,
+  65% {
+    transform: translate(3px, -12px) rotate(-68deg);
+  }
+}
+@keyframes mascotVictoryShadow {
+  0%,
+  46%,
+  78%,
+  100% {
+    transform: scaleX(1);
+    opacity: 0.35;
+  }
+  30% {
+    transform: scaleX(0.74);
+    opacity: 0.18;
+  }
+  62% {
+    transform: scaleX(0.88);
+    opacity: 0.25;
+  }
+}
+@keyframes mascotConfettiDrift {
+  0%,
+  8% {
+    opacity: 0;
+    transform: translateY(18px) scale(0.85);
+  }
+  28% {
+    opacity: 1;
+    transform: translateY(-8px) scale(1);
+  }
+  70% {
+    opacity: 0.8;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(56px) rotate(9deg);
+  }
+}
+@keyframes mascotCuriousLean {
+  0%,
+  100% {
+    transform: rotate(0);
+  }
+  35%,
+  65% {
+    transform: translateY(-3px) rotate(5deg);
+  }
+}
+@keyframes mascotCuriousLook {
+  0%,
+  100% {
+    transform: translate(0, 0);
+  }
+  35%,
+  65% {
+    transform: translate(5px, -2px);
+  }
+}
+
+.deckly-mascot[data-active="false"] .deckly-mascot-svg[class] * {
+  animation-play-state: paused;
+}
+.deckly-mascot[data-intro-finished="true"] .deckly-mascot-svg * {
+  animation-duration: 0s !important;
+  animation-delay: 0s !important;
+}
+
+/* Keep the feedback, but present a still pose when motion is reduced. */
+@media (prefers-reduced-motion: reduce) {
+  .deckly-mascot-svg.state-highfive .arm-right {
+    transform: translate(4px, -15px) rotate(-64deg);
+  }
+  .deckly-mascot-svg.state-highfive .highfive-ring {
+    display: none;
+  }
+  .deckly-mascot-svg:is(.state-dance, .state-celebrate) .arm-left {
+    transform: rotate(58deg);
+  }
+  .deckly-mascot-svg:is(.state-dance, .state-celebrate) .arm-right {
+    transform: rotate(-58deg);
+  }
+  .deckly-mascot-svg .prop-celebrate {
+    opacity: 0.65;
+  }
+}

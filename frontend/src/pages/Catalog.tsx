@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Icon } from "../components/Icon";
+import { MascotPageHeading } from "../components/MascotPageHeading";
 import { TemplateCover } from "../components/TemplateCover";
 import { SpatialGallery } from "../components/spatial/SpatialGallery";
 import type { CatalogActions } from "./catalogTypes";
@@ -93,27 +94,45 @@ export function Catalog(
     },
   );
   const hasFilters = Boolean(query || category !== "Все шаблоны");
+  const hasHeadingMascot = Boolean(
+    props.onlyFavorites && props.favorites.length > 0,
+  );
   const emptyFavorites = Boolean(
     props.onlyFavorites && props.favorites.length === 0 && !hasFilters,
   );
   return (
     <div className="catalog-page" ref={resultsScope}>
-      <div className="heading between">
-        <div>
-          <h1>
-            {props.onlyFavorites
-              ? "Ваши любимые шаблоны"
-              : "Найдите свой стиль"}
-          </h1>
-          {!props.onlyFavorites && (
-            <p>Фирменные шаблоны и авторские подборки под вашу задачу.</p>
-          )}
+      {hasHeadingMascot ? (
+        <MascotPageHeading
+          variant="favorites"
+          animation="kiss"
+          action={
+            <button className="btn" onClick={props.upload}>
+              <Icon name="library-upload" />
+              Загрузить шаблон
+            </button>
+          }
+        >
+          <h1>Ваши любимые шаблоны</h1>
+        </MascotPageHeading>
+      ) : (
+        <div className="heading between">
+          <div>
+            <h1>
+              {props.onlyFavorites
+                ? "Ваши любимые шаблоны"
+                : "Найдите свой стиль"}
+            </h1>
+            {!props.onlyFavorites && (
+              <p>Фирменные шаблоны и авторские подборки под вашу задачу.</p>
+            )}
+          </div>
+          <button className="btn" onClick={props.upload}>
+            <Icon name="library-upload" />
+            Загрузить шаблон
+          </button>
         </div>
-        <button className="btn" onClick={props.upload}>
-          <Icon name="library-upload" />
-          Загрузить шаблон
-        </button>
-      </div>
+      )}
       {!props.onlyFavorites && (
         <div className="collection-banner catalog-collection">
           <div>
@@ -208,6 +227,7 @@ export function Catalog(
         )}
         {!list.length && (
           <LibraryEmptyState
+            showMascot={!hasHeadingMascot}
             kind={emptyFavorites ? "favorites" : "search"}
             title={
               emptyFavorites

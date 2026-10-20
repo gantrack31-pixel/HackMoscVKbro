@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { api } from "../api";
 import { CloudLibrary } from "../components/CloudLibrary";
 import { Icon } from "../components/Icon";
+import { MascotPageHeading } from "../components/MascotPageHeading";
 import { LibraryEmptyState } from "../components/LibraryEmptyState";
 import { TemplateCover } from "../components/TemplateCover";
 import type { Project, ProjectSummary, Template } from "../types";
@@ -27,15 +28,39 @@ export function Projects({
   }, []);
   return (
     <>
-      <div className="heading between">
-        <div>
+      {projects.length > 0 ? (
+        <MascotPageHeading
+          variant="projects"
+          animation="laptop"
+          message="Какую историю продолжим сегодня?"
+          action={
+            <a className="btn primary" href="#create">
+              <Icon name="library-new-project" />
+              Создать презентацию
+            </a>
+          }
+        >
           <h1>Мои презентации</h1>
+          <p>
+            Все ваши презентации — продолжайте редактировать, просматривать и
+            сохранять.
+          </p>
+        </MascotPageHeading>
+      ) : (
+        <div className="heading between">
+          <div>
+            <h1>Мои презентации</h1>
+            <p>
+              Все ваши презентации — продолжайте редактировать, просматривать и
+              сохранять.
+            </p>
+          </div>
+          <a className="btn primary" href="#create">
+            <Icon name="library-new-project" />
+            Создать презентацию
+          </a>
         </div>
-        <a className="btn primary" href="#create">
-          <Icon name="library-new-project" />
-          Создать презентацию
-        </a>
-      </div>
+      )}
       <div className="cards">
         {projects.map((p) => {
           const template = templates.find((t) => t.id === p.template_id);
