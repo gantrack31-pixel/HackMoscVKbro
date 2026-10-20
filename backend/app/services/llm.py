@@ -14,7 +14,7 @@ from .template_context import model_template, template_images
 from ..icon_catalog import model_icons
 from . import provider_http
 from .visual_grounding import validate_visual, validate_diagram_design, normalize_model_icons
-from .sources import source_chunks, slide_binding, validate_bindings
+from .sources import source_chunks, slide_binding, validate_bindings, locate_quote
 from .materials import compact_resource
 from .narrative import brief_from_request, validate_narrative_slide
 from .assistant_context import presentation_context
@@ -290,7 +290,19 @@ def demo_outline(request: OutlineRequest) -> DeckContent:
     slides[0].kind='title'
     return DeckContent(title=slides[0].title,slides=slides)
 
+def rejection_reason(exc) -> str:
+    """First concrete problem; a bare 'N validation errors for DeckContent' tells the user nothing."""
+    if isinstance(exc,ValidationError) and exc.errors():
+        error=exc.errors()[0]
+        where='.'.join(str(part) for part in error['loc'])
+        return f'{where}: {error["msg"]}'[:300]
+    return str(exc).strip().splitlines()[0][:300] if str(exc).strip() else ''
+
 def validate_outline_slide(slide: Slide, request: OutlineRequest, resources: list[dict] | None) -> None:
+    # The quote is optional evidence: a paraphrased one is dropped rather than failing the whole deck.
+    if slide.source_quote and not locate_quote(slide.source_quote,request.prompt):
+        logging.getLogger(__name__).warning('Dropped source_quote not found verbatim in material: slide=%r',slide.title[:80])
+        slide.source_quote=''
     validate_narrative_slide(slide,request.prompt)
     # Description mode develops a topic: textual table cells are new prose, numbers still need a source.
     validate_visual(slide,request.prompt,allow_new_text=request.mode=='description')
@@ -385,10 +397,12 @@ async def make_outline(request: OutlineRequest, template: dict, resources: list[
                 raw=await complete_with_template(system,payload,template)
             return accept(DeckContent.model_validate(normalize_model_icons(raw,'slides')))
         except (ValidationError,ValueError,LLMFormatError) as exc:
+            # The correction goes back to the model; without this line nobody sees why an attempt failed.
+            logging.getLogger(__name__).warning('Outline attempt %d rejected (%s): %s',attempt+1,type(exc).__name__,str(exc)[:2000])
             if attempt:
                 if isinstance(exc,LLMTruncatedError):
                     raise LLMError('Ответ модели обрезан лимитом вывода после повтора. Уменьшите объём текста или количество слайдов.') from exc
-                reason=str(exc).strip().splitlines()[0][:300] if str(exc).strip() else ''
+                reason=rejection_reason(exc)
                 raise LLMError('Не удалось собрать структуру после двух попыток. До 50 000 символов принимаются; эта ошибка не означает превышение лимита текста. Проверьте ответ модели и ограничения провайдера; попробуйте уменьшить количество слайдов.'
                                +(f' Причина: {reason}' if reason else '')) from exc
             if isinstance(exc,OutlineSlidesRejected):
