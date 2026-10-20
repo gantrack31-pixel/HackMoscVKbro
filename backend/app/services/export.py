@@ -190,4 +190,6 @@ def export_pptx(content: DeckContent, template: dict, variant: str, *, scenes=No
             if analytical.warnings:slide.notes_slide.notes_text_frame.text+='\nОграничения: '+'; '.join(analytical.warnings)
         if slide_content.kind=='icons' or any(element.type == 'icon' for element in slide_content.elements):
             slide.notes_slide.notes_text_frame.text+='\n'+ATTRIBUTION
+    from .pptx_fonts import embed_manrope
+    embed_manrope(prs)
     stream=BytesIO();prs.save(stream);return stream.getvalue()

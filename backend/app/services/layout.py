@@ -14,9 +14,7 @@ FONTS=Path(__file__).parent
 for name,file in [('Deckly','Manrope-Regular.ttf'),('DecklyBold','Manrope-Bold.ttf')]:
     if name not in pdfmetrics.getRegisteredFontNames():
         font=TTFont(name,str(FONTS/file))
-        # The bundled static files share their source PostScript name. ReportLab
-        # otherwise aliases bold to regular, causing wrong width measurements
-        # and lighter PDF headings while browser/PPTX use the bold face.
+        # Keep PDF subset names stable and distinct from Office's family names.
         font.face.name=name.encode('ascii')
         pdfmetrics.registerFont(font)
 
@@ -250,16 +248,18 @@ def build_scene(slide: Slide, metadata: dict, variant: str, index: int) -> dict:
     if slide.kind in {'diagram','icons'}:
         intro_height=0
         if slide.body.strip():
-            text('body',slide.body,{**body_box,'h':min(90,body_box['h']*.22)},22,'#475569')
-            intro_height=min(90,body_box['h']*.22)+16
+            intro_box_height=max(min(90,body_box['h']*.22),len(wrap(slide.body,body_box['w'],20))*20*1.2)
+            intro_box_height=min(intro_box_height,body_box['h']*.45)
+            text('body',slide.body,{**body_box,'h':intro_box_height},22,'#475569')
+            intro_height=intro_box_height+16
         area={**body_box,'y':body_box['y']+intro_height,'h':max(1,body_box['h']-intro_height)}
         icon_color=accent if contrast(accent,theme['surface'])>=3 else theme['text']
-        visual=diagram_nodes(slide,area,accent) if slide.kind=='diagram' else pictogram_nodes(slide,area,icon_color)
+        def label_height(label, width):
+            return len(wrap(label,width,16,True))*16*1.2
+        visual=diagram_nodes(slide,area,accent,label_height) if slide.kind=='diagram' else pictogram_nodes(slide,area,icon_color,label_height)
         for node in visual:
             if node['type']=='text':
-                size=node['font_size']
-                while len(wrap(node['text'],node['w'],size,True))*size*1.28>node['h'] and size>16:size-=1
-                text(node['id'],node['text'],{k:node[k] for k in ('x','y','w','h')},size,node['color'],True)
+                text(node['id'],node['text'],{k:node[k] for k in ('x','y','w','h')},node['font_size'],node['color'],True)
             else: objects.append(node)
     elif slide.kind=='image':
         text('body',slide.body,{**body_box,'w':body_box['w']*.4},24,'#475569')

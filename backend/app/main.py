@@ -472,6 +472,12 @@ async def assemble_variants(jid, content, template, source, user_id, timings, re
                                              for slide in content.slides])
     checks=await asyncio.gather(*(asyncio.to_thread(audit_deck,content,template,v,source,scenes=scenes[v],bindings=bindings) for v in ('a','b','c')))
     timings['audit']=monotonic()-tick
+    overflow_slides=sorted({issue.slide+1 for issues in checks for issue in issues
+                            if issue.code=='overflow' and content.slides[issue.slide].kind in {'diagram','icons'}})
+    if overflow_slides:
+        raise LLMError('Текст не помещается в блоки схем или карточек на слайдах '
+                       + ', '.join(map(str,overflow_slides))
+                       + '. Сократите подписи или разделите содержание на несколько слайдов и повторите.')
     return {v:{'issues':len(issues),'errors':sum(i.severity=='error' for i in issues)} for v,issues in zip(('a','b','c'),checks)}
 
 @generation_budget

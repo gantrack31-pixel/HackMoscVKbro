@@ -5,7 +5,7 @@ from .icons import icon_data, choose_icon
 def hexagon_points(obj):
     return [(obj['x']+x*obj['w'],obj['y']+y*obj['h']) for x,y in ((.18,0),(.82,0),(1,.5),(.82,1),(.18,1),(0,.5))]
 
-def diagram_nodes(slide, box, accent):
+def diagram_nodes(slide, box, accent, label_height=None):
     """Normalized, editable nodes and directed connectors; never invent slide claims."""
     nodes=[]
     labels=slide.bullets[:6]
@@ -57,6 +57,33 @@ def diagram_nodes(slide, box, accent):
         if kind=='process':edges=[(i,i+1,'forward') for i in range(count-1)]
     if not sizes:sizes=[(width,height)]*count
     if not groups:groups=list(range(count))
+    if label_height and not custom:
+        def needed(label, w):
+            inset = w*.22 if kind=='honeycomb' else 16
+            return label_height(label, max(1, w-2*inset)) + 20
+        if any(needed(label, w) > h for label, (w, h) in zip(labels, sizes)):
+            if kind == 'hierarchy':
+                levels = int(math.log2(count)) + 1
+                row_h = box['h'] / levels
+                positions, sizes = [], []
+                for i, label in enumerate(labels):
+                    level = int(math.log2(i+1))
+                    first = 2**level-1
+                    columns = min(2**level, count-first)
+                    w = box['w']/columns*.86
+                    h = min(row_h*.86, max(height, needed(label, w)))
+                    positions.append((box['x']+(i-first+.5)*box['w']/columns-w/2,
+                                      box['y']+level*row_h))
+                    sizes.append((w,h))
+            elif kind not in {'cycle', 'vertical', 'pyramid'}:
+                for candidate in range(columns, 0, -1):
+                    rows = math.ceil(count/candidate)
+                    w, h = box['w']/candidate*.86, box['h']/rows*.86
+                    if all(needed(label, w) <= h for label in labels):
+                        positions = [(box['x']+(i%candidate+.07)*box['w']/candidate,
+                                      box['y']+(i//candidate+.07)*box['h']/rows) for i in range(count)]
+                        sizes = [(w,h)]*count
+                        break
     def segment(id,x1,y1,x2,y2):
         nodes.append({'id':id,'type':'line','x':min(x1,x2),'y':min(y1,y2),
                       'w':abs(x2-x1),'h':abs(y2-y1),'x1':x1,'y1':y1,'x2':x2,'y2':y2,'stroke':accent,'stroke_width':2})
@@ -85,22 +112,35 @@ def diagram_nodes(slide, box, accent):
             nodes.append({'id':f'node-accent-{i}','type':'rect','x':x,'y':y,'w':5,'h':h,'fill':accent,'group':groups[i]})
     return nodes
 
-def pictogram_nodes(slide, box, accent):
+def pictogram_nodes(slide, box, accent, label_height=None):
     nodes=[];labels=slide.bullets[:6]
     if not labels: return nodes
     count=len(labels);columns=min(count,3);rows=math.ceil(count/columns)
+    max_side=56
+    if label_height:
+        for candidate in range(columns, 0, -1):
+            candidate_rows = math.ceil(count/candidate)
+            cell_w, cell_h = box['w']/candidate, box['h']/candidate_rows
+            for cap in (56, 40, 32, 24):
+                side = min(cap, cell_h*.3, cell_w*.25)
+                if all(label_height(label, max(1, cell_w-52)) <= cell_h-side-54 for label in labels):
+                    columns, rows, max_side = candidate, candidate_rows, cap
+                    break
+            else:
+                continue
+            break
     for i,label in enumerate(labels):
         cell_w=box['w']/columns;cell_h=box['h']/rows
         x=box['x']+(i%columns)*cell_w;y=box['y']+(i//columns)*cell_h
         selected=slide.icon_names[i] if i<len(slide.icon_names) else 'auto'
         symbol=choose_icon(label) if selected=='auto' else selected
         uploaded=slide.resource_icon_data[i] if i<len(slide.resource_icon_data) else ''
-        side=min(56,cell_h*.3,cell_w*.25)
+        side=min(max_side,cell_h*.3,cell_w*.25)
         nodes.append({'id':f'icon-card-{i}','type':'rect','x':x,'y':y,'w':cell_w-16,'h':cell_h-16,'fill':'#F1F5F9'})
         if symbol or uploaded:
             nodes.append({'id':f'icon-{i}','type':'image','x':x+18,'y':y+14,'w':side,'h':side,
                           'src':uploaded or icon_data(symbol,accent),'icon_name':symbol})
-        label_y=y+side+24 if symbol else y+18
+        label_y=y+side+24 if symbol or uploaded else y+18
         nodes.append({'id':f'icon-label-{i}','type':'text','x':x+18,'y':label_y,'w':cell_w-52,'h':max(24,y+cell_h-30-label_y),
                       'text':label,'font_size':24,'bold':True,'color':'#0F172A'})
     return nodes

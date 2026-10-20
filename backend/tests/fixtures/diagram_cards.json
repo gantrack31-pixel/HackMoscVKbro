@@ -1,0 +1,2193 @@
+[
+  {
+    "name": "B1",
+    "metadata": {
+      "count": 54,
+      "ratio": 1.7777777777777777,
+      "font": "Manrope",
+      "heading_pt": 32,
+      "body_pt": 18,
+      "accent": "#0077FF",
+      "background": "#FFFFFF",
+      "colors": {
+        "accent1": "#0077FF"
+      },
+      "layouts": [],
+      "source": "starter",
+      "warnings": [
+        "Авторская стартовая тема; исходный корпоративный PPTX не загружен."
+      ],
+      "category": "Корпоративные",
+      "cover_title": "Технологии, которые работают на вас"
+    },
+    "slides": [
+      {
+        "title": "Историческая эволюция ИИ: от теории к практике",
+        "body": "Развитие ИИ прошло путь от абстрактных концепций до встроенных в повседневность инструментов. Понимание этой траектории помогает оценить текущие возможности и ограничения технологий.",
+        "kind": "diagram",
+        "bullets": [
+          "Формирование теоретических основ и первых алгоритмов",
+          "Период «зимы ИИ» и переход к экспертным системам",
+          "Возрождение интереса с развитием вычислительных мощностей",
+          "Эпоха глубокого обучения и нейросетей",
+          "Интеграция ИИ в бизнес-процессы и продукты"
+        ],
+        "chart": null,
+        "analytics": null,
+        "table": [],
+        "source_quote": "",
+        "notes": "Хронология отражает общие этапы развития области. Точные даты и имена исследователей не указаны, так как не были предоставлены в исходных материалах.",
+        "layout": null,
+        "design": {
+          "composition": "editorial",
+          "density": "balanced",
+          "layout_shift": 0,
+          "smartart": null,
+          "background_role": "template",
+          "foreground_role": "text",
+          "heading_role": "heading",
+          "body_role": "body",
+          "heading_scale": 1.0,
+          "body_scale": 1.0,
+          "heading_weight": "bold",
+          "diagram_style": "process",
+          "background_color": null,
+          "text_color": null,
+          "heading_color": null,
+          "accent_color": null,
+          "objects": {}
+        },
+        "designs": {
+          "a": {
+            "composition": "editorial",
+            "density": "balanced",
+            "layout_shift": 0,
+            "smartart": null,
+            "background_role": "template",
+            "foreground_role": "text",
+            "heading_role": "heading",
+            "body_role": "body",
+            "heading_scale": 1.0,
+            "body_scale": 1.0,
+            "heading_weight": "bold",
+            "diagram_style": "process",
+            "background_color": null,
+            "text_color": null,
+            "heading_color": null,
+            "accent_color": null,
+            "objects": {}
+          },
+          "b": {
+            "composition": "editorial",
+            "density": "balanced",
+            "layout_shift": 0,
+            "smartart": null,
+            "background_role": "template",
+            "foreground_role": "text",
+            "heading_role": "heading",
+            "body_role": "body",
+            "heading_scale": 1.0,
+            "body_scale": 1.0,
+            "heading_weight": "bold",
+            "diagram_style": "process",
+            "background_color": null,
+            "text_color": null,
+            "heading_color": null,
+            "accent_color": null,
+            "objects": {}
+          },
+          "c": {
+            "composition": "editorial",
+            "density": "balanced",
+            "layout_shift": 0,
+            "smartart": null,
+            "background_role": "template",
+            "foreground_role": "text",
+            "heading_role": "heading",
+            "body_role": "body",
+            "heading_scale": 1.0,
+            "body_scale": 1.0,
+            "heading_weight": "normal",
+            "diagram_style": "process",
+            "background_color": null,
+            "text_color": null,
+            "heading_color": null,
+            "accent_color": null,
+            "objects": {}
+          }
+        },
+        "fixed": [],
+        "diagram_type": "process",
+        "icon_names": [],
+        "image_prompt": "",
+        "template_asset_id": "",
+        "resource_id": "",
+        "resource_icon_ids": [],
+        "resource_icon_data": [],
+        "image_data": "",
+        "elements": [],
+        "element_images": {}
+      },
+      {
+        "title": "Нейросети: архитектура и принципы работы",
+        "body": "Нейронные сети имитируют работу биологических нейронов, обрабатывая информацию через слои. Их структура определяет способность решать сложные задачи.",
+        "kind": "diagram",
+        "bullets": [
+          "Входной слой: прием исходных данных",
+          "Скрытые слои: извлечение признаков и абстракций",
+          "Выходной слой: формирование результата",
+          "Обратное распространение ошибки: механизм обучения",
+          "Глубина сети: влияние на сложность решаемых задач"
+        ],
+        "chart": null,
+        "analytics": null,
+        "table": [],
+        "source_quote": "",
+        "notes": "Схема показывает логическую структуру нейросети. Конкретные типы архитектур (CNN, RNN, Transformer) не детализированы в рамках общего обзора.",
+        "layout": null,
+        "design": {
+          "composition": "editorial",
+          "density": "balanced",
+          "layout_shift": 0,
+          "smartart": null,
+          "background_role": "template",
+          "foreground_role": "text",
+          "heading_role": "heading",
+          "body_role": "body",
+          "heading_scale": 1.0,
+          "body_scale": 1.0,
+          "heading_weight": "bold",
+          "diagram_style": "hierarchy",
+          "background_color": null,
+          "text_color": null,
+          "heading_color": null,
+          "accent_color": null,
+          "objects": {}
+        },
+        "designs": {
+          "a": {
+            "composition": "editorial",
+            "density": "balanced",
+            "layout_shift": 0,
+            "smartart": null,
+            "background_role": "template",
+            "foreground_role": "text",
+            "heading_role": "heading",
+            "body_role": "body",
+            "heading_scale": 1.0,
+            "body_scale": 1.0,
+            "heading_weight": "bold",
+            "diagram_style": "hierarchy",
+            "background_color": null,
+            "text_color": null,
+            "heading_color": null,
+            "accent_color": null,
+            "objects": {}
+          },
+          "b": {
+            "composition": "split",
+            "density": "balanced",
+            "layout_shift": 1,
+            "smartart": null,
+            "background_role": "template",
+            "foreground_role": "text",
+            "heading_role": "heading",
+            "body_role": "body",
+            "heading_scale": 1.0,
+            "body_scale": 1.0,
+            "heading_weight": "bold",
+            "diagram_style": "hierarchy",
+            "background_color": null,
+            "text_color": null,
+            "heading_color": null,
+            "accent_color": null,
+            "objects": {}
+          },
+          "c": {
+            "composition": "editorial",
+            "density": "balanced",
+            "layout_shift": 0,
+            "smartart": null,
+            "background_role": "template",
+            "foreground_role": "text",
+            "heading_role": "heading",
+            "body_role": "body",
+            "heading_scale": 1.0,
+            "body_scale": 1.0,
+            "heading_weight": "normal",
+            "diagram_style": "hierarchy",
+            "background_color": null,
+            "text_color": null,
+            "heading_color": null,
+            "accent_color": null,
+            "objects": {}
+          }
+        },
+        "fixed": [],
+        "diagram_type": "hierarchy",
+        "icon_names": [],
+        "image_prompt": "",
+        "template_asset_id": "",
+        "resource_id": "",
+        "resource_icon_ids": [],
+        "resource_icon_data": [],
+        "image_data": "",
+        "elements": [],
+        "element_images": {}
+      },
+      {
+        "title": "Генеративные модели: создание нового контента",
+        "body": "Генеративные ИИ способны создавать тексты, изображения и другие форматы данных. Они расширяют возможности творческих и аналитических процессов.",
+        "kind": "icons",
+        "bullets": [
+          "Генерация текстов: статьи, описания, код",
+          "Создание изображений по текстовому описанию",
+          "Синтез речи и аудио",
+          "Автоматизация рутинного создания контента"
+        ],
+        "chart": null,
+        "analytics": null,
+        "table": [],
+        "source_quote": "",
+        "notes": "Описаны основные направления применения генеративных моделей. Примеры конкретных инструментов не приводятся, чтобы сохранить нейтральность обзора.",
+        "layout": null,
+        "design": {
+          "composition": "grid",
+          "density": "balanced",
+          "layout_shift": 0,
+          "smartart": null,
+          "background_role": "template",
+          "foreground_role": "text",
+          "heading_role": "heading",
+          "body_role": "body",
+          "heading_scale": 1.0,
+          "body_scale": 1.0,
+          "heading_weight": "bold",
+          "diagram_style": null,
+          "background_color": null,
+          "text_color": null,
+          "heading_color": null,
+          "accent_color": null,
+          "objects": {}
+        },
+        "designs": {
+          "a": {
+            "composition": "grid",
+            "density": "balanced",
+            "layout_shift": 0,
+            "smartart": null,
+            "background_role": "template",
+            "foreground_role": "text",
+            "heading_role": "heading",
+            "body_role": "body",
+            "heading_scale": 1.0,
+            "body_scale": 1.0,
+            "heading_weight": "bold",
+            "diagram_style": null,
+            "background_color": null,
+            "text_color": null,
+            "heading_color": null,
+            "accent_color": null,
+            "objects": {}
+          },
+          "b": {
+            "composition": "grid",
+            "density": "airy",
+            "layout_shift": 0,
+            "smartart": null,
+            "background_role": "template",
+            "foreground_role": "text",
+            "heading_role": "heading",
+            "body_role": "body",
+            "heading_scale": 1.0,
+            "body_scale": 1.0,
+            "heading_weight": "bold",
+            "diagram_style": null,
+            "background_color": null,
+            "text_color": null,
+            "heading_color": null,
+            "accent_color": null,
+            "objects": {}
+          },
+          "c": {
+            "composition": "grid",
+            "density": "airy",
+            "layout_shift": 0,
+            "smartart": null,
+            "background_role": "template",
+            "foreground_role": "text",
+            "heading_role": "heading",
+            "body_role": "body",
+            "heading_scale": 1.0,
+            "body_scale": 1.0,
+            "heading_weight": "normal",
+            "diagram_style": null,
+            "background_color": null,
+            "text_color": null,
+            "heading_color": null,
+            "accent_color": null,
+            "objects": {}
+          }
+        },
+        "fixed": [],
+        "diagram_type": "process",
+        "icon_names": [
+          "idea",
+          "document",
+          "chat",
+          "star"
+        ],
+        "image_prompt": "",
+        "template_asset_id": "",
+        "resource_id": "",
+        "resource_icon_ids": [],
+        "resource_icon_data": [],
+        "image_data": "",
+        "elements": [],
+        "element_images": {}
+      },
+      {
+        "title": "Преимущества внедрения ИИ в работу команды",
+        "body": "Использование ИИ-инструментов позволяет оптимизировать процессы и высвободить время для стратегических задач. Это повышает общую продуктивность.",
+        "kind": "icons",
+        "bullets": [
+          "Автоматизация рутинных операций",
+          "Ускорение анализа больших объемов данных",
+          "Повышение точности прогнозов и оценок",
+          "Поддержка принятия решений на основе данных"
+        ],
+        "chart": null,
+        "analytics": null,
+        "table": [],
+        "source_quote": "",
+        "notes": "Перечислены качественные преимущества. Количественные оценки экономии времени или роста производительности не приводятся из-за отсутствия данных.",
+        "layout": null,
+        "design": {
+          "composition": "grid",
+          "density": "balanced",
+          "layout_shift": 0,
+          "smartart": null,
+          "background_role": "template",
+          "foreground_role": "text",
+          "heading_role": "heading",
+          "body_role": "body",
+          "heading_scale": 1.0,
+          "body_scale": 1.0,
+          "heading_weight": "bold",
+          "diagram_style": null,
+          "background_color": null,
+          "text_color": null,
+          "heading_color": null,
+          "accent_color": null,
+          "objects": {}
+        },
+        "designs": {
+          "a": {
+            "composition": "grid",
+            "density": "balanced",
+            "layout_shift": 0,
+            "smartart": null,
+            "background_role": "template",
+            "foreground_role": "text",
+            "heading_role": "heading",
+            "body_role": "body",
+            "heading_scale": 1.0,
+            "body_scale": 1.0,
+            "heading_weight": "bold",
+            "diagram_style": null,
+            "background_color": null,
+            "text_color": null,
+            "heading_color": null,
+            "accent_color": null,
+            "objects": {}
+          },
+          "b": {
+            "composition": "grid",
+            "density": "balanced",
+            "layout_shift": 0,
+            "smartart": null,
+            "background_role": "template",
+            "foreground_role": "text",
+            "heading_role": "heading",
+            "body_role": "body",
+            "heading_scale": 1.0,
+            "body_scale": 1.0,
+            "heading_weight": "bold",
+            "diagram_style": null,
+            "background_color": null,
+            "text_color": null,
+            "heading_color": null,
+            "accent_color": null,
+            "objects": {}
+          },
+          "c": {
+            "composition": "grid",
+            "density": "airy",
+            "layout_shift": 0,
+            "smartart": null,
+            "background_role": "template",
+            "foreground_role": "text",
+            "heading_role": "heading",
+            "body_role": "body",
+            "heading_scale": 1.0,
+            "body_scale": 1.0,
+            "heading_weight": "normal",
+            "diagram_style": null,
+            "background_color": null,
+            "text_color": null,
+            "heading_color": null,
+            "accent_color": null,
+            "objects": {}
+          }
+        },
+        "fixed": [],
+        "diagram_type": "process",
+        "icon_names": [
+          "growth",
+          "clock",
+          "check",
+          "target"
+        ],
+        "image_prompt": "",
+        "template_asset_id": "",
+        "resource_id": "",
+        "resource_icon_ids": [],
+        "resource_icon_data": [],
+        "image_data": "",
+        "elements": [],
+        "element_images": {}
+      },
+      {
+        "title": "Ограничения и риски технологий ИИ",
+        "body": "ИИ не является универсальным решением. Понимание ограничений помогает реалистично планировать проекты и управлять ожиданиями.",
+        "kind": "icons",
+        "bullets": [
+          "Зависимость от качества и репрезентативности данных",
+          "Проблема «черного ящика» в сложных моделях",
+          "Этические вопросы и вопросы приватности",
+          "Необходимость человеческого контроля и экспертизы"
+        ],
+        "chart": null,
+        "analytics": null,
+        "table": [],
+        "source_quote": "",
+        "notes": "Описаны типовые риски. Конкретные инциденты или кейсы не приводятся, так как не были включены в исходный запрос.",
+        "layout": null,
+        "design": {
+          "composition": "grid",
+          "density": "balanced",
+          "layout_shift": 0,
+          "smartart": null,
+          "background_role": "template",
+          "foreground_role": "text",
+          "heading_role": "heading",
+          "body_role": "body",
+          "heading_scale": 1.0,
+          "body_scale": 1.0,
+          "heading_weight": "bold",
+          "diagram_style": null,
+          "background_color": null,
+          "text_color": null,
+          "heading_color": null,
+          "accent_color": null,
+          "objects": {}
+        },
+        "designs": {
+          "a": {
+            "composition": "grid",
+            "density": "balanced",
+            "layout_shift": 0,
+            "smartart": null,
+            "background_role": "template",
+            "foreground_role": "text",
+            "heading_role": "heading",
+            "body_role": "body",
+            "heading_scale": 1.0,
+            "body_scale": 1.0,
+            "heading_weight": "bold",
+            "diagram_style": null,
+            "background_color": null,
+            "text_color": null,
+            "heading_color": null,
+            "accent_color": null,
+            "objects": {}
+          },
+          "b": {
+            "composition": "split",
+            "density": "balanced",
+            "layout_shift": 1,
+            "smartart": null,
+            "background_role": "template",
+            "foreground_role": "text",
+            "heading_role": "heading",
+            "body_role": "body",
+            "heading_scale": 1.0,
+            "body_scale": 1.0,
+            "heading_weight": "bold",
+            "diagram_style": null,
+            "background_color": null,
+            "text_color": null,
+            "heading_color": null,
+            "accent_color": null,
+            "objects": {}
+          },
+          "c": {
+            "composition": "grid",
+            "density": "airy",
+            "layout_shift": 0,
+            "smartart": null,
+            "background_role": "template",
+            "foreground_role": "text",
+            "heading_role": "heading",
+            "body_role": "body",
+            "heading_scale": 1.0,
+            "body_scale": 1.0,
+            "heading_weight": "normal",
+            "diagram_style": null,
+            "background_color": null,
+            "text_color": null,
+            "heading_color": null,
+            "accent_color": null,
+            "objects": {}
+          }
+        },
+        "fixed": [],
+        "diagram_type": "process",
+        "icon_names": [
+          "warning",
+          "shield",
+          "search",
+          "people"
+        ],
+        "image_prompt": "",
+        "template_asset_id": "",
+        "resource_id": "",
+        "resource_icon_ids": [],
+        "resource_icon_data": [],
+        "image_data": "",
+        "elements": [],
+        "element_images": {}
+      }
+    ]
+  },
+  {
+    "name": "A1",
+    "metadata": {
+      "category": "Пак презентаций",
+      "cover_title": "Приют для животных",
+      "bundled_pack": true,
+      "original_name": "priyut-dlya-givotnih.pptx",
+      "master_only": false,
+      "cover_slide": 1,
+      "count": 10,
+      "ratio": 1.77778,
+      "width_emu": 12192000,
+      "height_emu": 6858000,
+      "colors": {
+        "dk1": "#000000",
+        "lt1": "#FFFFFF",
+        "dk2": "#593A2E",
+        "lt2": "#C49060",
+        "accent1": "#593A2E",
+        "accent2": "#C49060",
+        "accent3": "#F2C49B",
+        "accent4": "#484735",
+        "accent5": "#BACBD9",
+        "accent6": "#838C3F",
+        "hlink": "#0563C1",
+        "folHlink": "#954F72",
+        "extracted_2": "#2C1D17",
+        "extracted_3": "#404040",
+        "extracted_4": "#432C23",
+        "extracted_7": "#6A4828",
+        "extracted_10": "#B05F17",
+        "extracted_12": "#BFBFBF",
+        "extracted_15": "#F2F2F2",
+        "extracted_16": "#FCF3EB"
+      },
+      "palette": [
+        "#000000",
+        "#0563C1",
+        "#2C1D17",
+        "#404040",
+        "#432C23",
+        "#484735",
+        "#593A2E",
+        "#6A4828",
+        "#838C3F",
+        "#954F72",
+        "#B05F17",
+        "#BACBD9",
+        "#BFBFBF",
+        "#C49060",
+        "#F2C49B",
+        "#F2F2F2",
+        "#FCF3EB",
+        "#FFFFFF"
+      ],
+      "accent": "#593A2E",
+      "background": "#FFFFFF",
+      "text_color": "#FFFFFF",
+      "background_info": {
+        "color": null,
+        "kind": "complex",
+        "part": "ppt/slideLayouts/slideLayout1.xml"
+      },
+      "preserve_template_background": true,
+      "font": "Calibri Light",
+      "theme_font": "Calibri Light",
+      "fonts": [
+        "Angsana New",
+        "Arial",
+        "Calibri",
+        "Calibri Light",
+        "Cordia New",
+        "DaunPenh",
+        "DokChampa",
+        "Ebrima",
+        "Estrangelo Edessa",
+        "Euphemia",
+        "Gautami",
+        "Iskoola Pota",
+        "Javanese Text",
+        "Kalinga",
+        "Kartika",
+        "Latha",
+        "Leelawadee UI",
+        "MV Boli",
+        "Mangal",
+        "Microsoft Himalaya",
+        "Microsoft JhengHei",
+        "Microsoft New Tai Lue",
+        "Microsoft Tai Le",
+        "Microsoft Uighur",
+        "Microsoft Yi Baiti",
+        "Mongolian Baiti",
+        "MoolBoran",
+        "Myanmar Text",
+        "Nirmala UI",
+        "Nyala",
+        "Phagspa",
+        "Plantagenet Cherokee",
+        "Raavi",
+        "Segoe UI",
+        "Shruti",
+        "Sylfaen",
+        "Times New Roman",
+        "Tunga",
+        "Vrinda",
+        "新細明體",
+        "游ゴシック",
+        "游ゴシック Light",
+        "等线",
+        "等线 Light",
+        "맑은 고딕"
+      ],
+      "heading_font": "Calibri Light",
+      "body_font": "Calibri",
+      "heading_pt": 28.0,
+      "body_pt": 16.0,
+      "layouts": [
+        {
+          "master": 0,
+          "index": 1,
+          "name": "Композиция исходного слайда 10",
+          "static_shapes": 0,
+          "source_slide": 9,
+          "background_info": {
+            "color": "#C49060",
+            "kind": "solid",
+            "part": "ppt/slideLayouts/slideLayout2.xml"
+          },
+          "boxes": [
+            {
+              "x": 0.0688,
+              "y": 0.0532,
+              "w": 0.8625,
+              "h": 0.1933,
+              "type": "TITLE",
+              "index": 0
+            },
+            {
+              "x": 0.0688,
+              "y": 0.2662,
+              "w": 0.8625,
+              "h": 0.6345,
+              "type": "BODY",
+              "index": 1
+            }
+          ]
+        },
+        {
+          "master": 0,
+          "index": 4,
+          "name": "Композиция исходного слайда 9",
+          "static_shapes": 0,
+          "source_slide": 8,
+          "background_info": {
+            "color": "#FFFFFF",
+            "kind": "solid",
+            "part": "ppt/slideMasters/slideMaster1.xml"
+          },
+          "boxes": [
+            {
+              "x": 0.0115,
+              "y": 0.1982,
+              "w": 0.4331,
+              "h": 0.1933,
+              "type": "TITLE",
+              "index": 0
+            },
+            {
+              "x": 0.09,
+              "y": 0.4147,
+              "w": 0.3771,
+              "h": 0.2183,
+              "type": "BODY",
+              "index": 1
+            }
+          ]
+        },
+        {
+          "master": 0,
+          "index": 1,
+          "name": "Композиция исходного слайда 2",
+          "static_shapes": 0,
+          "source_slide": 1,
+          "background_info": {
+            "color": "#C49060",
+            "kind": "solid",
+            "part": "ppt/slideLayouts/slideLayout2.xml"
+          },
+          "boxes": [
+            {
+              "x": 0.0688,
+              "y": 0.0532,
+              "w": 0.8625,
+              "h": 0.1933,
+              "type": "TITLE",
+              "index": 0
+            },
+            {
+              "x": 0.0688,
+              "y": 0.2662,
+              "w": 0.8625,
+              "h": 0.6345,
+              "type": "BODY",
+              "index": 1
+            }
+          ]
+        },
+        {
+          "master": 0,
+          "index": 0,
+          "name": "Титульный слайд",
+          "boxes": [
+            {
+              "x": 0.0,
+              "y": 0.1916,
+              "w": 0.4946,
+              "h": 0.3481,
+              "type": "CENTER_TITLE (3)",
+              "index": 0
+            }
+          ],
+          "static_shapes": 0,
+          "background_info": {
+            "color": null,
+            "kind": "complex",
+            "part": "ppt/slideLayouts/slideLayout1.xml"
+          }
+        },
+        {
+          "master": 0,
+          "index": 1,
+          "name": "Пользовательский макет",
+          "boxes": [
+            {
+              "x": 0.0688,
+              "y": 0.0532,
+              "w": 0.8625,
+              "h": 0.1933,
+              "type": "TITLE (1)",
+              "index": 0
+            },
+            {
+              "x": 0.0688,
+              "y": 0.9269,
+              "w": 0.225,
+              "h": 0.0532,
+              "type": "DATE (16)",
+              "index": 10
+            },
+            {
+              "x": 0.3312,
+              "y": 0.9269,
+              "w": 0.3375,
+              "h": 0.0532,
+              "type": "FOOTER (15)",
+              "index": 11
+            },
+            {
+              "x": 0.7063,
+              "y": 0.9269,
+              "w": 0.225,
+              "h": 0.0532,
+              "type": "SLIDE_NUMBER (13)",
+              "index": 12
+            },
+            {
+              "x": 0.0688,
+              "y": 0.2662,
+              "w": 0.8625,
+              "h": 0.6345,
+              "type": "OBJECT (7)",
+              "index": 1
+            }
+          ],
+          "static_shapes": 1,
+          "background_info": {
+            "color": "#C49060",
+            "kind": "solid",
+            "part": "ppt/slideLayouts/slideLayout2.xml"
+          }
+        },
+        {
+          "master": 0,
+          "index": 2,
+          "name": "2_Пользовательский макет",
+          "boxes": [
+            {
+              "x": 0.0688,
+              "y": 0.0532,
+              "w": 0.8625,
+              "h": 0.1933,
+              "type": "TITLE (1)",
+              "index": 0
+            },
+            {
+              "x": 0.0688,
+              "y": 0.9269,
+              "w": 0.225,
+              "h": 0.0532,
+              "type": "DATE (16)",
+              "index": 10
+            },
+            {
+              "x": 0.3312,
+              "y": 0.9269,
+              "w": 0.3375,
+              "h": 0.0532,
+              "type": "FOOTER (15)",
+              "index": 11
+            },
+            {
+              "x": 0.7063,
+              "y": 0.9269,
+              "w": 0.225,
+              "h": 0.0532,
+              "type": "SLIDE_NUMBER (13)",
+              "index": 12
+            }
+          ],
+          "static_shapes": 1,
+          "background_info": {
+            "color": "#C49060",
+            "kind": "solid",
+            "part": "ppt/slideLayouts/slideLayout3.xml"
+          }
+        },
+        {
+          "master": 0,
+          "index": 3,
+          "name": "6_Пользовательский макет",
+          "boxes": [
+            {
+              "x": 0.0385,
+              "y": 0.0547,
+              "w": 0.55,
+              "h": 0.0975,
+              "type": "TITLE (1)",
+              "index": 0
+            },
+            {
+              "x": 0.0385,
+              "y": 0.1917,
+              "w": 0.55,
+              "h": 0.3083,
+              "type": "BODY (2)",
+              "index": 11
+            },
+            {
+              "x": 0.607,
+              "y": 0.0532,
+              "w": 0.3249,
+              "h": 0.8935,
+              "type": "PICTURE (18)",
+              "index": 10
+            }
+          ],
+          "static_shapes": 1,
+          "background_info": {
+            "color": "#FFFFFF",
+            "kind": "solid",
+            "part": "ppt/slideMasters/slideMaster1.xml"
+          }
+        },
+        {
+          "master": 0,
+          "index": 4,
+          "name": "1_Пользовательский макет",
+          "boxes": [
+            {
+              "x": 0.0115,
+              "y": 0.1982,
+              "w": 0.4331,
+              "h": 0.1933,
+              "type": "TITLE (1)",
+              "index": 0
+            }
+          ],
+          "static_shapes": 2,
+          "background_info": {
+            "color": "#FFFFFF",
+            "kind": "solid",
+            "part": "ppt/slideMasters/slideMaster1.xml"
+          }
+        },
+        {
+          "master": 0,
+          "index": 5,
+          "name": "5_Заголовок и объект",
+          "boxes": [
+            {
+              "x": 0.0349,
+              "y": 0.0341,
+              "w": 0.9302,
+              "h": 0.1509,
+              "type": "TITLE (1)",
+              "index": 0
+            },
+            {
+              "x": 0.0349,
+              "y": 0.3359,
+              "w": 0.3285,
+              "h": 0.2363,
+              "type": "PICTURE (18)",
+              "index": 13
+            },
+            {
+              "x": 0.3769,
+              "y": 0.3359,
+              "w": 0.3285,
+              "h": 0.2363,
+              "type": "PICTURE (18)",
+              "index": 14
+            },
+            {
+              "x": 0.7186,
+              "y": 0.3359,
+              "w": 0.2465,
+              "h": 0.2363,
+              "type": "PICTURE (18)",
+              "index": 15
+            },
+            {
+              "x": 0.0349,
+              "y": 0.5917,
+              "w": 0.2465,
+              "h": 0.2363,
+              "type": "PICTURE (18)",
+              "index": 16
+            },
+            {
+              "x": 0.2958,
+              "y": 0.5917,
+              "w": 0.3285,
+              "h": 0.2363,
+              "type": "PICTURE (18)",
+              "index": 17
+            },
+            {
+              "x": 0.6378,
+              "y": 0.5917,
+              "w": 0.3285,
+              "h": 0.2363,
+              "type": "PICTURE (18)",
+              "index": 18
+            },
+            {
+              "x": 0.0361,
+              "y": 0.2178,
+              "w": 0.9302,
+              "h": 0.0914,
+              "type": "BODY (2)",
+              "index": 19
+            }
+          ],
+          "static_shapes": 1,
+          "background_info": {
+            "color": "#C49060",
+            "kind": "solid",
+            "part": "ppt/slideLayouts/slideLayout6.xml"
+          }
+        },
+        {
+          "master": 0,
+          "index": 6,
+          "name": "4_Заголовок и объект",
+          "boxes": [
+            {
+              "x": 0.0688,
+              "y": 0.0532,
+              "w": 0.8625,
+              "h": 0.1933,
+              "type": "TITLE (1)",
+              "index": 0
+            },
+            {
+              "x": 0.0688,
+              "y": 0.4803,
+              "w": 0.8625,
+              "h": 0.4331,
+              "type": "BODY (2)",
+              "index": 10
+            },
+            {
+              "x": 0.0688,
+              "y": 0.29,
+              "w": 0.8625,
+              "h": 0.1181,
+              "type": "BODY (2)",
+              "index": 11
+            }
+          ],
+          "static_shapes": 2,
+          "background_info": {
+            "color": "#FFFFFF",
+            "kind": "solid",
+            "part": "ppt/slideMasters/slideMaster1.xml"
+          }
+        },
+        {
+          "master": 0,
+          "index": 7,
+          "name": "Заголовок и объект",
+          "boxes": [
+            {
+              "x": 0.0688,
+              "y": 0.0532,
+              "w": 0.8625,
+              "h": 0.1933,
+              "type": "TITLE (1)",
+              "index": 0
+            },
+            {
+              "x": 0.0688,
+              "y": 0.2662,
+              "w": 0.8625,
+              "h": 0.6345,
+              "type": "OBJECT (7)",
+              "index": 1
+            },
+            {
+              "x": 0.0688,
+              "y": 0.9269,
+              "w": 0.225,
+              "h": 0.0532,
+              "type": "DATE (16)",
+              "index": 10
+            },
+            {
+              "x": 0.3312,
+              "y": 0.9269,
+              "w": 0.3375,
+              "h": 0.0532,
+              "type": "FOOTER (15)",
+              "index": 11
+            },
+            {
+              "x": 0.7063,
+              "y": 0.9269,
+              "w": 0.225,
+              "h": 0.0532,
+              "type": "SLIDE_NUMBER (13)",
+              "index": 12
+            }
+          ],
+          "static_shapes": 0,
+          "background_info": {
+            "color": null,
+            "kind": "complex",
+            "part": "ppt/slideLayouts/slideLayout8.xml"
+          }
+        },
+        {
+          "master": 0,
+          "index": 8,
+          "name": "2_Заголовок и объект",
+          "boxes": [
+            {
+              "x": 0.0688,
+              "y": 0.0532,
+              "w": 0.8625,
+              "h": 0.1933,
+              "type": "TITLE (1)",
+              "index": 0
+            },
+            {
+              "x": 0.0688,
+              "y": 0.2662,
+              "w": 0.8625,
+              "h": 0.6345,
+              "type": "OBJECT (7)",
+              "index": 1
+            },
+            {
+              "x": 0.0688,
+              "y": 0.9269,
+              "w": 0.225,
+              "h": 0.0532,
+              "type": "DATE (16)",
+              "index": 10
+            },
+            {
+              "x": 0.3312,
+              "y": 0.9269,
+              "w": 0.3375,
+              "h": 0.0532,
+              "type": "FOOTER (15)",
+              "index": 11
+            },
+            {
+              "x": 0.7063,
+              "y": 0.9269,
+              "w": 0.225,
+              "h": 0.0532,
+              "type": "SLIDE_NUMBER (13)",
+              "index": 12
+            }
+          ],
+          "static_shapes": 0,
+          "background_info": {
+            "color": null,
+            "kind": "complex",
+            "part": "ppt/slideLayouts/slideLayout9.xml"
+          }
+        },
+        {
+          "master": 0,
+          "index": 9,
+          "name": "Заголовок раздела",
+          "boxes": [
+            {
+              "x": 0.0682,
+              "y": 0.2493,
+              "w": 0.8625,
+              "h": 0.416,
+              "type": "TITLE (1)",
+              "index": 0
+            },
+            {
+              "x": 0.0682,
+              "y": 0.6692,
+              "w": 0.8625,
+              "h": 0.2187,
+              "type": "BODY (2)",
+              "index": 1
+            },
+            {
+              "x": 0.0688,
+              "y": 0.9269,
+              "w": 0.225,
+              "h": 0.0532,
+              "type": "DATE (16)",
+              "index": 10
+            },
+            {
+              "x": 0.3312,
+              "y": 0.9269,
+              "w": 0.3375,
+              "h": 0.0532,
+              "type": "FOOTER (15)",
+              "index": 11
+            },
+            {
+              "x": 0.7063,
+              "y": 0.9269,
+              "w": 0.225,
+              "h": 0.0532,
+              "type": "SLIDE_NUMBER (13)",
+              "index": 12
+            }
+          ],
+          "static_shapes": 0,
+          "background_info": {
+            "color": "#FFFFFF",
+            "kind": "solid",
+            "part": "ppt/slideMasters/slideMaster1.xml"
+          }
+        },
+        {
+          "master": 0,
+          "index": 10,
+          "name": "Два объекта",
+          "boxes": [
+            {
+              "x": 0.0688,
+              "y": 0.0532,
+              "w": 0.8625,
+              "h": 0.1933,
+              "type": "TITLE (1)",
+              "index": 0
+            },
+            {
+              "x": 0.0688,
+              "y": 0.2662,
+              "w": 0.425,
+              "h": 0.6345,
+              "type": "OBJECT (7)",
+              "index": 1
+            },
+            {
+              "x": 0.5062,
+              "y": 0.2662,
+              "w": 0.425,
+              "h": 0.6345,
+              "type": "OBJECT (7)",
+              "index": 2
+            },
+            {
+              "x": 0.0688,
+              "y": 0.9269,
+              "w": 0.225,
+              "h": 0.0532,
+              "type": "DATE (16)",
+              "index": 10
+            },
+            {
+              "x": 0.3312,
+              "y": 0.9269,
+              "w": 0.3375,
+              "h": 0.0532,
+              "type": "FOOTER (15)",
+              "index": 11
+            },
+            {
+              "x": 0.7063,
+              "y": 0.9269,
+              "w": 0.225,
+              "h": 0.0532,
+              "type": "SLIDE_NUMBER (13)",
+              "index": 12
+            }
+          ],
+          "static_shapes": 0,
+          "background_info": {
+            "color": "#FFFFFF",
+            "kind": "solid",
+            "part": "ppt/slideMasters/slideMaster1.xml"
+          }
+        },
+        {
+          "master": 0,
+          "index": 11,
+          "name": "Сравнение",
+          "boxes": [
+            {
+              "x": 0.0689,
+              "y": 0.0532,
+              "w": 0.8625,
+              "h": 0.1933,
+              "type": "TITLE (1)",
+              "index": 0
+            },
+            {
+              "x": 0.0689,
+              "y": 0.2451,
+              "w": 0.423,
+              "h": 0.1201,
+              "type": "BODY (2)",
+              "index": 1
+            },
+            {
+              "x": 0.0689,
+              "y": 0.3653,
+              "w": 0.423,
+              "h": 0.5373,
+              "type": "OBJECT (7)",
+              "index": 2
+            },
+            {
+              "x": 0.5062,
+              "y": 0.2451,
+              "w": 0.4251,
+              "h": 0.1201,
+              "type": "BODY (2)",
+              "index": 3
+            },
+            {
+              "x": 0.5062,
+              "y": 0.3653,
+              "w": 0.4251,
+              "h": 0.5373,
+              "type": "OBJECT (7)",
+              "index": 4
+            },
+            {
+              "x": 0.0688,
+              "y": 0.9269,
+              "w": 0.225,
+              "h": 0.0532,
+              "type": "DATE (16)",
+              "index": 10
+            },
+            {
+              "x": 0.3312,
+              "y": 0.9269,
+              "w": 0.3375,
+              "h": 0.0532,
+              "type": "FOOTER (15)",
+              "index": 11
+            },
+            {
+              "x": 0.7063,
+              "y": 0.9269,
+              "w": 0.225,
+              "h": 0.0532,
+              "type": "SLIDE_NUMBER (13)",
+              "index": 12
+            }
+          ],
+          "static_shapes": 0,
+          "background_info": {
+            "color": "#FFFFFF",
+            "kind": "solid",
+            "part": "ppt/slideMasters/slideMaster1.xml"
+          }
+        },
+        {
+          "master": 0,
+          "index": 12,
+          "name": "Только заголовок",
+          "boxes": [
+            {
+              "x": 0.0688,
+              "y": 0.0532,
+              "w": 0.8625,
+              "h": 0.1933,
+              "type": "TITLE (1)",
+              "index": 0
+            },
+            {
+              "x": 0.0688,
+              "y": 0.9269,
+              "w": 0.225,
+              "h": 0.0532,
+              "type": "DATE (16)",
+              "index": 10
+            },
+            {
+              "x": 0.3312,
+              "y": 0.9269,
+              "w": 0.3375,
+              "h": 0.0532,
+              "type": "FOOTER (15)",
+              "index": 11
+            },
+            {
+              "x": 0.7063,
+              "y": 0.9269,
+              "w": 0.225,
+              "h": 0.0532,
+              "type": "SLIDE_NUMBER (13)",
+              "index": 12
+            }
+          ],
+          "static_shapes": 0,
+          "background_info": {
+            "color": "#FFFFFF",
+            "kind": "solid",
+            "part": "ppt/slideMasters/slideMaster1.xml"
+          }
+        },
+        {
+          "master": 0,
+          "index": 13,
+          "name": "Пустой слайд",
+          "boxes": [
+            {
+              "x": 0.0688,
+              "y": 0.9269,
+              "w": 0.225,
+              "h": 0.0532,
+              "type": "DATE (16)",
+              "index": 10
+            },
+            {
+              "x": 0.3312,
+              "y": 0.9269,
+              "w": 0.3375,
+              "h": 0.0532,
+              "type": "FOOTER (15)",
+              "index": 11
+            },
+            {
+              "x": 0.7063,
+              "y": 0.9269,
+              "w": 0.225,
+              "h": 0.0532,
+              "type": "SLIDE_NUMBER (13)",
+              "index": 12
+            }
+          ],
+          "static_shapes": 0,
+          "background_info": {
+            "color": "#FFFFFF",
+            "kind": "solid",
+            "part": "ppt/slideMasters/slideMaster1.xml"
+          }
+        },
+        {
+          "master": 0,
+          "index": 14,
+          "name": "Объект с подписью",
+          "boxes": [
+            {
+              "x": 0.0689,
+              "y": 0.0667,
+              "w": 0.3225,
+              "h": 0.2333,
+              "type": "TITLE (1)",
+              "index": 0
+            },
+            {
+              "x": 0.4251,
+              "y": 0.144,
+              "w": 0.5062,
+              "h": 0.7106,
+              "type": "OBJECT (7)",
+              "index": 1
+            },
+            {
+              "x": 0.0689,
+              "y": 0.3,
+              "w": 0.3225,
+              "h": 0.5558,
+              "type": "BODY (2)",
+              "index": 2
+            },
+            {
+              "x": 0.0688,
+              "y": 0.9269,
+              "w": 0.225,
+              "h": 0.0532,
+              "type": "DATE (16)",
+              "index": 10
+            },
+            {
+              "x": 0.3312,
+              "y": 0.9269,
+              "w": 0.3375,
+              "h": 0.0532,
+              "type": "FOOTER (15)",
+              "index": 11
+            },
+            {
+              "x": 0.7063,
+              "y": 0.9269,
+              "w": 0.225,
+              "h": 0.0532,
+              "type": "SLIDE_NUMBER (13)",
+              "index": 12
+            }
+          ],
+          "static_shapes": 0,
+          "background_info": {
+            "color": "#FFFFFF",
+            "kind": "solid",
+            "part": "ppt/slideMasters/slideMaster1.xml"
+          }
+        },
+        {
+          "master": 0,
+          "index": 15,
+          "name": "Рисунок с подписью",
+          "boxes": [
+            {
+              "x": 0.0689,
+              "y": 0.0667,
+              "w": 0.3225,
+              "h": 0.2333,
+              "type": "TITLE (1)",
+              "index": 0
+            },
+            {
+              "x": 0.4251,
+              "y": 0.144,
+              "w": 0.5062,
+              "h": 0.7106,
+              "type": "PICTURE (18)",
+              "index": 1
+            },
+            {
+              "x": 0.0689,
+              "y": 0.3,
+              "w": 0.3225,
+              "h": 0.5558,
+              "type": "BODY (2)",
+              "index": 2
+            },
+            {
+              "x": 0.0688,
+              "y": 0.9269,
+              "w": 0.225,
+              "h": 0.0532,
+              "type": "DATE (16)",
+              "index": 10
+            },
+            {
+              "x": 0.3312,
+              "y": 0.9269,
+              "w": 0.3375,
+              "h": 0.0532,
+              "type": "FOOTER (15)",
+              "index": 11
+            },
+            {
+              "x": 0.7063,
+              "y": 0.9269,
+              "w": 0.225,
+              "h": 0.0532,
+              "type": "SLIDE_NUMBER (13)",
+              "index": 12
+            }
+          ],
+          "static_shapes": 0,
+          "background_info": {
+            "color": "#FFFFFF",
+            "kind": "solid",
+            "part": "ppt/slideMasters/slideMaster1.xml"
+          }
+        },
+        {
+          "master": 0,
+          "index": 16,
+          "name": "Заголовок и вертикальный текст",
+          "boxes": [
+            {
+              "x": 0.0688,
+              "y": 0.0532,
+              "w": 0.8625,
+              "h": 0.1933,
+              "type": "TITLE (1)",
+              "index": 0
+            },
+            {
+              "x": 0.0688,
+              "y": 0.2662,
+              "w": 0.8625,
+              "h": 0.6345,
+              "type": "BODY (2)",
+              "index": 1
+            },
+            {
+              "x": 0.0688,
+              "y": 0.9269,
+              "w": 0.225,
+              "h": 0.0532,
+              "type": "DATE (16)",
+              "index": 10
+            },
+            {
+              "x": 0.3312,
+              "y": 0.9269,
+              "w": 0.3375,
+              "h": 0.0532,
+              "type": "FOOTER (15)",
+              "index": 11
+            },
+            {
+              "x": 0.7063,
+              "y": 0.9269,
+              "w": 0.225,
+              "h": 0.0532,
+              "type": "SLIDE_NUMBER (13)",
+              "index": 12
+            }
+          ],
+          "static_shapes": 0,
+          "background_info": {
+            "color": "#FFFFFF",
+            "kind": "solid",
+            "part": "ppt/slideMasters/slideMaster1.xml"
+          }
+        },
+        {
+          "master": 0,
+          "index": 17,
+          "name": "Вертикальный заголовок и текст",
+          "boxes": [
+            {
+              "x": 0.7156,
+              "y": 0.0532,
+              "w": 0.2156,
+              "h": 0.8475,
+              "type": "TITLE (1)",
+              "index": 0
+            },
+            {
+              "x": 0.0688,
+              "y": 0.0532,
+              "w": 0.6344,
+              "h": 0.8475,
+              "type": "BODY (2)",
+              "index": 1
+            },
+            {
+              "x": 0.0688,
+              "y": 0.9269,
+              "w": 0.225,
+              "h": 0.0532,
+              "type": "DATE (16)",
+              "index": 10
+            },
+            {
+              "x": 0.3312,
+              "y": 0.9269,
+              "w": 0.3375,
+              "h": 0.0532,
+              "type": "FOOTER (15)",
+              "index": 11
+            },
+            {
+              "x": 0.7063,
+              "y": 0.9269,
+              "w": 0.225,
+              "h": 0.0532,
+              "type": "SLIDE_NUMBER (13)",
+              "index": 12
+            }
+          ],
+          "static_shapes": 0,
+          "background_info": {
+            "color": "#FFFFFF",
+            "kind": "solid",
+            "part": "ppt/slideMasters/slideMaster1.xml"
+          }
+        },
+        {
+          "master": 0,
+          "index": 18,
+          "name": "1_Заголовок и объект",
+          "boxes": [
+            {
+              "x": 0.0688,
+              "y": 0.0532,
+              "w": 0.8625,
+              "h": 0.1933,
+              "type": "TITLE (1)",
+              "index": 0
+            },
+            {
+              "x": 0.7063,
+              "y": 0.9269,
+              "w": 0.225,
+              "h": 0.0532,
+              "type": "SLIDE_NUMBER (13)",
+              "index": 12
+            }
+          ],
+          "static_shapes": 0,
+          "background_info": {
+            "color": null,
+            "kind": "complex",
+            "part": "ppt/slideLayouts/slideLayout19.xml"
+          }
+        }
+      ],
+      "master_count": 1,
+      "source": "pptx",
+      "visual_elements": {
+        "shapes": 15,
+        "pictures": 19,
+        "charts": 1
+      },
+      "normalization_version": "6",
+      "file_fingerprint": "c4b30dc399e44f8055979194a782f2ae6de4034aca38dd0c427195df37e8606e",
+      "analysis_limits": {
+        "sampled_slides": 10,
+        "total_slides": 10,
+        "reusable_images": 30,
+        "retained_media": 52
+      },
+      "warnings": [
+        "Предпросмотр показывает содержимое и размещение. Графика мастера сохраняется в PPTX; проверьте итоговый файл в PowerPoint."
+      ]
+    },
+    "slides": [
+      {
+        "title": "Особенности поведения: инстинкты и привычки",
+        "body": "Поведение кошек определяется врождёнными инстинктами хищника и социальными навыками, развитыми в процессе одомашнивания.",
+        "kind": "icons",
+        "bullets": [
+          "Охотничий инстинкт проявляется в игре и преследовании целей",
+          "Территориальное поведение выражается в метке и защите пространства",
+          "Социальная гибкость позволяет кошкам адаптироваться к жизни в доме",
+          "Ночная активность сохраняется как остаточный признак диких предков"
+        ],
+        "chart": null,
+        "analytics": null,
+        "table": [],
+        "source_quote": "",
+        "notes": "Перечислены основные поведенческие паттерны. Конкретные проявления могут варьироваться в зависимости от породы и индивидуального характера животного.",
+        "layout": null,
+        "design": {
+          "composition": "grid",
+          "density": "balanced",
+          "layout_shift": 0,
+          "smartart": null,
+          "background_role": "template",
+          "foreground_role": "text",
+          "heading_role": "heading",
+          "body_role": "body",
+          "heading_scale": 1.0,
+          "body_scale": 1.0,
+          "heading_weight": "bold",
+          "diagram_style": null,
+          "background_color": null,
+          "text_color": null,
+          "heading_color": null,
+          "accent_color": null,
+          "objects": {}
+        },
+        "designs": {
+          "a": {
+            "composition": "grid",
+            "density": "balanced",
+            "layout_shift": 0,
+            "smartart": null,
+            "background_role": "template",
+            "foreground_role": "text",
+            "heading_role": "heading",
+            "body_role": "body",
+            "heading_scale": 1.0,
+            "body_scale": 1.0,
+            "heading_weight": "bold",
+            "diagram_style": null,
+            "background_color": null,
+            "text_color": null,
+            "heading_color": null,
+            "accent_color": null,
+            "objects": {}
+          },
+          "b": {
+            "composition": "grid",
+            "density": "compact",
+            "layout_shift": 2,
+            "smartart": null,
+            "background_role": "template",
+            "foreground_role": "text",
+            "heading_role": "heading",
+            "body_role": "body",
+            "heading_scale": 1.0,
+            "body_scale": 0.9,
+            "heading_weight": "bold",
+            "diagram_style": "honeycomb",
+            "background_color": null,
+            "text_color": null,
+            "heading_color": null,
+            "accent_color": null,
+            "objects": {}
+          },
+          "c": {
+            "composition": "grid",
+            "density": "airy",
+            "layout_shift": 0,
+            "smartart": null,
+            "background_role": "template",
+            "foreground_role": "text",
+            "heading_role": "heading",
+            "body_role": "body",
+            "heading_scale": 1.0,
+            "body_scale": 1.0,
+            "heading_weight": "normal",
+            "diagram_style": "matrix",
+            "background_color": null,
+            "text_color": null,
+            "heading_color": null,
+            "accent_color": null,
+            "objects": {}
+          }
+        },
+        "fixed": [],
+        "diagram_type": "process",
+        "icon_names": [
+          "target",
+          "shield",
+          "people",
+          "clock"
+        ],
+        "image_prompt": "",
+        "template_asset_id": "",
+        "resource_id": "",
+        "resource_icon_ids": [],
+        "resource_icon_data": [],
+        "image_data": "",
+        "elements": [],
+        "element_images": {}
+      }
+    ]
+  },
+  {
+    "name": "A2",
+    "metadata": {
+      "count": 55,
+      "ratio": 1.7777777777777777,
+      "font": "Manrope",
+      "heading_pt": 32,
+      "body_pt": 18,
+      "accent": "#73A929",
+      "background": "#FFFFFF",
+      "colors": {
+        "accent1": "#73A929"
+      },
+      "layouts": [],
+      "source": "starter",
+      "warnings": [
+        "Авторская стартовая тема; исходный корпоративный PPTX не загружен."
+      ],
+      "category": "Образование",
+      "cover_title": "Знания, которые меняют будущее"
+    },
+    "slides": [
+      {
+        "title": "Восемь планет и их порядок",
+        "body": "Планеты расположены в определённом порядке от Солнца. Их можно запомнить по первой букве названия.",
+        "kind": "diagram",
+        "bullets": [
+          "Меркурий, Венера, Земля, Марс",
+          "Юпитер, Сатурн, Уран, Нептун",
+          "Первые четыре — планеты земной группы, остальные — газовые гиганты"
+        ],
+        "chart": null,
+        "analytics": null,
+        "table": [],
+        "source_quote": "",
+        "notes": "Порядок планет фиксирован; Плутон считается карликовой планетой, а не девятой планетой.",
+        "layout": null,
+        "design": {
+          "composition": "editorial",
+          "density": "balanced",
+          "layout_shift": 0,
+          "smartart": null,
+          "background_role": "template",
+          "foreground_role": "text",
+          "heading_role": "heading",
+          "body_role": "body",
+          "heading_scale": 1.0,
+          "body_scale": 1.0,
+          "heading_weight": "bold",
+          "diagram_style": "process",
+          "background_color": null,
+          "text_color": null,
+          "heading_color": null,
+          "accent_color": null,
+          "objects": {}
+        },
+        "designs": {
+          "a": {
+            "composition": "editorial",
+            "density": "balanced",
+            "layout_shift": 0,
+            "smartart": null,
+            "background_role": "template",
+            "foreground_role": "text",
+            "heading_role": "heading",
+            "body_role": "body",
+            "heading_scale": 1.0,
+            "body_scale": 1.0,
+            "heading_weight": "bold",
+            "diagram_style": "process",
+            "background_color": null,
+            "text_color": null,
+            "heading_color": null,
+            "accent_color": null,
+            "objects": {}
+          },
+          "b": {
+            "composition": "grid",
+            "density": "balanced",
+            "layout_shift": 0,
+            "smartart": null,
+            "background_role": "template",
+            "foreground_role": "text",
+            "heading_role": "heading",
+            "body_role": "body",
+            "heading_scale": 1.0,
+            "body_scale": 1.0,
+            "heading_weight": "bold",
+            "diagram_style": "process",
+            "background_color": null,
+            "text_color": null,
+            "heading_color": null,
+            "accent_color": null,
+            "objects": {}
+          },
+          "c": {
+            "composition": "grid",
+            "density": "balanced",
+            "layout_shift": 0,
+            "smartart": null,
+            "background_role": "template",
+            "foreground_role": "text",
+            "heading_role": "heading",
+            "body_role": "body",
+            "heading_scale": 1.0,
+            "body_scale": 1.0,
+            "heading_weight": "bold",
+            "diagram_style": "process",
+            "background_color": null,
+            "text_color": null,
+            "heading_color": null,
+            "accent_color": null,
+            "objects": {}
+          }
+        },
+        "fixed": [],
+        "diagram_type": "process",
+        "icon_names": [],
+        "image_prompt": "",
+        "template_asset_id": "",
+        "resource_id": "",
+        "resource_icon_ids": [],
+        "resource_icon_data": [],
+        "image_data": "",
+        "elements": [],
+        "element_images": {}
+      },
+      {
+        "title": "Планеты земной группы: маленькие и каменистые",
+        "body": "Меркурий, Венера, Земля и Марс — ближайшие к Солнцу. У них твёрдая поверхность и мало спутников.",
+        "kind": "icons",
+        "bullets": [
+          "Меркурий — самая маленькая планета",
+          "Венера — самая горячая из-за плотной атмосферы",
+          "Земля — единственная известная планета с жизнью",
+          "Марс — «красная планета» с двумя спутниками"
+        ],
+        "chart": null,
+        "analytics": null,
+        "table": [],
+        "source_quote": "",
+        "notes": "Земля — единственная планета, где подтверждено существование жизни; наличие воды и атмосферы делает её уникальной.",
+        "layout": null,
+        "design": {
+          "composition": "grid",
+          "density": "balanced",
+          "layout_shift": 0,
+          "smartart": null,
+          "background_role": "template",
+          "foreground_role": "text",
+          "heading_role": "heading",
+          "body_role": "body",
+          "heading_scale": 1.0,
+          "body_scale": 1.0,
+          "heading_weight": "bold",
+          "diagram_style": null,
+          "background_color": null,
+          "text_color": null,
+          "heading_color": null,
+          "accent_color": null,
+          "objects": {}
+        },
+        "designs": {
+          "a": {
+            "composition": "grid",
+            "density": "balanced",
+            "layout_shift": 0,
+            "smartart": null,
+            "background_role": "template",
+            "foreground_role": "text",
+            "heading_role": "heading",
+            "body_role": "body",
+            "heading_scale": 1.0,
+            "body_scale": 1.0,
+            "heading_weight": "bold",
+            "diagram_style": null,
+            "background_color": null,
+            "text_color": null,
+            "heading_color": null,
+            "accent_color": null,
+            "objects": {}
+          },
+          "b": {
+            "composition": "split",
+            "density": "compact",
+            "layout_shift": 1,
+            "smartart": null,
+            "background_role": "template",
+            "foreground_role": "text",
+            "heading_role": "heading",
+            "body_role": "body",
+            "heading_scale": 1.0,
+            "body_scale": 0.9,
+            "heading_weight": "bold",
+            "diagram_style": null,
+            "background_color": null,
+            "text_color": null,
+            "heading_color": null,
+            "accent_color": null,
+            "objects": {}
+          },
+          "c": {
+            "composition": "grid",
+            "density": "balanced",
+            "layout_shift": 0,
+            "smartart": null,
+            "background_role": "template",
+            "foreground_role": "text",
+            "heading_role": "heading",
+            "body_role": "body",
+            "heading_scale": 1.0,
+            "body_scale": 1.0,
+            "heading_weight": "bold",
+            "diagram_style": null,
+            "background_color": null,
+            "text_color": null,
+            "heading_color": null,
+            "accent_color": null,
+            "objects": {}
+          }
+        },
+        "fixed": [],
+        "diagram_type": "process",
+        "icon_names": [
+          "location",
+          "star",
+          "shield",
+          "clock"
+        ],
+        "image_prompt": "",
+        "template_asset_id": "",
+        "resource_id": "",
+        "resource_icon_ids": [],
+        "resource_icon_data": [],
+        "image_data": "",
+        "elements": [],
+        "element_images": {}
+      },
+      {
+        "title": "Газовые гиганты: огромные и холодные",
+        "body": "Юпитер, Сатурн, Уран и Нептун — самые большие планеты. Они состоят в основном из газов и имеют много спутников.",
+        "kind": "icons",
+        "bullets": [
+          "Юпитер — самая большая планета системы",
+          "Сатурн известен своими яркими кольцами",
+          "Уран и Нептун — самые дальние и холодные",
+          "У каждого гиганта десятки спутников"
+        ],
+        "chart": null,
+        "analytics": null,
+        "table": [],
+        "source_quote": "",
+        "notes": "Кольца Сатурна состоят из льда и камней; у других гигантов также есть кольца, но менее заметные.",
+        "layout": null,
+        "design": {
+          "composition": "grid",
+          "density": "balanced",
+          "layout_shift": 0,
+          "smartart": null,
+          "background_role": "template",
+          "foreground_role": "text",
+          "heading_role": "heading",
+          "body_role": "body",
+          "heading_scale": 1.0,
+          "body_scale": 1.0,
+          "heading_weight": "bold",
+          "diagram_style": null,
+          "background_color": null,
+          "text_color": null,
+          "heading_color": null,
+          "accent_color": null,
+          "objects": {}
+        },
+        "designs": {
+          "a": {
+            "composition": "grid",
+            "density": "balanced",
+            "layout_shift": 0,
+            "smartart": null,
+            "background_role": "template",
+            "foreground_role": "text",
+            "heading_role": "heading",
+            "body_role": "body",
+            "heading_scale": 1.0,
+            "body_scale": 1.0,
+            "heading_weight": "bold",
+            "diagram_style": null,
+            "background_color": null,
+            "text_color": null,
+            "heading_color": null,
+            "accent_color": null,
+            "objects": {}
+          },
+          "b": {
+            "composition": "split",
+            "density": "compact",
+            "layout_shift": 1,
+            "smartart": null,
+            "background_role": "template",
+            "foreground_role": "text",
+            "heading_role": "heading",
+            "body_role": "body",
+            "heading_scale": 1.0,
+            "body_scale": 0.9,
+            "heading_weight": "bold",
+            "diagram_style": null,
+            "background_color": null,
+            "text_color": null,
+            "heading_color": null,
+            "accent_color": null,
+            "objects": {}
+          },
+          "c": {
+            "composition": "grid",
+            "density": "balanced",
+            "layout_shift": 0,
+            "smartart": null,
+            "background_role": "template",
+            "foreground_role": "text",
+            "heading_role": "heading",
+            "body_role": "body",
+            "heading_scale": 1.0,
+            "body_scale": 1.0,
+            "heading_weight": "bold",
+            "diagram_style": null,
+            "background_color": null,
+            "text_color": null,
+            "heading_color": null,
+            "accent_color": null,
+            "objects": {}
+          }
+        },
+        "fixed": [],
+        "diagram_type": "process",
+        "icon_names": [
+          "growth",
+          "star",
+          "cloud",
+          "location"
+        ],
+        "image_prompt": "",
+        "template_asset_id": "",
+        "resource_id": "",
+        "resource_icon_ids": [],
+        "resource_icon_data": [],
+        "image_data": "",
+        "elements": [],
+        "element_images": {}
+      }
+    ]
+  }
+]
