@@ -109,7 +109,7 @@ def validate_requested_analytics(user_id,slides):
             approved[dataset_id]={visual_fingerprint(s['analytics']):s for s in current['slides']}
         original=approved[dataset_id].get(visual_fingerprint(visual))
         if original is None: raise AnalysisError('Аналитические данные изменены или выбор устарел. Обновите план по исходному набору перед созданием.')
-        if slide.get('title')!=original['title']:
+        if slide.get('title', '').strip()!=original['title'].strip():
             raise AnalysisError('Вывод аналитического слайда изменён. Сохраните проверенный заголовок или пересчитайте анализ.')
     return True
 
@@ -125,7 +125,7 @@ def validate_content_evidence(content, previous, user_id):
     from .analytics_plan import validate_analytical_visual
     content = content.model_dump() if hasattr(content, 'model_dump') else content
     previous = previous.model_dump() if hasattr(previous, 'model_dump') else previous
-    trusted = {(json.dumps(s['analytics'], sort_keys=True), s['title'])
+    trusted = {(json.dumps(s['analytics'], sort_keys=True), s['title'].strip())
                for s in previous['slides'] if s.get('analytics')}
     for slide in content['slides']:
         visual = slide.get('analytics')
@@ -133,7 +133,7 @@ def validate_content_evidence(content, previous, user_id):
             continue
         if slide['kind'] != 'analysis' or validate_analytical_visual(visual):
             raise HTTPException(409, {'code': 'ANALYTICS_CHANGED', 'message': 'Аналитические данные изменены после расчёта. Пересоберите анализ по исходному набору.'})
-        if (json.dumps(visual, sort_keys=True), slide['title']) in trusted:
+        if (json.dumps(visual, sort_keys=True), slide['title'].strip()) in trusted:
             continue
         try:
             validate_requested_analytics(user_id, [slide])

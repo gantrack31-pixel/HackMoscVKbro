@@ -230,6 +230,7 @@ def plan(dataset, selection):
             takeaway=f'{labels[top[0]]}: {name} — {fmt(top[1])}'
             if comparable is not None: takeaway+=f', {series[1]["name"]} — {fmt(comparable)}'
             takeaway+=f' {first["unit"]}'
+            takeaway=takeaway.strip()
             calculations.append(_record('max',[name],top[1],used,len(table['rows'])-used,unit=first['unit'],description=f'Сравнение рядов в категории с максимумом «{name}»: {labels[top[0]]}.'))
             if comparable is not None:
                 calculations.append(_record('absolute_change',[name,series[1]['name']],top[1]-comparable,used,len(table['rows'])-used,unit=first['unit'],baseline=comparable,comparison=top[1],description=f'Разница двух рядов в категории «{labels[top[0]]}»; причина различий не установлена.'))
