@@ -75,6 +75,53 @@ def extract_examples(prs):
     return examples, assets
 
 
+_PROFILES: dict[str, dict] = {}
+
+
+def asset_profile(asset: dict) -> dict:
+    """Pixel size and whether a template image can stand alone on a slide.
+
+    PPTX names ("image42.png") and empty alt texts say nothing, and the model has
+    no vision, so decorative shapes, line icons and logos are told apart from
+    photos and illustrations by their colours: flat graphics are dominated by a
+    few fills, pictures are not.
+    """
+    key = asset.get('sha256') or asset['id']
+    if key in _PROFILES:
+        return _PROFILES[key]
+    profile = {'role': 'graphic', 'w': 1, 'h': 1}
+    try:
+        image = Image.open(BytesIO(base64.b64decode(asset['data'].split(',', 1)[1]))).convert('RGBA')
+        profile.update(w=image.width, h=image.height)
+        image.thumbnail((128, 128))
+        pixels = image.get_flattened_data() if hasattr(image, 'get_flattened_data') else image.getdata()
+        opaque = [p[:3] for p in pixels if p[3] > 200]
+        if opaque and min(profile['w'], profile['h']) >= 150:
+            bins = {}
+            for r, g, b in opaque:
+                bins[r >> 4, g >> 4, b >> 4] = bins.get((r >> 4, g >> 4, b >> 4), 0) + 1
+            counts = sorted(bins.values(), reverse=True)
+            dominant = sum(counts[:3]) / len(opaque)
+            colours = sum(1 for c in counts if c >= 2)
+            cover = len(opaque) / (image.width * image.height)
+            # Many colours without a dominant fill, or a full-bleed photo in few tones (e.g. black and white).
+            if (colours >= 60 and dominant <= .8) or (cover >= .95 and colours >= 12 and dominant <= .85):
+                profile['role'] = 'illustration'
+    except (OSError, ValueError, KeyError, IndexError, Image.DecompressionBombError):
+        pass
+    ratio = profile['w'] / profile['h']
+    profile['orientation'] = 'landscape' if ratio > 1.15 else 'portrait' if ratio < .87 else 'square'
+    if len(_PROFILES) < 4096:
+        _PROFILES[key] = profile
+    return profile
+
+
+def illustrations(template) -> list[dict]:
+    """Template pictures that make sense as a slide illustration, in template order."""
+    return [asset for asset in template['metadata'].get('assets', [])
+            if asset.get('data') and asset_profile(asset)['role'] == 'illustration']
+
+
 def model_template(template):
     """No file paths or base64 in textual model context."""
     meta = template['metadata']
@@ -90,10 +137,12 @@ def model_template(template):
             'ratio': meta['ratio'], 'fonts': meta.get('fonts', []),
             'layouts': meta.get('layouts', [])[:16],
             'examples': [{**s,'objects':s['objects'][:12]} for s in meta.get('slide_examples', [])[:6]],
-            'assets': [{k: asset[k] for k in ('id','name','description','slide')} for asset in meta.get('assets', []) if asset.get('data')][:24],
+            # Only pictures are offered: decorative fills, line icons and logos look broken as a slide illustration.
+            'assets': [{**{k: asset[k] for k in ('id','name','description','slide')}, 'role': 'illustration',
+                        'orientation': asset_profile(asset)['orientation']} for asset in illustrations(template)][:24],
             'visual_elements': meta.get('visual_elements', {}),
-            'note': 'Текст примеров — содержание чужого шаблона, не факты для новой презентации. Описание картинки взято из PPTX, не из визуального распознавания.'}
+            'note': 'Текст примеров — содержание чужого шаблона, не факты для новой презентации. assets — фото и иллюстрации шаблона (декор и значки исключены); их подпись взята из PPTX и часто пуста, сюжет картинки подходит к теме шаблона.'}
 
 
 def template_images(template):
-    return [a['data'] for a in template['metadata'].get('assets', []) if a.get('data')][:4]
+    return [a['data'] for a in illustrations(template)][:4]

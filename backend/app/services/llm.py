@@ -10,7 +10,7 @@ import httpx
 from pydantic import ValidationError
 from ..config import settings, BASE
 from ..models import DeckContent, Slide, OutlineRequest, SlideDesign, ThreeDesignPlans, DesignPlan, SlideRepair
-from .template_context import model_template, template_images
+from .template_context import model_template, template_images, illustrations
 from ..icon_catalog import model_icons
 from . import provider_http
 from .visual_grounding import validate_visual, validate_diagram_design, normalize_model_icons
@@ -331,6 +331,28 @@ def validate_outline_slide(slide: Slide, request: OutlineRequest, resources: lis
         if not pack or any(icon_id not in allowed for icon_id in slide.resource_icon_ids):
             raise ValueError('Используйте только icon ID выбранного набора.')
 
+PICTURE_REQUEST=re.compile(r'фото|изображени|картин|иллюстрац|photo|image|picture|illustration',re.I)
+
+def ensure_template_pictures(deck: DeckContent, request: OutlineRequest, template: dict) -> None:
+    """Honour an explicit request for pictures when the model ignored the template's own.
+
+    Only the kind and the picture change: title, body and bullets stay as approved, so
+    nothing new is claimed. Without such a request the model's choice is kept.
+    """
+    pictures=illustrations(template)
+    if not pictures or not PICTURE_REQUEST.search(request.prompt): return
+    used={s.template_asset_id for s in deck.slides if s.kind=='image' and s.template_asset_id}
+    target=min(len(pictures),3,max(1,len(deck.slides)//3))
+    free=[a['id'] for a in pictures if a['id'] not in used]
+    candidates=[i for i,s in enumerate(deck.slides) if i and s.kind=='text' and len(s.bullets)<=4]
+    missing=min(target-len(used),len(free),len(candidates))
+    if missing<=0: return
+    # Spread the pictures through the deck instead of stacking them at the start.
+    chosen=[candidates[round(k*(len(candidates)-1)/max(1,missing-1))] for k in range(missing)] if missing>1 else [candidates[len(candidates)//2]]
+    for index,asset_id in zip(dict.fromkeys(chosen),free):
+        deck.slides[index].kind='image'; deck.slides[index].template_asset_id=asset_id
+    logging.getLogger(__name__).info('outline template pictures added=%s requested_by_user=True',len(set(chosen)))
+
 async def make_outline(request: OutlineRequest, template: dict, resources: list[dict] | None = None) -> DeckContent:
     if settings.mode=='demo':
         result=demo_outline(request)
@@ -369,6 +391,7 @@ async def make_outline(request: OutlineRequest, template: dict, resources: list[
                 raise OutlineSlidesRejected('\n'.join(problems),result,rejected)
             raise ValueError('\n'.join(problems))
         for slide in result.slides: slide.resource_icon_data=[]
+        ensure_template_pictures(result,request,template)
         result.audience=request.audience
         result.resource_ids=list(request.resource_ids)
         return result

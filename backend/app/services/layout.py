@@ -8,6 +8,7 @@ from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 from ..models import Slide
 from .visuals import diagram_nodes, pictogram_nodes
+from .template_context import asset_profile
 from .palette import roles, scene_color, contrast, design_metadata, protect_foregrounds, safe_ink
 
 FONTS=Path(__file__).parent
@@ -262,13 +263,18 @@ def build_scene(slide: Slide, metadata: dict, variant: str, index: int) -> dict:
                 text(node['id'],node['text'],{k:node[k] for k in ('x','y','w','h')},node['font_size'],node['color'],True)
             else: objects.append(node)
     elif slide.kind=='image':
-        text('body',slide.body,{**body_box,'w':body_box['w']*.4},24,'#475569')
+        # Bullets stay on the slide: a picture illustrates the text, it does not replace it.
+        text('body',content,{**body_box,'w':body_box['w']*.42},24,'#475569')
         asset=next((a for a in metadata.get('assets',[]) if a['id']==slide.template_asset_id),None)
         image_data=slide.image_data or (asset['data'] if asset else '')
         if image_data:
-            side=min(body_box['h'],body_box['w']*.55)
-            objects.append({'id':'illustration','type':'image','x':body_box['x']+body_box['w']-side,
-                            'y':body_box['y'],'w':side,'h':side,'src':image_data})
+            # Fit the picture's own proportions into the right column; exporters stretch to the box.
+            profile=asset_profile(asset) if asset and not slide.image_data else asset_profile({'id':str(hash(image_data)),'data':image_data})
+            area_w,area_h=body_box['w']*.54,body_box['h']
+            scale=min(area_w/profile['w'],area_h/profile['h'])
+            w,h=profile['w']*scale,profile['h']*scale
+            objects.append({'id':'illustration','type':'image','x':body_box['x']+body_box['w']-area_w+(area_w-w)/2,
+                            'y':body_box['y']+(area_h-h)/2,'w':w,'h':h,'src':image_data})
         else:text('image-placeholder','Добавьте иллюстрацию в редакторе',{**body_box,'x':body_box['x']+body_box['w']*.45,'w':body_box['w']*.55},24,'#64748B')
     elif slide.kind=='chart' and slide.chart:
         text('body',slide.body,{**body_box,'h':64},22,'#475569')

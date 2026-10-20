@@ -139,7 +139,9 @@ def test_unseen_pptx_extracts_free_boxes_tables_charts_and_reusable_picture(clie
     slide.shapes.add_table(2,2,Inches(1),Inches(4),Inches(4),Inches(1)).table.cell(0,0).text='План'
     chart=CategoryChartData();chart.categories=['A','B'];chart.add_series('Пилот',[12,8])
     slide.shapes.add_chart(XL_CHART_TYPE.COLUMN_CLUSTERED, Inches(6),Inches(2), Inches(3),Inches(2),chart)
-    picture=BytesIO();Image.new('RGB',(48,48),'#317bee').save(picture,format='PNG');picture.seek(0)
+    # A photo-like picture: flat fills are decor and are not offered to the model as illustrations.
+    photo=Image.new('RGB',(200,200));photo.putdata([((x*7)%256,(y*5)%256,(x*y)%256) for y in range(200) for x in range(200)])
+    picture=BytesIO();photo.save(picture,format='PNG');picture.seek(0)
     slide.shapes.add_picture(picture, Inches(8), Inches(.5), width=Inches(1))
     binary=BytesIO();prs.save(binary)
     response=client.post('/api/templates',files={'file':(str(uuid4())+'.pptx',binary.getvalue(),'application/octet-stream')})
