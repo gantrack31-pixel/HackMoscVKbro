@@ -30,6 +30,7 @@ from .services.templates import seed_templates, analyze_template, BUILTIN_IDS
 from .services.template_parser import NORMALIZATION_VERSION, fingerprint
 from .services.pptx_security import validate_pptx_archive
 from .services.llm import make_outline, review_content, create_design_variants, configured, LLMError
+from .services.visual_grounding import normalize_model_icons
 from .services.layout import build_scene
 from .services.audit import audit_deck
 from .services.sources import slide_binding
@@ -170,9 +171,11 @@ def public_template(template, *, summary=False):
     return result
 
 def project_response(project):
-    content=DeckContent.model_validate(project['content']);template=project_template(project)
+    # Stored decks may carry icon IDs written before the strict allowlist; map them to 'auto' instead of failing the page.
+    content=DeckContent.model_validate(normalize_model_icons(project['content'],'slides'));template=project_template(project)
     return {**{k:v for k,v in project.items() if k not in {'revisions','future','user_id'}},'can_undo':bool(project.get('revisions')),
             'can_redo':bool(project.get('future')),
+            'content':normalize_model_icons(project['content'],'slides'),
             'template':public_template(template),
             'variants':{variant:[build_scene(slide,template['metadata'],variant,i) for i,slide in enumerate(content.slides)] for variant in ['a','b','c']},
             'sources':[{'slide':i,**slide_binding(slide,source_text(project['source_text'],content))} for i,slide in enumerate(content.slides)]}
@@ -491,7 +494,7 @@ async def generate_job(jid: str, request: GenerateRequest,user_id: str, result_p
             timings['design']=monotonic()-tick
             counts=await assemble_variants(jid,content,template,request.source_text,user_id,timings,resources)
             db.job_complete_with_project(jid,result_project_id,request.template_id,
-                                         content.model_dump(),request.source_text,user_id,
+                                         normalize_model_icons(content.model_dump(),'slides'),request.source_text,user_id,
                                          manifest(template,content,request.source_text,counts,monotonic()-started,jid,timings))
         except LLMError as exc:
             db.job_set(jid,'failed','failed',error=str(exc),user_id=user_id)
