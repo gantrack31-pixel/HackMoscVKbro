@@ -46,9 +46,8 @@ export function Audit({
   const [notice, setNotice] = useState("");
   useEffect(() => {
     const key = `audit-draft:${project.id}`;
-    const report = (saved: boolean) => { if (!saved) setNotice("Не удалось сохранить черновик в браузере. Сохраните изменения перед закрытием."); };
-    if (dirty) writeAccountDeferred(accountId, key, {draft, index, baseVersion, focus}, report);
-    else report(writeAccount(accountId, key, null));
+    if (dirty) writeAccountDeferred(accountId, key, {draft, index, baseVersion, focus});
+    else writeAccount(accountId, key, null);
   }, [accountId, project.id, draft, dirty, index, baseVersion, focus]);
   const [selected, setSelected] = useState<string[]>([]);
   const [viewing, setViewing] = useState(false);

@@ -35,7 +35,7 @@ test("wizard autosave avoids a false storage warning when only one draft fits", 
   await material.fill(edited);
 
   await expect.poll(recoveryPrompt).toBe(edited);
-  await expect(page.getByText("Браузер не смог сохранить черновик.", { exact: false })).toHaveCount(0);
+  await expect(page.locator(".error-banner")).toHaveCount(0);
   expect(consoleErrors).toEqual([]);
 
   // Remove only test filler, then verify that recovery uses the edited snapshot.

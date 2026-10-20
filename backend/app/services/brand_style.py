@@ -148,17 +148,23 @@ def resolve_brand(template,brand,prefer_template=False):
         metadata['brand_background_override']=True
         metadata['preserve_template_background']=False
     font_mapping=[]
+    from .font_support import normalized, system_assets
+    assets=list(brand.get('fonts',[]))
     for field in ('heading_font','body_font'):
-        requested=tokens['typography'].get(field)
+        requested=tokens['typography'].get(field) or next((f['family'] for f in assets if f['style']=='normal'),None)
         if not requested:continue
         template_value=metadata.get(field) or metadata.get('font','Manrope')
         chosen=template_value if prefer_template else requested
-        # Only the bundled family has the same measured and embedded face in all adapters.
-        effective_font='Manrope'
-        font_mapping.append({'role':field,'requested':chosen,'effective':effective_font,'substituted':chosen.casefold()!='manrope'})
+        if normalized(chosen) != normalized('Manrope') and not any(normalized(f['family'])==normalized(chosen) and f['style']=='normal' for f in assets):
+            assets.extend(system_assets(chosen))
+        effective_font=next((f['family'] for f in assets if normalized(f['family'])==normalized(chosen) and f['style']=='normal'),'Manrope')
+        font_mapping.append({'role':field,'requested':chosen,'effective':effective_font,'substituted':normalized(chosen)!=normalized(effective_font)})
         if requested!=template_value:conflicts.append({'field':field,'template':template_value,'brand':requested,'effective':effective_font})
         metadata[field]=effective_font
-    if font_mapping:metadata['font']='Manrope'
+    if font_mapping:
+        metadata['font']=metadata.get('body_font','Manrope')
+        used={mapping['effective'] for mapping in font_mapping}
+        metadata['font_assets']=[f for f in assets if f['family'] in used]
     chart=tokens.get('chart',{})
     if chart.get('series_palette') and not prefer_template:metadata['chart_palette']=chart['series_palette']
     elif tokens['palette'] and not prefer_template:metadata['chart_palette']=[c for c in tokens['palette'] if c not in {metadata.get('background'),metadata.get('text_color')}]
@@ -176,7 +182,7 @@ def resolve_brand(template,brand,prefer_template=False):
     warnings=list(brand.get('warnings',[]))
     if inferred_accent:warnings.append('Роль акцента не задана; выбран первый цвет палитры, отличный от белого и чёрного. Проверьте этот выбор в предпросмотре стиля.')
     for mapping in font_mapping:
-        if mapping['substituted']:warnings.append(f'Шрифт «{mapping["requested"]}» заменён на Manrope во всех форматах; файл исходного шрифта не подключён.')
+        if mapping['substituted']:warnings.append(f'Шрифт «{mapping["requested"]}» заменён на Manrope: добавьте статические TTF-начертания отдельно или в ZIP брендбука.')
     if template['metadata'].get('background_info',{}).get('kind')=='complex':
         warnings.append('Графика исходного мастера PPTX сохраняется. Проверьте её совместимость с выбранным брендбуком в PowerPoint.')
     metadata['brand_style']={'id':brand['id'],'name':brand['name'],'fingerprint':brand['fingerprint'],

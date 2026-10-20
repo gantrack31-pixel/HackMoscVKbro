@@ -6,6 +6,7 @@ expanded geometry is shared by browser, HTML, PDF and object-linked audit.
 from __future__ import annotations
 import math
 from .palette import roles, hex_color, blend, safe_ink, protect_foregrounds, surface_at
+from .font_support import text_fonts, family_for
 
 
 def number_label(value: float | None) -> str:
@@ -61,12 +62,13 @@ def series_colors(metadata, count):
     return (colors * (count // len(colors) + 1))[:count]
 
 
-def _text(identifier, value, x, y, w, h, size, color, *, bold=False, role='label', minimum=16):
+def _text(identifier, value, x, y, w, h, size, color, *, bold=False, role='label', minimum=16, family=None):
     from .layout import fit_text
-    lines, size = fit_text(str(value), {'x': x, 'y': y, 'w': max(1, w), 'h': max(1, h)}, size, minimum, bold, 1.18)
+    fonts=text_fonts(role, family, bold, str(value))
+    lines, size = fit_text(str(value), {'x': x, 'y': y, 'w': max(1, w), 'h': max(1, h)}, size, minimum, bold, 1.18, fonts['effective_font_family'])
     return {'id': identifier, 'type': 'text', 'x': x, 'y': y, 'w': w, 'h': h,
             'text': str(value), 'lines': lines, 'font_size': size, 'bold': bold,
-            'color': color, 'font_family': 'Manrope', 'line_spacing': 1.18,
+            'color': color, **fonts, 'line_spacing': 1.18,
             'used_height': len(lines) * size * 1.18, 'role': role}
 
 
@@ -153,6 +155,12 @@ def analysis_scene(slide, metadata, variant, index, *, layout=None, background_i
                          role='source', minimum=14))
     objects.append(_text('footer', f'{index + 1:02}', width - margin - 40, footer_y, 40, 28,
                          15, theme['muted'], role='caption', minimum=14))
+    for obj in objects:
+        if obj['type'] in {'chart','table'}:
+            data=obj.get('analysis',{})
+            visible={key:data.get(key) for key in ('labels','columns','rows','series','x_label','y_label')}
+            obj.update(text_fonts(text=str(obj.get('rows') or visible)))
+            obj['font_family']=obj['effective_font_family']
     from .layout import geometry_nodes
     corrections = protect_foregrounds(objects, metadata)
     rendered = [node for obj in objects for node in geometry_nodes(obj)]
@@ -161,7 +169,7 @@ def analysis_scene(slide, metadata, variant, index, *, layout=None, background_i
         if node['type'] == 'text':
             node['color'] = safe_ink(node['color'], surface_at(node,rendered[:position],theme['background']), metadata)
     requested_font = metadata.get('body_font') or metadata.get('font', 'Manrope')
-    font_warnings = [] if requested_font.casefold() == 'manrope' else [
+    font_warnings = [] if family_for(family=requested_font).casefold() == requested_font.casefold() else [
         f'Шрифт «{requested_font}» заменён на Manrope в аналитических слайдах: нет подтверждённого файла шрифта для одинаковой вёрстки всех форматов.']
     scene={'width': width, 'height': height, 'variant': variant, 'objects': objects,
             'render_objects': rendered, 'color_corrections': corrections,
@@ -184,7 +192,7 @@ def analytical_geometry(obj):
     nodes = []
 
     def text(id, value, tx, ty, tw, th, size=17, bold=False, role='chart-label'):
-        node = _text('analysis-' + id, value, tx, ty, tw, th, size, theme['text'], bold=bold, role=role)
+        node = _text('analysis-' + id, value, tx, ty, tw, th, size, theme['text'], bold=bold, role=role,family=obj.get('effective_font_family'))
         node['parent_id'] = obj['id']
         nodes.append(node)
 

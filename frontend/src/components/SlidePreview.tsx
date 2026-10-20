@@ -49,7 +49,7 @@ function ObjectView({ object: o }: { object: SceneObject }) {
   if (o.type === "text")
     return (
       <text
-        fontFamily={o.effective_font_family || o.font_family || "Manrope, Arial"}
+        fontFamily={o.css_font_family || o.effective_font_family || o.font_family || "Manrope, Arial"}
         fontSize={o.font_size}
         fontWeight={o.bold ? 750 : 400}
         fill={o.color}
@@ -164,6 +164,9 @@ export const SlidePreview = memo(function SlidePreview({
       role="img"
       aria-label={label}
     >
+      {scene.font_faces?.length ? <defs><style>{scene.font_faces.map(face =>
+        `@font-face{font-family:"${face.css_family}";src:url("${face.src}") format("truetype");font-weight:${face.weight};font-style:${face.style};}`
+      ).join("")}</style></defs> : null}
       {(scene.render_objects || scene.objects).map((o) => (
         <ObjectView key={o.id} object={o} />
       ))}

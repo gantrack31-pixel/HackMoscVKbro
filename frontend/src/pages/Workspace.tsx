@@ -153,7 +153,7 @@ export function Workspace({
   }
   function start(m: "text" | "description", t?: Template, reset = false) {
     if (reset) {
-      if (!archiveWizardDraft(user.id)) { setError("Не удалось сохранить предыдущий черновик. Освободите место в браузере и повторите."); return; }
+      if (!archiveWizardDraft(user.id)) return;
       clearPendingGenerationJob(user.id);
     }
     setMode(m);

@@ -1,0 +1,43 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e3]:
+  - generic [ref=e4]:
+    - generic [ref=e5]:
+      - button "Включить тёмную тему" [ref=e6] [cursor=pointer]:
+        - img [ref=e7]
+      - button "Открыть панель входа" [ref=e9] [cursor=pointer]:
+        - img [ref=e10]
+    - generic [ref=e13]:
+      - link "Deckly.Ai — главная" [ref=e14] [cursor=pointer]:
+        - /url: "#"
+        - generic [ref=e15]:
+          - generic [ref=e16]: D
+          - text: eckly
+        - generic [ref=e17]: .
+        - generic [ref=e18]: Ai
+      - paragraph [ref=e19]:
+        - text: Цифровой дизайнер
+        - text: презентаций
+    - generic [ref=e21]:
+      - generic [ref=e22]:
+        - text: ВАША ИДЕЯ. ВАШ СТИЛЬ.
+        - heading "От первой мысли до яркой истории." [level=1] [ref=e23]:
+          - text: От первой мысли
+          - text: до яркой истории.
+        - paragraph [ref=e24]:
+          - text: Презентации в фирменном стиле —
+          - text: с вниманием к каждой детали.
+      - button "Начать работу" [ref=e25] [cursor=pointer]
+    - generic [ref=e27]: © 2026 Deckly
+  - region "Создание презентации Deckly.Ai" [ref=e28]:
+    - generic [ref=e29]:
+      - generic:
+        - generic:
+          - generic:
+            - generic: VK Tech
+            - heading [level=3]: Технологии, которые работают на вас
+            - generic:
+              - generic: ПРЕЗЕНТАЦИЯ
+              - generic: 16:9
+```

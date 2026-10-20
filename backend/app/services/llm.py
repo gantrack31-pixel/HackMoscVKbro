@@ -371,13 +371,21 @@ async def make_outline(request: OutlineRequest, template: dict, resources: list[
     def salvage(slide):
         """Unsourced numbers left after the model's own correction: drop those claims, never the deck."""
         candidate=slide.model_copy(deep=True)
+        dropped_visual=''
+        if candidate.kind in {'chart','table'}:
+            try: validate_visual(candidate,request.prompt,allow_new_text=request.mode=='description')
+            except ValueError:
+                # A chart or table the material does not confirm is removed whole: keeping only
+                # the confirmed points would show a different, misleading picture.
+                dropped_visual=candidate.kind
+                candidate.kind,candidate.chart,candidate.table='text',None,[]
         removed=strip_unsupported_numbers(candidate,request.prompt)
-        if not removed: return None
+        if not (removed or dropped_visual): return None
         if candidate.kind in {'text','icons','steps','diagram'} and not (candidate.body.strip() or candidate.bullets): return None
         try: validate_outline_slide(candidate,request,resources)
         except ValueError: return None
-        logging.getLogger(__name__).warning('Outline slide %r: removed %d sentence(s)/bullet(s) with numbers not in the material',
-                                            slide.title[:80],removed)
+        logging.getLogger(__name__).warning('Outline slide %r: dropped unconfirmed %s, removed %d sentence(s)/bullet(s) with numbers not in the material',
+                                            slide.title[:80],dropped_visual or 'nothing',removed)
         return candidate
 
     def accept(result, last=False):

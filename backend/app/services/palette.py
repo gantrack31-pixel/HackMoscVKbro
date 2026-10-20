@@ -38,6 +38,19 @@ def safe_ink(requested, background, metadata, inverse=None, minimum=4.5):
         if color and contrast(color,background)>=minimum: return color
     return max(('#000000','#FFFFFF'),key=lambda c:contrast(c,background))
 
+def chart_ink(requested, background, metadata):
+    """Keep chart marks in the template's accents before using neutral ink."""
+    colors = metadata.get('colors', {})
+    candidates = [requested, *metadata.get('chart_palette', []),
+                  *(color for name, color in colors.items() if name.startswith('accent')),
+                  *metadata.get('palette', []), *colors.values()]
+    for index, value in enumerate(candidates):
+        color = hex_color(value)
+        if color and (index == 0 or color not in {'#000000', '#FFFFFF'}) and contrast(color, background) >= 3:
+            return color
+    return safe_ink(requested, background, metadata, minimum=3)
+
+
 def roles(metadata):
     colors = metadata.get('colors', {})
     background = hex_color(metadata.get('background')) or hex_color(colors.get('lt1')) or '#FFFFFF'
@@ -87,7 +100,7 @@ def protect_foregrounds(objects,metadata):
         surface=surface_at(obj,objects[:index],background)
         key='color' if obj['type']=='text' else 'stroke' if obj['type']=='line' else None
         if key and hex_color(obj.get(key)):
-            fixed=safe_ink(obj[key],surface,metadata)
+            fixed=safe_ink(obj[key],surface,metadata,minimum=3 if obj.get('role')=='chart_series' else 4.5)
             if fixed!=obj[key]: changes.append(obj['id']);obj[key]=fixed
         if obj.get('icon_name'):
             color=safe_ink(metadata.get('accent'),surface,metadata)

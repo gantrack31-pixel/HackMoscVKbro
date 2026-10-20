@@ -46,7 +46,6 @@ export function Editor({
 }) {
   const [recovered] = useState(() => readAccount<{ content: DeckContent; baseVersion: string }>(accountId, `editor-draft:${project.id}`));
   const [baseVersion, setBaseVersion] = useState(recovered?.baseVersion || project.updated_at);
-  const [storageError, setStorageError] = useState(false);
   const [conflict, setConflict] = useState(false);
   const [content, setContent] = useState(recovered?.content || project.content),
     [index, setIndex] = useState(0),
@@ -61,8 +60,8 @@ export function Editor({
   const preview = useLivePreview(project, content, dirty && !hasDataErrors);
   useEffect(() => {
     const key = `editor-draft:${project.id}`;
-    if (dirty) writeAccountDeferred(accountId, key, { content, baseVersion }, (saved) => setStorageError(!saved));
-    else setStorageError(!writeAccount(accountId, key, null));
+    if (dirty) writeAccountDeferred(accountId, key, { content, baseVersion });
+    else writeAccount(accountId, key, null);
   }, [accountId, project.id, content, dirty, baseVersion]);
 
   useEffect(() => {
@@ -148,7 +147,6 @@ export function Editor({
       className="editor-page motion-surface"
       aria-label="Редактор презентации"
     >
-      {storageError && <p className="error-banner" role="alert">Не удалось сохранить черновик в браузере. Сохраните презентацию перед закрытием вкладки.</p>}
       {stale && <div className="error-banner wrap" role="alert"><p>Презентация изменилась в другой вкладке. Сохраните копию вашего черновика и продолжите с актуальной версией.</p><button className="btn sm" style={{whiteSpace:"normal",maxWidth:"100%"}} disabled={busy} onClick={recoverLatest}>Скачать черновик и открыть актуальную версию</button></div>}
       <div className="editor-document-header">
         <div className="heading between editor-heading">

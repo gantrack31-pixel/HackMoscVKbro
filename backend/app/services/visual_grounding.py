@@ -70,20 +70,35 @@ def contains(text,value):
     pattern=(r'(?<!\w)' if value[0].isalnum() else '')+re.escape(value)+(r'(?!\w)' if value[-1].isalnum() else '')
     return bool(re.search(pattern,normalized(text)))
 
+YEAR_HEADING = re.compile(r'(?:19|20)\d{2}(?:\s*(?:г\.?|год))?', re.I)
+
+
 def structured_records(source):
-    """Carry explicit column headings/units into CSV, TSV and Markdown table rows."""
+    """Carry explicit column headings/units into CSV, TSV and Markdown table rows.
+
+    Each cell becomes one record with its row label and its column heading, in both
+    directions, so a chart may follow either the rows ("2023,120") or the columns
+    ("Показатель,2023,2024" / "Выручка,120,150") of the same table.
+    """
     records=[]
     for delimiter in ('|','\t',';',','):
         header=None
         for line in source.splitlines():
             if delimiter not in line: header=None;continue
             row=[c.strip() for c in next(csv.reader([line.strip().strip('|')],delimiter=delimiter))]
-            if len(row)<2: continue
-            if all(not numbers(cell) for cell in row):
-                if any(re.search(r'\w',cell) for cell in row): header=row
-                continue
-            if header and len(row)==len(header):
-                records.extend(f'{row[0]}: {cell} {header[i]}' for i,cell in enumerate(row[1:],1))
+            if len(row)<2 or all(re.fullmatch(r'[-: ]*',cell) for cell in row): continue
+            # Headings are words or years; any other number makes the row data.
+            if all(not numbers(cell) or YEAR_HEADING.fullmatch(cell) for cell in row) and any(re.search(r'\w',cell) for cell in row):
+                if header is None or all(not numbers(cell) for cell in row):
+                    header=row;continue
+            if not header: continue
+            if len(row)==len(header): headings=header
+            # "Год,Выручка, млн руб." — an unquoted comma inside the only value heading.
+            elif len(row)==2 and len(header)>2: headings=[header[0],' '.join(header[1:])]
+            else: continue
+            for i,cell in enumerate(row[1:],1):
+                records.append(f'{row[0]}: {cell} {headings[i]}')
+                records.append(f'{row[0]} — {headings[i]}: {cell}')
     return records
 
 def approved_material(deck):
@@ -105,7 +120,7 @@ def approved_material(deck):
 
 def unit_key(text):
     """Compare units by meaning: '₽' is 'руб', abbreviation dots do not matter. Values are never normalized this way."""
-    return re.sub(r'\s+', ' ', normalized(text).replace('₽', ' руб').replace('.', ' ')).strip()
+    return re.sub(r'\s+', ' ', normalized(text).replace('₽', ' руб').replace('.', ' ').replace('_', ' ')).strip()
 
 def validate_visual(slide,source,previous=None,*,allow_new_text=False):
     validate_diagram_design(slide,slide.design)
@@ -119,9 +134,7 @@ def validate_visual(slide,source,previous=None,*,allow_new_text=False):
             for series in numeric_series(source))
         # Each category and value must occur together in one source record.
         records=[normalized(s) for s in [*re.split(r'[\n;]|(?<=[.!?])\s+',source),*structured_records(source)] if s.strip()]
-        for label,value in zip(chart.labels,chart.values):
-            needle=normalized(label)
-            if literal_series: break
+        def grounded_in(needle,value):
             matches=[r for r in records if contains(r,needle) and (not chart.unit.strip() or contains(unit_key(r),unit_key(chart.unit)))]
             # Restrict to the category's segment, not another category in the same line.
             def category_values(record):
@@ -134,10 +147,18 @@ def validate_visual(slide,source,previous=None,*,allow_new_text=False):
                 if chart.unit.strip(): return True
                 if any(contains(other,needle) and Decimal(str(value)) in numbers(other)
                        and re.search(UNIT_PATTERN,other,re.I) for other in records): return False
-                # Unitless labelled values are valid, but dropping a sourced unit is not.
-                tail = record.split(needle, 1)[1].strip(' :=,')
-                return bool(re.fullmatch(r'[-+−]?\d+(?:[.,]\d+)?[ .]*', tail))
-            if not any(grounded(r) for r in matches):
+                # Unitless labelled values are valid, but dropping a sourced unit is not;
+                # a plain noun after the number ("1 200 клиентов") is not a unit.
+                tail = record.split(needle, 1)[1].strip(' :=,—')
+                number = re.match(r'[-+−]?\d+(?:[ \u00a0\u202f]\d{3})*(?:[.,]\d+)?', tail)
+                return bool(number) and not re.search(UNIT_PATTERN, tail[number.end():], re.I)
+            return any(grounded(r) for r in matches)
+        for label,value in zip(chart.labels,chart.values):
+            if literal_series: break
+            needle=normalized(label)
+            # "2023 г." on the chart is the same category as "2023" in the material.
+            bare=re.sub(r'\s*(?:гг?\.?|год[аеу]?)$','',needle)
+            if not any(grounded_in(n,value) for n in dict.fromkeys((needle,bare)) if n):
                 raise ValueError('Категория, значение и единица диаграммы не подтверждены одной записью источника. Не выдумывай данные.')
     if slide.kind=='table' and (previous is None or slide.table!=previous.table or previous.kind!='table'):
         if len(slide.table)>7 or len(slide.table[0])>5:

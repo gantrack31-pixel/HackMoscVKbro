@@ -9,7 +9,8 @@ from reportlab.pdfbase.ttfonts import TTFont
 from ..models import Slide
 from .visuals import diagram_nodes, pictogram_nodes
 from .template_context import asset_profile
-from .palette import roles, scene_color, contrast, design_metadata, protect_foregrounds, safe_ink
+from .palette import roles, scene_color, contrast, design_metadata, protect_foregrounds, safe_ink, chart_ink
+from .font_support import font_scope, pdf_font, text_fonts, set_metadata, supports_text
 
 FONTS=Path(__file__).parent
 for name,file in [('Deckly','Manrope-Regular.ttf'),('DecklyBold','Manrope-Bold.ttf')]:
@@ -19,8 +20,9 @@ for name,file in [('Deckly','Manrope-Regular.ttf'),('DecklyBold','Manrope-Bold.t
         font.face.name=name.encode('ascii')
         pdfmetrics.registerFont(font)
 
-def wrap(text: str, width: float, size: float, bold=False) -> list[str]:
-    font='DecklyBold' if bold else 'Deckly'
+def wrap(text: str, width: float, size: float, bold=False, font_family=None) -> list[str]:
+    font=pdf_font(font_family, bold)
+    if font.startswith('DecklyFont') and not supports_text(font,text): font='DecklyBold' if bold else 'Deckly'
     lines=[]
     for paragraph in text.split('\n'):
         line=''
@@ -37,13 +39,13 @@ def wrap(text: str, width: float, size: float, bold=False) -> list[str]:
         lines.append(line)
     return lines or ['']
 
-def fit_text(content, box, size, minimum, bold=False, line_spacing=1.2):
+def fit_text(content, box, size, minimum, bold=False, line_spacing=1.2, font_family=None):
     """Measured AutoFit approximation, with a readability floor; never truncate."""
     size = max(minimum, size)
-    lines = wrap(content, max(1,box['w']), size, bold)
+    lines = wrap(content, max(1,box['w']), size, bold, font_family)
     while len(lines)*size*line_spacing > box['h'] and size > minimum:
         size = max(minimum, size-1)
-        lines = wrap(content, max(1,box['w']), size, bold)
+        lines = wrap(content, max(1,box['w']), size, bold, font_family)
     return lines, size
 
 
@@ -70,9 +72,10 @@ def geometry_nodes(obj):
     def rect(x,y,w,h,fill):
         nodes.append({'type':'rect','x':x,'y':y,'w':w,'h':h,'fill':fill})
     def text(value,x,y,w,h,size=18,color='#0F172A',bold=False):
-        lines=wrap(str(value),w,size,bold)
+        fonts=text_fonts(family=obj.get('effective_font_family'),bold=bold,text=value)
+        lines=wrap(str(value),w,size,bold,fonts['effective_font_family'])
         nodes.append({'type':'text','x':x,'y':y,'w':w,'h':h,'lines':lines,'text':str(value),
-                      'font_size':size,'bold':bold,'color':color,'used_height':len(lines)*size*1.28})
+                      'font_size':size,'bold':bold,'color':color,'used_height':len(lines)*size*1.28,**fonts})
     if obj['type']=='chart':
         if obj.get('chart_type') in {'column','line'}:
             low=min(0,*obj['values']);high=max(1,*obj['values']);span=high-low
@@ -92,7 +95,7 @@ def geometry_nodes(obj):
             if obj['chart_type']=='line':
                 for (x1,y1),(x2,y2) in zip(points,points[1:]):
                     nodes.append({'type':'line','x':min(x1,x2),'y':min(y1,y2),'w':abs(x2-x1),'h':abs(y2-y1),
-                                  'x1':x1,'y1':y1,'x2':x2,'y2':y2,'stroke':obj['fill'],'stroke_width':3})
+                                  'x1':x1,'y1':y1,'x2':x2,'y2':y2,'stroke':obj['fill'],'stroke_width':3,'role':'chart_series'})
             return themed_nodes(nodes, obj)
         low=min(0,*obj['values']);high=max(1,*obj['values']);span=high-low
         label_w=min(176,obj['w']*.24);value_w=112
@@ -135,6 +138,7 @@ def themed_nodes(nodes, obj):
     return result
 
 
+@font_scope
 def build_scene(slide: Slide, metadata: dict, variant: str, index: int) -> dict:
     if slide.designs:
         slide=slide.model_copy(update={'design':slide.designs.get(slide.layout or variant,slide.design)})
@@ -149,6 +153,7 @@ def build_scene(slide: Slide, metadata: dict, variant: str, index: int) -> dict:
     if background_info.get('color'): metadata['background']=background_info['color']
     original_background=roles(metadata)['background']
     metadata=design_metadata(metadata,slide.design)
+    set_metadata(metadata)
     if metadata.get('brand_background_override'):
         metadata={**metadata,'background':original_background}
     if slide.kind=='analysis' and slide.analytics:
@@ -219,10 +224,11 @@ def build_scene(slide: Slide, metadata: dict, variant: str, index: int) -> dict:
         if role in {'body','subtitle'}:
             heading = next((o['font_size'] for o in objects if o['id']=='title'),title_size)
             size = min(size,heading*.78 if role=='subtitle' else heading*.72)
-        lines,size = fit_text(content,box,size,minimum,bold,spacing)
         family = metadata.get('heading_font' if role=='title' else 'body_font') or metadata.get('font','Manrope')
+        fonts=text_fonts(role, family, bold, content)
+        lines,size = fit_text(content,box,size,minimum,bold,spacing,fonts['effective_font_family'])
         objects.append({'id':id,'type':'text',**box,'text':content,'lines':lines,'font_size':size,'color':color,
-                        'role':role,'line_spacing':spacing,'bold':bold,'font_family':family,'effective_font_family':'Manrope',
+                        'role':role,'line_spacing':spacing,'bold':bold,**fonts,
                         'used_height':len(lines)*size*spacing})
     rect('background',0,0,width,height,theme['background'])
     objects[-1]['override_template']=theme['background']!=original_background
@@ -297,17 +303,19 @@ def build_scene(slide: Slide, metadata: dict, variant: str, index: int) -> dict:
     text('footer',f'{index+1:02} / Deckly.Ai',{'x':margin,'y':height-44,'w':500,'h':28},16,'#64748B')
     for obj in objects:
         if obj['type'] in {'chart','table'}:
+            obj.update(text_fonts(text=str(obj.get('rows') or (obj.get('labels',[]),obj.get('unit','')))))
             obj['theme']=theme
-            if obj['type']=='chart': obj['fill']=safe_ink(obj['fill'],theme['background'],metadata)
+            if obj['type']=='chart': obj['fill']=chart_ink(obj['fill'],theme['background'],metadata)
             else: obj['header_color']=safe_ink(obj['header_color'],obj['fill'],metadata)
         if obj['id'] in {'background','number'}: continue
         for key in ('fill','color','stroke'):
+            if obj['type']=='chart' and key=='fill': continue
             if key in obj and obj[key] != accent:
                 obj[key]=scene_color(obj[key],theme)
     corrections=protect_foregrounds(objects,metadata)
     rendered=[n for obj in objects for n in geometry_nodes(obj)]
     corrections+=protect_foregrounds(rendered,metadata)
-    requested_fonts=sorted({o['font_family'] for o in objects if o['type']=='text' and o.get('font_family','Manrope').casefold()!='manrope'})
+    requested_fonts=sorted({o['font_family'] for o in objects if o['type']=='text' and o.get('font_family','Manrope')!=o.get('effective_font_family','Manrope')})
     font_warnings=[f'Шрифт «{family}» заменён на Manrope: файл шрифта не включён в переносимую вёрстку.' for family in requested_fonts]
     scene={'font_warnings':font_warnings,'width':width,'height':height,'variant':variant,'objects':objects,
             'render_objects':rendered,'color_corrections':sorted(set(corrections)),

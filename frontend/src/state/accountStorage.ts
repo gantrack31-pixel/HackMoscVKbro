@@ -83,7 +83,7 @@ export function readAccount<T>(account: string, name: string): T | null {
     const legacy = localStorage.getItem(key);
     const value = legacy ? JSON.parse(legacy) : recoveryCopies(key)[0]?.copy.value ?? null;
     if (value !== null) {
-      try { sessionStorage.setItem(key, JSON.stringify(value)); } catch { /* Caller shows a save warning on the next write. */ }
+      try { sessionStorage.setItem(key, JSON.stringify(value)); } catch { /* The durable recovery copy remains available. */ }
       if (legacy && writeAccount(account, name, value)) localStorage.removeItem(key);
     }
     return value as T | null;

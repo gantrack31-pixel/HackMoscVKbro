@@ -23,3 +23,17 @@ backend/data/design/
 backend/data/uploads/
 backend/data/exports/
 *.log
+.test-runs
+.mypy_cache
+.ruff_cache
+.coverage
+.coverage.*
+**/htmlcov
+**/coverage
+**/blob-report
+**/.DS_Store
+qa-results/artifacts
+examples/outputs
+examples/Deckly-*.pptx
+examples/Deckly-demo.html
+examples/Deckly-demo.pdf

@@ -30,7 +30,7 @@
 
 ## Как работает модель по этапам
 
-Конкретный checkpoint не зашит в алгоритм: он берётся из окружения. При `LLM_BASE_URL` используются `LLM_MODEL` (default `Qwen/Qwen3.8-27B`) и `LLM_API_KEY`; иначе OpenRouter и `OPENROUTER_MODEL` (default `qwen/qwen3.8-27b`). Существование и доступность этих идентификаторов у провайдера здесь не проверялись. Поставщик должен поддерживать OpenAI-compatible `/chat/completions`; `LLM_JSON_MODE=true` запрашивает JSON object, а не гарантированную constrained generation. Pydantic и предметные проверки выполняются после ответа.
+Конкретный checkpoint не зашит в алгоритм: он берётся из окружения. Провайдер задаётся через `LLM_BASE_URL`, `LLM_MODEL` и `LLM_API_KEY`. Значения по умолчанию в коде — endpoint VK AI Space и `qwen38-27b-fp8`; для OpenRouter явно укажите его URL и идентификатор модели. Существование и доступность этих идентификаторов у провайдера здесь не проверялись. Поставщик должен поддерживать OpenAI-compatible `/chat/completions`; `LLM_JSON_MODE=true` запрашивает JSON object, а не гарантированную constrained generation. Pydantic и предметные проверки выполняются после ответа.
 
 | Этап | Вход/роль модели | Ограничения и результат |
 | --- | --- | --- |

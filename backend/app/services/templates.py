@@ -1,5 +1,7 @@
 """Читаем PPTX как набор правил; исходный файл никогда не изменяем."""
 from collections import Counter
+from copy import deepcopy
+from functools import lru_cache
 from pathlib import Path
 from zipfile import ZipFile, BadZipFile
 import re
@@ -9,7 +11,7 @@ from .. import database as db
 from .theme_catalog import THEMES, theme_metadata
 from .template_context import extract_examples
 from .template_package import inspect_package
-from .template_parser import parse_manifest, NORMALIZATION_VERSION
+from .template_parser import parse_manifest, NORMALIZATION_VERSION, fingerprint
 from .bundled_templates import PACK_BY_ID, seed_pack
 
 NS = {'a':'http://schemas.openxmlformats.org/drawingml/2006/main'}
@@ -29,6 +31,14 @@ def validate_pptx(path: Path):
         raise ValueError('Файл повреждён или не является PPTX.') from exc
 
 def analyze_template(path: Path) -> dict:
+    # A process may reopen the same catalog; never reuse analysis of changed bytes.
+    # Return isolated metadata because style application may modify nested values.
+    return deepcopy(_analyze_template(str(Path(path).resolve()), fingerprint(path), NORMALIZATION_VERSION))
+
+
+@lru_cache(maxsize=64)
+def _analyze_template(source: str, _digest: str, _version: str) -> dict:
+    path = Path(source)
     validate_pptx(path)
     prs = Presentation(str(path))
     width, height = int(prs.slide_width), int(prs.slide_height)

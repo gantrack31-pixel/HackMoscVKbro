@@ -143,6 +143,7 @@ export interface SceneObject {
   points?: [number, number][];
   font_family?: string;
   effective_font_family?: string;
+  css_font_family?: string;
   parent_id?: string;
   x1?: number; y1?: number; x2?: number; y2?: number;
   stroke?: string; stroke_width?: number; src?: string;
@@ -164,6 +165,7 @@ export interface SceneObject {
   unit?: string;
 }
 export interface Scene {
+  font_faces?: {family: string; css_family: string; src: string; weight: number; style: string}[];
   width: number;
   height: number;
   objects: SceneObject[];

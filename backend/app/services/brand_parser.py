@@ -38,7 +38,7 @@ def color(value):
 def blank(name,kind):
     return {'name':PurePosixPath(name.replace('\\','/')).stem[:200], 'kind':kind,
             'tokens':{'colors':{},'palette':[],'typography':{},'spacing':{},'chart':{}},
-            'logos':[], 'rules':[], 'unresolved_rules':[], 'warnings':[], 'evidence':[], 'inputs':[]}
+            'logos':[], 'fonts':[], 'rules':[], 'unresolved_rules':[], 'warnings':[], 'evidence':[], 'inputs':[]}
 
 
 def _walk(value, path='', depth=0, budget=None):
@@ -181,11 +181,23 @@ def parse_pdf(data,name):
 
 
 def parse_image(data,name):
+    svg_dimensions=None
+    warnings=[]
+    if PurePosixPath(name).suffix.lower() == '.svg':
+        try:
+            if __package__: from .brand_svg import rasterize_svg
+            else: from brand_svg import rasterize_svg
+            original = data
+            data,width,height,warnings = rasterize_svg(data)
+            svg_dimensions=(width,height)
+        except Exception as exc:
+            raise BrandError('Не удалось прочитать SVG: '+str(exc)[:200]) from None
+    else: original = data
     try:
         with Image.open(BytesIO(data)) as image:
             if image.format not in {'PNG','JPEG','WEBP'}:raise BrandError('Логотип: используйте PNG, JPEG или WebP.')
             if image.width*image.height>8_000_000 or max(image.size)>4096:raise BrandError('Логотип слишком большой: максимум 4096 px и 8 мегапикселей.')
-            image.load();width,height=image.size
+            image.load();width,height=svg_dimensions or image.size
             image=image.convert('RGBA');image.thumbnail((1024,1024))
             sample=image.copy();sample.thumbnail((64,64))
             ink=Counter((r,g,b) for r,g,b,a in sample.get_flattened_data() if a>=180).most_common(8)
@@ -195,7 +207,7 @@ def parse_image(data,name):
     return {'name':PurePosixPath(name).name[:200],'width':width,'height':height,
             'src':'data:image/png;base64,'+base64.b64encode(output.getvalue()).decode(),
             'visible_colors':['#'+''.join(f'{c:02X}' for c in rgb) for rgb,_ in ink],
-            'sha256':sha256(data).hexdigest(),'method':'original-colors-aspect-preserved'}
+            'sha256':sha256(original).hexdigest(),'method':'original-colors-aspect-preserved','warnings':warnings}
 
 
 def parse_sample_image(data,name):
@@ -204,6 +216,7 @@ def parse_sample_image(data,name):
     result['tokens']['palette']=image['visible_colors']
     result['evidence']=[{'field':'palette','value':image['visible_colors'],'method':'sampled-image-approximation'}]
     result['warnings'].append('Палитра образцового изображения определена приблизительно. Шрифты и правила компоновки по изображению не устанавливались; точные JSON/PDF-значения имеют приоритет.')
+    result['warnings'].extend(image.get('warnings',[]))
     result['inputs']=[{'name':PurePosixPath(name).name,'sha256':image['sha256'],'kind':'sample-image'}]
     return result
 
@@ -263,10 +276,13 @@ def merge_brands(items,name):
                 target[field]=value
         if item['tokens']['palette']:
             result['tokens']['palette']=item['tokens']['palette'][:40]
-        for key in ('logos','rules','unresolved_rules','warnings','evidence','inputs'):
+        for key in ('logos','fonts','rules','unresolved_rules','warnings','evidence','inputs'):
             result[key].extend(item.get(key,[]))
     result['conflicts']=conflicts
     result['logos']=result['logos'][:12]
+    result['fonts']=list({(f['family'],f['weight'],f['style']):f for f in result['fonts']}.values())
+    if len(result['fonts']) > 8 or sum(len(f['src']) for f in result['fonts']) > 5*1024*1024:
+        raise BrandError('Пакет шрифтов: до 8 начертаний и 3,75 МБ данных TTF суммарно.')
     result['evidence']=result['evidence'][:300]
     result['unresolved_rules']=result['unresolved_rules'][:100]
     result['warnings']=list(dict.fromkeys(result['warnings']))
@@ -281,24 +297,31 @@ def parse_brand(data,name):
     if suffix=='.json':result=parse_json(data,name)
     elif suffix=='.pdf':result=parse_pdf(data,name)
     elif suffix=='.pptx':result=parse_sample_pptx(data,name)
-    elif suffix in {'.png','.jpg','.jpeg','.webp'}:
+    elif suffix in {'.ttf','.otf'}:
+        try:
+            if __package__: from .font_support import read_font
+            else: from font_support import read_font
+            result=blank(name,'font');result['fonts']=[read_font(data,name)]
+        except Exception as exc: raise BrandError('Не удалось прочитать шрифт: '+str(exc)[:200]) from None
+    elif suffix in {'.png','.jpg','.jpeg','.webp','.svg'}:
         result=blank(name,'logo');result['logos']=[parse_image(data,name)]
+        result['warnings'].extend(result['logos'][0].get('warnings',[]))
     elif suffix=='.zip':
         items=[]
         with _archive(data) as z:
             members=[i.filename for i in z.infolist() if not i.is_dir() and not i.filename.startswith('__MACOSX/')]
-            allowed={'.json','.pdf','.png','.jpg','.jpeg','.webp','.pptx','.txt','.md'}
+            allowed={'.json','.pdf','.png','.jpg','.jpeg','.webp','.svg','.ttf','.otf','.pptx','.txt','.md'}
             if any(PurePosixPath(n).suffix.lower() not in allowed for n in members):
-                raise BrandError('ZIP принимает JSON, PDF, логотипы PNG/JPEG/WebP, образцы PPTX и текстовые правила. Вложенные архивы и исполняемые файлы запрещены.')
+                raise BrandError('ZIP принимает JSON, PDF, логотипы PNG/JPEG/WebP/SVG, шрифты TTF, образцы PPTX и текстовые правила. Вложенные архивы и исполняемые файлы запрещены.')
             # Explicit tokens override inferred PDF/sample rules. Within a class,
             # sorted filenames make precedence deterministic and visible.
-            priority={'.pptx':0,'.pdf':1,'.png':0,'.jpg':0,'.jpeg':0,'.webp':0,'.txt':3,'.md':3,'.json':4}
+            priority={'.pptx':0,'.pdf':1,'.png':0,'.jpg':0,'.jpeg':0,'.webp':0,'.svg':0,'.ttf':0,'.otf':0,'.txt':3,'.md':3,'.json':4}
             for member in sorted(members,key=lambda n:(priority[PurePosixPath(n).suffix.lower()],n.casefold())):
                 payload=z.read(member)
                 if PurePosixPath(member).suffix.lower() in {'.txt','.md'}:
                     item=blank(member,'text-rules')
                     item['unresolved_rules']=[payload.decode('utf-8-sig')[:20000]]
-                elif PurePosixPath(member).suffix.lower() in {'.png','.jpg','.jpeg','.webp'} and re.search(r'sample|slide|пример|слайд',member,re.I):
+                elif PurePosixPath(member).suffix.lower() in {'.png','.jpg','.jpeg','.webp','.svg'} and re.search(r'sample|slide|пример|слайд',member,re.I):
                     item=parse_sample_image(payload,member)
                 else:item=parse_brand(payload,member)
                 items.append(item)
@@ -306,7 +329,7 @@ def parse_brand(data,name):
         result=merge_brands(items,PurePosixPath(name).stem)
         result['kind']='brand-package'
         result['warnings'].append('Приоритет в пакете: образцы PPTX/изображений → PDF → текстовые правила → JSON. Внутри типа применяется порядок имён файлов; последнее значение побеждает. Изображения с sample/slide/пример/слайд в имени считаются образцами, остальные — логотипами.')
-    else:raise BrandError('Загрузите PDF, JSON, ZIP с логотипами и образцами, либо логотип PNG/JPEG/WebP.')
+    else:raise BrandError('Загрузите PDF, JSON, ZIP с логотипами и образцами, шрифт TTF или логотип PNG/JPEG/WebP/SVG.')
     result['inputs'].append({'name':PurePosixPath(name.replace('\\','/')).name[:200],'sha256':sha256(data).hexdigest(),'kind':result['kind']})
     result['fingerprint']=sha256(data).hexdigest();result['parser_version']=VERSION
     return result

@@ -32,7 +32,7 @@ def recipe():
     for name in ('main.py', 'models.py', 'icon_catalog.py', 'services/operations.py', 'services/provider_http.py', 'services/icons.py', 'services/workflow.py', 'services/templates.py',
                  'services/materials.py', 'services/llm.py', 'services/narrative.py', 'services/images.py', 'services/assistant.py', 'services/assistant_proposals.py', 'assistant_contract.py', 'services/template_context.py',
                  'services/layout.py', 'services/canvas.py', 'services/visuals.py', 'services/audit.py', 'services/export.py',
-                 'analytics_models.py', 'services/analytics_ingest.py', 'services/analytics_profile.py', 'services/analytics_plan.py', 'services/analytics_store.py', 'services/analytical_visuals.py', 'services/analytical_pptx.py', 'services/brand_parser.py', 'services/brand_style.py', 'services/sources.py', 'services/template_package.py', 'services/template_parser.py', 'services/palette.py'):
+                 'analytics_models.py', 'services/analytics_ingest.py', 'services/analytics_profile.py', 'services/analytics_plan.py', 'services/analytics_store.py', 'services/analytical_visuals.py', 'services/analytical_pptx.py', 'services/brand_parser.py', 'services/brand_style.py', 'services/brand_svg.py', 'services/font_support.py', 'services/pptx_fonts.py', 'services/sources.py', 'services/template_package.py', 'services/template_parser.py', 'services/palette.py'):
         path = BASE / 'app' / name
         code.append({'id': name, 'sha256': sha256(path.read_bytes()).hexdigest()})
     fingerprint = sha256(json.dumps({'snippets': snippets, 'code': code}, sort_keys=True).encode()).hexdigest()
@@ -44,7 +44,7 @@ def recipe():
 def manifest(template, content, source, audit_counts, duration, jid, timings=None):
     clean_model = settings.model
     return {'effective_style': {'brand_style_id': content.brand_style_id, 'prefer_template': content.brand_prefer_template,
-             'metadata': {k:template['metadata'][k] for k in ('accent','background','text_color','font','heading_font','body_font','heading_pt','body_pt','slide_margin','grid_gap','chart_palette','chart_grid','palette','colors','brand_style','brand_logo','brand_background_override','preserve_template_background','background_info') if k in template['metadata']}},
+             'metadata': {k:template['metadata'][k] for k in ('accent','background','text_color','font','heading_font','body_font','font_assets','heading_pt','body_pt','slide_margin','grid_gap','chart_palette','chart_grid','palette','colors','brand_style','brand_logo','brand_background_override','preserve_template_background','background_info') if k in template['metadata']}},
             'job_id': jid, 'recipe': recipe(), 'mode': settings.mode, 'model': clean_model,
             'template': {'id': template['id'], 'name': template['name'],
                          'fingerprint': sha256(json.dumps(template['metadata'], sort_keys=True).encode()).hexdigest()},

@@ -7,6 +7,7 @@ __pycache__/
 *.pyd
 .mypy_cache/
 .ruff_cache/
+.test-runs/
 
 .env
 .env.*
@@ -30,3 +31,24 @@ frontend/dist/
 frontend/playwright-report/
 frontend/test-results/
 *.log
+.DS_Store
+.coverage
+.coverage.*
+htmlcov/
+coverage/
+blob-report/
+
+qa-results/artifacts/**
+!qa-results/artifacts/**/
+!qa-results/artifacts/**/*.md
+!qa-results/artifacts/**/*.rst
+!qa-results/artifacts/**/README*
+examples/outputs/**
+!examples/outputs/**/
+!examples/outputs/**/*.md
+!examples/outputs/**/*.rst
+!examples/outputs/**/README*
+!examples/outputs/**/*.mjs
+examples/Deckly-*.pptx
+examples/Deckly-demo.html
+examples/Deckly-demo.pdf

@@ -17,11 +17,12 @@ from ..models import DeckContent
 from .layout import build_scene, selected_layout, FONTS, geometry_nodes
 from .visuals import hexagon_points
 from .icons import ATTRIBUTION
+from .font_support import font_css
 
 def rgb(value): return RGBColor.from_string(value.lstrip('#'))
 
 def scene_svg(scene):
-    parts=[]
+    parts=['<defs><style>'+font_css(scene.get('font_faces',[]))+'</style></defs>'] if scene.get('font_faces') else []
     for obj in scene.get('render_objects',scene['objects']):
         for n in ([obj] if 'render_objects' in scene else geometry_nodes(obj)):
             outline=f' stroke="{n["stroke"]}" stroke-width="{n.get("stroke_width",2)}"' if n.get('stroke') else ''
@@ -37,7 +38,7 @@ def scene_svg(scene):
             elif n['type']=='image': parts.append(f'<image x="{n["x"]}" y="{n["y"]}" width="{n["w"]}" height="{n["h"]}" href="{escape(n["src"],quote=True)}"/>')
             else:
                 spans=''.join(f'<tspan x="{n["x"]}" y="{n["y"]+n["font_size"]+i*n["font_size"]*n.get("line_spacing",1.28)}">{escape(line)}</tspan>' for i,line in enumerate(n['lines']))
-                parts.append(f'<text font-family="{escape(n.get("effective_font_family",n.get("font_family","Manrope, Arial")),quote=True)}" font-size="{n["font_size"]}" font-weight="{750 if n["bold"] else 400}" fill="{n["color"]}">{spans}</text>')
+                parts.append(f'<text font-family="{escape(n.get("css_font_family",n.get("effective_font_family",n.get("font_family","Manrope, Arial"))),quote=True)}" font-size="{n["font_size"]}" font-weight="{750 if n["bold"] else 400}" fill="{n["color"]}">{spans}</text>')
     return f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {scene["width"]} {scene["height"]}" role="img">'+''.join(parts)+'</svg>'
 
 def export_html(content,template,variant):
@@ -74,7 +75,7 @@ def export_pdf(content,template,variant):
                     pdf.drawImage(ImageReader(BytesIO(base64.b64decode(n['src'].split(',',1)[1]))),
                                   n['x'],height-n['y']-n['h'],n['w'],n['h'],mask='auto')
                 else:
-                    pdf.setFont('DecklyBold' if n['bold'] else 'Deckly',n['font_size']);pdf.setFillColor(HexColor(n['color']))
+                    pdf.setFont(n.get('pdf_font') or ('DecklyBold' if n['bold'] else 'Deckly'),n['font_size']);pdf.setFillColor(HexColor(n['color']))
                     for j,line in enumerate(n['lines']):pdf.drawString(n['x'],height-n['y']-n['font_size']-j*n['font_size']*n.get('line_spacing',1.28),line)
         pdf.showPage()
     pdf.save();return stream.getvalue()
@@ -159,13 +160,15 @@ def export_pptx(content: DeckContent, template: dict, variant: str, *, scenes=No
                 chart.has_legend=False;chart.value_axis.has_title=True;chart.value_axis.axis_title.text_frame.text=obj['unit'] or 'Значение'
                 chart.series[0].format.fill.solid();chart.series[0].format.fill.fore_color.rgb=rgb(obj['fill'])
                 chart.series[0].format.line.color.rgb=rgb(obj['fill'])
-                chart.font.name='Manrope'
+                chart.font.name=obj.get('effective_font_family','Manrope')
                 chart.font.color.rgb=rgb(obj['theme']['text'])
                 if obj.get('font_size'): chart.font.size=Pt(obj['font_size']*point_scale)
                 for axis in (chart.category_axis,chart.value_axis):
+                    axis.tick_labels.font.name=obj.get('effective_font_family','Manrope')
                     axis.tick_labels.font.color.rgb=rgb(obj['theme']['text'])
                     if obj.get('font_size'): axis.tick_labels.font.size=Pt(obj['font_size']*point_scale)
                 for paragraph in chart.value_axis.axis_title.text_frame.paragraphs:
+                    paragraph.font.name=obj.get('effective_font_family','Manrope')
                     paragraph.font.color.rgb=rgb(obj['theme']['text'])
                 # Chart area defaults must not silently use white on a dark slide.
                 from pptx.oxml.xmlchemy import OxmlElement
@@ -190,6 +193,7 @@ def export_pptx(content: DeckContent, template: dict, variant: str, *, scenes=No
             if analytical.warnings:slide.notes_slide.notes_text_frame.text+='\nОграничения: '+'; '.join(analytical.warnings)
         if slide_content.kind=='icons' or any(element.type == 'icon' for element in slide_content.elements):
             slide.notes_slide.notes_text_frame.text+='\n'+ATTRIBUTION
-    from .pptx_fonts import embed_manrope
+    from .pptx_fonts import embed_manrope, embed_brand_fonts
     embed_manrope(prs)
+    embed_brand_fonts(prs, metadata.get('font_assets',[]))
     stream=BytesIO();prs.save(stream);return stream.getvalue()

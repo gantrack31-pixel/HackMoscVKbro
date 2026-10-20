@@ -127,6 +127,11 @@ def template_save(tid: str, name: str, path: str | None, metadata: dict, user_id
     with connection() as db:
         db.execute('INSERT OR REPLACE INTO templates (id,name,path,metadata,created_at,user_id) VALUES (?,?,?,?,?,?)', (tid, name, path, json.dumps(metadata, ensure_ascii=False), now(),user_id))
 
+def template_update_metadata(tid: str, metadata: dict):
+    with connection() as db:
+        db.execute('UPDATE templates SET metadata=? WHERE id=?', (json.dumps(metadata, ensure_ascii=False), tid))
+
+
 def templates_list() -> list[dict]:
     with connection() as db:
         return [decode(row, ['metadata']) for row in db.execute('SELECT * FROM templates ORDER BY created_at')]

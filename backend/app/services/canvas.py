@@ -1,5 +1,6 @@
 """User-directed canvas edits, rendered as the same editable native objects."""
 from .palette import roles, protect_foregrounds
+from .font_support import text_fonts
 
 
 def explicit_layout(slide):
@@ -83,11 +84,10 @@ def apply_canvas(scene, slide, metadata):
             # Object colors have precedence over whole-slide text colors.
             if style and style.color:
                 obj['color'] = style.color
-            obj.setdefault('font_family', 'Manrope')
-            obj.setdefault('effective_font_family', 'Manrope')
+            obj.update(text_fonts(obj.get('role','body'),obj.get('font_family'),obj.get('bold',False),obj.get('text','')))
             obj.setdefault('line_spacing', 1.2)
             obj.setdefault('bold', False)
-            obj['lines'] = wrap(obj.get('text', ''), max(1, obj['w']), obj['font_size'], obj['bold'])
+            obj['lines'] = wrap(obj.get('text', ''), max(1, obj['w']), obj['font_size'], obj['bold'],obj['effective_font_family'])
             obj['used_height'] = len(obj['lines'])*obj['font_size']*obj['line_spacing']
         if obj['id'] == 'background':
             obj.update(x=0, y=0, w=scene['width'], h=scene['height'])

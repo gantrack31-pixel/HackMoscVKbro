@@ -1,0 +1,280 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e2]:
+  - link "К содержанию" [ref=e3] [cursor=pointer]:
+    - /url: "#main"
+  - generic [ref=e4]:
+    - complementary "Навигация" [ref=e5]:
+      - button "Раскрыть навигацию Deckly.Ai" [ref=e6] [cursor=pointer]:
+        - generic [ref=e7]:
+          - generic [ref=e8]:
+            - generic [ref=e9]: D
+            - generic: eckly
+          - generic:
+            - generic [ref=e10]: .
+            - generic [ref=e11]: Ai
+      - generic [ref=e12]:
+        - generic: РАБОЧЕЕ ПРОСТРАНСТВО
+        - navigation "Основная навигация" [ref=e13]:
+          - link "Главная" [ref=e14] [cursor=pointer]:
+            - /url: "#home"
+            - img [ref=e15]
+          - link "Шаблоны" [ref=e18] [cursor=pointer]:
+            - /url: "#templates"
+            - img [ref=e19]
+          - link "Мои презентации" [ref=e21] [cursor=pointer]:
+            - /url: "#projects"
+            - img [ref=e22]
+          - link "Избранное" [ref=e24] [cursor=pointer]:
+            - /url: "#favorites"
+            - img [ref=e25]
+          - link "Как это работает" [ref=e27] [cursor=pointer]:
+            - /url: "#demo"
+            - img [ref=e28]
+        - link "Новая презентация" [ref=e33] [cursor=pointer]:
+          - /url: "#create"
+          - img [ref=e34]
+      - generic [ref=e36]:
+        - button "Включить тёмную тему" [ref=e38] [cursor=pointer]:
+          - img [ref=e39]
+        - navigation "Аккаунт и помощь" [ref=e41]:
+          - link "Поддержка" [ref=e42] [cursor=pointer]:
+            - /url: "#support"
+            - img [ref=e43]
+          - link "Мой профиль" [ref=e50] [cursor=pointer]:
+            - /url: "#profile"
+            - img [ref=e51]
+          - button "Выйти из аккаунта" [ref=e55] [cursor=pointer]:
+            - img [ref=e56]
+    - main [ref=e60]:
+      - region "Редактор презентации" [ref=e61]:
+        - alert [ref=e62]:
+          - paragraph [ref=e63]: Презентация изменилась в другой вкладке. Сохраните копию вашего черновика и продолжите с актуальной версией.
+          - button "Скачать черновик и открыть актуальную версию" [ref=e64] [cursor=pointer]
+        - generic [ref=e65]:
+          - generic [ref=e66]:
+            - generic [ref=e67]:
+              - generic [ref=e68]: Редактор презентации
+              - generic [ref=e69]:
+                - textbox "Название презентации" [ref=e70]: Запуск нового продукта. Цель — рассказать команде о стратегии выхода на рынок и ключевых этапах запуска.
+                - img
+              - paragraph [ref=e71]:
+                - generic [ref=e72]: VK Education · 8 слайдов
+                - status [ref=e73]:
+                  - img [ref=e75]
+                  - text: Есть изменения
+            - generic [ref=e78]:
+              - button "Проверить" [disabled] [ref=e79]:
+                - img [ref=e80]
+                - text: Проверить
+              - button "Завершить" [disabled] [ref=e83]:
+                - img [ref=e84]
+                - text: Завершить
+          - generic [ref=e89]:
+            - generic [ref=e90]:
+              - group "История изменений" [ref=e91]:
+                - button "Отменить изменение" [disabled] [ref=e92]:
+                  - img [ref=e93]
+                - button "Повторить изменение" [disabled] [ref=e96]:
+                  - img [ref=e97]
+              - group "Оформление" [ref=e100]:
+                - generic [ref=e101]: Оформление
+                - generic [ref=e102]:
+                  - generic [ref=e103]:
+                    - radio "Классический" [disabled] [ref=e104]
+                    - generic [ref=e105]: Классический
+                  - generic [ref=e106]:
+                    - radio "Акцентный" [checked] [disabled] [ref=e107]
+                    - generic [ref=e108]: Акцентный
+                  - generic [ref=e109]:
+                    - radio "Минималистичный" [disabled] [ref=e110]
+                    - generic [ref=e111]: Минималистичный
+            - button "Сохранить изменения" [disabled] [ref=e112]:
+              - img [ref=e113]
+              - text: Сохранить изменения
+        - group [ref=e117]:
+          - generic "О создании презентации · 8 слайдов · 0,03 с" [ref=e118] [cursor=pointer]
+        - region "AI-помощник" [ref=e119]:
+          - generic [ref=e120]:
+            - img [ref=e122]
+            - generic [ref=e125]:
+              - heading "Редактировать с AI" [level=2] [ref=e126]
+              - paragraph [ref=e127]: AI не подключён. Ручное редактирование доступно.
+            - button "Развернуть AI-помощник" [ref=e128] [cursor=pointer]:
+              - generic [ref=e129]: Развернуть
+              - img [ref=e130]
+        - generic [ref=e132]:
+          - complementary "Слайды" [ref=e133]:
+            - generic [ref=e134]:
+              - generic [ref=e135]: Слайды
+              - generic [ref=e136]: "8"
+            - 'button "Слайд 1: Стратегия запуска продукта" [ref=e137] [cursor=pointer]':
+              - generic [ref=e138]: "01"
+              - img "Слайд" [ref=e139]:
+                - generic [ref=e142]: "01"
+                - generic [ref=e143]: Стратегия запуска продукта
+                - generic [ref=e144]: Четыре этапа работы команды.
+                - generic [ref=e146]: Исследование
+                - generic [ref=e148]: Разработка
+                - generic [ref=e150]: Проверка
+                - generic [ref=e152]: Запуск
+                - generic [ref=e153]: 01 / Deckly.Ai
+              - generic [ref=e154]: Стратегия запуска продукта
+            - 'button "Слайд 2: Контекст" [ref=e155] [cursor=pointer]':
+              - generic [ref=e156]: "02"
+              - img "Слайд" [ref=e157]:
+                - generic [ref=e160]: "02"
+                - generic [ref=e161]: Контекст
+                - generic [ref=e162]: Добавьте подтверждённые тезисы из исходных материалов.
+                - generic [ref=e163]: 02 / Deckly.Ai
+              - generic [ref=e164]: Контекст
+            - 'button "Слайд 3: Главная задача" [ref=e165] [cursor=pointer]':
+              - generic [ref=e166]: "03"
+              - img "Слайд" [ref=e167]:
+                - generic [ref=e170]: "03"
+                - generic [ref=e171]: Главная задача
+                - generic [ref=e172]: Добавьте подтверждённые тезисы из исходных материалов.
+                - generic [ref=e173]: 03 / Deckly.Ai
+              - generic [ref=e174]: Главная задача
+            - 'button "Слайд 4: Подход" [ref=e175] [cursor=pointer]':
+              - generic [ref=e176]: "04"
+              - img "Слайд" [ref=e177]:
+                - generic [ref=e180]: "04"
+                - generic [ref=e181]: Подход
+                - generic [ref=e182]: Добавьте подтверждённые тезисы из исходных материалов.
+                - generic [ref=e183]: 04 / Deckly.Ai
+              - generic [ref=e184]: Подход
+            - 'button "Слайд 5: План действий" [ref=e185] [cursor=pointer]':
+              - generic [ref=e186]: "05"
+              - img "Слайд" [ref=e187]:
+                - generic [ref=e190]: "05"
+                - generic [ref=e191]: План действий
+                - generic [ref=e192]: Добавьте подтверждённые тезисы из исходных материалов.
+                - generic [ref=e193]: 05 / Deckly.Ai
+              - generic [ref=e194]: План действий
+            - 'button "Слайд 6: Следующий шаг" [ref=e195] [cursor=pointer]':
+              - generic [ref=e196]: "06"
+              - img "Слайд" [ref=e197]:
+                - generic [ref=e200]: "06"
+                - generic [ref=e201]: Следующий шаг
+                - generic [ref=e202]: Добавьте подтверждённые тезисы из исходных материалов.
+                - generic [ref=e203]: 06 / Deckly.Ai
+              - generic [ref=e204]: Следующий шаг
+            - 'button "Слайд 7: Раздел 7" [ref=e205] [cursor=pointer]':
+              - generic [ref=e206]: "07"
+              - img "Слайд" [ref=e207]:
+                - generic [ref=e210]: "07"
+                - generic [ref=e211]: Раздел 7
+                - generic [ref=e212]: Добавьте материал для этого раздела.
+                - generic [ref=e213]: 07 / Deckly.Ai
+              - generic [ref=e214]: Раздел 7
+            - 'button "Слайд 8: Раздел 8" [ref=e215] [cursor=pointer]':
+              - generic [ref=e216]: "08"
+              - img "Слайд" [ref=e217]:
+                - generic [ref=e220]: "08"
+                - generic [ref=e221]: Раздел 8
+                - generic [ref=e222]: Добавьте материал для этого раздела.
+                - generic [ref=e223]: 08 / Deckly.Ai
+              - generic [ref=e224]: Раздел 8
+            - button "Слайд" [ref=e225] [cursor=pointer]:
+              - img [ref=e226]
+              - text: Слайд
+          - generic [ref=e229]:
+            - generic [ref=e230]:
+              - generic [ref=e231]:
+                - generic [ref=e232]: "01"
+                - generic [ref=e233]:
+                  - generic [ref=e234]: Слайд 1 из 8
+                  - generic [ref=e235]: Связанная схема
+              - button "Смотреть" [ref=e236] [cursor=pointer]:
+                - img [ref=e237]
+                - text: Смотреть
+            - generic [ref=e240]:
+              - generic [ref=e241]:
+                - img "Слайд" [ref=e242]:
+                  - generic [ref=e245]: "01"
+                  - generic [ref=e246]: Стратегия запуска продукта
+                  - generic [ref=e247]: Четыре этапа работы команды.
+                  - generic [ref=e249]: Исследование
+                  - generic [ref=e251]: Разработка
+                  - generic [ref=e253]: Проверка
+                  - generic [ref=e255]: Запуск
+                  - generic [ref=e256]: 01 / Deckly.Ai
+                - group "Управление элементами слайда" [disabled] [ref=e257]:
+                  - 'button "Переместить: Прямоугольник · accent" [disabled] [ref=e258]'
+                  - 'button "Переместить: Текст · number" [disabled] [ref=e259]'
+                  - 'button "Переместить: Заголовок" [disabled] [ref=e260]'
+                  - 'button "Переместить: Основной текст" [disabled] [ref=e261]'
+                  - 'button "Переместить: Шестиугольник · node-bg-0" [disabled] [ref=e262]'
+                  - 'button "Переместить: Текст · node-label-0" [disabled] [ref=e263]'
+                  - 'button "Переместить: Шестиугольник · node-bg-1" [disabled] [ref=e264]'
+                  - 'button "Переместить: Текст · node-label-1" [disabled] [ref=e265]'
+                  - 'button "Переместить: Шестиугольник · node-bg-2" [disabled] [ref=e266]'
+                  - 'button "Переместить: Текст · node-label-2" [disabled] [ref=e267]'
+                  - 'button "Переместить: Шестиугольник · node-bg-3" [disabled] [ref=e268]'
+                  - 'button "Переместить: Текст · node-label-3" [disabled] [ref=e269]'
+                  - 'button "Переместить: Текст · footer" [disabled] [ref=e270]'
+              - status [ref=e271]: Выберите элемент и перетащите мышью. Для изменения размера потяните маркер рамки.
+            - paragraph [ref=e272]: Предпросмотр обновлён. Сохраните изменения, чтобы продолжить.
+            - generic [ref=e273]:
+              - generic [ref=e274]:
+                - heading "Опора на источник" [level=3] [ref=e275]:
+                  - img [ref=e276]
+                  - text: Опора на источник
+                - generic [ref=e279]: Без цитаты
+              - blockquote [ref=e280]: Добавьте точную цитату из исходного материала в поле справа.
+              - paragraph [ref=e281]: Проверяется совпадение текста. Смысловую связь тезиса с цитатой необходимо проверить отдельно.
+              - group [ref=e282]:
+                - generic "Исходный материал" [ref=e283] [cursor=pointer]
+          - group [ref=e284]:
+            - generic [ref=e285]:
+              - generic [ref=e286]:
+                - heading "Содержание" [level=2] [ref=e287]
+                - generic [ref=e288]: Текст и детали слайда
+              - generic [ref=e289]: "01"
+            - generic [ref=e290]:
+              - tablist "Редактирование слайда" [ref=e291]:
+                - tab "Слайд" [selected] [ref=e292] [cursor=pointer]
+                - tab "Источник" [ref=e293] [cursor=pointer]
+                - tab "Заметки" [ref=e294] [cursor=pointer]
+              - tabpanel "Слайд" [ref=e295]:
+                - generic [ref=e296]:
+                  - text: Тип слайда
+                  - combobox "Тип слайда" [ref=e297]:
+                    - option "Титульный"
+                    - option "Текст"
+                    - option "Диаграмма"
+                    - option "Таблица"
+                    - option "Шаги"
+                    - option "Связанная схема" [selected]
+                    - option "Пиктограммы"
+                    - option "AI-иллюстрация"
+                - generic [ref=e298]:
+                  - text: Тип схемы
+                  - combobox "Тип схемы До 6 узлов. Названия — в поле «Тезисы». Фигуры и связи остаются редактируемыми в PPTX." [ref=e299]:
+                    - option "Процесс"
+                    - option "Цикл"
+                    - option "Иерархия"
+                    - option "Вертикальные этапы"
+                    - option "Матрица / SWOT"
+                    - option "Пирамида"
+                    - option "Соты" [selected]
+                    - option "Сравнение"
+                    - option "Карточки KPI"
+                  - generic [ref=e300]: До 6 узлов. Названия — в поле «Тезисы». Фигуры и связи остаются редактируемыми в PPTX.
+                - generic [ref=e301]:
+                  - text: Заголовок
+                  - textbox "Заголовок" [ref=e302]: Стратегия запуска продукта
+                - generic [ref=e303]:
+                  - text: Основной текст
+                  - textbox "Основной текст" [ref=e304]: Четыре этапа работы команды.
+                - generic [ref=e305]:
+                  - text: Узлы схемы · по одному в строке
+                  - textbox "Узлы схемы · по одному в строке До 6 подписей. Каждый пункт соответствует отдельному элементу." [ref=e306]: Исследование Разработка Проверка Запуск
+                  - generic [ref=e307]: До 6 подписей. Каждый пункт соответствует отдельному элементу.
+            - button "Удалить слайд" [ref=e308] [cursor=pointer]:
+              - img [ref=e309]
+              - text: Удалить слайд
+  - status
+```

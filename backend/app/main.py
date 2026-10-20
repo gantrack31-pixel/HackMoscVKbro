@@ -68,6 +68,9 @@ async def lifespan(app):
     validate_settings()
     settings.storage.mkdir(parents=True,exist_ok=True)
     db.initialize();seed_templates(settings.storage)
+    # Migrate persisted and bundled indexes before the first catalog response.
+    for template in db.templates_list():
+        if template.get('path'): get_template(template['id'])
     await provider_http.start()
     try: yield
     finally: await provider_http.close()
@@ -125,12 +128,13 @@ def get_template(tid,user_id=None):
     if result.get('path'):
         try:
             stale = (result['metadata'].get('normalization_version') != NORMALIZATION_VERSION
+                     or not isinstance(result['metadata'].get('assets'), list)
                      or result['metadata'].get('file_fingerprint') != fingerprint(result['path']))
             if stale:
                 fresh=analyze_template(Path(result['path']))
                 catalog={k:result['metadata'][k] for k in ('category','cover_title','bundled_pack','original_name','master_only','cover_slide') if k in result['metadata']}
                 result['metadata']={**catalog,**fresh}
-                db.template_save(tid,result['name'],result['path'],result['metadata'],result.get('user_id'))
+                db.template_update_metadata(tid,result['metadata'])
         except (OSError,ValueError):
             pass  # A previously saved project remains readable if its source is unavailable.
     return result

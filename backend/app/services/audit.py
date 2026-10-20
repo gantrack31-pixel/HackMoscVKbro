@@ -85,7 +85,7 @@ def audit_deck(content: DeckContent, template: dict, variant: str, source: str, 
                     add('overflow','Текст не помещается в блок','Автоподбор уже достиг безопасного минимума. Сократите текст, измените композицию или разделите содержание.',severity='error',fixable=False,obj=obj['id'])
             if obj['type']=='table':
                 cell_width=obj['w']/len(obj['rows'][0])-24;cell_height=obj['h']/len(obj['rows'])-16
-                if any(len(wrap(cell,cell_width,obj['font_size']))*obj['font_size']*1.28>cell_height for row in obj['rows'] for cell in row):
+                if any(len(wrap(cell,cell_width,obj['font_size'],font_family=obj.get('pdf_font')))*obj['font_size']*1.28>cell_height for row in obj['rows'] for cell in row):
                     add('table_density','Текст в таблице не помещается','Сократите ячейки или разделите таблицу на несколько слайдов.',severity='error',obj=obj['id'])
             if obj['type']=='chart' and not obj.get('analytical'):
                 row_height=(obj['h']-32)/len(obj['labels'])-8

@@ -73,7 +73,6 @@ export function Wizard({
   const readPendingJob = () => pendingJobRef.current;
   const writePendingJob = (job: PendingJob | null) => { pendingJobRef.current = job; writeJob(accountId, job); };
   const [interruptedJob, setInterruptedJob] = useState<{ pending: PendingJob; message: string } | null>(null);
-  const [storageError, setStorageError] = useState(false);
   const [previousDraft, setPreviousDraft] = useState(() => readAccount<WizardDraft>(accountId, "wizard-previous"));
   const ai = useAiOperation();
   const [step, setStep] = useState(saved?.content ? Math.min(saved.step, 2) : 1),
@@ -125,7 +124,7 @@ export function Wizard({
     const draft: WizardDraft = { version: 1, savedAt: new Date().toISOString(), step, mode, prompt, count,
       audience, purpose, resources, sourceBlocks, analytics, brandId, brandPreferTemplate, content, templateId: template.id,
       resultId: result?.id, variant, instruction };
-    writeAccountDeferred(accountId, "wizard-draft", draft, (saved) => setStorageError(!saved));
+    writeAccountDeferred(accountId, "wizard-draft", draft);
   }, [accountId, step, mode, prompt, count, audience, purpose, resources, sourceBlocks, analytics, brandId, brandPreferTemplate, content, template.id, result?.id, variant, instruction]);
   useEffect(() => {
     if (saved?.resultId && saved.step === 4 && !readPendingJob()) {
@@ -570,7 +569,6 @@ export function Wizard({
           </li>
         ))}
       </ol>
-      {storageError && <p className="error-banner" role="alert">Браузер не смог сохранить черновик. Не закрывайте вкладку до сохранения презентации.</p>}
       {previousDraft && !busy && <div className="demo-notice"><span>Предыдущий черновик сохранён.</span><button className="btn sm" onClick={restorePrevious}>Восстановить</button><button className="btn ghost sm" onClick={() => { setPreviousDraft(null); writeAccount(accountId, "wizard-previous", null); }}>Скрыть</button></div>}
       {interruptedJob && <div className="error-banner" role="alert">
         <div><strong>Проверка состояния прервана</strong><p>{interruptedJob.message}</p>
