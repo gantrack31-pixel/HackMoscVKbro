@@ -37,6 +37,7 @@
   }
 }
 
+/* 2. АНИМАЦИЯ: ХОДИТ ВПРАВО И ВЛЕВО (WALK) */
 @keyframes mascotWalkMoveX {
   0% {
     transform: translateX(0px);
@@ -143,6 +144,7 @@
   }
 }
 
+/* 3. АНИМАЦИЯ: ЗАДУМЧИВЫЙ (THINK) — Лапка аккуратно у края корпуса, не закрывает лицо */
 @keyframes mascotThinkBreathe {
   0%,
   100% {
@@ -202,6 +204,7 @@
   }
 }
 
+/* 4. АНИМАЦИЯ: СИДИТ С НОУТБУКОМ (LAPTOP) — Глазки приподняты, не наезжают на рот */
 @keyframes mascotLaptopSitBob {
   0%,
   100% {
@@ -248,6 +251,7 @@
   }
 }
 
+/* 5. АНИМАЦИЯ: ОШИБКА СОЗДАНИЯ ПРЕЗЕНТАЦИИ (ERROR) — Падение на попу + аккуратные скобочки в углу корпуса */
 @keyframes mascotErrorFallBody {
   0% {
     transform: translateY(-26px) rotate(6deg) scale(0.96, 1.04);
@@ -370,17 +374,202 @@
   }
 }
 
+/* */
+/* 6. АНИМАЦИЯ (НОВАЯ 1): СМЕЁТСЯ И УЛЫБАЕТСЯ (LAUGH) */
+@keyframes mascotLaughBounce {
+  0%,
+  100% {
+    transform: translateY(0px) rotate(0deg) scale(1, 1);
+  }
+  15% {
+    transform: translateY(-12px) rotate(-2.5deg) scale(0.98, 1.03);
+  }
+  30% {
+    transform: translateY(-2px) rotate(2deg) scale(1.02, 0.98);
+  }
+  45% {
+    transform: translateY(-14px) rotate(-2deg) scale(0.98, 1.03);
+  }
+  60% {
+    transform: translateY(-3px) rotate(2.5deg) scale(1.02, 0.98);
+  }
+  75% {
+    transform: translateY(-10px) rotate(-1.5deg) scale(0.99, 1.02);
+  }
+}
+@keyframes mascotLaughArmLeft {
+  0%,
+  100% {
+    transform: translate(0px, -6px) rotate(42deg);
+  }
+  25%,
+  75% {
+    transform: translate(-4px, -18px) rotate(68deg);
+  }
+  50% {
+    transform: translate(2px, -4px) rotate(35deg);
+  }
+}
+@keyframes mascotLaughArmRight {
+  0%,
+  100% {
+    transform: translate(0px, -6px) rotate(-42deg);
+  }
+  25%,
+  75% {
+    transform: translate(4px, -18px) rotate(-68deg);
+  }
+  50% {
+    transform: translate(-2px, -4px) rotate(-35deg);
+  }
+}
+@keyframes mascotLaughSparks {
+  0%,
+  100% {
+    transform: scale(0.85) translateY(2px);
+    opacity: 0.5;
+  }
+  50% {
+    transform: scale(1.12) translateY(-4px);
+    opacity: 1;
+  }
+}
+
+/* 7. АНИМАЦИЯ (НОВАЯ 2): ВОЗДУШНЫЙ ПОЦЕЛУЙ ДВУМЯ РУКАМИ + СЕРДЕЧКО (KISS) */
+@keyframes mascotKissBody {
+  0%,
+  100% {
+    transform: translateY(0px) scale(1);
+  }
+  25% {
+    transform: translateY(3px) scale(1.02, 0.98);
+  }
+  50% {
+    transform: translateY(-8px) scale(0.99, 1.02);
+  }
+}
+@keyframes mascotKissArmLeft {
+  0%,
+  100% {
+    transform: translate(0px, 0px) rotate(26deg);
+  }
+  20%,
+  35% {
+    transform: translate(92px, -2px) rotate(-16deg);
+  }
+  60%,
+  78% {
+    transform: translate(22px, -24px) rotate(48deg);
+  }
+}
+@keyframes mascotKissArmRight {
+  0%,
+  100% {
+    transform: translate(0px, 0px) rotate(-26deg);
+  }
+  20%,
+  35% {
+    transform: translate(-92px, 8px) rotate(16deg);
+  }
+  60%,
+  78% {
+    transform: translate(-22px, -14px) rotate(-48deg);
+  }
+}
+@keyframes mascotKissHeartFly {
+  0%,
+  26% {
+    opacity: 0;
+    transform: translate(0px, 14px) scale(0.2);
+  }
+  42% {
+    opacity: 1;
+    transform: translate(0px, -4px) scale(1.18);
+  }
+  62% {
+    opacity: 1;
+    transform: translate(0px, -28px) scale(1);
+  }
+  85% {
+    opacity: 0.85;
+    transform: translate(0px, -54px) scale(1.08);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(0px, -72px) scale(0.6);
+  }
+}
+
+/* 8. АНИМАЦИЯ (НОВАЯ 3): ВОСХИЩЕНИЕ В ПРОФИЛЕ (ADMIRE) */
+@keyframes mascotAdmireFloat {
+  0%,
+  100% {
+    transform: translateY(0px) rotate(-1.5deg) scale(1);
+  }
+  50% {
+    transform: translateY(-9px) rotate(1.5deg) scale(1.02);
+  }
+}
+@keyframes mascotAdmireArmLeft {
+  0%,
+  100% {
+    transform: translate(62px, 8px) rotate(-32deg);
+  }
+  50% {
+    transform: translate(66px, 2px) rotate(-42deg);
+  }
+}
+@keyframes mascotAdmireArmRight {
+  0%,
+  100% {
+    transform: translate(-62px, 18px) rotate(32deg);
+  }
+  50% {
+    transform: translate(-66px, 12px) rotate(42deg);
+  }
+}
+@keyframes mascotStarEyePulse {
+  0%,
+  100% {
+    transform: scale(1) rotate(0deg);
+  }
+  50% {
+    transform: scale(1.18) rotate(8deg);
+  }
+}
+@keyframes mascotSparkleTwinkle {
+  0%,
+  100% {
+    transform: scale(0.7) rotate(0deg);
+    opacity: 0.4;
+  }
+  50% {
+    transform: scale(1.2) rotate(15deg);
+    opacity: 1;
+  }
+}
+
+/* Скрытие дополнительных пропсов по умолчанию */
 .deckly-mascot-svg .prop-think,
 .deckly-mascot-svg .prop-laptop,
 .deckly-mascot-svg .prop-error-brackets,
+.deckly-mascot-svg .prop-laugh,
+.deckly-mascot-svg .prop-kiss,
+.deckly-mascot-svg .prop-admire,
 .deckly-mascot-svg .eyes-think,
 .deckly-mascot-svg .eyes-error,
+.deckly-mascot-svg .eyes-admire,
 .deckly-mascot-svg .mouth-think,
 .deckly-mascot-svg .mouth-error,
+.deckly-mascot-svg .mouth-laugh,
+.deckly-mascot-svg .mouth-kiss,
+.deckly-mascot-svg .mouth-admire,
+.deckly-mascot-svg .cheeks-blush,
 .deckly-mascot-svg .legs-sitting {
   display: none;
 }
 
+/* Состояние 1: WAVE */
 .deckly-mascot-svg.state-wave .mascot-body-rig {
   animation: mascotWaveBob 1.8s ease-in-out infinite;
   transform-origin: 200px 200px;
@@ -396,6 +585,7 @@
   transform-origin: 200px 362px;
 }
 
+/* Состояние 2: WALK */
 .deckly-mascot-svg.state-walk .mascot-root-mover {
   animation: mascotWalkMoveX 3.4s linear infinite;
 }
@@ -423,6 +613,7 @@
   animation: mascotWalkMoveX 3.4s linear infinite;
 }
 
+/* Состояние 3: THINK */
 .deckly-mascot-svg.state-think .mascot-body-rig {
   animation: mascotThinkBreathe 2.8s ease-in-out infinite;
   transform-origin: 200px 200px;
@@ -459,6 +650,7 @@
   transform-origin: 340px 40px;
 }
 
+/* Состояние 4: LAPTOP */
 .deckly-mascot-svg.state-laptop .mascot-body-rig {
   animation: mascotLaptopSitBob 1.2s ease-in-out infinite;
   transform-origin: 200px 200px;
@@ -487,6 +679,7 @@
   transform-origin: 200px 362px;
 }
 
+/* Состояние 5: ERROR (Упал на попу, грустит, скобочки ушиба над головой) */
 .deckly-mascot-svg.state-error .mascot-body-rig {
   animation: mascotErrorFallBody 3.2s cubic-bezier(0.22, 1, 0.36, 1) infinite;
   transform-origin: 200px 260px;
@@ -521,10 +714,114 @@
   transform-origin: 200px 362px;
 }
 
+/* */
+/* Состояние 6 (Новая 1): LAUGH (Смеётся и улыбается) */
+.deckly-mascot-svg.state-laugh .mascot-body-rig {
+  animation: mascotLaughBounce 1.35s ease-in-out infinite;
+  transform-origin: 200px 220px;
+}
+.deckly-mascot-svg.state-laugh .mouth-smile {
+  display: none;
+}
+.deckly-mascot-svg.state-laugh .mouth-laugh,
+.deckly-mascot-svg.state-laugh .cheeks-blush,
+.deckly-mascot-svg.state-laugh .prop-laugh {
+  display: block;
+}
+.deckly-mascot-svg.state-laugh .arm-left {
+  animation: mascotLaughArmLeft 0.675s ease-in-out infinite;
+}
+.deckly-mascot-svg.state-laugh .arm-right {
+  animation: mascotLaughArmRight 0.675s ease-in-out infinite;
+}
+.deckly-mascot-svg.state-laugh .prop-laugh {
+  animation: mascotLaughSparks 0.675s ease-in-out infinite;
+  transform-origin: 200px 90px;
+}
+.deckly-mascot-svg.state-laugh .floor-shadow {
+  animation: mascotWaveShadow 0.675s ease-in-out infinite;
+  transform-origin: 200px 362px;
+}
+
+/* Состояние 7 (Новая 2): KISS (Воздушный поцелуй двумя руками + сердечко) */
+.deckly-mascot-svg.state-kiss .mascot-body-rig {
+  animation: mascotKissBody 2.4s ease-in-out infinite;
+  transform-origin: 200px 220px;
+}
+.deckly-mascot-svg.state-kiss .mouth-smile {
+  display: none;
+}
+.deckly-mascot-svg.state-kiss .mouth-kiss,
+.deckly-mascot-svg.state-kiss .cheeks-blush,
+.deckly-mascot-svg.state-kiss .prop-kiss {
+  display: block;
+}
+.deckly-mascot-svg.state-kiss .arm-left {
+  animation: mascotKissArmLeft 2.4s cubic-bezier(0.34, 1.2, 0.64, 1) infinite;
+}
+.deckly-mascot-svg.state-kiss .arm-right {
+  animation: mascotKissArmRight 2.4s cubic-bezier(0.34, 1.2, 0.64, 1) infinite;
+}
+.deckly-mascot-svg.state-kiss .kiss-heart-group {
+  animation: mascotKissHeartFly 2.4s ease-out infinite;
+  transform-origin: 200px 175px;
+}
+
+/* Состояние 8 (Новая 3): ADMIRE (Восхищение в профиле) */
+.deckly-mascot-svg.state-admire .mascot-body-rig {
+  animation: mascotAdmireFloat 2.2s ease-in-out infinite;
+  transform-origin: 200px 210px;
+}
+.deckly-mascot-svg.state-admire .eyes-happy,
+.deckly-mascot-svg.state-admire .mouth-smile {
+  display: none;
+}
+.deckly-mascot-svg.state-admire .eyes-admire,
+.deckly-mascot-svg.state-admire .mouth-admire,
+.deckly-mascot-svg.state-admire .cheeks-blush,
+.deckly-mascot-svg.state-admire .prop-admire {
+  display: block;
+}
+.deckly-mascot-svg.state-admire .arm-left {
+  animation: mascotAdmireArmLeft 1.1s ease-in-out infinite;
+}
+.deckly-mascot-svg.state-admire .arm-right {
+  animation: mascotAdmireArmRight 1.1s ease-in-out infinite;
+}
+.deckly-mascot-svg.state-admire .star-eye-left {
+  animation: mascotStarEyePulse 1.1s ease-in-out infinite;
+  transform-origin: 170px 165px;
+}
+.deckly-mascot-svg.state-admire .star-eye-right {
+  animation: mascotStarEyePulse 1.1s ease-in-out infinite 0.15s;
+  transform-origin: 226px 165px;
+}
+.deckly-mascot-svg.state-admire .sparkle-1 {
+  animation: mascotSparkleTwinkle 1.4s ease-in-out infinite;
+  transform-origin: 72px 102px;
+}
+.deckly-mascot-svg.state-admire .sparkle-2 {
+  animation: mascotSparkleTwinkle 1.4s ease-in-out infinite 0.45s;
+  transform-origin: 328px 94px;
+}
+.deckly-mascot-svg.state-admire .sparkle-3 {
+  animation: mascotSparkleTwinkle 1.4s ease-in-out infinite 0.9s;
+  transform-origin: 318px 152px;
+}
+
+/* Живое моргание глазок */
 .deckly-mascot-svg .eyelid-blink {
   animation: mascotBlink 4.2s infinite;
   transform-origin: 200px 175px;
 }
+
+.deckly-mascot-svg .arm-left {
+  transform: rotate(26deg);
+}
+.deckly-mascot-svg .arm-right {
+  transform: rotate(-26deg);
+}
+
 .deckly-mascot {
   width: var(--mascot-size, 180px);
   max-width: 100%;

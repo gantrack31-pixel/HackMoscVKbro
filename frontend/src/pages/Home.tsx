@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { api } from "../api";
 import { Icon } from "../components/Icon";
+import { MascotPageHeading } from "../components/MascotPageHeading";
 import { TemplateCard } from "../components/TemplateCard";
 import type { Project, ProjectSummary } from "../types";
 import type { CatalogActions } from "./catalogTypes";
@@ -84,21 +85,24 @@ export function Home(
   );
   return (
     <div className="spatial-home" ref={motionScope}>
-      <div className="heading between">
-        <div>
-          <h1>
-            Ваша следующая идея —<br />в отличной форме.
-          </h1>
-          <p>Цифровой дизайнер презентаций</p>
-        </div>
-        <button
-          className="btn primary"
-          onClick={() => props.start("description")}
-        >
-          <Icon name="home-create" />
-          Создать презентацию
-        </button>
-      </div>
+      <MascotPageHeading
+        variant="home"
+        animation="laugh"
+        action={
+          <button
+            className="btn primary"
+            onClick={() => props.start("description")}
+          >
+            <Icon name="home-create" />
+            Создать презентацию
+          </button>
+        }
+      >
+        <h1>
+          Ваша следующая идея —<br />в отличной форме.
+        </h1>
+        <p>Цифровой дизайнер презентаций</p>
+      </MascotPageHeading>
       <div
         className="tabs home-tabs"
         role="tablist"

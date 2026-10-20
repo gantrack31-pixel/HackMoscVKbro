@@ -1,7 +1,7 @@
-import { useId, useState, type FormEvent } from "react";
+import { useId, useRef, useState, type FormEvent } from "react";
 import { api } from "../api";
 import { Icon, type IconName } from "../components/Icon";
-import { DecklyMascot } from "../components/DecklyMascot";
+import { MascotPageHeading } from "../components/MascotPageHeading";
 
 const supportQuestions = [
   {
@@ -76,6 +76,19 @@ export function Support() {
   >("idle");
   const [contactError, setContactError] = useState("");
   const accordionId = useId();
+  const contactSection = useRef<HTMLElement>(null);
+  const answersSection = useRef<HTMLElement>(null);
+
+  function showSection(section: HTMLElement | null) {
+    if (!section) return;
+    section.focus({ preventScroll: true });
+    section.scrollIntoView({
+      behavior: matchMedia("(prefers-reduced-motion: reduce)").matches
+        ? "instant"
+        : "smooth",
+      block: "start",
+    });
+  }
 
   async function submitSupportMessage(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -98,15 +111,34 @@ export function Support() {
 
   return (
     <section className="support-page">
-      <header className="heading support-heading">
-        <div className="support-heading-copy">
-          <h1>Мы рядом, если нужна помощь</h1>
-          <p>Найдите ответ или напишите нам — поможем разобраться.</p>
-        </div>
-        <div className="support-mascot">
-          <DecklyMascot animation="wave" size={180} />
-        </div>
-      </header>
+      <MascotPageHeading
+        variant="support"
+        animation="wave"
+        message="Я рядом. С чем помочь?"
+        action={
+          <div className="support-heading-actions">
+            <button
+              className="btn primary"
+              type="button"
+              onClick={() => showSection(contactSection.current)}
+            >
+              <Icon name="info-support-contact" />
+              Написать нам
+            </button>
+            <button
+              className="btn"
+              type="button"
+              onClick={() => showSection(answersSection.current)}
+            >
+              <Icon name="info-support-reference" />
+              Частые вопросы
+            </button>
+          </div>
+        }
+      >
+        <h1>Мы рядом, если нужна помощь</h1>
+        <p>Найдите ответ или напишите нам — поможем разобраться.</p>
+      </MascotPageHeading>
       <div className="support-layout">
         <aside className="support-aside">
           <a className="support-guide" href="#demo">
@@ -118,11 +150,18 @@ export function Support() {
               <small>Пройдём путь вместе, шаг за шагом</small>
             </span>
           </a>
-          <section className="support-personal">
+          <section
+            className="support-personal"
+            ref={contactSection}
+            tabIndex={-1}
+            aria-labelledby={`${accordionId}-contact-title`}
+          >
             <span className="support-contact-icon">
               <Icon name="info-support-contact" />
             </span>
-            <h2>Давайте разберёмся вместе.</h2>
+            <h2 id={`${accordionId}-contact-title`}>
+              Давайте разберёмся вместе.
+            </h2>
             <p>Опишите ситуацию — ответим на указанную почту.</p>
             <form
               className="support-contact-form"
@@ -215,6 +254,8 @@ export function Support() {
         </aside>
         <section
           className="support-answers"
+          ref={answersSection}
+          tabIndex={-1}
           aria-labelledby={`${accordionId}-title`}
         >
           <div className="support-section-heading">

@@ -15,27 +15,44 @@ export function LibraryEmptyState({
   title,
   description,
   children,
+  showMascot = true,
 }: {
   kind: LibraryEmptyStateKind;
   title: string;
   description: string;
   children?: ReactNode;
+  showMascot?: boolean;
 }) {
   const titleId = useId();
   return (
     <section
-      className={`library-empty-state library-empty-state--${kind}`}
+      className={`library-empty-state library-empty-state--${kind}${showMascot ? "" : " library-empty-state--compact"}`}
       aria-labelledby={titleId}
     >
-      <div className="library-empty-mascot" aria-hidden="true">
-        <DecklyMascot
-          animation={kind === "search" ? "think" : "wave"}
-          size={170}
-        />
-        <span className="library-mascot-badge">
-          <Icon name={stateIcons[kind]} />
-        </span>
-      </div>
+      {showMascot && (
+        <div className="library-empty-mascot">
+          <DecklyMascot
+            animation={
+              kind === "search"
+                ? "think"
+                : kind === "favorites"
+                  ? "kiss"
+                  : "laptop"
+            }
+            size={170}
+            message={
+              kind === "projects"
+                ? "Здесь будет ваша первая история!"
+                : kind === "favorites"
+                  ? "Сохраним здесь всё, что нравится?"
+                  : "Поищем ещё? Идея где-то рядом."
+            }
+          />
+          <span className="library-mascot-badge">
+            <Icon name={stateIcons[kind]} />
+          </span>
+        </div>
+      )}
       <div className="library-empty-copy">
         <h2 id={titleId}>{title}</h2>
         <p>{description}</p>
