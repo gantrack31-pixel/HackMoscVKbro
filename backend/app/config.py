@@ -93,6 +93,8 @@ class Settings:
     email_from: str = field(default_factory=lambda: os.getenv('EMAIL_FROM',''))
     support_to: str = field(default_factory=lambda: os.getenv('SUPPORT_TO',''))
     smtp_security: str = field(default_factory=lambda: os.getenv('SMTP_SECURITY','auto').lower())
+    # Reverse proxies in front of the app (Railway: 1). Each appends the address it saw to X-Forwarded-For.
+    trusted_proxy_hops: int = field(default_factory=lambda: int(os.getenv('TRUSTED_PROXY_HOPS','0')))
     support_rate_limit: int = field(default_factory=lambda: int(os.getenv('SUPPORT_RATE_LIMIT','5' if os.getenv('APP_ENV')=='production' else '30')))
     yandex_disk_token_key: str = field(default_factory=lambda: os.getenv('YANDEX_DISK_TOKEN_KEY',''),repr=False)
 
@@ -115,6 +117,8 @@ def validate_settings(config: Settings = None) -> None:
         raise ValueError('SMTP_PORT должен быть в диапазоне 1–65535.')
     if config.smtp_security not in {'auto','ssl','starttls'} or config.support_rate_limit<1:
         raise ValueError('SMTP_SECURITY: auto/ssl/starttls; SUPPORT_RATE_LIMIT должен быть положительным.')
+    if not 0 <= config.trusted_proxy_hops <= 5:
+        raise ValueError('TRUSTED_PROXY_HOPS должен быть в диапазоне 0–5.')
     if config.yandex_disk_token_key:
         from cryptography.fernet import Fernet
         try: Fernet(config.yandex_disk_token_key.encode())
