@@ -309,8 +309,8 @@ def deliver_support_message(email: str, message: str, user: dict) -> None:
 
 
 def rate_limit_support_message(request: Request, user_id: str) -> int:
-    ip=request.client.host if request.client else 'unknown'
-    ip_hash=hashlib.sha256(ip.encode()).hexdigest()
+    from .auth import client_ip
+    ip_hash=hashlib.sha256(client_ip(request).encode()).hexdigest()
     user_hash=hashlib.sha256(user_id.encode()).hexdigest()
     now=int(time.time())
     cutoff=now-SUPPORT_RATE_WINDOW_SECONDS

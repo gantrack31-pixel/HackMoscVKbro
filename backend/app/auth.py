@@ -235,13 +235,25 @@ class ResendVerification(BaseModel):
         if not re.fullmatch(r'[^\s@]+@[^\s@]+\.[^\s@]+',value):raise ValueError('Укажите корректную электронную почту')
         return value
 
-def rate_limit(request):
-    ip=digest(request.client.host if request.client else 'unknown');cutoff=int(time.time())-900
+def client_ip(request):
+    """Behind a proxy every request comes from the proxy; take the address our own proxies appended.
+    Entries further left are client-supplied and cannot be trusted."""
+    direct=request.client.host if request.client else 'unknown'
+    hops=settings.trusted_proxy_hops
+    if not hops: return direct
+    forwarded=[part.strip() for part in request.headers.get('x-forwarded-for','').split(',') if part.strip()]
+    return forwarded[-hops] if len(forwarded)>=hops else direct
+
+def rate_limit(request,record=True):
+    ip=digest(client_ip(request));cutoff=int(time.time())-900
     with connection() as db:
         db.execute('DELETE FROM auth_attempts WHERE time<?',(cutoff,))
         count=db.execute('SELECT COUNT(*) FROM auth_attempts WHERE ip_hash=? AND time>=?',(ip,cutoff)).fetchone()[0]
         if count>=15:raise HTTPException(429,'Слишком много попыток. Повторите через 15 минут.')
-        db.execute('INSERT INTO auth_attempts VALUES (?,?)',(ip,int(time.time())))
+        if record: db.execute('INSERT INTO auth_attempts VALUES (?,?)',(ip,int(time.time())))
+
+def record_auth_failure(request):
+    with connection() as db: db.execute('INSERT INTO auth_attempts VALUES (?,?)',(digest(client_ip(request)),int(time.time())))
 
 def set_session(response,user,request):
     token=secrets.token_urlsafe(32);csrf=secrets.token_urlsafe(32)
@@ -303,9 +315,11 @@ def register(data:Registration,request:Request,response:Response):
 
 @router.post('/login')
 def login(data:Credentials,request:Request,response:Response):
-    rate_limit(request)
+    # Only wrong passwords count, so people signing in normally never lock each other out.
+    rate_limit(request,record=False)
     with connection() as db: row=db.execute('SELECT * FROM users WHERE email=?',(data.email,)).fetchone()
-    if not password_valid(data.password,row['password_hash'] if row else None):raise HTTPException(401,'Неверная почта или пароль')
+    if not password_valid(data.password,row['password_hash'] if row else None):
+        record_auth_failure(request);raise HTTPException(401,'Неверная почта или пароль')
     if row['password_hash'] and not row['email_verified']:
         raise HTTPException(403,'Подтвердите адрес электронной почты по ссылке из письма.')
     return set_session(response,dict(row),request)

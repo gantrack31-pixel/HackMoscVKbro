@@ -89,7 +89,10 @@ docker compose up --build -d
    DATABASE_PATH=data/deckly.sqlite3
    LLM_MODE=live
    LLM_API_KEY=...
+   TRUSTED_PROXY_HOPS=1
    ```
+
+   `TRUSTED_PROXY_HOPS=1` говорит серверу, что перед ним один прокси Railway, и лимиты попыток входа считаются по реальному IP посетителя. Без этой настройки все запросы приходят с адреса прокси, и после 15 попыток вход блокируется сразу для всех. Локально и без прокси оставьте `0`.
 
    `LLM_API_KEY` — секрет: вводите его только в Railway Variables, никогда не коммитьте в репозиторий и не задавайте как `VITE_*`. Если пока не подключаете AI, используйте `LLM_MODE=demo` вместе с `ALLOW_DEMO_IN_PRODUCTION=true` — демо-режим будет работать без реальной модели.
 5. По умолчанию подтверждение email включено. Чтобы регистрация и восстановление пароля отправляли письма, добавьте `SMTP_HOST`, `SMTP_PORT`, `SMTP_USERNAME`, `SMTP_PASSWORD`, `EMAIL_FROM` (и при необходимости `SMTP_SECURITY`). Если почта пока не настроена, явно задайте `EMAIL_VERIFICATION_REQUIRED=false`; тогда email не подтверждается.
